@@ -117,6 +117,12 @@
 <pre>
 <code>&lt;link rel="stylesheet" href="_content/Radzen.Blazor/css/standard-base.css"&gt;</code>
 </pre>
+        <RadzenText>
+           Make sure you have also bootstrap CSS:
+        </RadzenText>
+<pre>
+<code>&lt;link rel="stylesheet" href="css/bootstrap/bootstrap.min.css"&gt;</code>
+</pre>
     </RadzenColumn>
 </RadzenRow>
 
@@ -170,6 +176,9 @@
 }
 </code>
 </pre>
+        <RadzenAlert AlertStyle="AlertStyle.Warning">
+            All Radzen Blazor components with events are interactive and cannot work in .NET 8 Static @@rendermode. Make sure the components @@rendermode is set to InteractiveServer or InteractiveWebAssembly or they are nested inside interactive parent.
+        </RadzenAlert>
     </RadzenColumn>
 </RadzenRow>
 

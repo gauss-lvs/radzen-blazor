@@ -1767,7 +1767,7 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
-        /// Resets the DataGrid instance to initial state with no sorting, grouping and/or filtering.
+        /// Resets the DataGrid instance to initial state with no sorting, grouping and/or filtering, column visibility.
         /// </summary>
         /// <param name="resetColumnState">if set to <c>true</c> [reset column state].</param>
         /// <param name="resetRowState">if set to <c>true</c> [reset row state].</param>
@@ -1792,7 +1792,9 @@ namespace Radzen.Blazor
                     c.ResetSortOrder();
                     c.SetOrderIndex(null);
                     c.SetWidth(null);
+                    c.SetVisible(null);
                 });
+                selectedColumns = allColumns.Where(c => c.Pickable && c.GetVisible()).ToList();
                 sorts.Clear();
            }
 
@@ -1887,7 +1889,7 @@ namespace Radzen.Blazor
 
         IEnumerable<FilterDescriptor> filters = Enumerable.Empty<FilterDescriptor>();
 
-        async Task InvokeLoadData(int start, int top)
+        internal async Task InvokeLoadData(int start, int top)
         {
             var orderBy = GetOrderBy();
 
@@ -1986,7 +1988,13 @@ namespace Radzen.Blazor
         public string KeyProperty { get; set; }
 
         internal Func<TItem, object> keyPropertyGetter;
-        bool ItemEquals(TItem item, TItem otherItem)
+        /// <summary>
+        /// Compares two items
+        /// </summary>
+        /// <param name="item">The first item</param>
+        /// <param name="otherItem">The second item</param>
+        /// <returns>Are items equal</returns>
+        protected bool ItemEquals(TItem item, TItem otherItem)
         {
             return keyPropertyGetter != null ? keyPropertyGetter(item).Equals(keyPropertyGetter(otherItem)) : item.Equals(otherItem);
         }
@@ -2830,7 +2838,7 @@ namespace Radzen.Blazor
                     var descriptor = Groups.Where(d => d.Property == column.GetGroupProperty()).FirstOrDefault();
                     if (descriptor == null)
                     {
-                        descriptor = new GroupDescriptor() { Property = column.GetGroupProperty(), Title = column.GetTitle(), SortOrder = column.GetSortOrder() ?? SortOrder.Ascending  };
+                        descriptor = new GroupDescriptor() { Property = column.GetGroupProperty(), Title = column.GetTitle(), SortOrder = column.GetSortOrder() ?? SortOrder.Ascending, FormatString = column.FormatString  };
                         Groups.Add(descriptor);
                         _groupedPagedView = null;
 
@@ -3322,10 +3330,6 @@ namespace Radzen.Blazor
                         CurrentPage = 0;
                         skip = 0;
                         Reset(true);
-                        allColumns.ToList().ForEach(c =>
-                        {
-                            c.SetVisible(true);
-                        });
                         columns = allColumns.Where(c => c.Parent == null).ToList();
                         InvokeAsync(Reload);
 

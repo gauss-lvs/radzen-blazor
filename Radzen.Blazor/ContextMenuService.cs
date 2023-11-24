@@ -214,6 +214,11 @@ namespace Radzen
         /// </summary>
         /// <value>The image.</value>
         public string Image { get; set; }
+        /// <summary>
+        /// Gets a value indicating whether this instance is disabled.
+        /// </summary>
+        /// <value><c>true</c> if this instance is disabled; otherwise, <c>false</c>.</value>
+        public bool Disabled { get; set; }
     }
 
     /// <summary>
