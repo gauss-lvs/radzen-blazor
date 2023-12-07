@@ -694,6 +694,7 @@ namespace Radzen.Blazor
                 builder.AddAttribute(1, "Value", isFirst ? column.GetFilterValue() : column.GetSecondFilterValue());
                 builder.AddAttribute(2, "ShowUpDown", column.ShowUpDownForNumericFilter());
                 builder.AddAttribute(3, "Style", "width:100%");
+                builder.AddAttribute(4, "InputAttributes", new Dictionary<string,object>(){ { "aria-label", column.Title + $"{(!isFirst ? " second " : " ")}filter value " + (isFirst ? column.GetFilterValue() : column.GetSecondFilterValue()) } });
 
                 Action<object> action;
                 if (force)
@@ -1357,6 +1358,48 @@ namespace Radzen.Blazor
         /// <value>The remove group button aria label text.</value>
         [Parameter]
         public string RemoveGroupArialLabel { get; set; } = "Remove group";
+
+        /// <summary>
+        /// Gets or sets the select visible columns aria label text.
+        /// </summary>
+        /// <value>The select visible columns aria label text.</value>
+        [Parameter]
+        public string SelectVisibleColumnsArialLabel { get; set; } = "select visible columns";
+
+        /// <summary>
+        /// Gets or sets the column logical filter value aria label text.
+        /// </summary>
+        /// <value>The the column logical filter value aria label text.</value>
+        [Parameter]
+        public string LogicalOperatorArialLabel { get; set; } = " logical filter operator ";
+
+        /// <summary>
+        /// Gets or sets the column filter value aria label text.
+        /// </summary>
+        /// <value>The the column filter value aria label text.</value>
+        [Parameter]
+        public string FilterOperatorArialLabel { get; set; } = " filter operator ";
+
+        /// <summary>
+        /// Gets or sets the column filter value aria label text.
+        /// </summary>
+        /// <value>The the column filter value aria label text.</value>
+        [Parameter]
+        public string SecondFilterOperatorArialLabel { get; set; } = " second filter operator ";
+
+        /// <summary>
+        /// Gets or sets the column filter value aria label text.
+        /// </summary>
+        /// <value>The the column filter value aria label text.</value>
+        [Parameter]
+        public string FilterValueArialLabel { get; set; } = " filter value ";
+
+        /// <summary>
+        /// Gets or sets the column filter value aria label text.
+        /// </summary>
+        /// <value>The the column filter value aria label text.</value>
+        [Parameter]
+        public string SecondFilterValueArialLabel { get; set; } = " second filter value ";
 
         /// <summary>
         /// Gets or sets a value indicating whether user can pick all columns in column picker.
