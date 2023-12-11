@@ -427,7 +427,8 @@ namespace Radzen.Blazor
                 "rz-listbox-item  rz-state-highlight" :
                 "rz-listbox-item ";
         }
-        
+
+        bool preventKeyDown = false;
         int focusedIndex = -1;
         /// <summary>
         /// Handles the <see cref="E:KeyDown" /> event.
@@ -441,6 +442,7 @@ namespace Radzen.Blazor
 
             if (key == "ArrowDown" || key == "ArrowUp")
             {
+                preventKeyDown = true;
                 try
                 {
                     var newFocusedIndex = await JSRuntime.InvokeAsync<int>("Radzen.focusTableRow", UniqueID, key == "ArrowDown", focusedIndex, SelectionMode == DataGridSelectionMode.Multiple && args.ShiftKey);
@@ -462,6 +464,10 @@ namespace Radzen.Blazor
                 {
                     //
                 }
+            }
+            else
+            {
+                preventKeyDown = false;
             }
         }
 
@@ -2523,7 +2529,11 @@ namespace Radzen.Blazor
                 }
                 else
                 {
-                    selectedItems.Remove(item);
+                    var itemToRemove = selectedItems.Keys.FirstOrDefault(i => ItemEquals(i, item));
+                    if (itemToRemove != null)
+                    {
+                        selectedItems.Remove(itemToRemove);
+                    }
                     await RowDeselect.InvokeAsync(item);
                 }
             }
