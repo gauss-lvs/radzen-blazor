@@ -443,8 +443,6 @@ namespace Radzen.Blazor
         /// <param name="args">The <see cref="KeyboardEventArgs"/> instance containing the event data.</param>
         protected virtual async Task OnKeyDown(KeyboardEventArgs args)
         {
-            var items = PagedView.ToList();
-
             var key = args.Code != null ? args.Code : args.Key;
 
             if (key == "ArrowDown" || key == "ArrowUp")
@@ -453,9 +451,8 @@ namespace Radzen.Blazor
                 try
                 {
                     var newFocusedIndex = await JSRuntime.InvokeAsync<int>("Radzen.focusTableRow", UniqueID, key == "ArrowDown", focusedIndex, SelectionMode == DataGridSelectionMode.Multiple && args.ShiftKey);
-                    var itemToSelect = items.ElementAtOrDefault(newFocusedIndex);
-
-                    if (newFocusedIndex != focusedIndex && itemToSelect != null)
+                    
+                    if (newFocusedIndex != focusedIndex)
                     {
                         focusedIndex = newFocusedIndex;
 
@@ -464,7 +461,11 @@ namespace Radzen.Blazor
                             selectedItems.Clear();
                         }
 
-                        await SelectRow(itemToSelect, false);
+                        var itemToSelect = PagedView.ElementAtOrDefault(newFocusedIndex);
+                        if (itemToSelect != null)
+                        {
+                            await SelectRow(itemToSelect, false);
+                        }
                     }
                 }
                 catch (Exception)
