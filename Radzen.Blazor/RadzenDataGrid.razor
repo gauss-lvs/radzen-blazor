@@ -102,12 +102,15 @@
                         <tr>
                             @if (i == 0) // Only add the th elements for the first row
                             {
+                             @if (ShowGroupExpandColumn)
+                                {
                                     @foreach (var g in Groups)
                                     {
                                         <th class="rz-col-icon rz-unselectable-text" scope="col" rowspan=@(deepestChildColumnLevel + 1)>
                                             <span class="rz-column-title"></span>
                                         </th>
                                     }
+                                }
                                     @if (Template != null && ShowExpandColumn && i == 0)
                                     {
                                         <th class="rz-col-icon rz-unselectable-text" scope="col" rowspan=@(deepestChildColumnLevel + 1)>
@@ -139,13 +142,15 @@
                     @if (AllowFiltering && (FilterMode == FilterMode.Simple || FilterMode == FilterMode.SimpleWithMenu) && columns.Where(column => column.Filterable && (!string.IsNullOrEmpty(column.GetFilterProperty()) || column.FilterTemplate != null)).Any())
                     {
                         <tr>
-                             
-                            @foreach (var g in Groups)
-                            {
-                                <th class="rz-col-icon  rz-unselectable-text" scope="col" rowspan=@(deepestChildColumnLevel + 1)>
-                                    <span class="rz-column-title"></span>
-                                </th>
-                            }
+                             @if (ShowGroupExpandColumn)
+                                {
+                                    @foreach (var g in Groups)
+                                    {
+                                        <th class="rz-col-icon  rz-unselectable-text" scope="col" rowspan=@(deepestChildColumnLevel + 1)>
+                                            <span class="rz-column-title"></span>
+                                        </th>
+                                    }
+                                }
                             @if (Template != null && ShowExpandColumn  )
                             {
                                 <th class="rz-col-icon  rz-unselectable-text" scope="col" rowspan=@(deepestChildColumnLevel + 1)>
@@ -361,11 +366,14 @@
                             <tr class="">
                                 @if (i == 0) // Only add the th elements for the first row
                                 {
-                                    @foreach (var g in Groups)
+                                    @if (ShowGroupExpandColumn)
                                     {
-                                        <td class="rz-col-icon rz-unselectable-text" scope="col" rowspan=@(deepestChildColumnLevel + 1)>
-                                            <span class="rz-column-title"></span>
-                                        </td>
+                                        @foreach (var g in Groups)
+                                        {
+                                            <td class="rz-col-icon rz-unselectable-text" scope="col" rowspan=@(deepestChildColumnLevel + 1)>
+                                                <span class="rz-column-title"></span>
+                                            </td>
+                                        }
                                     }
                                     @if (Template != null && ShowExpandColumn && i == 0)
                                     {
@@ -422,16 +430,18 @@
 @code {
     internal void SetAttribute(Dictionary<string, object> attributes, string attributeName, object attributeValue)
     {
+        var separator = attributeName == "class" ? " " : ";";
+
         if (!attributes.ContainsKey(attributeName))
         {
             attributes.Add(attributeName, attributeValue);
         }
         else
         {
-            var values = $"{attributes[attributeName]}".Split(";").Where(v => v != string.Empty);
-            var newValues = $"{attributeValue}".Split(";").Where(v => v != string.Empty);
+            var values = $"{attributes[attributeName]}".Split(separator).Where(v => v != string.Empty);
+            var newValues = $"{attributeValue}".Split(separator).Where(v => v != string.Empty);
 
-            attributes[attributeName] = string.Join(";", values.Concat(newValues).Distinct());
+            attributes[attributeName] = string.Join(separator, values.Concat(newValues).Distinct());
         }
     }
 

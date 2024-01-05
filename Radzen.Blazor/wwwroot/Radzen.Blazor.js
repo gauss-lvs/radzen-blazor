@@ -995,7 +995,7 @@ window.Radzen = {
     if (instance) {
       instance.invokeMethodAsync(callback);
     }
-      Radzen.popups = Radzen.popups.filter(function (obj) {
+    Radzen.popups = (Radzen.popups || []).filter(function (obj) {
         return obj.id !== id;
     });
 
@@ -1571,6 +1571,9 @@ window.Radzen = {
     }
   },
   startDrag: function (ref, instance, handler) {
+    if (!ref) {
+        return { left: 0, top: 0, width: 0, height: 0 };
+    }
     ref.mouseMoveHandler = function (e) {
       instance.invokeMethodAsync(handler, { clientX: e.clientX, clientY: e.clientY });
     };
