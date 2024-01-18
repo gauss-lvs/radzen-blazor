@@ -527,6 +527,12 @@ namespace Radzen.Blazor
         [Parameter]
         public RenderFragment HeaderTemplate { get; set; } 
 
+        /// <summary>
+        /// Gives the grid a custom footer, allowing the adding of components to create custom tool bars or custom pagination
+        /// </summary>
+        [Parameter]
+        public RenderFragment FooterTemplate { get; set; }
+
         internal object selectedColumns;
 
         /// <summary>
@@ -2123,6 +2129,9 @@ namespace Radzen.Blazor
 
         internal bool? allGroupsExpanded;
 
+        /// <summary>
+        /// Expand group item.
+        /// </summary>
         public async System.Threading.Tasks.Task ExpandGroupItem(RadzenDataGridGroupRow<TItem> item, bool? expandedOnLoad)
         {
             if (expandedOnLoad == true)
@@ -2260,6 +2269,7 @@ namespace Radzen.Blazor
         {
             if (firstRender && Visible && (LoadData.HasDelegate && Data == null) && IsVirtualizationAllowed())
             {
+                await Task.Yield();
                 Data = Enumerable.Empty<TItem>().Append(default(TItem));
             }
             else if(settings == null)

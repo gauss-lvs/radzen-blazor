@@ -615,6 +615,7 @@ window.Radzen = {
       files.push({Name: file.name, Size: file.size});
     }
     var xhr = new XMLHttpRequest();
+    xhr.withCredentials = true;
     xhr.upload.onprogress = function (e) {
       if (e.lengthComputable) {
         var uploadComponent =
@@ -892,6 +893,8 @@ window.Radzen = {
     Radzen[id] = function (e) {
         var lastPopup = Radzen.popups && Radzen.popups[Radzen.popups.length - 1];
         var currentPopup = lastPopup != null && document.getElementById(lastPopup.id) || popup;
+        currentPopup.instance = lastPopup.instance;
+        currentPopup.callback = lastPopup.callback;
 
         if(e.type == 'contextmenu' || !e.target || !closeOnDocumentClick) return;
         if (!/Android/i.test(navigator.userAgent) &&
@@ -1071,23 +1074,25 @@ window.Radzen = {
             lastDialog.removeEventListener('keydown', Radzen.focusTrapDialog);
             lastDialog.addEventListener('keydown', Radzen.focusTrapDialog);
 
-            dialog.offsetWidth = lastDialog.parentElement.offsetWidth;
-            dialog.offsetHeight = lastDialog.parentElement.offsetHeight;
-            var dialogResize = function (e) {
-                if(!dialog) return;
-                if (dialog.offsetWidth != e[0].target.offsetWidth || dialog.offsetHeight != e[0].target.offsetHeight) {
+            if (options.resizable) {
+                dialog.offsetWidth = lastDialog.parentElement.offsetWidth;
+                dialog.offsetHeight = lastDialog.parentElement.offsetHeight;
+                var dialogResize = function (e) {
+                    if (!dialog) return;
+                    if (dialog.offsetWidth != e[0].target.offsetWidth || dialog.offsetHeight != e[0].target.offsetHeight) {
 
-                    dialog.offsetWidth = e[0].target.offsetWidth;
-                    dialog.offsetHeight = e[0].target.offsetHeight;
+                        dialog.offsetWidth = e[0].target.offsetWidth;
+                        dialog.offsetHeight = e[0].target.offsetHeight;
 
-                    dialog.invokeMethodAsync(
-                        'RadzenDialog.OnResize',
-                        e[0].target.offsetWidth,
-                        e[0].target.offsetHeight
-                    );
-                }
-            };
-            Radzen.dialogResizer = new ResizeObserver(dialogResize).observe(lastDialog.parentElement);
+                        dialog.invokeMethodAsync(
+                            'RadzenDialog.OnResize',
+                            e[0].target.offsetWidth,
+                            e[0].target.offsetHeight
+                        );
+                    }
+                };
+                Radzen.dialogResizer = new ResizeObserver(dialogResize).observe(lastDialog.parentElement);
+            }
 
             if (options.autoFocusFirstElement) {
                 if (lastDialog.querySelectorAll('.rz-html-editor-content').length) {

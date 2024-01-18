@@ -3,7 +3,7 @@
 <RadzenText TextStyle="TextStyle.H2" TagName="TagName.H1" class="rz-pt-8">
     FormField
 </RadzenText>
-<RadzenText TextStyle="TextStyle.Subtitle1" class="rz-pb-4">
+<RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.P" class="rz-pb-4">
     Radzen Blazor <strong>FormField</strong> component features a floating label effect. When the user focuses on an empty input field, the label floats above, providing a visual cue as to which field is being filled out. This can help improve the layout and overall user experience of your forms.
 </RadzenText>
 
@@ -37,7 +37,17 @@
     <FormFieldChildContent />
 </RadzenExample>
 
-<RadzenText ID="start-end-child-content" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
+<RadzenText ID="floating-label" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
+    Floating Label
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Body1" class="rz-mb-8">
+    By default, RadzenFormField has the floating label effect enabled. To disable it and always display the label fixed on top, use <code>AllowFloatingLabel="false"</code>.
+</RadzenText>
+<RadzenExample ComponentName="FormField" Example="FormFieldFloatingLabel">
+    <FormFieldFloatingLabel />
+</RadzenExample>
+
+<RadzenText ID="helper-text" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
     Helper text
 </RadzenText>
 <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-8">
