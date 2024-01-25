@@ -14,11 +14,16 @@ namespace Radzen.Blazor
         [CascadingParameter]
         public RadzenLayout Layout { get; set; }
 
+        /// <summary>
+        /// Controls whether the CSS class "fixed" is added to the classlist.
+        /// </summary>
+        public bool Fixed { get; set; } = true;
+
         /// <inheritdoc />
         protected override string GetComponentCssClass()
         {
             return ClassList.Create("rz-header")
-                            .Add("fixed", Layout == null)
+                            .Add("fixed", Layout == null && Fixed)
                             .ToString();
         }
     }
