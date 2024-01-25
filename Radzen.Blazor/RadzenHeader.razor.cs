@@ -17,6 +17,7 @@ namespace Radzen.Blazor
         /// <summary>
         /// Controls whether the CSS class "fixed" is added to the classlist.
         /// </summary>
+        [Parameter]
         public bool Fixed { get; set; } = true;
 
         /// <inheritdoc />
