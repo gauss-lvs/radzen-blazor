@@ -219,6 +219,10 @@ namespace Radzen
         /// </summary>
         /// <value><c>true</c> if this instance is disabled; otherwise, <c>false</c>.</value>
         public bool Disabled { get; set; }
+        /// <summary>
+        /// Gets or sets additional css classes.
+        /// </summary>
+        public string CssClass { get; set; }
     }
 
     /// <summary>
