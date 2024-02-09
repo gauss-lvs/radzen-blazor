@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Radzen
@@ -46,7 +47,7 @@ namespace Radzen
             var totalItemsCount = LoadData.HasDelegate ? Count : view.Count();
             var top = request.Count;
 
-            if(top <= 0)
+            if (top <= 0)
             {
                 top = PageSize;
             }
@@ -122,7 +123,7 @@ namespace Radzen
                         });
                     }));
 
-                    if(VirtualizationOverscanCount != default(int))
+                    if (VirtualizationOverscanCount != default(int))
                     {
                         builder.AddAttribute(3, "OverscanCount", VirtualizationOverscanCount);
                     }
@@ -434,6 +435,7 @@ namespace Radzen
 
                 if (!string.IsNullOrEmpty(ValueProperty))
                 {
+                    valuePropertyInfo = PropertyAccess.GetElementType(type).GetProperty(ValueProperty);
                     valuePropertyGetter = PropertyAccess.Getter<object, object>(ValueProperty, type);
                 }
 
@@ -448,6 +450,8 @@ namespace Radzen
                 }
             }
         }
+
+        internal PropertyInfo valuePropertyInfo;
 
         internal Func<object, object> valuePropertyGetter;
         internal Func<object, object> textPropertyGetter;
@@ -830,7 +834,7 @@ namespace Radzen
         {
 #if NET5_0_OR_GREATER
             var pageSize = parameters.GetValueOrDefault<int>(nameof(PageSize));
-            if(pageSize != default(int))
+            if (pageSize != default(int))
             {
                 PageSize = pageSize;
             }
@@ -1106,8 +1110,7 @@ namespace Radzen
 
                 if (!string.IsNullOrEmpty(ValueProperty))
                 {
-                    System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
-                    internalValue = selectedItems.Select(i => GetItemOrValueFromProperty(i, ValueProperty)).AsQueryable().Cast(pi.PropertyType);
+                    internalValue = selectedItems.Select(i => GetItemOrValueFromProperty(i, ValueProperty)).AsQueryable().Cast(valuePropertyInfo.PropertyType);
                 }
                 else
                 {
@@ -1225,7 +1228,8 @@ namespace Radzen
                 {
                     if (!string.IsNullOrEmpty(ValueProperty))
                     {
-                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()))
+                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType())
+                            || valuePropertyInfo.PropertyType == typeof(object) && value.GetType() != typeof(object))
                         {
                             SelectedItem = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).FirstOrDefault();
                         }
@@ -1254,7 +1258,8 @@ namespace Radzen
                             {
                                 dynamic item;
 
-                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()))
+                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType())
+                                    || valuePropertyInfo.PropertyType == typeof(object) && value.GetType() != typeof(object))
                                 {
                                     item = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), v)).FirstOrDefault();
                                 }
