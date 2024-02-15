@@ -417,6 +417,12 @@ namespace Radzen
             }
         }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the <see cref="DropDownBase{T}.GetLoadDataArgs"/> method will be called when the Popup is opened or on first render.
+        /// </summary>
+        [Parameter]
+        public bool LoadDataOnOpenPopup { get; set; }
+
         /// <inheritdoc/>
         protected override void OnParametersSet()
         {
@@ -741,7 +747,8 @@ namespace Radzen
                 }
                 else
                 {
-                    await LoadData.InvokeAsync(await GetLoadDataArgs());
+                    if (!LoadDataOnOpenPopup)
+                        await LoadData.InvokeAsync(await GetLoadDataArgs());
                 }
             }
 

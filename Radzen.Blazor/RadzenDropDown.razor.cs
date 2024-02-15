@@ -38,7 +38,7 @@ namespace Radzen.Blazor
         /// <value>The value template.</value>
         [Parameter]
         public RenderFragment<dynamic> ValueTemplate { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the empty template.
         /// </summary>
@@ -52,7 +52,7 @@ namespace Radzen.Blazor
         /// <value><c>true</c> if popup should open on focus; otherwise, <c>false</c>.</value>
         [Parameter]
         public bool OpenOnFocus { get; set; }
-        
+
         /// <summary>
         /// Gets or sets a value indicating whether search field need to be cleared after selection. Set to <c>false</c> by default.
         /// </summary>
@@ -85,6 +85,12 @@ namespace Radzen.Blazor
         {
             if (Disabled)
                 return;
+
+            if (LoadDataOnOpenPopup && LoadData.HasDelegate)
+            {
+                await LoadData.InvokeAsync(await GetLoadDataArgs());
+                StateHasChanged();
+            }
 
             await JSRuntime.InvokeVoidAsync(OpenOnFocus ? "Radzen.openPopup" : "Radzen.togglePopup", Element, PopupID, true);
             await JSRuntime.InvokeVoidAsync("Radzen.focusElement", isFilter ? UniqueID : SearchID);
@@ -184,7 +190,7 @@ namespace Radzen.Blazor
                 if (Visible)
                 {
                     bool reload = false;
-                    if (LoadData.HasDelegate && Data == null)
+                    if (LoadData.HasDelegate && Data == null && !LoadDataOnOpenPopup)
                     {
                         await LoadData.InvokeAsync(await GetLoadDataArgs());
                         reload = true;
@@ -223,7 +229,7 @@ namespace Radzen.Blazor
                 {
                     await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
                 }
-                
+
                 if (ClearSearchAfterSelection)
                 {
                     await JSRuntime.InvokeAsync<string>("Radzen.setInputValue", search, string.Empty);
@@ -277,6 +283,6 @@ namespace Radzen.Blazor
         internal async Task ClosePopup()
         {
             await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
-        }       
+        }
     }
 }
