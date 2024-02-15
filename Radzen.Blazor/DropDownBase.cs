@@ -709,13 +709,20 @@ namespace Radzen
         /// <summary>
         /// Debounces the filter.
         /// </summary>
-        async Task DebounceFilter()
+        Task DebounceFilter() => DebounceFilter(true);
+
+        /// <summary>
+        /// Debounces the filter.
+        /// </summary>
+        async Task DebounceFilter(bool reloadData)
         {
-            if (!LoadData.HasDelegate)
+            if (reloadData)
             {
-                _view = null;
-                if (IsVirtualizationAllowed())
+                if (!LoadData.HasDelegate)
                 {
+                    _view = null;
+                    if (IsVirtualizationAllowed())
+                    {
 #if NET5_0_OR_GREATER
                     if (virtualize != null)
                     {
@@ -723,16 +730,16 @@ namespace Radzen
                     }
                     await InvokeAsync(() => { StateHasChanged(); });
 #endif
+                    }
+                    else
+                    {
+                        await InvokeAsync(() => { StateHasChanged(); });
+                    }
                 }
                 else
                 {
-                    await InvokeAsync(() => { StateHasChanged(); });
-                }
-            }
-            else
-            {
-                if (IsVirtualizationAllowed())
-                {
+                    if (IsVirtualizationAllowed())
+                    {
 #if NET5_0_OR_GREATER
                     if (virtualize != null)
                     {
@@ -744,11 +751,11 @@ namespace Radzen
                     }
                     await InvokeAsync(() => { StateHasChanged(); });
 #endif
-                }
-                else
-                {
-                    if (!LoadDataOnOpenPopup)
+                    }
+                    else
+                    {
                         await LoadData.InvokeAsync(await GetLoadDataArgs());
+                    }
                 }
             }
 
@@ -784,7 +791,7 @@ namespace Radzen
         /// <param name="args">The <see cref="ChangeEventArgs"/> instance containing the event data.</param>
         protected virtual async System.Threading.Tasks.Task OnFilter(ChangeEventArgs args)
         {
-            await DebounceFilter();
+            await DebounceFilter(!LoadDataOnOpenPopup);
         }
 
         /// <summary>
