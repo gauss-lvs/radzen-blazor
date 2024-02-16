@@ -18,7 +18,7 @@ namespace Radzen.Blazor
     /// <typeparam name="TValue">The type of the t value.</typeparam>
     /// <example>
     /// <code>
-    /// &lt;RadzenDurationPicker @bind-Value=@someValue TValue="TimeSpan" Change=@(args => Console.WriteLine($"Selected date: {args}")) /&gt;
+    /// &lt;RadzenDurationPicker @bind-Value=@someValue TValue="TimeSpan" Change=@(args => Console.WriteLine($"Selected timespan: {args}")) /&gt;
     /// </code>
     /// </example>
     public partial class RadzenDurationPicker<TValue> : RadzenComponent, IRadzenFormComponent
@@ -190,23 +190,23 @@ namespace Radzen.Blazor
         public string InputClass { get; set; }
 
         /// <summary>
-        /// Gets or sets the Minimum Selectable Date.
+        /// Gets or sets the Minimum Selectable TimeSpan.
         /// </summary>
-        /// <value>The Minimum Selectable Date.</value>
+        /// <value>The Minimum Selectable TimeSpan.</value>
         [Parameter]
         public TimeSpan? Min { get; set; }
 
         /// <summary>
-        /// Gets or sets the Maximum Selectable Date.
+        /// Gets or sets the Maximum Selectable TimeSpan.
         /// </summary>
-        /// <value>The Maximum Selectable Date.</value>
+        /// <value>The Maximum Selectable TimeSpan.</value>
         [Parameter]
         public TimeSpan? Max { get; set; }
 
         /// <summary>
-        /// Gets or sets the Initial Date/Month View.
+        /// Gets or sets the Initial TimeSpan View.
         /// </summary>
-        /// <value>The Initial Date/Month View.</value>
+        /// <value>The Initial TimeSpan View.</value>
         [Parameter]
         public TimeSpan? InitialViewTimeSpan { get; set; }
 
@@ -229,9 +229,9 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
-        /// Gets or sets the date render callback. Use it to set attributes.
+        /// Gets or sets the timespan render callback. Use it to set attributes.
         /// </summary>
-        /// <value>The date render callback.</value>
+        /// <value>The timespan render callback.</value>
         [Parameter]
         public Action<DurationRenderEventArgs> TimeSpanRender { get; set; }
 
@@ -305,7 +305,7 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
-        /// Gets or set the current date changed callback.
+        /// Gets or set the current timespan changed callback.
         /// </summary>
         [Parameter]
         public EventCallback<TimeSpan> CurrentTimeSpanChanged { get; set; }
@@ -382,7 +382,7 @@ namespace Radzen.Blazor
         protected ElementReference input;
 
         /// <summary>
-        /// Parses the date.
+        /// Parses the timespan.
         /// </summary>
         protected async Task ParseTimeSpan()
         {
@@ -505,9 +505,9 @@ namespace Radzen.Blazor
         public bool AllowInput { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether popup datepicker button is shown.
+        /// Gets or sets a value indicating whether popup durationpicker button is shown.
         /// </summary>
-        /// <value><c>true</c> if need show button open datepicker popup; <c>false</c> if need hide button, click for input field open datepicker popup.</value>
+        /// <value><c>true</c> if need show button open durationpicker popup; <c>false</c> if need hide button, click for input field open durationpicker popup.</value>
         [Parameter]
         public bool ShowButton { get; set; } = true;
 
@@ -632,9 +632,9 @@ namespace Radzen.Blazor
         public bool ShowTimeOkButton { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets the date format.
+        /// Gets or sets the timespan format.
         /// </summary>
-        /// <value>The date format.</value>
+        /// <value>The timespan format.</value>
         [Parameter]
         public string TimeFormat { get; set; }
 
