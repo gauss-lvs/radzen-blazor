@@ -417,9 +417,11 @@ window.Radzen = {
     }
   },
   scrollIntoViewIfNeeded: function (ref, selector) {
-    var el = ref.getElementsByClassName(selector)[0];
-    if (el) {
-      el.scrollIntoViewIfNeeded();
+    var el = selector ? ref.getElementsByClassName(selector)[0] : ref;
+    if (el && el.scrollIntoViewIfNeeded) {
+        el.scrollIntoViewIfNeeded();
+    } else if (el && el.scrollIntoView) {
+        el.scrollIntoView();
     }
   },
   selectListItem: function (input, ul, index) {
@@ -481,7 +483,7 @@ window.Radzen = {
       ul.nextSelectedIndex <= childNodes.length - 1
     ) {
       childNodes[ul.nextSelectedIndex].classList.add('rz-state-highlight');
-      childNodes[ul.nextSelectedIndex].scrollIntoViewIfNeeded();
+      Radzen.scrollIntoViewIfNeeded(childNodes[ul.nextSelectedIndex]);
     }
 
     return ul.nextSelectedIndex;
@@ -499,7 +501,7 @@ window.Radzen = {
         }
     }
   },
-  focusTableRow: function (gridId, key, rowIndex, cellIndex) {
+  focusTableRow: function (gridId, key, rowIndex, cellIndex, isVirtual) {
     var grid = document.getElementById(gridId);
     if (!grid) return;
 
@@ -508,6 +510,11 @@ window.Radzen = {
     var thead = table.tHead;
 
     var rows = (cellIndex != null && thead && thead.rows && thead.rows.length ? [...thead.rows] : []).concat(tbody && tbody.rows && tbody.rows.length ? [...tbody.rows] : []);
+
+    if (isVirtual) {
+        var rowHeight = rows[rows.length - 1] ? rows[rows.length - 1].offsetHeight : 25;
+        table.parentNode.scrollTop = table.parentNode.scrollTop + (key == 'ArrowDown' ? rowHeight : -rowHeight);
+    }
 
     table.nextSelectedIndex = rowIndex || 0;
     table.nextSelectedCellIndex = cellIndex || 0;
@@ -538,7 +545,7 @@ window.Radzen = {
         }
     }
 
-    if (key == 'ArrowLeft' || key == 'ArrowRight' || (key == 'ArrowUp' && table.nextSelectedIndex == 0)) {
+    if (key == 'ArrowLeft' || key == 'ArrowRight' || (key == 'ArrowUp' && table.nextSelectedIndex == 0 && table.parentNode.scrollTop == 0)) {
         var highlightedCells = rows[table.nextSelectedIndex].querySelectorAll('.rz-state-focused');
         if (highlightedCells.length) {
             for (var i = 0; i < highlightedCells.length; i++) {
@@ -554,10 +561,8 @@ window.Radzen = {
 
             if (!cell.classList.contains('rz-state-focused')) {
                 cell.classList.add('rz-state-focused');
-                cell.scrollIntoViewIfNeeded();
+                Radzen.scrollIntoViewIfNeeded(cell);
             }
-
-            table.parentNode.parentNode.scrollLeft = rows[table.nextSelectedIndex].cells[table.nextSelectedCellIndex].offsetLeft - rows[table.nextSelectedIndex].cells[table.nextSelectedCellIndex].offsetWidth;
         }
     } else if (key == 'ArrowDown' || key == 'ArrowUp') {
         var highlighted = table.querySelectorAll('.rz-state-focused');
@@ -567,18 +572,17 @@ window.Radzen = {
             }
         }
 
-        if (
-            table.nextSelectedIndex >= 0 &&
+        if (table.nextSelectedIndex >= 0 &&
             table.nextSelectedIndex <= rows.length - 1
         ) {
             var row = rows[table.nextSelectedIndex];
 
             if (!row.classList.contains('rz-state-focused')) {
                 row.classList.add('rz-state-focused');
-                row.scrollIntoViewIfNeeded();
+                if (!isVirtual) {
+                    Radzen.scrollIntoViewIfNeeded(row);
+                }
             }
-
-            table.parentNode.parentNode.scrollTop = rows[table.nextSelectedIndex].offsetTop - rows[table.nextSelectedIndex].offsetHeight;
         }
     } 
 
