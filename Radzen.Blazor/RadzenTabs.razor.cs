@@ -158,6 +158,8 @@ namespace Radzen.Blazor
         {
             selectedIndex = IndexOf(tab);
 
+            SetFocusedIndex();
+
             if (raiseChange)
             {
                 await Change.InvokeAsync(selectedIndex);
@@ -205,6 +207,14 @@ namespace Radzen.Blazor
             base.OnInitialized();
         }
 
+        void SetFocusedIndex()
+        {
+            if (focusedIndex != selectedIndex)
+            {
+                focusedIndex = selectedIndex;
+            }
+        }
+
         /// <inheritdoc />
         public override async Task SetParametersAsync(ParameterView parameters)
         {
@@ -213,10 +223,7 @@ namespace Radzen.Blazor
                 selectedIndex = parameters.GetValueOrDefault<int>(nameof(SelectedIndex));
             }
 
-            if (focusedIndex != selectedIndex)
-            {
-                focusedIndex = selectedIndex;
-            }
+            SetFocusedIndex();
 
             await base.SetParametersAsync(parameters);
         }
@@ -251,6 +258,8 @@ namespace Radzen.Blazor
             {
                 selectedIndex = index;
 
+                SetFocusedIndex();
+
                 await JSRuntime.InvokeVoidAsync("Radzen.selectTab", $"{GetId()}-tabpanel-{selectedIndex}", selectedIndex);
 
                 shouldRender = false;
@@ -275,21 +284,21 @@ namespace Radzen.Blazor
             {
                 preventKeyPress = true;
 
-                focusedIndex = Math.Clamp(focusedIndex + (key == "ArrowLeft" ? -1 : 1), 0, tabs.Count - 1);
+                focusedIndex = Math.Clamp(focusedIndex + (key == "ArrowLeft" ? -1 : 1), 0, tabs.Where(t => t.Visible).Count() - 1);
             }
             else if (key == "Home" || key == "End")
             {
                 preventKeyPress = true;
 
-                focusedIndex = key == "Home" ? 0 : tabs.Count - 1;
+                focusedIndex = key == "Home" ? 0 : tabs.Where(t => t.Visible).Count() - 1;
             }
             else if (key == "Space" || key == "Enter")
             {
                 preventKeyPress = true;
 
-                if (focusedIndex >= 0 && focusedIndex < tabs.Count)
+                if (focusedIndex >= 0 && focusedIndex < tabs.Where(t => t.Visible).Count())
                 {
-                    await tabs[focusedIndex].OnClick();
+                    await tabs.Where(t => t.Visible).ToList()[focusedIndex].OnClick();
                 }
             }
             else
@@ -299,7 +308,7 @@ namespace Radzen.Blazor
         }
         internal bool IsFocused(RadzenTabsItem item)
         {
-            return tabs.IndexOf(item) == focusedIndex && focusedIndex != -1;
+            return tabs.Where(t => t.Visible).ToList().IndexOf(item) == focusedIndex && focusedIndex != -1;
         }
     }
 }

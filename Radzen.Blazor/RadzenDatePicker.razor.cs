@@ -614,7 +614,7 @@ namespace Radzen.Blazor
                 }
                 else
                 {
-                    await ValueChanged.InvokeAsync((TValue)Value);
+                    await ValueChanged.InvokeAsync(Value == null ? default(TValue) : (TValue)Value);
                 }
 
                 if (FieldIdentifier.FieldName != null)
@@ -1210,7 +1210,12 @@ namespace Radzen.Blazor
         /// <inheritdoc/>
         public async ValueTask FocusAsync()
         {
-            await input.FocusAsync();
+           try
+           {
+               await input.FocusAsync();
+            }
+            catch
+            {}
         }
 #endif
     }

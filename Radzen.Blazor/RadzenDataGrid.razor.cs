@@ -248,6 +248,8 @@ namespace Radzen.Blazor
                         builder.AddAttribute(7, nameof(RadzenDataGridRow<TItem>.EditContext), editContexts[item]);
                     }
 
+                    builder.SetKey(item);
+
                     builder.CloseComponent();
                     i++;
                 }
@@ -436,13 +438,27 @@ namespace Radzen.Blazor
                 "rz-listbox-item ";
         }
 
-        bool preventKeyDown = false;
+        bool preventKeyDown = true;
         int focusedIndex = -1;
         int focusedCellIndex = 0;
 
         internal string GridId()
         {
             return GetId();
+        }
+
+        async Task FocusRow(string key)
+        {
+            try
+            {
+                var result = await JSRuntime.InvokeAsync<int[]>("Radzen.focusTableRow", UniqueID, key, focusedIndex, focusedCellIndex, IsVirtualizationAllowed());
+                focusedIndex = result[0];
+                focusedCellIndex = result[1];
+            }
+            catch (Exception)
+            {
+                //
+            }
         }
 
         /// <summary>
@@ -467,16 +483,13 @@ namespace Radzen.Blazor
                     return;
                 }
 
-                try
-                {
-                    var result = await JSRuntime.InvokeAsync<int[]>("Radzen.focusTableRow", UniqueID, key, focusedIndex, focusedCellIndex, IsVirtualizationAllowed());
-                    focusedIndex = result[0];
-                    focusedCellIndex = result[1];
-                }
-                catch (Exception)
-                {
-                    //
-                }
+                await FocusRow(key);
+            }
+            else if (IsVirtualizationAllowed() && (key == "PageUp" || key == "PageDown" || key == "Home" || key == "End"))
+            {
+                preventKeyDown = true;
+
+                await FocusRow(key);
             }
             else if (key == "Space" || key == "Enter")
             {
@@ -922,7 +935,7 @@ namespace Radzen.Blazor
         /// <summary>
         /// Сlear filter on the specified column
         /// </summary>
-        public async Task ClearFilter(RadzenDataGridColumn<TItem> column, bool closePopup = false)
+        public async Task ClearFilter(RadzenDataGridColumn<TItem> column, bool closePopup = false, bool shouldReload = true)
         {
             if (closePopup)
             {
@@ -953,7 +966,7 @@ namespace Radzen.Blazor
                 LogicalFilterOperator = column.GetLogicalFilterOperator()
             });
 
-            if (LoadData.HasDelegate && IsVirtualizationAllowed())
+            if (LoadData.HasDelegate && IsVirtualizationAllowed() && shouldReload)
             {
                 Data = null;
 #if NET5_0_OR_GREATER
@@ -966,7 +979,10 @@ namespace Radzen.Blazor
                 await JSRuntime.InvokeVoidAsync("Radzen.closeAllPopups", $"{PopupID}{column.GetFilterProperty()}");
             }
 
-            await InvokeAsync(ReloadInternal);
+            if (shouldReload)
+            {
+                await InvokeAsync(ReloadInternal);
+            }
         }
 
         /// <summary>
@@ -1952,7 +1968,7 @@ namespace Radzen.Blazor
             {
                 allColumns.ToList().ForEach(c => 
                 { 
-                    c.ClearFilters(); 
+                    c.ClearFilters();
                     c.ResetSortOrder();
                     c.SetOrderIndex(null);
                     c.SetWidth(null);
