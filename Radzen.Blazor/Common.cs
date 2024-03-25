@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.DependencyInjection;
 using Radzen.Blazor;
+using Radzen.Blazor.Rendering;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -14,6 +15,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Radzen
@@ -292,6 +294,25 @@ namespace Radzen
 
             return services;
         }
+    }
+
+    /// <summary>
+    /// SecurityCodeType enum
+    /// </summary>
+    public enum SecurityCodeType
+    {
+        /// <summary>
+        /// January.
+        /// </summary>
+        String = 0,
+        /// <summary>
+        /// February
+        /// </summary>
+        Numeric = 1,
+        /// <summary>
+        /// March
+        /// </summary>
+        Password = 2
     }
 
     /// <summary>
@@ -592,6 +613,22 @@ namespace Radzen
     }
 
     /// <summary>
+    /// Supplies information about a <see cref="DropableViewBase.AppointmentMove" /> event that is being raised.
+    /// </summary>
+    public class SchedulerAppointmentMoveEventArgs
+    {
+        /// <summary>
+        /// Gets or sets the appointment data.
+        /// </summary> 
+        public AppointmentData Appointment { get; set; }
+        
+        /// <summary>
+        /// Gets or sets the time span.
+        /// </summary> 
+        public TimeSpan TimeSpan { get; set; }
+    }
+
+    /// <summary>
     /// Supplies information about a <see cref="RadzenMenu.Click" /> event that is being raised.
     /// </summary>
     public class MenuItemEventArgs : MouseEventArgs
@@ -833,16 +870,92 @@ namespace Radzen
     /// Represents a file which the user selects for upload via <see cref="RadzenUpload" />.
     /// </summary>
     public class FileInfo
+#if NET5_0_OR_GREATER
+        : IBrowserFile
+#endif
     {
+#if NET5_0_OR_GREATER
+        /// <summary>
+        /// Creates FileInfo.
+        /// </summary>
+        public FileInfo()
+        {
+            //
+        }
+
+        IBrowserFile source;
+        /// <summary>
+        /// Creates FileInfo with IBrowserFile as source.
+        /// </summary>
+        public FileInfo(IBrowserFile source)
+        {
+            this.source = source;
+        }
+#endif
+        string _name;
         /// <summary>
         /// Gets the name of the selected file.
         /// </summary>
-        public string Name { get; set; }
+        public string Name 
+        {
+            get
+            {
+#if NET5_0_OR_GREATER
+                return _name ?? source.Name;
+#else
+                return _name;
+#endif
+            }
+            set
+            {
+                _name = value;
+            }
+        }
 
+        long _size;
         /// <summary>
         /// Gets the size (in bytes) of the selected file.
         /// </summary>
-        public long Size { get; set; }
+        public long Size
+        {
+            get
+            {
+#if NET5_0_OR_GREATER
+                return _size != default(long) ? _size : source.Size;
+#else
+                return _size;
+#endif
+            }
+            set
+            {
+                _size = value;
+            }
+        }
+
+#if NET5_0_OR_GREATER
+        /// <summary>
+        /// Gets the IBrowserFile.
+        /// </summary>
+        public IBrowserFile Source => source;
+
+        /// <summary>
+        /// Gets the LastModified.
+        /// </summary>
+        public DateTimeOffset LastModified => source.LastModified;
+
+        /// <summary>
+        /// Gets the ContentType.
+        /// </summary>
+        public string ContentType => source.ContentType;
+
+        /// <summary>
+        /// Open read stream.
+        /// </summary>
+        public System.IO.Stream OpenReadStream(long maxAllowedSize = 512000, CancellationToken cancellationToken = default)
+        {
+            return source.OpenReadStream(maxAllowedSize, cancellationToken);
+        }
+#endif
     }
 
     /// <summary>

@@ -303,6 +303,99 @@ window.Radzen = {
       delete Radzen[id].instance;
     }
   },
+ focusSecurityCode: function (el) {
+    if (!el) return;
+    var firstInput = el.querySelector('.rz-security-code-input');
+    if (firstInput) {
+        setTimeout(function () { firstInput.focus() }, 500);
+    }
+ },
+  destroySecurityCode: function (id, el) {
+    if (!Radzen[id]) return;
+
+    var inputs = el.getElementsByTagName('input');
+
+    if (Radzen[id].keyPress && Radzen[id].paste) {
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].removeEventListener('keypress', Radzen[id].keyPress);
+            inputs[i].removeEventListener('paste', Radzen[id].paste);
+        }
+        delete Radzen[id].keyPress;
+        delete Radzen[id].paste;
+    }
+
+    Radzen[id] = null;
+  },
+  createSecurityCode: function (id, ref, el, isNumber) {
+      if (!el || !ref) return;
+
+      var hidden = el.querySelector('input[type="hidden"]');
+      var inputs = [...el.querySelectorAll('.rz-security-code-input')];
+
+      Radzen[id] = {};
+
+      Radzen[id].paste = function (e) {
+          if (e.clipboardData) {
+              var value = e.clipboardData.getData('text');
+
+              if (value) {
+                  for (var i = 0; i < value.length; i++) {
+                      if (isNumber && isNaN(+value[i])) {
+                          continue;
+                      }
+                      inputs[i].value = value[i];
+                  }
+
+                  var code = inputs.map(i => i.value).join('').trim();
+                  hidden.value = code;
+
+                  ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', code);
+
+                  inputs[inputs.length - 1].focus();
+              }
+
+              e.preventDefault();
+          }
+      }
+      Radzen[id].keyPress = function (e) {
+          var ch = String.fromCharCode(e.charCode);
+
+          if (e.metaKey ||
+              e.ctrlKey ||
+              e.keyCode == 9 ||
+              e.keyCode == 8 ||
+              e.keyCode == 13
+          ) {
+              return;
+          }
+
+          if (isNumber && (e.which < 48 || e.which > 57)) {
+              e.preventDefault();
+              return;
+          }
+
+          if (e.currentTarget.value == ch) {
+              return;
+          }
+
+          e.currentTarget.value = ch;
+
+          var value = inputs.map(i => i.value).join('').trim();
+          hidden.value = value;
+
+          ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', value);
+
+          var index = inputs.indexOf(e.currentTarget);
+          if (index < inputs.length - 1) {
+              inputs[index + 1].focus();
+          }
+      }
+
+      for (var i = 0; i < inputs.length; i++) {
+          inputs[i].addEventListener('keypress', Radzen[id].keyPress);
+          inputs[i].addEventListener('paste', Radzen[id].paste);
+      }
+  },
   createSlider: function (
     id,
     slider,
@@ -852,6 +945,24 @@ window.Radzen = {
     if (Radzen[id + 'duration']) {
         clearTimeout(Radzen[id + 'duration']);
     }
+  },
+  destroyDatePicker(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+
+      var button = el.querySelector('.rz-datepicker-trigger');
+      if (button) {
+          button.onclick = null
+      }
+  },
+  createDatePicker(el, popupId) {
+      var toggle = function (e) {
+          Radzen.togglePopup(e.currentTarget.parentNode, popupId, false, null, null, true, false);
+      };
+      var button = el.querySelector('.rz-datepicker-trigger');
+      if (button) {
+          button.onclick = toggle
+      }
   },
   findPopup: function (id) {
     var popups = [];
@@ -1812,6 +1923,25 @@ window.Radzen = {
       document.removeEventListener('mousemove', Radzen[id + 'move']);
       document.addEventListener('mousemove', Radzen[id + 'move']);
   },
+  stopColumnResize: function (id, grid, columnIndex) {
+    var el = document.getElementById(id + '-resizer');
+    if(!el) return;
+    var cell = el.parentNode.parentNode;
+    if (!cell) return;
+    if (Radzen[el]) {
+        grid.invokeMethodAsync(
+            'RadzenGrid.OnColumnResized',
+            columnIndex,
+            cell.getBoundingClientRect().width
+        );
+        el.style.width = null;
+        document.removeEventListener('mousemove', Radzen[el].mouseMoveHandler);
+        document.removeEventListener('mouseup', Radzen[el].mouseUpHandler);
+        document.removeEventListener('touchmove', Radzen[el].touchMoveHandler)
+        document.removeEventListener('touchend', Radzen[el].mouseUpHandler);
+        Radzen[el] = null;
+    }
+  },
   startColumnResize: function(id, grid, columnIndex, clientX) {
       var el = document.getElementById(id + '-resizer');
       var cell = el.parentNode.parentNode;
@@ -1960,6 +2090,10 @@ window.Radzen = {
             },
             mouseMoveHandler: function(e) {
                 if (Radzen[el]) {
+
+                    splitter.invokeMethodAsync(
+                        'RadzenSplitter.OnPaneResizing'
+                    );
 
                     var spacePerc = Radzen[el].panePerc + Radzen[el].paneNextPerc;
                     var spaceLength = Radzen[el].paneLength + Radzen[el].paneNextLength;

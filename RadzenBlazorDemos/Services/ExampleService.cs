@@ -776,6 +776,15 @@ namespace RadzenBlazorDemos
                         }
                     }
                 },
+                new Example()
+                {
+                    Name = "PickList",
+                    New = true,
+                    Description = "Use Radzen Blazor PickList component to transfer items between two collections.",
+                    Path = "picklist",
+                    Icon = "&#xe0b8",
+                    Tags = new[] { "picklist", "list", "listbox" }
+                },
             }
 },
         new Example()
@@ -1190,6 +1199,15 @@ namespace RadzenBlazorDemos
                     Description = "Demonstration and configuration of the Radzen Blazor Rating component.",
                     Icon = "&#xe839",
                     Tags = new [] { "star", "form", "edit" }
+                },
+                new Example()
+                {
+                    Name = "SecurityCode",
+                    Path = "security-code",
+                    Description = "Demonstration and configuration of the Radzen Blazor SecurityCode component.",
+                    Icon = "&#xf045",
+                    New = true,
+                    Tags = new [] { "security", "code", "input" }
                 },
                 new Example()
                 {

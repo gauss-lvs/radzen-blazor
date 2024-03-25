@@ -223,6 +223,10 @@ namespace Radzen.Blazor.Tests
             component.SetParametersAndRender(parameters => parameters.Add<bool>(p => p.AutoComplete, true));
 
             Assert.Contains(@$"autocomplete=""on""", component.Markup);
+
+            component.SetParametersAndRender(parameters => parameters.AddUnmatched("autocomplete", "custom"));
+
+            Assert.Contains(@$"autocomplete=""custom""", component.Markup);
         }
 
         [Fact]
