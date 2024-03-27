@@ -132,7 +132,7 @@ namespace Radzen.Blazor
 
         /// <summary>
         /// Gets or sets a value indicating whether the selected items will be displayed as chips. Set to <c>false</c> by default.
-        /// Requires <see cref="DropDownBase{T}.Multiple" /> to be set to <c>true</c>. 
+        /// Requires <see cref="DropDownBase{T}.Multiple" /> to be set to <c>true</c>.
         /// </summary>
         /// <value><c>true</c> to display the selected items as chips; otherwise, <c>false</c>.</value>
         [Parameter]
