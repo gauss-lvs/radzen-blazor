@@ -480,23 +480,23 @@ namespace Radzen
         {
             if (item != null)
             {
-                if (property == TextProperty && textPropertyGetter != null)
-                {
-                    return textPropertyGetter(item);
-                }
-                else if (property == ValueProperty && valuePropertyGetter != null)
-                {
-                    return valuePropertyGetter(item);
-                }
-                else if (property == DisabledProperty && disabledPropertyGetter != null)
-                {
-                    return disabledPropertyGetter(item);
-                }
-
                 var enumValue = item as Enum;
                 if (enumValue != null)
                 {
                     return Radzen.Blazor.EnumExtensions.GetDisplayDescription(enumValue);
+                }
+
+                if (property == TextProperty)
+                {
+                    return textPropertyGetter != null ? textPropertyGetter(item) : PropertyAccess.GetItemOrValueFromProperty(item, property);
+                }
+                else if (property == ValueProperty)
+                {
+                    return valuePropertyGetter != null ? valuePropertyGetter(item) : PropertyAccess.GetItemOrValueFromProperty(item, property);
+                }
+                else if (property == DisabledProperty)
+                {
+                    return disabledPropertyGetter != null ? disabledPropertyGetter(item) : PropertyAccess.GetItemOrValueFromProperty(item, property);
                 }
             }
 

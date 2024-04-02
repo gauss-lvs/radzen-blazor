@@ -956,12 +956,13 @@ window.Radzen = {
       }
   },
   createDatePicker(el, popupId) {
-      var toggle = function (e) {
-          Radzen.togglePopup(e.currentTarget.parentNode, popupId, false, null, null, true, false);
-      };
       var button = el.querySelector('.rz-datepicker-trigger');
       if (button) {
-          button.onclick = toggle
+          button.onclick = function (e) {
+              if (!e.currentTarget.classList.contains('rz-state-disabled')) {
+                  Radzen.togglePopup(e.currentTarget.parentNode, popupId, false, null, null, true, false);
+              }
+          };
       }
   },
   findPopup: function (id) {
@@ -1168,8 +1169,9 @@ window.Radzen = {
   closeAllPopups: function (e, id) {
     if (!Radzen.popups) return;
     var el = e && e.target || id && documentElement.getElementById(id);
-    for (var i = 0; i < Radzen.popups.length; i++) {
-        var p = Radzen.popups[i];
+    var popups = Radzen.popups;
+      for (var i = 0; i < popups.length; i++) {
+        var p = popups[i];
 
         var closestPopup = el && el.closest && (el.closest('.rz-popup') || el.closest('.rz-overlaypanel'));
         if (closestPopup && closestPopup != p) {
