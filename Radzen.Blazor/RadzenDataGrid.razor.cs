@@ -798,10 +798,11 @@ namespace Radzen.Blazor
                         column.SetFilterValue(filterValue, isFirst);
                         SaveSettings();
                     }));
+                    builder.AddAttribute(5, "Disabled", !column.CanSetFilterValue());
                 }
                 else if (FilterMode == FilterMode.SimpleWithMenu)
                 {
-                    builder.AddAttribute(4, "Disabled", column.CanSetFilterValue());
+                    builder.AddAttribute(4, "Disabled", !column.CanSetFilterValue());
                 }
 
                 builder.CloseComponent();
@@ -1982,11 +1983,6 @@ namespace Radzen.Blazor
                 selectedColumns = allColumns.Where(c => c.Pickable && c.GetVisible()).ToList();
                 sorts.Clear();
            }
-
-            if (!LoadData.HasDelegate)
-            {
-                SaveSettings();
-            }
         }
 
         /// <summary>
@@ -2354,6 +2350,7 @@ namespace Radzen.Blazor
                 if (args.Settings != settings)
                 {
                     settings = args.Settings;
+                    settingsChanged = true;
                 }
             }
 
