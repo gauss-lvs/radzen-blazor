@@ -1377,7 +1377,14 @@ namespace Radzen
             }
             else
             {
-                selectedItem = null;
+                if (LoadDataOnOpenPopup && value != null && !string.IsNullOrEmpty(ValueProperty))
+                {
+                    selectedItem = value;
+                }
+                else
+                {
+                    selectedItem = null;
+                }
             }
         }
 
