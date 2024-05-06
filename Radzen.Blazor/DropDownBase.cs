@@ -1329,12 +1329,11 @@ namespace Radzen
             var view = LoadData.HasDelegate ? Data : View;
             if (value != null && view != null)
             {
-                System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
-
                 if (!Multiple)
                 {
                     if (!string.IsNullOrEmpty(ValueProperty))
                     {
+                        System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
                         if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType == typeof(object))
                         {
                             SelectedItem = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).FirstOrDefault();
@@ -1358,6 +1357,7 @@ namespace Radzen
                     {
                         if (!string.IsNullOrEmpty(ValueProperty))
                         {
+                            System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
                             foreach (object v in values.ToDynamicList())
                             {
                                 dynamic item;
