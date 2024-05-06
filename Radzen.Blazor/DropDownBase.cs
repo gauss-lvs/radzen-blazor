@@ -450,23 +450,33 @@ namespace Radzen
 
                 if (!string.IsNullOrEmpty(ValueProperty))
                 {
-                    valuePropertyInfo = PropertyAccess.GetElementType(type).GetProperty(ValueProperty);
-                    valuePropertyGetter = PropertyAccess.Getter<object, object>(ValueProperty, type);
+                    valuePropertyGetter = GetGetter(ValueProperty, type);
                 }
 
                 if (!string.IsNullOrEmpty(TextProperty))
                 {
-                    textPropertyGetter = PropertyAccess.Getter<object, object>(TextProperty, type);
+                    textPropertyGetter = GetGetter(TextProperty, type);
                 }
 
                 if (!string.IsNullOrEmpty(DisabledProperty))
                 {
-                    disabledPropertyGetter = PropertyAccess.Getter<object, object>(DisabledProperty, type);
+                    disabledPropertyGetter = GetGetter(DisabledProperty, type);
                 }
             }
         }
 
-        internal PropertyInfo valuePropertyInfo;
+        Func<object, object> GetGetter(string propertyName, Type type)
+        {
+            if (propertyName?.Contains("[") == true)
+            {
+                var getter = typeof(PropertyAccess).GetMethod("Getter", [typeof(string), typeof(Type)]);
+                var getterMethod = getter.MakeGenericMethod([type, typeof(object)]);
+
+                return (i) => getterMethod.Invoke(i, [propertyName, type]);
+            }
+
+            return PropertyAccess.Getter<object, object>(propertyName, type);
+        }
 
         internal Func<object, object> valuePropertyGetter;
         internal Func<object, object> textPropertyGetter;
@@ -637,7 +647,7 @@ namespace Radzen
                 if (IsVirtualizationAllowed())
                 {
 #if NET5_0_OR_GREATER
-                    items = virtualItems;
+                    items = virtualItems ?? Enumerable.Empty<object>().ToList();
 #endif
                 }
                 else
@@ -1338,8 +1348,6 @@ namespace Radzen
                     }
 
                     SetSelectedIndexFromSelectedItem();
-
-                    SelectedItemChanged.InvokeAsync(selectedItem);
                 }
                 else
                 {

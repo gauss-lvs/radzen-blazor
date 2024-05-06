@@ -506,6 +506,60 @@ namespace Radzen
     }
 
     /// <summary>
+    /// Supplies information about RadzenDropZoneContainer CanDrop function and RadzenDropZone Drop event.
+    /// </summary>
+    public class RadzenDropZoneItemEventArgs<TItem>
+    {
+        /// <summary>
+        /// Gets the dragged item zone.
+        /// </summary>
+        public RadzenDropZone<TItem> FromZone { get; internal set; }
+
+        /// <summary>
+        /// Gets the drop zone.
+        /// </summary>
+        public RadzenDropZone<TItem> ToZone { get; internal set; }
+
+        /// <summary>
+        /// Gets the dragged item.
+        /// </summary>
+        public TItem Item { get; internal set; }
+
+        /// <summary>
+        /// Gets the dropped item.
+        /// </summary>
+        public TItem ToItem { get; internal set; }
+    }
+
+    /// <summary>
+    /// Supplies information about RadzenDropZoneContainer ItemRender event.
+    /// </summary>
+    public class RadzenDropZoneItemRenderEventArgs<TItem>
+    {
+        /// <summary>
+        /// Gets the drop zone.
+        /// </summary>
+        public RadzenDropZone<TItem> Zone { get; internal set; }
+
+        /// <summary>
+        /// Gets the dragged item.
+        /// </summary>
+        public TItem Item { get; internal set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this item is visible.
+        /// </summary>
+        /// <value><c>true</c> if visible; otherwise, <c>false</c>.</value>
+        [Parameter]
+        public bool Visible { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets the row HTML attributes.
+        /// </summary>
+        public IDictionary<string, object> Attributes { get; private set; } = new Dictionary<string, object>();
+    }
+
+    /// <summary>
     /// Supplies information about a <see cref="RadzenDatePicker{TValue}.DateRender" /> event that is being raised.
     /// </summary>
     public class DateRenderEventArgs
@@ -1772,7 +1826,11 @@ namespace Radzen
         /// <summary>
         /// The component displays a popup filtering UI and allows you to pick filtering operator and or filter by multiple values.
         /// </summary>
-        Advanced
+        Advanced,
+        /// <summary>
+        /// The component displays a popup filtering UI and allows you to pick multiple values from list of all values.
+        /// </summary>
+        CheckBoxList
     }
 
     /// <summary>
@@ -2860,8 +2918,46 @@ namespace Radzen
             {
                 return true;
             }
-
+#if NET6_0_OR_GREATER
+            if (type == typeof(DateOnly))
+            {
+                return true;
+            }
+#endif
             return false;
+        }
+
+        /// <summary>
+        /// Determines whether the specified type is a DateOnly.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        /// <returns><c>true</c> if the specified type is a DateOnly instance or nullable DateOnly; otherwise, <c>false</c>.</returns>
+        public static bool IsDateOnly(Type source)
+        {
+            if (source == null) return false;
+            var type = source.IsGenericType ? source.GetGenericArguments()[0] : source;
+
+#if NET6_0_OR_GREATER
+            if (type == typeof(DateOnly))
+            {
+                return true;
+            }
+#endif
+            return false;
+        }
+
+        /// <summary>
+        /// Determines whether the specified type is a DateOnly.
+        /// </summary>
+        /// <param name="source">The source.</param>
+        /// <returns><c>true</c> if the specified type is a DateOnly instance or nullable DateOnly; otherwise, <c>false</c>.</returns>
+        public static object DateOnlyFromDateTime(DateTime source)
+        {
+            object result = null;
+#if NET6_0_OR_GREATER
+            result = DateOnly.FromDateTime(source);
+#endif
+            return result;
         }
 
         /// <summary>
