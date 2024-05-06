@@ -7,7 +7,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Radzen
@@ -1215,7 +1214,8 @@ namespace Radzen
 
                 if (!string.IsNullOrEmpty(ValueProperty))
                 {
-                    internalValue = selectedItems.Select(i => GetItemOrValueFromProperty(i, ValueProperty)).AsQueryable().Cast(valuePropertyInfo.PropertyType);
+                    System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
+                    internalValue = selectedItems.Select(i => GetItemOrValueFromProperty(i, ValueProperty)).AsQueryable().Cast(pi.PropertyType);
                 }
                 else
                 {
@@ -1329,11 +1329,13 @@ namespace Radzen
             var view = LoadData.HasDelegate ? Data : View;
             if (value != null && view != null)
             {
+                System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
+
                 if (!Multiple)
                 {
                     if (!string.IsNullOrEmpty(ValueProperty))
                     {
-                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || valuePropertyInfo.PropertyType == typeof(object))
+                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType == typeof(object))
                         {
                             SelectedItem = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).FirstOrDefault();
                         }
@@ -1360,7 +1362,7 @@ namespace Radzen
                             {
                                 dynamic item;
 
-                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || valuePropertyInfo.PropertyType == typeof(object))
+                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType == typeof(object))
                                 {
                                     item = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), v)).FirstOrDefault();
                                 }
