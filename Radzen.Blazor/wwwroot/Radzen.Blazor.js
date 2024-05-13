@@ -318,6 +318,7 @@ window.Radzen = {
     if (Radzen[id].keyPress && Radzen[id].paste) {
         for (var i = 0; i < inputs.length; i++) {
             inputs[i].removeEventListener('keypress', Radzen[id].keyPress);
+            inputs[i].removeEventListener('keydown', Radzen[id].keyDown);
             inputs[i].removeEventListener('paste', Radzen[id].paste);
         }
         delete Radzen[id].keyPress;
@@ -358,18 +359,19 @@ window.Radzen = {
           }
       }
       Radzen[id].keyPress = function (e) {
-          var ch = String.fromCharCode(e.charCode);
+          var keyCode = e.data ? e.data.charCodeAt(0) : e.which;
+          var ch = e.data || String.fromCharCode(e.which);
 
           if (e.metaKey ||
               e.ctrlKey ||
-              e.keyCode == 9 ||
-              e.keyCode == 8 ||
-              e.keyCode == 13
+              keyCode == 9 ||
+              keyCode == 8 ||
+              keyCode == 13
           ) {
               return;
           }
 
-          if (isNumber && (e.which < 48 || e.which > 57)) {
+          if (isNumber && (keyCode < 48 || keyCode > 57)) {
               e.preventDefault();
               return;
           }
@@ -391,8 +393,26 @@ window.Radzen = {
           }
       }
 
+      Radzen[id].keyDown = function (e) {
+          var keyCode = e.data ? e.data.charCodeAt(0) : e.which;
+          if (keyCode == 8) {
+              e.currentTarget.value = '';
+
+              var value = inputs.map(i => i.value).join('').trim();
+              hidden.value = value;
+
+              ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', value);
+
+              var index = inputs.indexOf(e.currentTarget);
+              if (index > 0) {
+                  inputs[index - 1].focus();
+              }
+          }
+      }
+
       for (var i = 0; i < inputs.length; i++) {
-          inputs[i].addEventListener('keypress', Radzen[id].keyPress);
+          inputs[i].addEventListener(navigator.userAgent.match(/Android/i) ? 'textInput' : 'keypress', Radzen[id].keyPress);
+          inputs[i].addEventListener(navigator.userAgent.match(/Android/i) ? 'textInput' : 'keydown', Radzen[id].keyDown);
           inputs[i].addEventListener('paste', Radzen[id].paste);
       }
   },

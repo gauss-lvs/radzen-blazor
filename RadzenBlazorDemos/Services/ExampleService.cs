@@ -182,6 +182,14 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
+                            Name = "Crosstab data",
+                            Path = "datagrid-crosstab",
+                            Title = "Blazor DataGrid Component - Crosstab Data | Free UI Components by Radzen",
+                            Description = "Blazor Data Grid supports crosstab data sources.",
+                            Tags = new [] { "datagrid", "bind", "load", "data", "loaddata", "crosstab", "rows", "columns" }
+                        },
+                        new Example
+                        {
                             Name = "Performance",
                             Path = "datagrid-performance",
                             Title = "Blazor DataGrid Component - Performance | Free UI Components by Radzen",
@@ -653,6 +661,24 @@ namespace RadzenBlazorDemos
                     Description = "This example demonstrates Blazor DataGrid without data.",
                     Icon = "&#xe661",
                     Tags = new [] { "datagrid", "databinding" }
+                },
+                new Example()
+                {
+                    Name = "Rows reorder",
+                    Path = "/datagrid-rowreorder",
+                    Title = "Blazor DataGrid Component - Reorder rows | Free UI Components by Radzen",
+                    Description = "This example demonstrates custom DataGrid rows reoder.",
+                    Icon = "&#xe945",
+                    Tags = new [] { "datagrid", "reorder", "row" }
+                },
+                new Example()
+                {
+                    Name = "Drag row between two DataGrids",
+                    Path = "/datagrid-rowdragbetween",
+                    Title = "Blazor DataGrid Component - Drag rows between two DataGrids | Free UI Components by Radzen",
+                    Description = "This example demonstrates drag and drop rows between two DataGrid components.",
+                    Icon = "&#xe25d",
+                    Tags = new [] { "datagrid", "drag", "row", "between" }
                 }
             }
         },
@@ -782,6 +808,14 @@ namespace RadzenBlazorDemos
                             Description = "This example demonstrates tri-state checkboxes in RadzenTree.",
                             Path = "tree-checkboxes",
                             Tags = new [] { "tree", "treeview", "nodes", "check" },
+                        },
+                        new Example
+                        {
+                            Name = "Drag & Drop",
+                            Title = "Blazor Tree Component - Drag & Drop items | Free UI Components by Radzen",
+                            Description = "This example demonstrates custom drag & drop logic in RadzenTree.",
+                            Path = "tree-dragdrop",
+                            Tags = new [] { "tree", "treeview", "nodes", "drag", "drop" },
                         }
                     }
                 },
