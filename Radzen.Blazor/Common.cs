@@ -673,12 +673,12 @@ namespace Radzen
     {
         /// <summary>
         /// Gets or sets the appointment data.
-        /// </summary> 
+        /// </summary>
         public AppointmentData Appointment { get; set; }
-        
+
         /// <summary>
         /// Gets or sets the time span.
-        /// </summary> 
+        /// </summary>
         public TimeSpan TimeSpan { get; set; }
     }
 
@@ -850,6 +850,22 @@ namespace Radzen
     }
 
     /// <summary>
+    /// Supplies information about a <see cref="RadzenTree.ItemContextMenu" /> event that is being raised.
+    /// </summary>
+    public class TreeItemContextMenuEventArgs : Microsoft.AspNetCore.Components.Web.MouseEventArgs
+    {
+        /// <summary>
+        /// Gets the tree item text.
+        /// </summary>
+        public string Text { get; internal set; }
+
+        /// <summary>
+        /// Gets the tree item value.
+        /// </summary>
+        public object Value { get; internal set; }
+    }
+
+    /// <summary>
     /// Supplies information about a <see cref="RadzenDataGrid{TItem}.RowClick" /> or <see cref="RadzenDataGrid{TItem}.RowDoubleClick" /> event that is being raised.
     /// </summary>
     /// <typeparam name="T"></typeparam>
@@ -950,7 +966,7 @@ namespace Radzen
         /// <summary>
         /// Gets the name of the selected file.
         /// </summary>
-        public string Name 
+        public string Name
         {
             get
             {
@@ -2731,7 +2747,7 @@ namespace Radzen
     public class TreeItemRenderEventArgs
     {
         /// <summary>
-        /// Gets or sets the item HTML attributes. 
+        /// Gets or sets the item HTML attributes.
         /// </summary>
         public IDictionary<string, object> Attributes { get; private set; } = new Dictionary<string, object>();
 
@@ -2746,7 +2762,7 @@ namespace Radzen
         /// Gets or sets a value indicating whether this item is checked.
         /// </summary>
         /// <value><c>true</c> if expanded; otherwise, <c>false</c>.</value>
-        public bool? Checked 
+        public bool? Checked
         {
             get
             {

@@ -747,11 +747,11 @@ namespace Radzen
 
                 Debounce(DebounceFilter, FilterDelay);
             }
-            else 
+            else
             {
-                var filteredItems = GetView(items.AsQueryable(), 
-                    args.Key, 
-                    StringFilterOperator.StartsWith, 
+                var filteredItems = GetView(items.AsQueryable(),
+                    args.Key,
+                    StringFilterOperator.StartsWith,
                     FilterCaseSensitivity.CaseInsensitive)
                     .Cast<object>()
                     .ToList();
@@ -781,7 +781,7 @@ namespace Radzen
                             selectedIndex = result.Index;
                         }
                         await JSRuntime.InvokeVoidAsync("Radzen.selectListItem", list, list, result.Index);
-                    }                    
+                    }
                 }
 
                 preventKeydown = false;
@@ -1122,7 +1122,7 @@ namespace Radzen
                 }
                 else
                 {
-                    result = source.Where(String.Join(".", query), search);
+                    result = source.Where(DynamicLinqCustomTypeProvider.ParsingConfig, string.Join(".", query), search);
                 }
             }
             else
@@ -1311,7 +1311,7 @@ namespace Radzen
                 }
                 else
                 {
-                    selectedItems = selectedItems.AsQueryable().Where($@"!object.Equals(it.{ValueProperty},@0)", value).ToList();
+                    selectedItems = selectedItems.AsQueryable().Where(DynamicLinqCustomTypeProvider.ParsingConfig, $@"!object.Equals(it.{ValueProperty},@0)", value).ToList();
                 }
             }
             else
@@ -1347,7 +1347,7 @@ namespace Radzen
                         }
                         else
                         {
-                            SelectedItem = view.AsQueryable().Where($@"{ValueProperty} == @0", value).FirstOrDefault();
+                            SelectedItem = view.AsQueryable().Where(DynamicLinqCustomTypeProvider.ParsingConfig, $@"{ValueProperty} == @0", value).FirstOrDefault();
                         }
                     }
                     else
@@ -1375,10 +1375,10 @@ namespace Radzen
                                 }
                                 else
                                 {
-                                    item = view.AsQueryable().Where($@"{ValueProperty} == @0", v).FirstOrDefault();
+                                    item = view.AsQueryable().Where(DynamicLinqCustomTypeProvider.ParsingConfig, $@"{ValueProperty} == @0", v).FirstOrDefault();
                                 }
 
-                                if (!object.Equals(item, null) && !selectedItems.AsQueryable().Where($@"object.Equals(it.{ValueProperty},@0)", v).Any())
+                                if (!object.Equals(item, null) && !selectedItems.AsQueryable().Where(DynamicLinqCustomTypeProvider.ParsingConfig, $@"object.Equals(it.{ValueProperty},@0)", v).Any())
                                 {
                                     selectedItems.Add(item);
                                 }
