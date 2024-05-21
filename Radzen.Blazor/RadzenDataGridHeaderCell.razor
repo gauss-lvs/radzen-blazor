@@ -1,6 +1,7 @@
 @typeparam TItem
 @using Microsoft.JSInterop
 @using Radzen.Blazor.Rendering
+@using System.Globalization
 @if (RowIndex == Column.GetLevel())
 {
 <th rowspan="@(Column.GetRowSpan())" colspan="@(Column.GetColSpan())" @attributes="@Attributes" class="@CssClass" scope="col" style="@GetStyle()" @onmouseup=@(args => Grid.EndColumnReorder(args, ColumnIndex))>
@@ -53,7 +54,7 @@
                     @onmousedown:preventDefault="true"
                     @onmousedown=@StartColumnResize @onmouseup=@StopColumnResize>&nbsp;</div>
         }
-        @if (Grid.AllowFiltering && Column.Filterable && Grid.FilterMode == FilterMode.Advanced)
+        @if (Grid.AllowFiltering && Column.Filterable && (Grid.FilterMode == FilterMode.Advanced || Grid.FilterMode == FilterMode.CheckBoxList))
         {
                 <i @ref=@filterButton @onclick:stopPropagation="true" @onmousedown=@ToggleFilter
                    class="@getFilterIconCss(Column)" onclick=@getFilterOpen() @onclick:preventDefault="true">
@@ -70,6 +71,8 @@
                             else
                             {
                                 <form id="@($"{getColumnPopupID()}-form")" @onsubmit="@(args => ApplyFilter())" class="rz-grid-filter">
+                                @if(Grid.FilterMode == FilterMode.Advanced)
+                                {
                                 <span class="rz-grid-filter-label">@Grid.FilterText</span>
                                 <RadzenDropDown InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", Grid.FilterOperatorArialLabel + Column.GetFilterOperatorText(Column.GetSecondFilterOperator()) }})"
                                     @onclick:preventDefault="true" Data="@(Column.GetFilterOperators().Select(t => new { Value = Column.GetFilterOperatorText(t), Key = t }))" TextProperty="Value" ValueProperty="Key" TValue="FilterOperator" Value="@Column.GetFilterOperator()" Change="@(args => Column.SetFilterOperator((FilterOperator)args))" />
@@ -91,7 +94,7 @@
                                 else if (PropertyAccess.IsDate(Column.FilterPropertyType))
                                 {
                                     <RadzenDatePicker Disabled="@(!Column.CanSetFilterValue())" TValue="@object" ShowTime="@Column.ShowTimeForDateTimeFilter()" ShowTimeOkButton="true" DateFormat="@Grid.getFilterDateFormat(Column)"
-                                                      Value="@Column.GetFilterValue()" Change="@(args => Column.SetFilterValue(args.Value))" AllowInput=@(Grid.AllowFilterDateInput)
+                                                      Value="@Column.GetFilterValue()" Change="@(args => Column.SetFilterValue(PropertyAccess.IsDateOnly(Column.FilterPropertyType) ? PropertyAccess.DateOnlyFromDateTime(args.Value) : args.Value))" AllowInput=@(Grid.AllowFilterDateInput)
                                                       InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", Column.Title + Grid.FilterValueArialLabel  + Column.GetFilterValue() }})" />
 
                                 }
@@ -126,7 +129,7 @@
                                 {
                                     <RadzenDatePicker Disabled="@(!Column.CanSetFilterValue(false))" TValue="@object" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", Column.Title +  Grid.SecondFilterValueArialLabel + Column.GetSecondFilterValue() }})"
                                                 ShowTime="@Column.ShowTimeForDateTimeFilter()" ShowTimeOkButton="true" DateFormat="@Grid.getFilterDateFormat(Column)"
-                                                      Value="@Column.GetSecondFilterValue()" Change="@(args => Column.SetFilterValue(args.Value, false))" AllowInput=@(Grid.AllowFilterDateInput) />
+                                                      Value="@Column.GetSecondFilterValue()" Change="@(args => Column.SetFilterValue(PropertyAccess.IsDateOnly(Column.FilterPropertyType) ? PropertyAccess.DateOnlyFromDateTime(args.Value) : args.Value, false))" AllowInput=@(Grid.AllowFilterDateInput) />
 
                                 }
                                 else if (Column.FilterPropertyType == typeof(bool) || Column.FilterPropertyType == typeof(bool?))
@@ -136,15 +139,29 @@
                                 else
                                 {
                                     <RadzenTextBox Disabled="@(!Column.CanSetFilterValue(false))" id="@($"{getColumnPopupID()}-sf2")" aria-label=@(Column.Title + Grid.SecondFilterValueArialLabel + Column.GetSecondFilterValue()) Value="@($"{Column.GetSecondFilterValue()}")" Change="@(args => Column.SetFilterValue(args, false))" />
+                                    }
                                 }
-                                </form>
+                                else
+                                {
+                                    <RadzenListBox AllowVirtualization="true" AllowClear="true" Multiple="true" Style="height: 300px"
+                                                   TValue="IEnumerable<object>" Data=@Column.GetFilterValues() Value=@Column.GetFilterValue()
+                                                   Change="@(args => Column.SetFilterValue(args))" 
+                                                   AllowFiltering="@(PropertyAccess.GetPropertyType(typeof(TItem), Column.GetFilterProperty()) == typeof(string))"
+                                                   Disabled="@(!Column.CanSetFilterValue())" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+                                                   InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", Column.Title + Grid.FilterValueArialLabel  + Column.GetFilterValue() }})">
+                                        <Template>
+                                            @(!string.IsNullOrEmpty(Column.FormatString) ? string.Format(Grid?.Culture ?? CultureInfo.CurrentCulture, Column.FormatString, context) : Convert.ToString(context, Grid?.Culture ?? CultureInfo.CurrentCulture))
+                                        </Template>
+                                    </RadzenListBox>
+                                }
+                            </form>
                             }
                         </div>
                         @if (Column.FilterTemplate == null)
                         {
                             <div class="rz-grid-filter-buttons">
-                                <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text=@Grid.ClearFilterText Click="@ClearFilter" />
-                                <RadzenButton form="@($"{getColumnPopupID()}-form")" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text=@Grid.ApplyFilterText />
+                                <RadzenButton ButtonStyle="ButtonStyle.Secondary" Text=@Grid.ClearFilterText Click="@ClearFilter" title="@Grid.ClearFilterText" />
+                                <RadzenButton form="@($"{getColumnPopupID()}-form")" ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text=@Grid.ApplyFilterText title="@Grid.ApplyFilterText" />
                             </div>
                         }
                     </Popup>

@@ -7,7 +7,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Radzen
@@ -266,6 +265,13 @@ namespace Radzen
         public string SearchAriaLabel { get; set; } = "Search";
 
         /// <summary>
+        /// Gets or sets the empty value aria label text.
+        /// </summary>
+        /// <value>The empty value aria label text.</value>
+        [Parameter]
+        public string EmptyAriaLabel { get; set; } = "Empty";
+
+        /// <summary>
         /// Gets or sets the selected item changed.
         /// </summary>
         /// <value>The selected item changed.</value>
@@ -450,23 +456,33 @@ namespace Radzen
 
                 if (!string.IsNullOrEmpty(ValueProperty))
                 {
-                    valuePropertyInfo = PropertyAccess.GetElementType(type).GetProperty(ValueProperty);
-                    valuePropertyGetter = PropertyAccess.Getter<object, object>(ValueProperty, type);
+                    valuePropertyGetter = GetGetter(ValueProperty, type);
                 }
 
                 if (!string.IsNullOrEmpty(TextProperty))
                 {
-                    textPropertyGetter = PropertyAccess.Getter<object, object>(TextProperty, type);
+                    textPropertyGetter = GetGetter(TextProperty, type);
                 }
 
                 if (!string.IsNullOrEmpty(DisabledProperty))
                 {
-                    disabledPropertyGetter = PropertyAccess.Getter<object, object>(DisabledProperty, type);
+                    disabledPropertyGetter = GetGetter(DisabledProperty, type);
                 }
             }
         }
 
-        internal PropertyInfo valuePropertyInfo;
+        Func<object, object> GetGetter(string propertyName, Type type)
+        {
+            if (propertyName?.Contains("[") == true)
+            {
+                var getter = typeof(PropertyAccess).GetMethod("Getter", [typeof(string), typeof(Type)]);
+                var getterMethod = getter.MakeGenericMethod([type, typeof(object)]);
+
+                return (i) => getterMethod.Invoke(i, [propertyName, type]);
+            }
+
+            return PropertyAccess.Getter<object, object>(propertyName, type);
+        }
 
         internal Func<object, object> valuePropertyGetter;
         internal Func<object, object> textPropertyGetter;
@@ -637,7 +653,7 @@ namespace Radzen
                 if (IsVirtualizationAllowed())
                 {
 #if NET5_0_OR_GREATER
-                    items = virtualItems;
+                    items = virtualItems ?? Enumerable.Empty<object>().ToList();
 #endif
                 }
                 else
@@ -731,11 +747,11 @@ namespace Radzen
 
                 Debounce(DebounceFilter, FilterDelay);
             }
-            else 
+            else
             {
-                var filteredItems = GetView(items.AsQueryable(), 
-                    args.Key, 
-                    StringFilterOperator.StartsWith, 
+                var filteredItems = GetView(items.AsQueryable(),
+                    args.Key,
+                    StringFilterOperator.StartsWith,
                     FilterCaseSensitivity.CaseInsensitive)
                     .Cast<object>()
                     .ToList();
@@ -765,7 +781,7 @@ namespace Radzen
                             selectedIndex = result.Index;
                         }
                         await JSRuntime.InvokeVoidAsync("Radzen.selectListItem", list, list, result.Index);
-                    }                    
+                    }
                 }
 
                 preventKeydown = false;
@@ -1106,7 +1122,7 @@ namespace Radzen
                 }
                 else
                 {
-                    result = source.Where(String.Join(".", query), search);
+                    result = source.Where(DynamicLinqCustomTypeProvider.ParsingConfig, string.Join(".", query), search);
                 }
             }
             else
@@ -1205,7 +1221,8 @@ namespace Radzen
 
                 if (!string.IsNullOrEmpty(ValueProperty))
                 {
-                    internalValue = selectedItems.Select(i => GetItemOrValueFromProperty(i, ValueProperty)).AsQueryable().Cast(valuePropertyInfo.PropertyType);
+                    System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
+                    internalValue = selectedItems.Select(i => GetItemOrValueFromProperty(i, ValueProperty)).AsQueryable().Cast(pi.PropertyType);
                 }
                 else
                 {
@@ -1294,7 +1311,7 @@ namespace Radzen
                 }
                 else
                 {
-                    selectedItems = selectedItems.AsQueryable().Where($@"!object.Equals(it.{ValueProperty},@0)", value).ToList();
+                    selectedItems = selectedItems.AsQueryable().Where(DynamicLinqCustomTypeProvider.ParsingConfig, $@"!object.Equals(it.{ValueProperty},@0)", value).ToList();
                 }
             }
             else
@@ -1323,13 +1340,14 @@ namespace Radzen
                 {
                     if (!string.IsNullOrEmpty(ValueProperty))
                     {
-                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || valuePropertyInfo.PropertyType == typeof(object))
+                        System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
+                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType == typeof(object))
                         {
                             SelectedItem = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).FirstOrDefault();
                         }
                         else
                         {
-                            SelectedItem = view.AsQueryable().Where($@"{ValueProperty} == @0", value).FirstOrDefault();
+                            SelectedItem = view.AsQueryable().Where(DynamicLinqCustomTypeProvider.ParsingConfig, $@"{ValueProperty} == @0", value).FirstOrDefault();
                         }
                     }
                     else
@@ -1338,8 +1356,6 @@ namespace Radzen
                     }
 
                     SetSelectedIndexFromSelectedItem();
-
-                    SelectedItemChanged.InvokeAsync(selectedItem);
                 }
                 else
                 {
@@ -1348,20 +1364,21 @@ namespace Radzen
                     {
                         if (!string.IsNullOrEmpty(ValueProperty))
                         {
+                            System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
                             foreach (object v in values.ToDynamicList())
                             {
                                 dynamic item;
 
-                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || valuePropertyInfo.PropertyType == typeof(object))
+                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType == typeof(object))
                                 {
                                     item = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), v)).FirstOrDefault();
                                 }
                                 else
                                 {
-                                    item = view.AsQueryable().Where($@"{ValueProperty} == @0", v).FirstOrDefault();
+                                    item = view.AsQueryable().Where(DynamicLinqCustomTypeProvider.ParsingConfig, $@"{ValueProperty} == @0", v).FirstOrDefault();
                                 }
 
-                                if (!object.Equals(item, null) && !selectedItems.AsQueryable().Where($@"object.Equals(it.{ValueProperty},@0)", v).Any())
+                                if (!object.Equals(item, null) && !selectedItems.AsQueryable().Where(DynamicLinqCustomTypeProvider.ParsingConfig, $@"object.Equals(it.{ValueProperty},@0)", v).Any())
                                 {
                                     selectedItems.Add(item);
                                 }

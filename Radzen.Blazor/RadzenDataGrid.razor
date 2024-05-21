@@ -1,4 +1,3 @@
-@using System.Linq.Dynamic.Core
 @using Microsoft.JSInterop
 @using Microsoft.AspNetCore.Components.Forms
 @using Radzen
@@ -37,7 +36,7 @@
                             {
                                 <div class="rz-group-header-item">
                                     <span class="rz-group-header-item-title">@gd.GetTitle()</span>
-                                    <a aria-label="@RemoveGroupArialLabel" @onclick:preventDefault="true" @onclick=@(args => RemoveGroupAsync(gd)) role="button" class="rz-dialog-titlebar-icon rz-dialog-titlebar-close">
+                                    <a id="@(GetId() + "rg")" aria-label="@RemoveGroupArialLabel" @onclick:preventDefault="true" @onclick=@(args => RemoveGroupAsync(gd)) role="button" class="rz-dialog-titlebar-icon rz-dialog-titlebar-close">
                                         <span class="rzi rzi-times"></span>
                                     </a>
                                 </div>
@@ -85,9 +84,12 @@
         <div class="rz-data-grid-data" tabindex="-1">
             <table class="rz-grid-table rz-grid-table-fixed @(AllowAlternatingRows ? "rz-grid-table-striped" : "") @(allColumns.Any(c => c.Parent != null) ? "rz-grid-table-composite" : "") @(getGridLinesCSSClass())">
                 <colgroup>
-                    @foreach (var g in Groups)
+                    @if (ShowGroupExpandColumn)
                     {
-                        <col>
+                        @foreach (var g in Groups)
+                        {
+                            <col>
+                        }
                     }
                     @if (Template != null && ShowExpandColumn)
                     {
@@ -177,7 +179,7 @@
                                                         {
                                                             if (FilterMode == FilterMode.Simple)
                                                             {
-                                                                <button class="rz-button rz-button-md rz-button-icon-only rz-variant-flat rz-light" onclick="@($"Radzen.togglePopup(this.parentNode, '{PopupID}{column.GetFilterProperty()}')")">
+                                                                    <button aria-label="@FilterToggleAriaLabel" class="rz-button rz-button-md rz-button-icon-only rz-variant-flat rz-light" onclick="@($"Radzen.togglePopup(this.parentNode, '{PopupID}{column.GetFilterProperty()}')")">
                                                                     <i class="rzi">date_range</i>
                                                                 </button>
                                                                 var filterValue = column.GetFilterValue();
@@ -267,14 +269,14 @@
 
                                                                             <RadzenDatePicker TValue="@object" AllowInput=@(AllowFilterDateInput) InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", column.Title + FilterValueArialLabel  + column.GetFilterValue() }})"
                                                                   ShowTime="@column.ShowTimeForDateTimeFilter()" ShowTimeOkButton="false" Inline="true" DateFormat="@getFilterDateFormat(column)"
-                                                                  Value="@column.GetFilterValue()" Change="@(args => { column.SetFilterValue(args.Value); SaveSettings(); })" />
+                                                                  Value="@column.GetFilterValue()" Change="@(args => { column.SetFilterValue(PropertyAccess.IsDateOnly(column.FilterPropertyType) ? PropertyAccess.DateOnlyFromDateTime(args.Value) : args.Value); SaveSettings(); })" />
 
                                                                         </div>
                                                                         <div class="rz-date-filter-buttons">
-                                                                            <button class="rz-button rz-clear-filter" @onclick="@((args) => ClearFilter(column, true))">
+                                                                            <button title="@ClearFilterText" class="rz-button rz-clear-filter" @onclick="@((args) => ClearFilter(column, true))">
                                                                                 @ClearFilterText
                                                                             </button>
-                                                                            <button class="rz-button rz-apply-filter" @onclick="@((args) => ApplyFilter(column, true))">
+                                                                            <button title="@ApplyFilterText" class="rz-button rz-apply-filter" @onclick="@((args) => ApplyFilter(column, true))">
                                                                                 @ApplyFilterText
                                                                             </button>
                                                                         </div>
@@ -287,7 +289,7 @@
                                                                 <RadzenDataGridFilterMenu Grid="@this" Column="@column" />
                                                                 <RadzenDatePicker Disabled=@(!column.CanSetFilterValue()) TValue="@object" Style="width:100%" AllowInput=@(AllowFilterDateInput) AllowClear="true" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", column.Title + FilterValueArialLabel  + column.GetFilterValue() }})"
                                                       ShowTime="false" ShowTimeOkButton="false" DateFormat="@getFilterDateFormat(column)"
-                                                      Value="@column.GetFilterValue()" Change="@(args => { if(!args.HasValue) { InvokeAsync(() => ClearFilter(column, true)); } else {column.SetFilterValue(args.Value); InvokeAsync(() => ApplyFilter(column, true));} })" />
+                                                      Value="@column.GetFilterValue()" Change="@(args => { if(!args.HasValue) { InvokeAsync(() => ClearFilter(column, true)); } else {column.SetFilterValue(PropertyAccess.IsDateOnly(column.FilterPropertyType) ? PropertyAccess.DateOnlyFromDateTime(args.Value) : args.Value); InvokeAsync(() => ApplyFilter(column, true));} })" />
                                                             }
                                                         }
                                                         else if (PropertyAccess.IsNullableEnum(column.FilterPropertyType) || PropertyAccess.IsEnum(column.FilterPropertyType))
@@ -346,7 +348,7 @@
                         else
                         {
                             <tr class=" rz-datatable-emptymessage-row" @onkeydown:stopPropagation>
-                                <td class="rz-datatable-emptymessage" colspan="@(visibleColumns.Sum(c => c.GetColSpan()) + (Template != null && ShowExpandColumn ? 1 : 0))">
+                                <td class="rz-datatable-emptymessage" colspan="@(visibleColumns.Sum(c => c.GetColSpan()) + (Template != null && ShowExpandColumn ? 1 : 0) + Groups.Count)">
                                     @if (EmptyTemplate != null)
                                     {
                                         @EmptyTemplate
@@ -527,7 +529,7 @@
                     @if (this.LoadChildData.HasDelegate && this.ShowExpandColumn && this.allColumns.IndexOf(column) == 0)
                     {
                         <span class="rz-cell-toggle">
-                            <a aria-label="@ExpandChildItemAriaLabel" class="@(getExpandIconCssClass(this, Item))" style="@(getExpandIconStyle(this, Item, rowArgs.Item1.Expandable))" @onclick:preventDefault="true" @onclick="_ => this.ExpandItem(Item)" @onclick:stopPropagation>
+                            <a id="@(GetId() + "exp")" aria-label="@ExpandChildItemAriaLabel" class="@(getExpandIconCssClass(this, Item))" style="@(getExpandIconStyle(this, Item, rowArgs.Item1.Expandable))" @onclick:preventDefault="true" @onclick="_ => this.ExpandItem(Item)" @onclick:stopPropagation>
                                 <span class="@(this.ExpandedItemStyle(Item))"></span>
                             </a>
                             <span class="rz-cell-data" @attributes="@spanAttributes">

@@ -182,6 +182,14 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
+                            Name = "Crosstab data",
+                            Path = "datagrid-crosstab",
+                            Title = "Blazor DataGrid Component - Crosstab Data | Free UI Components by Radzen",
+                            Description = "Blazor Data Grid supports crosstab data sources.",
+                            Tags = new [] { "datagrid", "bind", "load", "data", "loaddata", "crosstab", "rows", "columns" }
+                        },
+                        new Example
+                        {
                             Name = "Performance",
                             Path = "datagrid-performance",
                             Title = "Blazor DataGrid Component - Performance | Free UI Components by Radzen",
@@ -321,6 +329,15 @@ namespace RadzenBlazorDemos
                             Title = "Blazor DataGrid Component - Advanced Filter Mode | Free UI Components by Radzen",
                             Description = "RadzenDataGrid advanced mode filtering.",
                             Tags = new [] { "filter", "advanced", "grid", "datagrid", "table"}
+                        },
+                        new Example
+                        {
+                            New = true,
+                            Name = "CheckBoxList (Excel like)",
+                            Path = "datagrid-checkboxlist-filter",
+                            Title = "Blazor DataGrid Component - Excel like filtering | Free UI Components by Radzen",
+                            Description = "RadzenDataGrid Excel like filtering.",
+                            Tags = new [] { "filter", "excel", "grid", "datagrid", "table", "menu", "checkbox", "list" }
                         },
                         new Example
                         {
@@ -644,6 +661,24 @@ namespace RadzenBlazorDemos
                     Description = "This example demonstrates Blazor DataGrid without data.",
                     Icon = "&#xe661",
                     Tags = new [] { "datagrid", "databinding" }
+                },
+                new Example()
+                {
+                    Name = "Rows reorder",
+                    Path = "/datagrid-rowreorder",
+                    Title = "Blazor DataGrid Component - Reorder rows | Free UI Components by Radzen",
+                    Description = "This example demonstrates custom DataGrid rows reoder.",
+                    Icon = "&#xe945",
+                    Tags = new [] { "datagrid", "reorder", "row" }
+                },
+                new Example()
+                {
+                    Name = "Drag row between two DataGrids",
+                    Path = "/datagrid-rowdragbetween",
+                    Title = "Blazor DataGrid Component - Drag rows between two DataGrids | Free UI Components by Radzen",
+                    Description = "This example demonstrates drag and drop rows between two DataGrid components.",
+                    Icon = "&#xe25d",
+                    Tags = new [] { "datagrid", "drag", "row", "between" }
                 }
             }
         },
@@ -773,6 +808,22 @@ namespace RadzenBlazorDemos
                             Description = "This example demonstrates tri-state checkboxes in RadzenTree.",
                             Path = "tree-checkboxes",
                             Tags = new [] { "tree", "treeview", "nodes", "check" },
+                        },
+                        new Example
+                        {
+                            Name = "Drag & Drop",
+                            Title = "Blazor Tree Component - Drag & Drop items | Free UI Components by Radzen",
+                            Description = "This example demonstrates custom drag & drop logic in RadzenTree.",
+                            Path = "tree-dragdrop",
+                            Tags = new [] { "tree", "treeview", "nodes", "drag", "drop" },
+                        },
+                        new Example
+                        {
+                            Name = "Context menu",
+                            Title = "Blazor Tree Component - Context menu | Free UI Components by Radzen",
+                            Description = "This example demonstrates context menu in RadzenTree.",
+                            Path = "tree-contextmenu",
+                            Tags = new [] { "tree", "treeview", "nodes", "context", "menu" },
                         }
                     }
                 },
@@ -865,19 +916,20 @@ namespace RadzenBlazorDemos
                 },
                 new Example()
                 {
+                    New = true,
+                    Name = "DropZone",
+                    Description = "Demonstration and configuration of the Radzen Blazor DropZone component.",
+                    Path = "dropzone",
+                    Icon = "&#xe945",
+                    Tags = new [] { "dropzone", "drag", "drop" }
+                },
+                new Example()
+                {
                     Name = "Panel",
                     Description = "Demonstration and configuration of the Blazor RadzenPanel component.",
                     Path = "panel",
                     Icon = "&#xe14f",
                     Tags = new [] { "container" }
-                },
-                new Example()
-                {
-                    Name = "Splitter",
-                    Description = "Demonstration and configuration of the Blazor RadzenSplitter component.",
-                    Path = "splitter",
-                    Icon = "&#xe94f",
-                    Tags = new [] { "splitter", "layout"}
                 },
                 new Example()
                 {
@@ -887,6 +939,14 @@ namespace RadzenBlazorDemos
                     Path = "popup",
                     Icon = "&#xe0cb",
                     Tags = new [] { "popup", "dropdown"}
+                },
+                new Example()
+                {
+                    Name = "Splitter",
+                    Description = "Demonstration and configuration of the Blazor RadzenSplitter component.",
+                    Path = "splitter",
+                    Icon = "&#xe94f",
+                    Tags = new [] { "splitter", "layout"}
                 }
             }
         },

@@ -33,6 +33,18 @@ namespace Radzen.Blazor
         internal List<RadzenSplitterPane> Panes = new List<RadzenSplitterPane>();
 
         /// <summary>
+        /// Gets or sets whether StateHasChanged is invoked while resizing the pane.
+        /// </summary>
+        [Parameter]
+        public bool InvokeStateHasChangedOnPaneResizing { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets whether StateHasChanged is invoked after the pane was resized.
+        /// </summary>
+        [Parameter]
+        public bool InvokeStateHasChangedOnPaneResized { get; set; } = true;
+
+        /// <summary>
         /// Adds the pane.
         /// </summary>
         /// <param name="pane">The pane.</param>
@@ -94,7 +106,7 @@ namespace Radzen.Blazor
             }
         }
 
-        internal Task StartResize(MouseEventArgs args, int paneIndex)
+        internal Task StartResize(PointerEventArgs args, int paneIndex)
         {
             var pane = Panes[paneIndex];
             if (!pane.Resizable)
@@ -128,7 +140,8 @@ namespace Radzen.Blazor
         {
             IsResizing = true;
 
-            StateHasChanged();
+            if (InvokeStateHasChangedOnPaneResizing)
+                StateHasChanged();
 
             await Task.CompletedTask;
         }
@@ -155,9 +168,11 @@ namespace Radzen.Blazor
                 {
                     var oldSize = pane.SizeRuntine;
                     pane.SizeRuntine = "0";
-                    await InvokeAsync(StateHasChanged);
+                    if (InvokeStateHasChangedOnPaneResized)
+                        await InvokeAsync(StateHasChanged);
                     pane.SizeRuntine = oldSize;
-                    await InvokeAsync(StateHasChanged);
+                    if (InvokeStateHasChangedOnPaneResized)
+                        await InvokeAsync(StateHasChanged);
                     return;
                 }
             }
@@ -178,7 +193,8 @@ namespace Radzen.Blazor
                 paneNext.SizeRuntine = sizeNextNew.Value.ToString("0.##", CultureInfo.InvariantCulture) + "%";
             }
 
-            StateHasChanged();
+            if (InvokeStateHasChangedOnPaneResized)
+                StateHasChanged();
         }
 
         internal async Task OnCollapse(int paneIndex)

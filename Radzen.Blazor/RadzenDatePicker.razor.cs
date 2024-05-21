@@ -40,6 +40,20 @@ namespace Radzen.Blazor
         public string CalendarWeekTitle { get; set; } = "#";
 
         /// <summary>
+        /// Gets or sets the toggle popup aria label text.
+        /// </summary>
+        /// <value>The toggle popup aria label text.</value>
+        [Parameter]
+        public string ToggleAriaLabel { get; set; } = "Toggle";
+
+        /// <summary>
+        /// Gets or sets the OK button aria label text.
+        /// </summary>
+        /// <value>The OK button aria label text.</value>
+        [Parameter]
+        public string OkAriaLabel { get; set; } = "Ok";
+
+        /// <summary>
         /// Gets or sets the previous month aria label text.
         /// </summary>
         /// <value>The previous month aria label text.</value>
@@ -216,12 +230,12 @@ namespace Radzen.Blazor
 
                 if (monthDropDown != null)
                 {
-                    await monthDropDown.ClosePopup();
+                    await monthDropDown.PopupClose();
                 }
 
                 if (yearDropDown != null)
                 {
-                    await yearDropDown.ClosePopup();
+                    await yearDropDown.PopupClose();
                 }
             }
         }
