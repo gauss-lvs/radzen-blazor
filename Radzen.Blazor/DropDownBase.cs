@@ -445,6 +445,12 @@ namespace Radzen
         [Parameter]
         public bool LoadDataOnOpenPopup { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the method <see cref="object.Equals(object?, object?)" /> should be used to select the item based on the current value.
+        /// </summary>
+        [Parameter]
+        public bool SelectItemFromValueForceObjectEquals { get; set; }
+
         /// <inheritdoc/>
         protected override void OnParametersSet()
         {
@@ -825,11 +831,11 @@ namespace Radzen
                     if (IsVirtualizationAllowed())
                     {
 #if NET5_0_OR_GREATER
-                    if (virtualize != null)
-                    {
-                        await virtualize.RefreshDataAsync();
-                    }
-                    await InvokeAsync(() => { StateHasChanged(); });
+                        if (virtualize != null)
+                        {
+                            await virtualize.RefreshDataAsync();
+                        }
+                        await InvokeAsync(() => { StateHasChanged(); });
 #endif
                     }
                     else
@@ -842,15 +848,15 @@ namespace Radzen
                     if (IsVirtualizationAllowed())
                     {
 #if NET5_0_OR_GREATER
-                    if (virtualize != null)
-                    {
-                        await InvokeAsync(virtualize.RefreshDataAsync);
-                    }
-                    else
-                    {
-                        await LoadData.InvokeAsync(await GetLoadDataArgs());
-                    }
-                    await InvokeAsync(() => { StateHasChanged(); });
+                        if (virtualize != null)
+                        {
+                            await InvokeAsync(virtualize.RefreshDataAsync);
+                        }
+                        else
+                        {
+                            await LoadData.InvokeAsync(await GetLoadDataArgs());
+                        }
+                        await InvokeAsync(() => { StateHasChanged(); });
 #endif
                     }
                     else
@@ -1348,8 +1354,8 @@ namespace Radzen
                     if (!string.IsNullOrEmpty(ValueProperty))
                     {
                         System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
-                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType != value.GetType())
-                        {
+                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || SelectItemFromValueForceObjectEquals)
+                            {
                             SelectedItem = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).FirstOrDefault();
                         }
                         else
@@ -1376,7 +1382,7 @@ namespace Radzen
                             {
                                 dynamic item;
 
-                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType != value.GetType())
+                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || SelectItemFromValueForceObjectEquals)
                                 {
                                     item = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), v)).FirstOrDefault();
                                 }
