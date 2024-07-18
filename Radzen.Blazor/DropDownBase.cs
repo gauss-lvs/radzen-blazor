@@ -1348,7 +1348,7 @@ namespace Radzen
                     if (!string.IsNullOrEmpty(ValueProperty))
                     {
                         System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
-                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType == typeof(object))
+                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType != value.GetType())
                         {
                             SelectedItem = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).FirstOrDefault();
                         }
@@ -1376,7 +1376,7 @@ namespace Radzen
                             {
                                 dynamic item;
 
-                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType == typeof(object))
+                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || pi.PropertyType != value.GetType())
                                 {
                                     item = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), v)).FirstOrDefault();
                                 }
