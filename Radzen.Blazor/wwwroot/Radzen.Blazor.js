@@ -21,6 +21,9 @@ var rejectCallbacks = [];
 var radzenRecognition;
 
 window.Radzen = {
+    isRTL: function (el) {
+        return el && getComputedStyle(el).direction == 'rtl';
+    },
     throttle: function (callback, delay) {
         var timeout = null;
         return function () {
@@ -196,7 +199,7 @@ window.Radzen = {
     script.src =
       'https://maps.googleapis.com/maps/api/js?' +
       (apiKey ? 'key=' + apiKey + '&' : '') +
-      'callback=rz_map_init';
+      'callback=rz_map_init&libraries=marker';
 
     script.async = true;
     script.defer = true;
@@ -265,16 +268,19 @@ window.Radzen = {
                 Radzen[id].instance.markers = [];
 
                 markers.forEach(function (m) {
-                    var marker = new this.google.maps.Marker({
+                    var content = document.createElement('span');
+                    content.innerHTML = m.label;
+
+                    var marker = new this.google.maps.marker.AdvancedMarkerElement({
                         position: m.position,
                         title: m.title,
-                        label: m.label
+                        content: content
                     });
 
                     marker.addListener('click', function (e) {
                         Radzen[id].invokeMethodAsync('RadzenGoogleMap.OnMarkerClick', {
                             Title: marker.title,
-                            Label: marker.label,
+                            Label: marker.content.innerText,
                             Position: marker.position
                         });
                     });
@@ -444,7 +450,8 @@ window.Radzen = {
         e.targetTouches && e.targetTouches[0]
           ? e.targetTouches[0].pageX - e.target.getBoundingClientRect().left
           : e.pageX - handle.getBoundingClientRect().left;
-      var percent = (handle.offsetLeft + offsetX) / parent.offsetWidth;
+      var percent = (Radzen.isRTL(handle) ? parent.offsetWidth - handle.offsetLeft - offsetX
+            : handle.offsetLeft + offsetX) / parent.offsetWidth;
 
       if (percent > 1) {
           percent = 1;
@@ -1009,7 +1016,7 @@ window.Radzen = {
       var input = el.querySelector('.rz-inputtext');
       if (input) {
           input.onclick = function (e) {
-              handler(e, e.currentTarget.classList.contains('rz-readonly'));
+              handler(e, e.currentTarget.classList.contains('rz-readonly') || e.currentTarget.classList.contains('rz-input-trigger') );
           };
       }
   },
@@ -1043,7 +1050,7 @@ window.Radzen = {
 
       popup.style.top = top + 'px';
   },
-  openPopup: function (parent, id, syncWidth, position, x, y, instance, callback, closeOnDocumentClick = true, autoFocusFirstElement = false) {
+  openPopup: function (parent, id, syncWidth, position, x, y, instance, callback, closeOnDocumentClick = true, autoFocusFirstElement = false, disableSmartPosition = false) {
     var popup = document.getElementById(id);
     if (!popup) return;
 
@@ -1085,7 +1092,9 @@ window.Radzen = {
     var smartPosition = !position || position == 'bottom';
 
     if (smartPosition && top + rect.height > window.innerHeight && parentRect.top > rect.height) {
-      top = parentRect.top - rect.height;
+        if (disableSmartPosition !== true) {
+            top = parentRect.top - rect.height;
+        }
 
       if (position) {
         top = top - 40;
@@ -1368,6 +1377,38 @@ window.Radzen = {
                     }
                 };
                 Radzen.dialogResizer = new ResizeObserver(dialogResize).observe(lastDialog.parentElement);
+            }
+
+            if (options.draggable) {
+                var dialogTitle = lastDialog.parentElement.querySelector('.rz-dialog-titlebar');
+                if (dialogTitle) {
+                    var start = function (e) {
+                        var rect = lastDialog.parentElement.getBoundingClientRect();
+                        var offsetX = e.clientX - rect.left;
+                        var offsetY = e.clientY - rect.top;
+
+                        var move = function (e) {
+                            lastDialog.parentElement.style.left = e.clientX - offsetX + 'px';
+                            lastDialog.parentElement.style.top = e.clientY - offsetY + 'px';
+                        };
+
+                        var stop = function () {
+                            document.removeEventListener('mousemove', move);
+                            document.removeEventListener('mouseup', stop);
+
+                            dialog.invokeMethodAsync(
+                                'RadzenDialog.OnDrag',
+                                lastDialog.parentElement.style.top,
+                                lastDialog.parentElement.style.left
+                            );
+                        };
+
+                        document.addEventListener('mousemove', move);
+                        document.addEventListener('mouseup', stop);
+                    };
+
+                    dialogTitle.addEventListener('mousedown', start);
+                }
             }
 
             if (options.autoFocusFirstElement) {
@@ -1882,7 +1923,7 @@ window.Radzen = {
     }
     return attributes.reduce(function (result, name) {
       if (target) {
-        result[name] = target[name];
+        result[name] = target[name].toString();
       }
       return result;
     }, { innerText: selection.toString(), innerHTML: innerHTML });
@@ -2033,7 +2074,7 @@ window.Radzen = {
           },
           mouseMoveHandler: function (e) {
               if (Radzen[el]) {
-                  var widthFloat = (Radzen[el].width - (Radzen[el].clientX - e.clientX));
+                  var widthFloat = (Radzen[el].width - (Radzen.isRTL(cell) ? -1 : 1) * (Radzen[el].clientX - e.clientX));
                   var minWidth = parseFloat(cell.style.minWidth || 0)
 
                   if (widthFloat < minWidth) {
@@ -2164,7 +2205,7 @@ window.Radzen = {
                     var spaceLength = Radzen[el].paneLength + Radzen[el].paneNextLength;
 
                     var length = (Radzen[el].paneLength -
-                        (Radzen[el].clientPos - (isHOrientation ? e.clientX : e.clientY)));
+                        (isHOrientation && Radzen.isRTL(e.target) ? -1 : 1) * (Radzen[el].clientPos - (isHOrientation ? e.clientX : e.clientY)));
 
                     if (length > spaceLength)
                         length = spaceLength;

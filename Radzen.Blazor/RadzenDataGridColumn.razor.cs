@@ -126,6 +126,7 @@ namespace Radzen.Blazor
                 {
                     _filterPropertyType = typeof(IEnumerable<object>);
                     SetFilterOperator(FilterOperator.Contains);
+                    Grid.FilterPopupRenderMode = PopupRenderMode.OnDemand;
                 }
 
                 var property = GetFilterProperty();
@@ -627,13 +628,13 @@ namespace Radzen.Blazor
             {
                 var stackColumns = visibleFrozenColumns.Where((c, i) => visibleFrozenColumns.IndexOf(this) > i);
 
-                return GetStackedStyleForFrozen(stackColumns, "left");
+                return GetStackedStyleForFrozen(stackColumns, "inset-inline-start");
             }
             else
             {
                 var stackColumns = visibleFrozenColumns.Where((c, i) => visibleFrozenColumns.IndexOf(this) < i);
 
-                return GetStackedStyleForFrozen(stackColumns, "right");
+                return GetStackedStyleForFrozen(stackColumns, "inset-inline-end");
             }
         }
 
