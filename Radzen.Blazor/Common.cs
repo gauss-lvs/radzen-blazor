@@ -963,12 +963,8 @@ namespace Radzen
     /// <summary>
     /// Represents a file which the user selects for upload via <see cref="RadzenUpload" />.
     /// </summary>
-    public class FileInfo
-#if NET5_0_OR_GREATER
-        : IBrowserFile
-#endif
+    public class FileInfo : IBrowserFile
     {
-#if NET5_0_OR_GREATER
         /// <summary>
         /// Creates FileInfo.
         /// </summary>
@@ -985,7 +981,7 @@ namespace Radzen
         {
             this.source = source;
         }
-#endif
+
         string _name;
         /// <summary>
         /// Gets the name of the selected file.
@@ -994,11 +990,7 @@ namespace Radzen
         {
             get
             {
-#if NET5_0_OR_GREATER
                 return _name ?? source.Name;
-#else
-                return _name;
-#endif
             }
             set
             {
@@ -1014,11 +1006,7 @@ namespace Radzen
         {
             get
             {
-#if NET5_0_OR_GREATER
                 return _size != default(long) ? _size : source.Size;
-#else
-                return _size;
-#endif
             }
             set
             {
@@ -1026,7 +1014,6 @@ namespace Radzen
             }
         }
 
-#if NET5_0_OR_GREATER
         /// <summary>
         /// Gets the IBrowserFile.
         /// </summary>
@@ -1049,7 +1036,6 @@ namespace Radzen
         {
             return source.OpenReadStream(maxAllowedSize, cancellationToken);
         }
-#endif
     }
 
     /// <summary>
@@ -3369,12 +3355,11 @@ namespace Radzen
         /// </summary>
         /// <value>The field identifier.</value>
         FieldIdentifier FieldIdentifier { get; }
-#if NET5_0_OR_GREATER
+
         /// <summary>
         /// Sets the focus.
         /// </summary>
         ValueTask FocusAsync();
-#endif
     }
 
     /// <summary>
