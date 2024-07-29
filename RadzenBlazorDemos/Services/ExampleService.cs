@@ -7,16 +7,17 @@ namespace RadzenBlazorDemos
     public class ExampleService
     {
         Example[] allExamples = new[] {
-        new Example()
+        new Example
         {
             Name = "Overview",
             Path = "/",
             Icon = "&#xe88a"
         },
-        new Example()
+        new Example
         {
             Name = "Dashboard",
             Path = "/dashboard",
+            Updated = true,
             Title = "Sample Dashboard | Free UI Components by Radzen",
             Description = "Rich dashboard created with the Radzen Blazor Components library.",
             Icon = "&#xe871"
@@ -47,12 +48,12 @@ namespace RadzenBlazorDemos
             Tags = new[] { "keyboard", "accessibility", "standard", "508", "wai-aria", "wcag", "shortcut"}
         },
 
-        new Example()
+        new Example
         {
             Name = "UI Fundamentals",
             Icon = "&#xe749",
             Children = new [] {
-                new Example()
+                new Example
                 {
                     Name = "Themes",
                     Path = "themes",
@@ -62,27 +63,37 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe40a",
                     Tags = new[] { "theme", "color", "background", "border", "utility", "css", "var"}
                 },
-                new Example()
+                new Example
+                {
+                    Name = "ThemeService",
+                    Path = "theme-service",
+                    New = true,
+                    Title = "ThemeService",
+                    Description = "The ThemeService allows to change the theme of the application at runtime.",
+                    Icon = "&#xe3ae",
+                    Tags = ["theme", "service", "change", "runtime", "rtl", "right to left", "direction", "wcag", "accessibility"]
+                },
+                new Example
                 {
                     Name = "AppearanceToggle",
                     Path = "appearance-toggle",
                     New = true,
                     Title = "Blazor Themes | Free UI Components by Radzen",
                     Description = "The AppearanceToggle button allows you to switch between two predefined themes, most commonly light and dark.",
-                    Icon = "&#xe51c",
+                    Icon = "&#xeb37",
                     Tags = new[] { "theme", "light", "dark", "mode", "appearance", "toggle", "switch"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "Colors",
                     Path = "colors",
                     Updated = true,
                     Title = "Blazor Color Utilities | Free UI Components by Radzen",
                     Description = "List of colors and utility CSS classes available in Radzen Blazor Components library.",
-                    Icon = "&#xe891",
+                    Icon = "&#xe997",
                     Tags = new[] { "color", "background", "border", "utility", "css", "var"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "Typography",
                     Path = "typography",
@@ -91,7 +102,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe264",
                     Tags = new [] { "typo", "typography", "text", "paragraph", "header", "heading", "caption", "overline", "content" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Icons",
                     Path = "icon",
@@ -101,7 +112,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe148",
                     Tags = new [] { "icon", "content" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Borders",
                     Path = "borders",
@@ -110,7 +121,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe3c6",
                     Tags = new [] { "border", "utility", "css", "var"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "Shadows",
                     Path = "shadows",
@@ -119,7 +130,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe595",
                     Tags = new [] { "shadow", "utility", "css", "var"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "Ripple",
                     Title = "Blazor Ripple Effect | Free UI Components by Radzen",
@@ -128,7 +139,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe39e",
                     Tags = new [] { "ripple", "utility", "css", "var"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "Breakpoints",
                     Title = "Blazor Responsive Breakpoints | Free UI Components by Radzen",
@@ -137,7 +148,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe1b1",
                     Tags = new [] { "breakpoints", "spacing", "margin", "padding", "gutter", "gap", "utility", "css", "responsive", "layout"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "Spacing",
                     Title = "Blazor Spacing Utilities | Free UI Components by Radzen",
@@ -149,7 +160,7 @@ namespace RadzenBlazorDemos
             }
         },
 
-        new Example()
+        new Example
         {
             Name = "DataGrid",
             Updated = true,
@@ -560,7 +571,7 @@ namespace RadzenBlazorDemos
                         }
                     }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Density",
                     Path = "datagrid-density",
@@ -569,7 +580,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xeb9e",
                     Tags = new [] { "density", "compact", "small", "large", "tight" }
                 },
-                new Example()
+                new Example
                 {
                     Name="Custom Header",
                     Icon = "&#xe051",
@@ -592,7 +603,7 @@ namespace RadzenBlazorDemos
                         }
                     }
                 },
-                new Example()
+                new Example
                 {
                     Name = "GridLines",
                     Path = "datagrid-grid-lines",
@@ -601,7 +612,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xf016",
                     Tags = new [] { "grid", "lines", "border", "gridlines" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Cell Context Menu",
                     Path = "datagrid-cell-contextmenu",
@@ -618,7 +629,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xf02e",
                     Children = new []
                     {
-                        new Example()
+                        new Example
                         {
                             Name = "IQueryable",
                             Path = "datagrid-save-settings",
@@ -627,7 +638,7 @@ namespace RadzenBlazorDemos
                             Tags = new [] { "save", "load", "settings" }
                         },
 
-                        new Example()
+                        new Example
                         {
                             Name = "LoadData binding",
                             Path = "datagrid-save-settings-loaddata",
@@ -645,7 +656,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe945",
                     Children = new []
                     {
-                        new Example()
+                        new Example
                         {
                             Name = "Rows reorder",
                             Path = "/datagrid-rowreorder",
@@ -653,7 +664,7 @@ namespace RadzenBlazorDemos
                             Description = "This example demonstrates custom DataGrid rows reoder.",
                             Tags = new [] { "datagrid", "reorder", "row" }
                         },
-                        new Example()
+                        new Example
                         {
                             Name = "Drag row between two DataGrids",
                             Path = "/datagrid-rowdragbetween",
@@ -661,7 +672,7 @@ namespace RadzenBlazorDemos
                             Description = "This example demonstrates drag and drop rows between two DataGrid components.",
                             Tags = new [] { "datagrid", "drag", "row", "between" }
                         },
-                        new Example()
+                        new Example
                         {
                             New = true,
                             Name = "Drag row between DataGrid and Scheduler",
@@ -673,7 +684,7 @@ namespace RadzenBlazorDemos
                     }
                 },
 
-                new Example()
+                new Example
                 {
                     Name = "InLine Editing",
                     Path = "datagrid-inline-edit",
@@ -683,7 +694,7 @@ namespace RadzenBlazorDemos
                     Tags = new [] { "inline", "editor", "datagrid", "table", "dataview" }
                 },
 
-                new Example()
+                new Example
                 {
                     New = true,
                     Name = "InCell Editing",
@@ -694,7 +705,7 @@ namespace RadzenBlazorDemos
                     Tags = new [] { "in-cell", "editor", "datagrid", "table", "dataview" }
                 },
 
-                new Example()
+                new Example
                 {
                     Name = "Conditional formatting",
                     Path = "datagrid-conditional-template",
@@ -703,7 +714,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe41d",
                     Tags = new [] { "conditional", "template", "style", "datagrid", "table", "dataview" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Export to Excel and CSV",
                     Path = "export-excel-csv",
@@ -712,7 +723,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe0c3",
                     Tags = new [] { "export", "excel", "csv" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Cascading DropDowns",
                     Path = "cascading-dropdowns",
@@ -721,7 +732,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe915",
                     Tags = new [] { "related", "parent", "child" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Empty Data Grid",
                     Path = "/datagrid-empty",
@@ -738,7 +749,7 @@ namespace RadzenBlazorDemos
             Updated = true,
             Icon = "&#xe1db",
             Children = new [] {
-                new Example()
+                new Example
         {
             Name = "DataList",
                     Icon = "&#xe896",
@@ -762,7 +773,7 @@ namespace RadzenBlazorDemos
                         }
                     }
                 },
-                new Example()
+                new Example
         {
             Name = "DataFilter",
                     Icon = "&#xef4f",
@@ -794,7 +805,7 @@ namespace RadzenBlazorDemos
                         }
                     }
                 },
-                new Example()
+                new Example
         {
             Name = "Pager",
                     Path = "pager",
@@ -802,7 +813,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8be",
                     Tags = new[] { "pager", "paging" }
                 },
-                new Example()
+                new Example
         {
             Name = "Scheduler",
                     Path = "scheduler",
@@ -811,7 +822,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe616",
                     Tags = new[] { "scheduler", "calendar", "event", "appointment" }
                 },
-                new Example()
+                new Example
         {
             Name = "Tree",
                     Icon = "&#xe8ef",
@@ -875,7 +886,7 @@ namespace RadzenBlazorDemos
                         }
                     }
                 },
-                new Example()
+                new Example
                 {
                     Name = "PickList",
                     New = true,
@@ -886,19 +897,19 @@ namespace RadzenBlazorDemos
                 },
             }
 },
-        new Example()
+        new Example
         {
             Name = "Images",
             Icon = "&#xe3d3",
             Children = new[] {
-                new Example()
+                new Example
                 {
                     Name = "Gravatar",
                     Description = "Demonstration and configuration of the Radzen Blazor Gravatar component.",
                     Path = "gravatar",
                     Icon = "&#xe420"
                 },
-                new Example()
+                new Example
                 {
                     Name = "Image",
                     Description = "Demonstration and configuration of the Radzen Blazor Image component.",
@@ -907,13 +918,13 @@ namespace RadzenBlazorDemos
                 },
             }
         },
-        new Example()
+        new Example
         {
             Name = "Layout",
             Updated = true,
             Icon = "&#xe8f1",
             Children = new[] {
-                new Example()
+                new Example
                 {
                     Name = "Layout",
                     Description = "Blazor RadzenLayout allows you to define the global layout of your application.",
@@ -921,7 +932,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8f1",
                     Tags = new [] { "layout", "sidebar", "drawer", "header", "body", "footer" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Stack",
                     Description = "Use RadzenStack component to create a stack layout - a way of arranging elements in a vertical or horizontal stack.",
@@ -929,7 +940,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8f2",
                     Tags = new [] { "stack", "layout" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Row",
                     Description = "Blazor RadzenRow component is used to create a row in a responsive grid layout.",
@@ -937,7 +948,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xf101",
                     Tags = new [] { "row", "layout", "responsive", "grid" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Column",
                     Description = "Blazor RadzenColumn component is used within a RadzenRow to create a structured grid layout. Columns are positioned on a 12-column based responsive grid.",
@@ -945,7 +956,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8ec",
                     Tags = new [] { "column", "col", "layout", "responsive", "grid" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Card",
                     Description = "Use the Blazor RadzenCard component to display a piece of content, like an image and text.",
@@ -953,7 +964,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe919",
                     Tags = new [] { "container" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Dialog",
                     Description = "Demonstration and configuration of the Blazor RadzenDialog component.",
@@ -961,7 +972,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8a7",
                     Tags = new [] { "popup", "window" },
                 },
-                new Example()
+                new Example
                 {
                     New = true,
                     Name = "DropZone",
@@ -970,7 +981,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe945",
                     Tags = new [] { "dropzone", "drag", "drop" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Panel",
                     Description = "Demonstration and configuration of the Blazor RadzenPanel component.",
@@ -978,7 +989,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe14f",
                     Tags = new [] { "container" }
                 },
-                new Example()
+                new Example
                 {
                     New = true,
                     Name = "Popup",
@@ -987,7 +998,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe0cb",
                     Tags = new [] { "popup", "dropdown"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "Splitter",
                     Description = "Demonstration and configuration of the Blazor RadzenSplitter component.",
@@ -997,12 +1008,12 @@ namespace RadzenBlazorDemos
                 }
             }
         },
-        new Example()
+        new Example
         {
             Name = "Navigation",
             Icon = "&#xe762",
             Children = new[] {
-                new Example()
+                new Example
                 {
                     Name = "Accordion",
                     Path = "accordion",
@@ -1010,7 +1021,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8ee",
                     Tags = new [] { "panel", "container" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "BreadCrumb",
                     Description = "The Blazor RadzenBreadCrumb component provides a navigation trail to help users keep track of their location.",
@@ -1018,7 +1029,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xeac9",
                     Tags = new [] { "breadcrumb", "navigation", "menu" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "ContextMenu",
                     Description = "Demonstration and configuration of the Radzen Blazor Context Menu component.",
@@ -1026,21 +1037,21 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8de",
                     Tags = new [] { "popup", "dropdown", "menu" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Link",
                     Description = "Demonstration and configuration of the Blazor RadzenLink component. Use Path and Target properties to specify Link component navigation.",
                     Path = "link",
                     Icon = "&#xe157"
                 },
-                new Example()
+                new Example
                 {
                     Name = "Login",
                     Description = "Demonstration and configuration of the Blazor RadzenLogin component.",
                     Path = "login",
                     Icon = "&#xe8e8"
                 },
-                new Example()
+                new Example
                 {
                     Name = "Menu",
                     Description = "Demonstration and configuration of the Blazor RadzenMenu component.",
@@ -1048,7 +1059,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe91a",
                     Tags = new [] { "navigation", "dropdown" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "PanelMenu",
                     Path = "panelmenu",
@@ -1057,7 +1068,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8d2",
                     Tags = new [] { "navigation", "menu" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "ProfileMenu",
                     Description = "Demonstration and configuration of the Blazor RadzenProfileMenu component.",
@@ -1065,7 +1076,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe851",
                     Tags = new [] { "navigation", "dropdown", "menu" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Steps",
                     Description = "Use Radzen Blazor Steps component to guide users through a process or sequence of actions. The component consists of a series of numbered steps that represent the various stages of the process.",
@@ -1073,7 +1084,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe044",
                     Tags = new [] { "step", "steps", "wizard" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Tabs",
                     Description = "Demonstration and configuration of the Radzen Blazor Tabs component.",
@@ -1083,12 +1094,12 @@ namespace RadzenBlazorDemos
                 }
             }
         },
-        new Example()
+        new Example
         {
             Name = "Forms",
             Icon = "&#xf1c1",
             Children = new[] {
-                new Example()
+                new Example
                 {
                     Name = "AutoComplete",
                     Path = "autocomplete",
@@ -1096,14 +1107,14 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe03b",
                     Tags = new [] { "form", "complete", "suggest", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Button",
                     Description = "Demonstration and configuration of the RadzenButton Blazor component.",
                     Path = "button",
                     Icon = "&#xf1c1"
                 },
-                new Example()
+                new Example
                 {
                     Name = "ToggleButton",
                     Description = "Radzen Blazor ToggleButton is a button that changes its appearance or color when activated and returns to its original state when deactivated.",
@@ -1111,7 +1122,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8e0",
                     Tags = new [] { "button", "switch", "toggle" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "CheckBox",
                     Path = "checkbox",
@@ -1119,7 +1130,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe86c",
                     Tags = new [] { "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "CheckBoxList",
                     Path = "checkboxlist",
@@ -1127,7 +1138,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe065",
                     Tags = new [] { "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "ColorPicker",
                     Description = "Demonstration and configuration of the Radzen Blazor ColorPicker component. HSV Picker. RGBA Picker.",
@@ -1135,7 +1146,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe40a",
                     Tags = new [] { "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "DatePicker",
                     Path = "datepicker",
@@ -1144,12 +1155,12 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe916",
                     Tags = new [] { "calendar", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "DropDown",
                     Icon = "&#xe875",
                     Children = new [] {
-                        new Example()
+                        new Example
                         {
                             Name = "Single selection",
                             Path = "dropdown",
@@ -1157,7 +1168,7 @@ namespace RadzenBlazorDemos
                             Description = "Demonstration and configuration of the Radzen Blazor DropDown component.",
                             Tags = new [] { "select", "picker", "form" , "edit", "dropdown" },
                         },
-                        new Example()
+                        new Example
                         {
                             Name = "Multiple selection",
                             Path = "dropdown-multiple",
@@ -1165,7 +1176,7 @@ namespace RadzenBlazorDemos
                             Description = "This example demonstrates multiple selection support in Radzen Blazor DropDown component.",
                             Tags = new [] { "select", "picker", "form" , "edit", "multiple", "dropdown" },
                         },
-                        new Example()
+                        new Example
                         {
                             Name = "Virtualization",
                             Path = "dropdown-virtualization",
@@ -1173,7 +1184,7 @@ namespace RadzenBlazorDemos
                             Description = "This example demonstrates virtualization using IQueryable.",
                             Tags = new [] { "select", "picker", "form" , "edit", "multiple", "dropdown", "virtualization", "paging" },
                         },
-                        new Example()
+                        new Example
                         {
                             Name = "Filtering",
                             Path = "dropdown-filtering",
@@ -1181,7 +1192,7 @@ namespace RadzenBlazorDemos
                             Description = "This example demonstrates Blazor DropDown component filtering case sensitivity and filter operator.",
                             Tags = new [] { "select", "picker", "form" , "edit", "multiple", "dropdown", "filter" },
                         },
-                        new Example()
+                        new Example
                         {
                             Name = "Grouping",
                             Path = "dropdown-grouping",
@@ -1189,7 +1200,7 @@ namespace RadzenBlazorDemos
                             Description = "This example demonstrates Blazor DropDown component with grouping.",
                             Tags = new [] { "select", "picker", "form" , "edit", "multiple", "dropdown", "grouping" },
                         },
-                        new Example()
+                        new Example
                         {
                             Name = "Custom objects binding",
                             Path = "dropdown-custom-objects",
@@ -1199,7 +1210,7 @@ namespace RadzenBlazorDemos
                         },
                     }
                 },
-                new Example()
+                new Example
                 {
                     Name = "DropDownDataGrid",
                     Path = "dropdown-datagrid",
@@ -1207,7 +1218,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe8b0",
                     Tags = new [] { "select", "picker", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Fieldset",
                     Path = "fieldset",
@@ -1215,7 +1226,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe850",
                     Tags = new [] { "form", "container" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "FileInput",
                     Path = "fileinput",
@@ -1223,7 +1234,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe226",
                     Tags = new [] { "upload", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "FormField",
                     Path = "form-field",
@@ -1231,12 +1242,12 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe578",
                     Tags = new [] { "form", "label", "floating", "float", "edit", "outline", "input", "helper", "valid" }
                 },
-                new Example()
+                new Example
                 {
                     Name="HtmlEditor",
                     Icon = "&#xe3c9",
                     Children = new [] {
-                        new Example()
+                        new Example
                         {
                             Name = "Default Tools",
                             Path = "html-editor",
@@ -1244,7 +1255,7 @@ namespace RadzenBlazorDemos
                             Description = "Blazor HTML editor component with lots of built-in tools.",
                             Tags = new [] { "html", "editor", "rich", "text" }
                         },
-                        new Example()
+                        new Example
                         {
                             Name = "Custom Tools",
                             Path = "html-editor-custom-tools",
@@ -1254,7 +1265,7 @@ namespace RadzenBlazorDemos
                         },
                     }
                 },
-                new Example()
+                new Example
                 {
                     Name = "ListBox",
                     Path = "listbox",
@@ -1262,7 +1273,7 @@ namespace RadzenBlazorDemos
                     Description = "Demonstration and configuration of the Radzen Blazor ListBox component.",
                     Tags = new [] { "select", "picker", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Mask",
                     Path = "mask",
@@ -1270,7 +1281,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe262",
                     Tags = new [] { "input", "form", "edit", "mask" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Numeric",
                     Path = "numeric",
@@ -1278,7 +1289,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe85b",
                     Tags = new [] { "input", "number", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Password",
                     Path = "password",
@@ -1286,7 +1297,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xf042",
                     Tags = new [] { "input", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "RadioButtonList",
                     Path = "radiobuttonlist",
@@ -1294,7 +1305,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe837",
                     Tags = new [] { "toggle", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Rating",
                     Path = "rating",
@@ -1302,7 +1313,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe839",
                     Tags = new [] { "star", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "SecurityCode",
                     Path = "security-code",
@@ -1311,7 +1322,7 @@ namespace RadzenBlazorDemos
                     New = true,
                     Tags = new [] { "security", "code", "input" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "SelectBar",
                     Path = "selectbar",
@@ -1319,7 +1330,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe86d",
                     Tags = new [] { "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Slider",
                     Path = "slider",
@@ -1327,21 +1338,21 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe260",
                     Tags = new [] { "form", "slider" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "SpeechToTextButton",
                     Description = "Demonstration and configuration of the Radzen Blazor speech to text button component.",
                     Path = "speechtotextbutton",
                     Icon = "&#xe029"
                 },
-                new Example()
+                new Example
                 {
                     Name = "SplitButton",
                     Description = "Demonstration and configuration of the Radzen Blazor split button component",
                     Path = "splitbutton",
                     Icon = "&#xe05f"
                 },
-                new Example()
+                new Example
                 {
                     Name = "Switch",
                     Path = "switch",
@@ -1349,7 +1360,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe9f6",
                     Tags = new [] { "form", "edit", "switch" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "TemplateForm",
                     Path = "templateform",
@@ -1357,7 +1368,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe06d",
                     Tags = new [] { "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "TextArea",
                     Path = "textarea",
@@ -1365,7 +1376,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe873",
                     Tags = new [] { "input", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "TextBox",
                     Path = "textbox",
@@ -1373,7 +1384,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe890",
                     Tags = new [] { "input", "form", "edit" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Upload",
                     Description = "Demonstration and configuration of the Radzen Blazor Upload component.",
@@ -1555,7 +1566,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe00d",
                     Tags = new [] { "timeline", "time", "line" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "GoogleMap",
                     Path = "googlemap",
@@ -1564,12 +1575,12 @@ namespace RadzenBlazorDemos
                 },
             }
         },
-        new Example()
+        new Example
         {
             Name = "Feedback",
             Icon = "&#xe0cb",
             Children = new[] {
-                new Example()
+                new Example
                 {
                     Name = "Badge",
                     Path = "badge",
@@ -1577,7 +1588,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xea67",
                     Tags = new[] { "badge", "link"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "Notification",
                     Path = "notification",
@@ -1586,7 +1597,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe85a",
                     Tags = new [] { "message", "notification" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Alert",
                     Title = "Blazor Alert component",
@@ -1611,7 +1622,7 @@ namespace RadzenBlazorDemos
                         }
                     }
                 },
-                new Example()
+                new Example
                 {
                     Name = "ProgressBar",
                     Description = "Demonstration and configuration of the Radzen Blazor ProgressBar component.",
@@ -1619,7 +1630,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe893",
                     Tags = new [] { "progress", "spinner", "bar", "linear" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "ProgressBarCircular",
                     Description = "Demonstration and configuration of the Radzen Blazor circular progress bar component.",
@@ -1627,7 +1638,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe5d5",
                     Tags = new [] { "progress", "spinner", "circle", "circular" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "Tooltip",
                     Description = "The Radzen Blazor Tooltip component is a small pop-up box that appears when the user hovers or clicks on a UI element. It is commonly used to provide additional information or context to the user.",
@@ -1637,12 +1648,12 @@ namespace RadzenBlazorDemos
                 },
             }
         },
-        new Example()
+        new Example
         {
             Name = "Validators",
             Icon = "&#xf1c2",
             Children = new[] {
-                new Example()
+                new Example
                 {
                     Name = "CompareValidator",
                     Path = "comparevalidator",
@@ -1650,7 +1661,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe877",
                     Tags = new [] { "validator", "validation", "required", "compare"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "DataAnnotationValidator",
                     Path = "dataannotationvalidator",
@@ -1658,7 +1669,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe6b3",
                     Tags = new [] { "validator", "validation", "pattern", "annotations" }
                 },
-                new Example()
+                new Example
                 {
                     Name = "EmailValidator",
                     Path = "emailvalidator",
@@ -1666,7 +1677,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe0be",
                     Tags = new [] { "validator", "validation", "required", "email"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "LengthValidator",
                     Path = "lengthvalidator",
@@ -1674,7 +1685,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe915",
                     Tags = new [] { "validator", "validation", "required", "length"}
                 } ,
-                new Example()
+                new Example
                 {
                     Name = "NumericRangeValidator",
                     Path = "numericrangevalidator",
@@ -1682,7 +1693,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe3d0",
                     Tags = new [] { "validator", "validation", "required", "range"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "RegexValidator",
                     Path = "regexvalidator",
@@ -1690,7 +1701,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe53f",
                     Tags = new [] { "validator", "validation", "pattern", "regex", "regular", "expression"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "RequiredValidator",
                     Path = "requiredvalidator",
@@ -1698,7 +1709,7 @@ namespace RadzenBlazorDemos
                     Icon = "&#xe5ca",
                     Tags = new [] { "validator", "validation", "required"}
                 },
-                new Example()
+                new Example
                 {
                     Name = "CustomValidator",
                     Path = "customvalidator",
@@ -1708,7 +1719,7 @@ namespace RadzenBlazorDemos
                 },
             }
         },
-        new Example()
+        new Example
         {
             Name = "V5 Changelog",
             Path = "/changelog",
@@ -1717,7 +1728,6 @@ namespace RadzenBlazorDemos
             Description = "See what's new in Radzen Blazor Components v5",
             Icon = "&#xe8e1"
         },
-
     };
 
         public IEnumerable<Example> Examples
