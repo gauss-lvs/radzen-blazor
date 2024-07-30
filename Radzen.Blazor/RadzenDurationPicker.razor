@@ -10,55 +10,53 @@
 @implements IRadzenFormComponent
 @if (Visible)
 {
-    <div @ref="@Element" @attributes="Attributes" class="@GetCssClass()" style="@getStyle()" id="@GetId()">
-        @if (!Inline)
-        {
-            <span class="@($"rz-calendar rz-calendar-w-btn{(Disabled ? " rz-state-disabled" : "")}")" style="width:100%">
-                <input @ref="@input" @attributes="InputAttributes" disabled="@Disabled" readonly="@IsReadonly" value="@FormattedValue" tabindex="@(Disabled ? "-1" : $"{TabIndex}")"
-                       @onchange="@ParseTimeSpan" autocomplete="off" type="text" name="@Name"
-                       class="rz-inputtext @InputClass @(IsReadonly ? "rz-readonly" : "")" id="@Name" placeholder="@Placeholder" onclick="@getOpenPopupForInput()"/>
-                @if (ShowButton)
-                {
-	                <button @onmousedown=@OnToggle onclick="@getOpenPopup()" class="@($"rz-datepicker-trigger rz-calendar-button rz-button rz-button-icon-only{(Disabled ? " rz-state-disabled" : "")}")" tabindex="-1" type="button">
-		                <span aria-hidden="true" class="@ButtonClasses"></span><span class="rz-button-text"></span>
-	                </button>
-                }
-                @if (AllowClear && HasValue)
-                {
-                    <i class="rz-dropdown-clear-icon rzi rzi-times" @onclick="@Clear" @onclick:stopPropagation="true"></i>
-                }
-            </span>
-        }
+  <div @ref="@Element" @attributes="Attributes" class="@($"rz-datepicker{(Disabled ? " rz-state-disabled" : "")}") @GetCssClass()" style="@getStyle()" id="@GetId()">
+    @if (!Inline)
+    {
+      <input @ref="@input" @attributes="InputAttributes" disabled="@Disabled" readonly="@IsReadonly" value="@FormattedValue" tabindex="@(Disabled ? "-1" : $"{TabIndex}")"
+             @onchange="@ParseTimeSpan" autocomplete="off" type="text" name="@Name"
+             class="rz-inputtext @InputClass @(IsReadonly ? "rz-readonly" : "")" id="@Name" placeholder="@Placeholder" onclick="@getOpenPopupForInput()" />
+      @if (ShowButton)
+      {
+        <button @onmousedown=@OnToggle onclick="@getOpenPopup()" class="@($"rz-datepicker-trigger rz-calendar-button rz-button rz-button-icon-only{(Disabled ? " rz-state-disabled" : "")}")" tabindex="-1" type="button">
+          <span aria-hidden="true" class="@ButtonClasses"></span><span class="rz-button-text"></span>
+        </button>
+      }
+      @if (AllowClear && HasValue)
+      {
+        <i class="rz-dropdown-clear-icon rzi rzi-times" @onclick="@Clear" @onclick:stopPropagation="true"></i>
+      }
+    }
 
-        <Popup id="@PopupID" Lazy=@(PopupRenderMode == PopupRenderMode.OnDemand) @ref=@popup style=@PopupStyle class="@($"{(Inline ? "rz-datepicker-inline " : "")}rz-datepicker")">
-               
-                <div class="rz-timepicker" @onmousedown:stopPropagation>
-                        <RadzenNumeric InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "hour" }})" TValue="int" Disabled="@Disabled" Value="@((int)CurrentTimeSpan.TotalHours)" 
-                           Min="0" TValue="double" Step="@HoursStep"
-                           Change="@UpdateHour" class="rz-hour-picker" @oninput=@OnUpdateHourInput Format="@(PadHours ? "00" : "")" Name="@($"{UniqueID}-h")" />
-                        <div class="rz-separator">
-                            <span>:</span>
-                        </div>
-                        <RadzenNumeric InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "minutes" }})" TValue="int" Disabled="@Disabled" Value="@CurrentTimeSpan.Minutes" TValue="double" Step="@MinutesStep" Min="0" Max="59"
-                           Change="@UpdateMinutes" class="rz-minute-picker" @oninput=@OnUpdateHourMinutes Format="@(PadMinutes ? "00" : "")" Name="@($"{UniqueID}-m")"/>
-                        @if (ShowSeconds)
-                        {
-                            <div class="rz-separator">
-                                <span>:</span>
-                            </div>
-                            <RadzenNumeric InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "seconds" }})" TValue="int" Disabled="@Disabled" Value="@CurrentTimeSpan.Seconds" TValue="double" Step="@SecondsStep" Min="0" Max="59"
-                               Change="@UpdateSeconds" class="rz-second-picker" @oninput=@OnUpdateHourSeconds Format="@(PadSeconds ? "00" : "")" Name="@($"{UniqueID}-s")"/>
-                        }
-                        @if (ShowTimeOkButton)
-                        {
-                            <button type="button" class="rz-button rz-button-md rz-secondary"
-                        @onclick="@OkClick"
-                        onmouseup="@($"Radzen.closePopup('{PopupID}')")">
-                                <span class="rz-button-text">Ok</span>
-                            </button>
-                        }
-                </div>
-        </Popup>
-        
-    </div>
+    <Popup id="@PopupID" Lazy=@(PopupRenderMode == PopupRenderMode.OnDemand) @ref=@popup style=@PopupStyle class="@($"{(Inline ? "rz-datepicker-inline-container " : "rz-datepicker-popup-container ")}")">
+
+      <div class="rz-timepicker" @onmousedown:stopPropagation>
+        <RadzenNumeric InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "hour" }})" TValue="int" Disabled="@Disabled" Value="@((int)CurrentTimeSpan.TotalHours)"
+                       Min="0" TValue="double" Step="@HoursStep"
+                       Change="@UpdateHour" class="rz-hour-picker" @oninput=@OnUpdateHourInput Format="@(PadHours ? "00" : "")" Name="@($"{UniqueID}-h")" />
+        <div class="rz-separator">
+          <span>:</span>
+        </div>
+        <RadzenNumeric InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "minutes" }})" TValue="int" Disabled="@Disabled" Value="@CurrentTimeSpan.Minutes" TValue="double" Step="@MinutesStep" Min="0" Max="59"
+                       Change="@UpdateMinutes" class="rz-minute-picker" @oninput=@OnUpdateHourMinutes Format="@(PadMinutes ? "00" : "")" Name="@($"{UniqueID}-m")" />
+        @if (ShowSeconds)
+        {
+          <div class="rz-separator">
+            <span>:</span>
+          </div>
+          <RadzenNumeric InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", "seconds" }})" TValue="int" Disabled="@Disabled" Value="@CurrentTimeSpan.Seconds" TValue="double" Step="@SecondsStep" Min="0" Max="59"
+                         Change="@UpdateSeconds" class="rz-second-picker" @oninput=@OnUpdateHourSeconds Format="@(PadSeconds ? "00" : "")" Name="@($"{UniqueID}-s")" />
+        }
+        @if (ShowTimeOkButton)
+        {
+          <button type="button" class="rz-button rz-button-md rz-secondary"
+                  @onclick="@OkClick"
+                  onmouseup="@($"Radzen.closePopup('{PopupID}')")">
+            <span class="rz-button-text">Ok</span>
+          </button>
+        }
+      </div>
+    </Popup>
+
+  </div>
 }
