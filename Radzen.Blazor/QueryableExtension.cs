@@ -379,7 +379,7 @@ namespace Radzen
                 var v = column.FilterValue;
                 if (v != null)
                 {
-                    value = $"DateTime({(v is DateTime time ? time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) : v is DateTimeOffset offset ? offset.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) : "")})";
+                    value = $@"DateTime(""{(v is DateTime time ? time.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) : v is DateTimeOffset offset ? offset.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ", CultureInfo.InvariantCulture) : "")}"")";
                 }
             }
             else if (PropertyAccess.IsEnum(columnType) || PropertyAccess.IsNullableEnum(columnType))
@@ -444,13 +444,14 @@ namespace Radzen
         private static string GetColumnFilter<T>(RadzenDataGridColumn<T> column, string value, bool second = false)
         {
             var property = PropertyAccess.GetProperty(column.GetFilterProperty());
+            var propertyType = !string.IsNullOrEmpty(property) ? PropertyAccess.GetPropertyType(typeof(T), property) : null;
 
             if (property.IndexOf(".") != -1)
             {
                 property = $"({property})";
             }
             bool hasNp = property.Contains("np(");
-            string npProperty = hasNp ? property : $@"np({property})";
+            string npProperty = hasNp ? property : (propertyType != null ? Nullable.GetUnderlyingType(propertyType) != null : true) ? $@"np({property})" : property;
 
             var columnFilterOperator = !second ? column.GetFilterOperator() : column.GetSecondFilterOperator();
 
@@ -570,7 +571,7 @@ namespace Radzen
             }
             else if (column.FilterPropertyType == typeof(bool) || column.FilterPropertyType == typeof(bool?))
             {
-                return $"{property} == {value}";
+                return $"{property} {linqOperator} {(columnFilterOperator == FilterOperator.IsNull || columnFilterOperator == FilterOperator.IsNotNull ? "null" : value)}";
             }
             else if (column.FilterPropertyType == typeof(Guid) || column.FilterPropertyType == typeof(Guid?))
             {

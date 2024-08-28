@@ -1163,6 +1163,7 @@ window.Radzen = {
         if (lastPopup) {
             currentPopup.instance = lastPopup.instance;
             currentPopup.callback = lastPopup.callback;
+            currentPopup.parent = lastPopup.parent;
         }
 
         if(e.type == 'contextmenu' || !e.target || !closeOnDocumentClick) return;
@@ -1178,8 +1179,8 @@ window.Radzen = {
                 Radzen.closeAllPopups();
             }
         }
-        if (parent) {
-          if (e.type == 'mousedown' && !parent.contains(e.target) && !currentPopup.contains(e.target)) {
+        if (currentPopup.parent) {
+          if (e.type == 'mousedown' && !currentPopup.parent.contains(e.target) && !currentPopup.contains(e.target)) {
               Radzen.closePopup(currentPopup.id, currentPopup.instance, currentPopup.callback, e);
           }
         } else {
@@ -1193,7 +1194,7 @@ window.Radzen = {
         Radzen.popups = [];
     }
 
-    Radzen.popups.push({ id, instance, callback });
+    Radzen.popups.push({ id, instance, callback, parent });
 
     document.body.appendChild(popup);
     document.removeEventListener('mousedown', Radzen[id]);
@@ -1343,6 +1344,37 @@ window.Radzen = {
         }
     }
   },
+  focusFirstFocusableElement: function (el) {
+      var focusable = Radzen.getFocusableElements(el);
+      var editor = el.querySelector('.rz-html-editor');
+
+      if (editor && !focusable.includes(editor.previousElementSibling)) {
+          var editable = el.querySelector('.rz-html-editor-content');
+          if (editable) {
+              var selection = window.getSelection();
+              var range = document.createRange();
+              range.setStart(editable, 0);
+              range.setEnd(editable, 0);
+              selection.removeAllRanges();
+              selection.addRange(range);
+          }
+      } else {
+          var firstFocusable = focusable[0];
+          if (firstFocusable) {
+              firstFocusable.focus();
+          }
+      }
+  },
+  openSideDialog: function (options) {
+      setTimeout(function () {
+          if (options.autoFocusFirstElement) {
+              var dialogs = document.querySelectorAll('.rz-dialog-side-content');
+              if (dialogs.length == 0) return;
+              var lastDialog = dialogs[dialogs.length - 1];
+              Radzen.focusFirstFocusableElement(lastDialog);
+          }
+      }, 500);
+  },
   openDialog: function (options, dialogService, dialog) {
     if (Radzen.closeAllPopups) {
         Radzen.closeAllPopups();
@@ -1416,26 +1448,7 @@ window.Radzen = {
             }
 
             if (options.autoFocusFirstElement) {
-                var focusable = Radzen.getFocusableElements(lastDialog);
-                var editor = lastDialog.querySelector('.rz-html-editor');
-
-                if (editor && !focusable.includes(editor.previousElementSibling)) {
-                    var editable = lastDialog.querySelector('.rz-html-editor-content');
-                    if (editable) {
-                        var selection = window.getSelection();
-                        var range = document.createRange();
-                        range.setStart(editable, 0);
-                        range.setEnd(editable, 0);
-                        selection.removeAllRanges();
-                        selection.addRange(range);
-                    }
-                } else {
-                    var focusable = Radzen.getFocusableElements(lastDialog);
-                    var firstFocusable = focusable[0];
-                    if (firstFocusable) {
-                        firstFocusable.focus();
-                    }
-                }
+                Radzen.focusFirstFocusableElement(lastDialog);
             }
         }
     }, 500);
@@ -1849,7 +1862,15 @@ window.Radzen = {
                     var status = xhr.status;
                     if (status === 0 || (status >= 200 && status < 400)) {
                         var result = JSON.parse(xhr.responseText);
-                        document.execCommand("insertHTML", false, '<img src="' + result.url + '">');
+                        var html = '<img src="' + result.url + '">';
+                        if (paste) {
+                            instance.invokeMethodAsync('OnPaste', html)
+                                .then(function (html) {
+                                    document.execCommand("insertHTML", false, html);
+                                });
+                        } else {
+                          document.execCommand("insertHTML", false, '<img src="' + result.url + '">');
+                        }
                     } else {
                         instance.invokeMethodAsync('OnError', xhr.responseText);
                     }
@@ -1865,7 +1886,16 @@ window.Radzen = {
         } else {
             var reader = new FileReader();
             reader.onload = function (e) {
-                document.execCommand("insertHTML", false, '<img src="' + e.target.result + '">');
+              var html = '<img src="' + e.target.result + '">';
+
+              if (paste) {
+                instance.invokeMethodAsync('OnPaste', html)
+                  .then(function (html) {
+                    document.execCommand("insertHTML", false, html);
+                  });
+              } else {
+                document.execCommand("insertHTML", false, html);
+              }
             };
             reader.readAsDataURL(file);
         }

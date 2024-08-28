@@ -549,6 +549,13 @@ namespace Radzen.Blazor
         [Parameter]
         public Type Type { get; set; }
 
+        /// <summary>
+        /// Gets or sets the IFormatProvider used for FormatString.
+        /// </summary>
+        /// <value>The IFormatProvider.</value>
+        [Parameter]
+        public IFormatProvider FormatProvider { get; set; }
+
         Func<TItem, object> propertyValueGetter;
 
         /// <summary>
@@ -569,7 +576,7 @@ namespace Radzen.Blazor
                 }
             }
 
-            return !string.IsNullOrEmpty(FormatString) ? string.Format(Grid?.Culture ?? CultureInfo.CurrentCulture, FormatString, value) : Convert.ToString(value, Grid?.Culture ?? CultureInfo.CurrentCulture);
+            return !string.IsNullOrEmpty(FormatString) ? string.Format(FormatProvider ?? Grid?.Culture ?? CultureInfo.CurrentCulture, FormatString, value) : Convert.ToString(value, FormatProvider ?? Grid?.Culture ?? CultureInfo.CurrentCulture);
         }
 
         internal object GetHeader()
@@ -1231,10 +1238,10 @@ namespace Radzen.Blazor
         /// </summary>
         public virtual IEnumerable<FilterOperator> GetFilterOperators()
         {
-            if (PropertyAccess.IsEnum(FilterPropertyType))
+            if (PropertyAccess.IsEnum(FilterPropertyType) || FilterPropertyType == typeof(bool))
                 return new FilterOperator[] { FilterOperator.Equals, FilterOperator.NotEquals };
 
-            if (PropertyAccess.IsNullableEnum(FilterPropertyType))
+            if (PropertyAccess.IsNullableEnum(FilterPropertyType) || FilterPropertyType == typeof(bool?))
                 return new FilterOperator[] { FilterOperator.Equals, FilterOperator.NotEquals, FilterOperator.IsNull, FilterOperator.IsNotNull };
 
             return Enum.GetValues(typeof(FilterOperator)).Cast<FilterOperator>().Where(o =>
