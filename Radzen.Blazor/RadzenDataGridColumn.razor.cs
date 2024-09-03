@@ -38,6 +38,13 @@ namespace Radzen.Blazor
         [CascadingParameter]
         public RadzenDataGridColumn<TItem> Parent { get; set; }
 
+        /// <summary>
+        /// Gets or sets the column filter mode.
+        /// </summary>
+        /// <value>The column filter mode.</value>
+        [Parameter]
+        public FilterMode? FilterMode { get; set; }
+
         internal void RemoveColumn(RadzenDataGridColumn<TItem> column)
         {
             if (Grid.childColumns.Contains(column))
@@ -120,7 +127,7 @@ namespace Radzen.Blazor
             {
                 Grid.AddColumn(this);
 
-                var canSetFilterPropertyType = Grid.FilterMode == FilterMode.CheckBoxList && FilterTemplate == null;
+                var canSetFilterPropertyType = (FilterMode ?? Grid.FilterMode) == Radzen.FilterMode.CheckBoxList && FilterTemplate == null;
 
                 if (canSetFilterPropertyType)
                 {
@@ -567,7 +574,9 @@ namespace Radzen.Blazor
         {
             var value = propertyValueGetter != null && !string.IsNullOrEmpty(Property) && !Property.Contains('.') ? propertyValueGetter(item) : !string.IsNullOrEmpty(Property) ? PropertyAccess.GetValue(item, Property) : "";
 
-            if ((PropertyAccess.IsEnum(FilterPropertyType) || PropertyAccess.IsNullableEnum(FilterPropertyType)) && value != null)
+
+            if ((PropertyAccess.IsEnum(FilterPropertyType) || PropertyAccess.IsNullableEnum(FilterPropertyType) ||
+                ((FilterMode ?? Grid.FilterMode) == Radzen.FilterMode.CheckBoxList && (value as Enum) != null)) && value != null)
             {
                 var enumValue = value as Enum;
                 if (enumValue != null)

@@ -352,19 +352,32 @@ namespace Radzen.Blazor
         /// </summary>
         /// <param name="firstRender">if set to <c>true</c> [first render].</param>
         /// <returns>Task.</returns>
-        protected override Task OnAfterRenderAsync(bool firstRender)
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
             {
                 if(Visible && LoadData.HasDelegate && Data == null)
                 {
-                    LoadData.InvokeAsync(new Radzen.LoadDataArgs() { Skip = 0, Top = PageSize, Filter = searchText });
+                    await LoadData.InvokeAsync(new Radzen.LoadDataArgs() { Skip = 0, Top = PageSize, Filter = searchText });
                 }
 
                 StateHasChanged();
+
+                if (!Multiple && grid != null && SelectedItem != null)
+                {
+                    var items = (LoadData.HasDelegate ? Data != null ? Data : Enumerable.Empty<object>() : (pagedData != null ? pagedData : Enumerable.Empty<object>())).OfType<object>().ToList();
+                    if (items.Any())
+                    {
+                        selectedIndex = items.IndexOf(SelectedItem);
+                        if (selectedIndex >= 0)
+                        {
+                            await JSRuntime.InvokeAsync<int[]>("Radzen.focusTableRow", grid.GridId(), "ArrowDown", selectedIndex - 1, null);
+                        }
+                    }
+                }
             }
 
-            return base.OnAfterRenderAsync(firstRender);
+            await base.OnAfterRenderAsync(firstRender);
         }
 
         /// <summary>
@@ -542,21 +555,32 @@ namespace Radzen.Blazor
             {
                 if (!Multiple)
                 {
+                    bool raiseChange = false;
+
                     if (!string.IsNullOrEmpty(ValueProperty))
                     {
                         var item = Query.Where(DynamicLinqCustomTypeProvider.ParsingConfig, $@"{ValueProperty} == @0", value).FirstOrDefault();
-                        if (item != null)
+                        if (item != null && SelectedItem != item)
                         {
                             SelectedItem = item;
+                            raiseChange = true;
                         }
                     }
                     else
                     {
-                        SelectedItem = internalValue;
+                        if (SelectedItem != internalValue)
+                        {
+                            SelectedItem = internalValue;
+                            raiseChange = true;
+                        }
                     }
-                    SelectedItemChanged.InvokeAsync(SelectedItem);
-                    selectedItems.Clear();
-                    selectedItems.Add(SelectedItem);
+
+                    if (raiseChange)
+                    {
+                        SelectedItemChanged.InvokeAsync(SelectedItem);
+                        selectedItems.Clear();
+                        selectedItems.Add(SelectedItem);
+                    }
                 }
                 else
                 {
