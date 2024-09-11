@@ -148,7 +148,7 @@
                                 }
                                 else
                                 {
-                                    <RadzenListBox AllowVirtualization="true" AllowClear="true" Multiple="true" Style="height: 300px" 
+                                    <RadzenListBox AllowVirtualization="@Column.AllowCheckBoxListVirtualization" AllowClear="true" Multiple="true" Style="height: 300px"
                                                    TValue="IEnumerable<object>" Value=@Column.GetFilterValue() Change="@ListBoxChange" 
                                                    Data=@filterValues Count=@filterValuesCount LoadData="@LoadFilterValues" 
                                                    AllowFiltering="@(!string.IsNullOrEmpty(Column.GetFilterProperty()) && PropertyAccess.GetPropertyType(typeof(TItem), Column.GetFilterProperty()) == typeof(string))"
@@ -307,6 +307,11 @@ else
         if (Grid.FilterPopupRenderMode == PopupRenderMode.OnDemand)
         {
             await popup.ToggleAsync(filterButton);
+
+            Grid.allColumns
+            .Where(c => c != Column && c.headerCell != null)
+            .Select(c => c.headerCell).ToList()
+            .ForEach(cell => InvokeAsync(cell.CloseFilter));
         }
     }
 
