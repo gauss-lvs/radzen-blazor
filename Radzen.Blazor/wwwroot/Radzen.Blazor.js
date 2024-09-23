@@ -59,6 +59,12 @@ window.Radzen = {
               return formatted;
           }
 
+          if (window.safari !== undefined) {
+              el.onblur = function (e) {
+                  el.dispatchEvent(new Event('change'));
+              };
+          }
+
           var start = el.selectionStart != el.value.length ? el.selectionStart : -1;
           var end = el.selectionEnd != el.value.length ? el.selectionEnd : -1;
 
@@ -349,9 +355,10 @@ window.Radzen = {
       if (!el || !ref) return;
 
       var hidden = el.querySelector('input[type="hidden"]');
-      var inputs = [...el.querySelectorAll('.rz-security-code-input')];
 
       Radzen[id] = {};
+
+      Radzen[id].inputs = [...el.querySelectorAll('.rz-security-code-input')];
 
       Radzen[id].paste = function (e) {
           if (e.clipboardData) {
@@ -362,15 +369,15 @@ window.Radzen = {
                       if (isNumber && isNaN(+value[i])) {
                           continue;
                       }
-                      inputs[i].value = value[i];
+                      Radzen[id].inputs[i].value = value[i];
                   }
 
-                  var code = inputs.map(i => i.value).join('').trim();
+                  var code = Radzen[id].inputs.map(i => i.value).join('').trim();
                   hidden.value = code;
 
                   ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', code);
 
-                  inputs[inputs.length - 1].focus();
+                  Radzen[id].inputs[Radzen[id].inputs.length - 1].focus();
               }
 
               e.preventDefault();
@@ -400,14 +407,14 @@ window.Radzen = {
 
           e.currentTarget.value = ch;
 
-          var value = inputs.map(i => i.value).join('').trim();
+          var value = Radzen[id].inputs.map(i => i.value).join('').trim();
           hidden.value = value;
 
           ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', value);
 
-          var index = inputs.indexOf(e.currentTarget);
-          if (index < inputs.length - 1) {
-              inputs[index + 1].focus();
+          var index = Radzen[id].inputs.indexOf(e.currentTarget);
+          if (index < Radzen[id].inputs.length - 1) {
+              Radzen[id].inputs[index + 1].focus();
           }
       }
 
@@ -416,22 +423,22 @@ window.Radzen = {
           if (keyCode == 8) {
               e.currentTarget.value = '';
 
-              var value = inputs.map(i => i.value).join('').trim();
+              var value = Radzen[id].inputs.map(i => i.value).join('').trim();
               hidden.value = value;
 
               ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', value);
 
-              var index = inputs.indexOf(e.currentTarget);
+              var index = Radzen[id].inputs.indexOf(e.currentTarget);
               if (index > 0) {
-                  inputs[index - 1].focus();
+                  Radzen[id].inputs[index - 1].focus();
               }
           }
       }
 
-      for (var i = 0; i < inputs.length; i++) {
-          inputs[i].addEventListener(navigator.userAgent.match(/Android/i) ? 'textInput' : 'keypress', Radzen[id].keyPress);
-          inputs[i].addEventListener(navigator.userAgent.match(/Android/i) ? 'textInput' : 'keydown', Radzen[id].keyDown);
-          inputs[i].addEventListener('paste', Radzen[id].paste);
+      for (var i = 0; i < Radzen[id].inputs.length; i++) {
+          Radzen[id].inputs[i].addEventListener(navigator.userAgent.match(/Android/i) ? 'textInput' : 'keypress', Radzen[id].keyPress);
+          Radzen[id].inputs[i].addEventListener(navigator.userAgent.match(/Android/i) ? 'textInput' : 'keydown', Radzen[id].keyDown);
+          Radzen[id].inputs[i].addEventListener('paste', Radzen[id].paste);
       }
   },
   createSlider: function (
@@ -938,10 +945,13 @@ window.Radzen = {
       return;
       }
 
-    if (e.code === 'NumpadDecimal') {
-      e.target.value += decimalSeparator;
-      e.preventDefault();
-      return;
+      if (e.code === 'NumpadDecimal') {
+          var cursorPosition = e.target.selectionEnd;
+          e.target.value = [e.target.value.slice(0, e.target.selectionStart), decimalSeparator, e.target.value.slice(e.target.selectionEnd)].join('');
+          e.target.selectionStart = ++cursorPosition;
+          e.target.selectionEnd = cursorPosition;
+          e.preventDefault();
+          return;
     }
 
     var ch = String.fromCharCode(e.charCode);
@@ -1393,6 +1403,7 @@ window.Radzen = {
         var lastDialog = dialogs[dialogs.length - 1];
 
         if (lastDialog) {
+            lastDialog.options = options;
             lastDialog.removeEventListener('keydown', Radzen.focusTrap);
             lastDialog.addEventListener('keydown', Radzen.focusTrap);
 
@@ -1524,15 +1535,20 @@ window.Radzen = {
               }
           }
 
-          Radzen.dialogService.invokeMethodAsync('DialogService.Close', null);
-
           var dialogs = document.querySelectorAll('.rz-dialog-content');
-          if (dialogs.length <= 1) {
-              document.removeEventListener('keydown', Radzen.closePopupOrDialog);
-              delete Radzen.dialogService;
-              var layout = document.querySelector('.rz-layout');
-              if (layout) {
-                  layout.removeEventListener('keydown', Radzen.disableKeydown);
+          if (dialogs.length == 0) return;
+          var lastDialog = dialogs[dialogs.length - 1];
+
+          if (lastDialog && lastDialog.options && lastDialog.options.closeDialogOnEsc) {
+              Radzen.dialogService.invokeMethodAsync('DialogService.Close', null);
+
+              if (dialogs.length <= 1) {
+                  document.removeEventListener('keydown', Radzen.closePopupOrDialog);
+                  delete Radzen.dialogService;
+                  var layout = document.querySelector('.rz-layout');
+                  if (layout) {
+                      layout.removeEventListener('keydown', Radzen.disableKeydown);
+                  }
               }
           }
       }

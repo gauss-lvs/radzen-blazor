@@ -1250,6 +1250,8 @@ namespace Radzen.Blazor
 
         internal async Task TogglePopup()
         {
+            if (Inline) return;
+
             if (PopupRenderMode == PopupRenderMode.Initial)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.togglePopup", Element, PopupID, false, null, null, true, true);
@@ -1262,6 +1264,8 @@ namespace Radzen.Blazor
 
         async Task ClosePopup()
         {
+            if (Inline) return;
+
             if (PopupRenderMode == PopupRenderMode.Initial)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);

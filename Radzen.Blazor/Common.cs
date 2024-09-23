@@ -1006,7 +1006,7 @@ namespace Radzen
         {
             get
             {
-                return _size != default(long) ? _size : source.Size;
+                return _size != default(long) ? _size : source != null ? source.Size : 0;
             }
             set
             {
@@ -3141,7 +3141,7 @@ namespace Radzen
         {
             var type = data.GetType();
             var arg = Expression.Parameter(typeof(object));
-            var body = Expression.Property(Expression.Convert(arg, type), propertyName);
+            var body = Expression.Convert(Expression.Property(Expression.Convert(arg, type), propertyName), typeof(T));
 
             return Expression.Lambda<Func<object, T>>(body, arg).Compile();
         }
