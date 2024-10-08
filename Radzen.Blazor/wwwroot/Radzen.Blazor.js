@@ -609,9 +609,9 @@ window.Radzen = {
                 break;
         }
     } else {
-        while (ul.nextSelectedIndex > 0) {
+        while (ul.nextSelectedIndex >= 0) {
             ul.nextSelectedIndex--;
-            if (!childNodes[ul.nextSelectedIndex].classList.contains('rz-state-disabled'))
+            if (!childNodes[ul.nextSelectedIndex] || !childNodes[ul.nextSelectedIndex].classList.contains('rz-state-disabled'))
                 break;
         }
     }
@@ -681,25 +681,25 @@ window.Radzen = {
     if (key == 'ArrowDown') {
         while (table.nextSelectedIndex < rows.length - 1) {
             table.nextSelectedIndex++;
-            if (!rows[table.nextSelectedIndex].classList.contains('rz-state-disabled'))
+            if (!rows[table.nextSelectedIndex] || !rows[table.nextSelectedIndex].classList.contains('rz-state-disabled'))
                 break;
         }
     } else if (key == 'ArrowUp') {
         while (table.nextSelectedIndex > 0) {
             table.nextSelectedIndex--;
-            if (!rows[table.nextSelectedIndex].classList.contains('rz-state-disabled'))
+            if (!rows[table.nextSelectedIndex] || !rows[table.nextSelectedIndex].classList.contains('rz-state-disabled'))
                 break;
         }
     } else if (key == 'ArrowRight') {
         while (table.nextSelectedCellIndex < rows[table.nextSelectedIndex].cells.length - 1) {
             table.nextSelectedCellIndex++;
-            if (!rows[table.nextSelectedIndex].cells[table.nextSelectedCellIndex].classList.contains('rz-state-disabled'))
+            if (!rows[table.nextSelectedIndex] || !rows[table.nextSelectedIndex].cells[table.nextSelectedCellIndex] || !rows[table.nextSelectedIndex].cells[table.nextSelectedCellIndex].classList.contains('rz-state-disabled'))
                 break;
         }
     } else if (key == 'ArrowLeft') {
         while (table.nextSelectedCellIndex > 0) {
             table.nextSelectedCellIndex--;
-            if (!rows[table.nextSelectedIndex].cells[table.nextSelectedCellIndex].classList.contains('rz-state-disabled'))
+            if (!rows[table.nextSelectedIndex] || !rows[table.nextSelectedIndex].cells[table.nextSelectedCellIndex] || !rows[table.nextSelectedIndex].cells[table.nextSelectedCellIndex].classList.contains('rz-state-disabled'))
                 break;
         }
     } else if (isVirtual && (key == 'PageDown' || key == 'End')) {
@@ -708,7 +708,7 @@ window.Radzen = {
         table.nextSelectedIndex = 1;
     }
 
-    if (key == 'ArrowLeft' || key == 'ArrowRight' || (key == 'ArrowUp' && table.nextSelectedIndex == 0 && table.parentNode.scrollTop == 0)) {
+    if (key == 'ArrowLeft' || key == 'ArrowRight' || (key == 'ArrowUp' && cellIndex != null && table.nextSelectedIndex == 0 && table.parentNode.scrollTop == 0)) {
         var highlightedCells = rows[table.nextSelectedIndex].querySelectorAll('.rz-state-focused');
         if (highlightedCells.length) {
             for (var i = 0; i < highlightedCells.length; i++) {
