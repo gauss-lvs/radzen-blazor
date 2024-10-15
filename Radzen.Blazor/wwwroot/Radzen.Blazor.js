@@ -561,6 +561,9 @@ window.Radzen = {
       el.focus();
     }
   },
+  scrollCarouselItem: function (el) {
+    el.parentElement.scroll(el.offsetLeft, 0);
+  },
   scrollIntoViewIfNeeded: function (ref, selector) {
     var el = selector ? ref.getElementsByClassName(selector)[0] : ref;
     if (el && el.scrollIntoViewIfNeeded) {
@@ -991,6 +994,7 @@ window.Radzen = {
     }
   },
   closeTooltip(id) {
+    Radzen.activeElement = null;
     Radzen.closePopup(id);
 
     if (Radzen[id + 'delay']) {
@@ -1022,16 +1026,17 @@ window.Radzen = {
           }
       };
 
+      var input = el.querySelector('.rz-inputtext');
       var button = el.querySelector('.rz-datepicker-trigger');
       if (button) {
           button.onclick = function (e) {
-              handler(e, !e.currentTarget.classList.contains('rz-state-disabled'));
+              handler(e, !e.currentTarget.classList.contains('rz-state-disabled') && (input ? !input.classList.contains('rz-readonly') : true));
           };
       }
-      var input = el.querySelector('.rz-inputtext');
+  
       if (input) {
           input.onclick = function (e) {
-              handler(e, e.currentTarget.classList.contains('rz-readonly') || e.currentTarget.classList.contains('rz-input-trigger') );
+              handler(e, e.currentTarget.classList.contains('rz-input-trigger') && !e.currentTarget.classList.contains('rz-readonly'));
           };
       }
   },
@@ -1106,6 +1111,21 @@ window.Radzen = {
 
     var smartPosition = !position || position == 'bottom';
 
+    var scrollbarSize = 20;
+    var el = parent;
+    while (el && el != document.documentElement) {
+        if (el.scrollWidth > el.clientWidth) {
+            scrollbarSize = el.scrollWidth - el.clientWidth;
+            break;
+        }
+
+        if (el.scrollHeight > el.clientHeight) {
+            scrollbarSize = el.scrollHeight - el.clientHeight;
+            break;
+        }
+        el = el.parentElement;
+    }
+
     if (smartPosition && top + rect.height > window.innerHeight && parentRect.top > rect.height) {
         if (disableSmartPosition !== true) {
             top = parentRect.top - rect.height;
@@ -1122,7 +1142,7 @@ window.Radzen = {
       }
     }
 
-    if (smartPosition && left + rect.width > window.innerWidth && window.innerWidth > rect.width) {
+    if (smartPosition && left + rect.width > window.innerWidth + scrollbarSize && window.innerWidth + scrollbarSize > rect.width) {
       left = window.innerWidth - rect.width;
 
       if (position) {
