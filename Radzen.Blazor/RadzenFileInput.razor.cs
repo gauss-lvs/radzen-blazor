@@ -56,6 +56,12 @@ namespace Radzen.Blazor
         public string Title { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether a preview is shown or not.
+        /// </summary>
+        [Parameter]
+        public bool ShowPreview { get; set; } = true;
+
+        /// <summary>
         /// Gets the choose class list.
         /// </summary>
         /// <value>The choose class list.</value>
