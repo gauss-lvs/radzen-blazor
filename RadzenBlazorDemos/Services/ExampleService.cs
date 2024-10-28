@@ -236,6 +236,14 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
+                            Name = "Real-time data",
+                            Path = "datagrid-realtime",
+                            Title = "Blazor DataGrid Component - Real-time Data | Free UI Components by Radzen",
+                            Description = "Blazor Data Grid with real-time data sources.",
+                            Tags = new [] { "datagrid", "bind", "load", "data", "loaddata", "real-time" }
+                        },
+                        new Example
+                        {
                             Name = "Crosstab data",
                             Path = "datagrid-crosstab",
                             Title = "Blazor DataGrid Component - Crosstab Data | Free UI Components by Radzen",
@@ -1018,7 +1026,16 @@ namespace RadzenBlazorDemos
                     Description = "Use the Blazor RadzenCard component to display a piece of content, like an image and text.",
                     Path = "card",
                     Icon = "&#xefad",
-                    Tags = new [] { "container" }
+                    Tags = new [] { "card", "container" }
+                },
+                new Example
+                {
+                    Name = "CardGroup",
+                    Description = "Use the Blazor RadzenCardGroup component to visually stick RadzenCards next to each other.",
+                    Path = "card-group",
+                    Icon = "&#xe8f3",
+                    New = true,
+                    Tags = new [] { "card", "group", "deck", "container" }
                 },
                 new Example
                 {
