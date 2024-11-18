@@ -16,7 +16,7 @@ if (!Element.prototype.closest) {
   };
 }
 
-if (document.fonts) {
+if (document.fonts && document.body) {
   document.body.classList.add('rz-icons-loading');
   document.fonts.load('16px Material Symbols').then(() => {
       document.body.classList.remove('rz-icons-loading');
@@ -500,6 +500,17 @@ window.Radzen = {
 
     Radzen[id].mouseDownHandler = function (e) {
       if (parent.classList.contains('rz-state-disabled')) return;
+
+      document.addEventListener('mousemove', Radzen[id].mouseMoveHandler);
+      document.addEventListener('touchmove', Radzen[id].mouseMoveHandler, {
+        passive: false, capture: true
+      });
+
+      document.addEventListener('mouseup', Radzen[id].mouseUpHandler);
+      document.addEventListener('touchend', Radzen[id].mouseUpHandler, {
+        passive: true
+      });
+
       if (minHandle == e.target || maxHandle == e.target) {
         slider.canChange = true;
         slider.isMin = minHandle == e.target;
@@ -526,17 +537,15 @@ window.Radzen = {
 
     Radzen[id].mouseUpHandler = function (e) {
       slider.canChange = false;
+      document.removeEventListener('mousemove', Radzen[id].mouseMoveHandler);
+      document.removeEventListener('touchmove', Radzen[id].mouseMoveHandler, {
+        passive: false, capture: true
+      });
+      document.removeEventListener('mouseup', Radzen[id].mouseUpHandler);
+      document.removeEventListener('touchend', Radzen[id].mouseUpHandler, {
+        passive: true
+      });
     };
-
-    document.addEventListener('mousemove', Radzen[id].mouseMoveHandler);
-    document.addEventListener('touchmove', Radzen[id].mouseMoveHandler, {
-      passive: false, capture: true
-    });
-
-    document.addEventListener('mouseup', Radzen[id].mouseUpHandler);
-    document.addEventListener('touchend', Radzen[id].mouseUpHandler, {
-      passive: true
-    });
 
     parent.addEventListener('mousedown', Radzen[id].mouseDownHandler);
     parent.addEventListener('touchstart', Radzen[id].mouseDownHandler, {
@@ -1048,7 +1057,7 @@ window.Radzen = {
               handler(e, !e.currentTarget.classList.contains('rz-state-disabled') && (input ? !input.classList.contains('rz-readonly') : true));
           };
       }
-  
+
       if (input) {
           input.onclick = function (e) {
               handler(e, e.currentTarget.classList.contains('rz-input-trigger') && !e.currentTarget.classList.contains('rz-readonly'));
@@ -1123,6 +1132,8 @@ window.Radzen = {
     popup.style.display = 'block';
 
     var rect = popup.getBoundingClientRect();
+    rect.width = rect.width + 20;
+    rect.height = rect.height + 20;
 
     var smartPosition = !position || position == 'bottom';
 
@@ -2455,7 +2466,7 @@ window.Radzen = {
         x = Math.max(2, chartRect.left + x);
         y = Math.max(2, chartRect.top + y);
         Radzen.openPopup(chart, id, false, null, x, y, instance, callback, true, false, false);
-        
+
         var popup = document.getElementById(id);
         if (!popup) {
             return;
