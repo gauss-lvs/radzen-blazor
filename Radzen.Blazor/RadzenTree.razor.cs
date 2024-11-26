@@ -355,6 +355,36 @@ namespace Radzen.Blazor
             }
         }
 
+        /// <summary>
+        /// Forces the item with value <paramref name="value"/> to be
+        /// re-evaluated such that items lazily created via <see cref="Expand"/>
+        /// are realised if the underlying data model has been changed from
+        /// somewhere else.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public async Task Reload(object value = null)
+        {
+            // mde
+            // Diese Methode habe ich ergänzt, da das originale Reload() zwei Unzulänglichkeiten hat:
+            // 1) Es gibt keine Möglichkeit, von außen an ein RadzenTreeItem zu kommen.
+            // 2) Der Aufruf mit item == null funktioniert nicht mit Lazy Loading der Children, da sich die Liste 'items' dann während
+            //    der Aufzählung ändert, was eine Exception verursacht.
+
+            var item = items.FirstOrDefault(i => i.Value == value);
+            if (item != null)
+            {
+                await this.ExpandItem(item);
+            }
+            else
+            {
+                foreach (var i in this.items.ToList().Where(ri => ri.Expanded == false))
+                {
+                    await this.ExpandItem(i);
+                }
+            }
+        }
+
         internal async Task ExpandItem(RadzenTreeItem item)
         {
             var args = new TreeExpandEventArgs()
