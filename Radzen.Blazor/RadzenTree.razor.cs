@@ -80,6 +80,12 @@ namespace Radzen.Blazor
         public EventCallback<TreeEventArgs> Change { get; set; }
 
         /// <summary>
+        /// A callback that will be invoked when the user selects an item, before the selection is made.
+        /// </summary>
+        [Parameter]
+        public EventCallback<TreeCancelEventArgs> BeforeChange { get; set; }
+
+        /// <summary>
         /// A callback that will be invoked when the user expands an item.
         /// </summary>
         /// <example>
@@ -302,6 +308,20 @@ namespace Radzen.Blazor
 
             if (selectedItem != item)
             {
+                var cancelArgs = new TreeCancelEventArgs()
+                {
+                    Text = item?.Text,
+                    Value = item?.Value
+                };
+
+                await BeforeChange.InvokeAsync(cancelArgs);
+
+                if (cancelArgs.Cancelled)
+                {
+                    item.Unselect();
+                    return;
+                }
+
                 SelectedItem = item;
 
                 selectedItem?.Unselect();
