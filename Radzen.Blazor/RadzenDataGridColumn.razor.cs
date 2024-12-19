@@ -248,6 +248,11 @@ namespace Radzen.Blazor
         /// <returns>System.Boolean.</returns>
         public bool GetVisible()
         {
+            if (Columns != null && ColumnsCollection.Any() && VisibleColumns.Count() == 0)
+            {
+                return false;
+            }
+
             return _visible ?? Visible;
         }
 
@@ -510,7 +515,9 @@ namespace Radzen.Blazor
         /// Allows the column to override whether or not this column's the <see cref="EditTemplate" /> is visible at runtime.
         /// </summary>
         [Parameter]
-        public Func<string, TItem, bool> IsInEditMode { get; set; } = (property, item) => false;
+        public Func<string, TItem, bool> IsInEditMode { get; set; } = DefaultIsInEditMode;
+
+        internal static Func<string, TItem, bool> DefaultIsInEditMode { get; set; } = (property, item) => false;
 
         /// <summary>
         /// Gets or sets the header template.
@@ -898,7 +905,7 @@ namespace Radzen.Blazor
             {
                 filterValue = parameters.GetValueOrDefault<object>(nameof(FilterValue));
 
-                if (FilterTemplate != null)
+                if (FilterTemplate != null || FilterValueTemplate != null)
                 {
                     FilterValue = filterValue;
                     Grid.SaveSettings();
@@ -922,7 +929,7 @@ namespace Radzen.Blazor
             {
                 secondFilterValue = parameters.GetValueOrDefault<object>(nameof(SecondFilterValue));
 
-                if (FilterTemplate != null)
+                if (FilterTemplate != null || SecondFilterValueTemplate != null)
                 {
                     SecondFilterValue = secondFilterValue;
                     Grid.SaveSettings();
@@ -1181,6 +1188,24 @@ namespace Radzen.Blazor
             }
         }
 
+        IEnumerable<FilterOperator> _filterOperators;
+        /// <summary>
+        /// Gets or sets the filter operators.
+        /// </summary>
+        /// <value>The filter operators.</value>
+        [Parameter]
+        public IEnumerable<FilterOperator> FilterOperators
+        {
+            get
+            {
+                return _filterOperators;
+            }
+            set
+            {
+                _filterOperators = value;
+            }
+        }
+
         /// <summary>
         /// Gets or sets the second filter operator.
         /// </summary>
@@ -1272,6 +1297,8 @@ namespace Radzen.Blazor
         /// </summary>
         public virtual IEnumerable<FilterOperator> GetFilterOperators()
         {
+            if (FilterOperators != null) return FilterOperators;
+
             if (PropertyAccess.IsEnum(FilterPropertyType) || FilterPropertyType == typeof(bool))
                 return new FilterOperator[] { FilterOperator.Equals, FilterOperator.NotEquals };
 
@@ -1366,6 +1393,10 @@ namespace Radzen.Blazor
                     return "= ''";
                 case FilterOperator.IsNotEmpty:
                     return "≠ ''";
+                case FilterOperator.In:
+                    return "∈";
+                case FilterOperator.NotIn:
+                    return "∉";
                 default:
                     return $"{filterOperator}";
             }

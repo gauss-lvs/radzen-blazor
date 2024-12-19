@@ -628,10 +628,7 @@ namespace Radzen.Blazor
                         {
                             foreach (object v in valueList)
                             {
-                                if (selectedItems.IndexOf(v) == -1)
-                                {
-                                    selectedItems.Add(v);
-                                }
+                                selectedItems.Add(v);
                             }
                         }
 
@@ -654,6 +651,8 @@ namespace Radzen.Blazor
             if (Disabled)
                 return;
 
+            var canRequest = searchText != null;
+
             searchText = null;
             internalValue = default(TValue);
             selectedItem = null;
@@ -669,7 +668,10 @@ namespace Radzen.Blazor
                 await grid.SelectRow(null);
             }
 
-            await OnLoadData(new Radzen.LoadDataArgs() { Skip = 0, Top = PageSize, OrderBy = "" });
+            if (canRequest)
+            {
+                await OnLoadData(new Radzen.LoadDataArgs() { Skip = 0, Top = PageSize, OrderBy = "" });
+            }
 
             StateHasChanged();
         }

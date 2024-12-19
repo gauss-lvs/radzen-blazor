@@ -483,7 +483,13 @@ window.Radzen = {
       var percent = isVertical ? (parent.offsetHeight - handle.offsetTop - offsetY) / parent.offsetHeight
         : (Radzen.isRTL(handle) ? parent.offsetWidth - handle.offsetLeft - offsetX : handle.offsetLeft + offsetX) / parent.offsetWidth;
 
-      var newValue = Math.max(min, Math.min(percent, max)) * (max - min) + min;
+      if (percent > 1) {
+        percent = 1;
+      } else if (percent < 0) {
+        percent = 0;
+      }
+
+     var newValue = percent * (max - min) + min;
 
       if (
         slider.canChange &&
@@ -1132,25 +1138,10 @@ window.Radzen = {
     popup.style.display = 'block';
 
     var rect = popup.getBoundingClientRect();
-    rect.width = rect.width + 20;
-    rect.height = rect.height + 20;
+    rect.width = x ? rect.width + 20 : rect.width;
+    rect.height = y ? rect.height + 20 : rect.height;
 
     var smartPosition = !position || position == 'bottom';
-
-    var scrollbarSize = 20;
-    var el = parent;
-    while (el && el != document.documentElement) {
-        if (el.scrollWidth > el.clientWidth) {
-            scrollbarSize = el.scrollWidth - el.clientWidth;
-            break;
-        }
-
-        if (el.scrollHeight > el.clientHeight) {
-            scrollbarSize = el.scrollHeight - el.clientHeight;
-            break;
-        }
-        el = el.parentElement;
-    }
 
     if (smartPosition && top + rect.height > window.innerHeight && parentRect.top > rect.height) {
         if (disableSmartPosition !== true) {
@@ -1164,21 +1155,28 @@ window.Radzen = {
         if (tooltipContent.classList.contains(tooltipContentClassName)) {
           tooltipContent.classList.remove(tooltipContentClassName);
           tooltipContent.classList.add('rz-top-tooltip-content');
+            position = 'top';
+            if (instance && callback) {
+                instance.invokeMethodAsync(callback, position);
+            }
         }
       }
     }
 
-    if (smartPosition && left + rect.width > window.innerWidth + scrollbarSize && window.innerWidth + scrollbarSize > rect.width) {
-      left = window.innerWidth - rect.width;
+    if (smartPosition && left + rect.width > window.innerWidth && window.innerWidth > rect.width) {
+      left = !position ? window.innerWidth - rect.width : rect.left;
 
       if (position) {
+        top = y || parentRect.top;
         var tooltipContent = popup.children[0];
         var tooltipContentClassName = 'rz-' + position + '-tooltip-content';
         if (tooltipContent.classList.contains(tooltipContentClassName)) {
           tooltipContent.classList.remove(tooltipContentClassName);
           tooltipContent.classList.add('rz-left-tooltip-content');
-          left = parentRect.left - rect.width - 5;
-          top = parentRect.top - parentRect.height;
+          position = 'left';
+          if (instance && callback) {
+            instance.invokeMethodAsync(callback, position);
+          }
         }
       }
     }
@@ -1240,7 +1238,7 @@ window.Radzen = {
               Radzen.closePopup(currentPopup.id, currentPopup.instance, currentPopup.callback, e);
           }
         } else {
-          if (!currentPopup.contains(e.target)) {
+          if (e.target.nodeType && !currentPopup.contains(e.target)) {
               Radzen.closePopup(currentPopup.id, currentPopup.instance, currentPopup.callback, e);
           }
         }
@@ -1335,8 +1333,12 @@ window.Radzen = {
     window.removeEventListener('resize', Radzen[id]);
     Radzen[id] = null;
 
-    if (instance) {
-      instance.invokeMethodAsync(callback);
+    if (instance && callback) {
+        if (callback.includes('RadzenTooltip')) {
+            instance.invokeMethodAsync(callback, null);
+        } else {
+            instance.invokeMethodAsync(callback);
+        }
     }
     Radzen.popups = (Radzen.popups || []).filter(function (obj) {
         return obj.id !== id;
@@ -1599,6 +1601,13 @@ window.Radzen = {
           }
       }
   },
+  getNumericValue: function (arg) {
+    var el =
+      arg instanceof Element || arg instanceof HTMLDocument
+        ? arg
+        : document.getElementById(arg);
+    return el ? Radzen.getInputValue(el.children[0]) : null;
+  },
   getInputValue: function (arg) {
     var input =
       arg instanceof Element || arg instanceof HTMLDocument
@@ -1613,6 +1622,12 @@ window.Radzen = {
         : document.getElementById(arg);
     if (input) {
       input.value = value;
+    }
+  },
+  blur: function (el, e) { 
+    if (el) {
+        e.preventDefault();
+        el.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, keyCode: 9 }));
     }
   },
   readFileAsBase64: function (fileInput, maxFileSize, maxWidth, maxHeight) {
@@ -1800,7 +1815,7 @@ window.Radzen = {
     return this.createResizable(ref, instance);
   },
   destroyScheduler: function (ref) {
-    if (ref.resizeHandler) {
+    if (ref && ref.resizeHandler) {
       window.removeEventListener('resize', ref.resizeHandler);
       delete ref.resizeHandler;
     }

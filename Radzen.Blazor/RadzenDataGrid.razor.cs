@@ -777,7 +777,7 @@ namespace Radzen.Blazor
         [Parameter]
         public EventCallback<DataGridPickedColumnsChangedEventArgs<TItem>> PickedColumnsChanged { get; set; }
 
-        string getFilterInputId(RadzenDataGridColumn<TItem> column)
+        internal string getFilterInputId(RadzenDataGridColumn<TItem> column)
         {
             return string.Join("", $"{UniqueID}".Split('.')) + column.GetFilterProperty();
         }
@@ -807,6 +807,7 @@ namespace Radzen.Blazor
                 builder.AddAttribute(2, "ShowUpDown", column.ShowUpDownForNumericFilter());
                 builder.AddAttribute(3, "Style", "width:100%");
                 builder.AddAttribute(4, "InputAttributes", new Dictionary<string,object>(){ { "aria-label", column.Title + $"{(!isFirst ? " second " : " ")}filter value " + (isFirst ? column.GetFilterValue() : column.GetSecondFilterValue()) } });
+                builder.AddAttribute(5, "id", getFilterInputId(column) + (isFirst ? "f" : "s"));
 
                 Action<object> action;
                 if (force)
@@ -1242,6 +1243,20 @@ namespace Radzen.Blazor
         /// <value>The does not contain text.</value>
         [Parameter]
         public string DoesNotContainText { get; set; } = "Does not contain";
+
+        /// <summary>
+        /// Gets or sets the in operator text.
+        /// </summary>
+        /// <value>The in operator text.</value>
+        [Parameter]
+        public string InText { get; set; } = "In";
+
+        /// <summary>
+        /// Gets or sets the not in operator text.
+        /// </summary>
+        /// <value>The not in operator text.</value>
+        [Parameter]
+        public string NotInText { get; set; } = "Not in";
 
         /// <summary>
         /// Gets or sets the starts with text.
@@ -3015,14 +3030,14 @@ namespace Radzen.Blazor
             if (args.Action == NotifyCollectionChangedAction.Add)
             {
                 RadzenDataGridColumn<TItem> column;
-                column = columns.Where(c => c.GetGroupProperty() == ((GroupDescriptor)args.NewItems[0]).Property).FirstOrDefault();
+                column = columns.FirstOrDefault(c => c.GetGroupProperty() == ((GroupDescriptor)args.NewItems[0]).Property);
 
                 if(column == null)
                 {
-                   column = allColumns.Where(c => c.GetGroupProperty() == ((GroupDescriptor)args.NewItems[0]).Property).FirstOrDefault();
+                   column = allColumns.FirstOrDefault(c => c.GetGroupProperty() == ((GroupDescriptor)args.NewItems[0]).Property);
                 }
 
-                if (HideGroupedColumn)
+                if (column != null && HideGroupedColumn)
                 {
                     column.SetVisible(false);
                     if (!groupedColumns.Contains(column))
@@ -3034,14 +3049,14 @@ namespace Radzen.Blazor
             else if (args.Action == NotifyCollectionChangedAction.Remove)
             {
                 RadzenDataGridColumn<TItem> column;
-                column = columns.Where(c => c.GetGroupProperty() == ((GroupDescriptor)args.OldItems[0]).Property).FirstOrDefault();
+                column = columns.FirstOrDefault(c => c.GetGroupProperty() == ((GroupDescriptor)args.OldItems[0]).Property);
 
                 if (column == null)
                 {
-                    column = allColumns.Where(c => c.GetGroupProperty() == ((GroupDescriptor)args.OldItems[0]).Property).FirstOrDefault();
+                    column = allColumns.FirstOrDefault(c => c.GetGroupProperty() == ((GroupDescriptor)args.OldItems[0]).Property);
                 }
 
-                if (HideGroupedColumn)
+                if (column != null && HideGroupedColumn)
                 {
                     column.SetVisible(true);
                     if (groupedColumns.Contains(column))
