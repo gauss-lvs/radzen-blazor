@@ -322,11 +322,20 @@ namespace Radzen.Blazor
         /// <value><c>true</c> if DataGrid data cells will follow the header cells structure in composite columns; otherwise, <c>false</c>.</value>
         [Parameter]
         public bool AllowCompositeDataCells { get; set; } = false;
+
         /// <summary>
         /// Gets or sets a value indicating whether DataGrid data body show empty message.
         /// </summary>
         [Parameter]
         public bool ShowEmptyMessage { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets value if headers are shown.
+        /// </summary>
+        /// <value>If headers are shown value.</value>
+        [Parameter]
+        public bool ShowHeader { get; set; } = true;
+
         /// <summary>
         /// Gets or sets a value indicating whether DataGrid is responsive.
         /// </summary>
@@ -2943,22 +2952,39 @@ namespace Radzen.Blazor
         /// <param name="item">The item.</param>
         public async System.Threading.Tasks.Task InsertRow(TItem item)
         {
+            await InsertRowAtIndex(item);
+        }
+
+        /// <summary>
+        /// Inserts new row after specific row item.
+        /// </summary>
+        /// <param name="itemToInsert">The item.</param>
+        /// <param name="rowItem">Row item to insert after</param>
+        public async System.Threading.Tasks.Task InsertAfterRow(TItem itemToInsert, TItem rowItem)
+        {
+            var list = this.PagedView.ToList();
+            var index = list.IndexOf(rowItem);
+            await InsertRowAtIndex(itemToInsert, index + 1);
+        }
+
+        private async System.Threading.Tasks.Task InsertRowAtIndex(TItem item, int insertIndex = 0)
+        {
             itemsToInsert.Add(item);
-            if(!IsVirtualizationAllowed())
+            if (!IsVirtualizationAllowed())
             {
                 var list = this.PagedView.ToList();
-                list.Insert(0, item);
+                list.Insert(insertIndex, item);
                 this._view = list.AsQueryable();
                 this.Count++;
             }
             else
             {
-                if(virtualize != null)
+                if (virtualize != null)
                 {
                     await virtualize.RefreshDataAsync();
                 }
 
-                if(groupVirtualize != null)
+                if (groupVirtualize != null)
                 {
                     await groupVirtualize.RefreshDataAsync();
                 }

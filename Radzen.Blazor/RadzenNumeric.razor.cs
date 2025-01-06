@@ -216,6 +216,8 @@ namespace Radzen.Blazor
                 {
                     _value = value;
                 }
+
+                stringValue = $"{value}";
             }
         }
 
@@ -393,6 +395,8 @@ namespace Radzen.Blazor
             }
 
             newValue = ApplyMinMax(newValue);
+
+            stringValue = $"{newValue}";
 
             if (EqualityComparer<TValue>.Default.Equals(Value, newValue))
             {
