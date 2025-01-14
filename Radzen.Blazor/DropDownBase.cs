@@ -472,7 +472,10 @@ namespace Radzen
                     disabledPropertyGetter = GetGetter(DisabledProperty, type);
                 }
 
-                selectedItems = new HashSet<object>(ItemComparer);
+                if (selectedItems.Count == 0)
+                {
+                    selectedItems = new HashSet<object>(ItemComparer);
+                }
             }
         }
 

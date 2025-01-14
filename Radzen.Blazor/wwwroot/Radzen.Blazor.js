@@ -1228,7 +1228,7 @@ window.Radzen = {
         }
 
         var closestLink = e.target.closest && (e.target.closest('.rz-link') || e.target.closest('.rz-navigation-item-link'));
-        if (closestLink && closestLink.closest && closestLink.closest('a')) {
+        if (e.type == 'resize' || closestLink && closestLink.closest && closestLink.closest('a')) {
             if (Radzen.closeAllPopups) {
                 Radzen.closeAllPopups();
             }
@@ -2127,7 +2127,7 @@ window.Radzen = {
       visual.style.height = cell.offsetHeight + 'px';
       visual.style.width = cell.offsetWidth + 'px';
       visual.style.zIndex = 2000;
-      visual.innerHTML = cell.innerHTML;
+      visual.innerHTML = cell.firstChild.outerHTML;
       visual.id = id + 'visual';
       document.body.appendChild(visual);
 
