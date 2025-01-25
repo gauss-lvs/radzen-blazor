@@ -751,6 +751,11 @@ namespace Radzen.Blazor
         public bool Disabled { get; set; }
 
         /// <summary>
+        /// Gets or sets the FormFieldContext of the component
+        /// </summary>
+        public IFormFieldContext FormFieldContext { get; set; } = null;
+
+        /// <summary>
         /// Gets or sets a value indicating whether days part is shown.
         /// </summary>
         /// <value><c>true</c> if days part is shown; otherwise, <c>false</c>.</value>

@@ -4,6 +4,11 @@ using System.Linq;
 
 namespace RadzenBlazorDemos
 {
+    public class KeyboardShortcut
+    {
+        public string Key { get; set; }
+        public string Action { get; set; }
+    }
     public class ExampleService
     {
         Example[] allExamples = new[] {
@@ -872,8 +877,8 @@ namespace RadzenBlazorDemos
             Icon = "&#xe99c",
             Children = new [] {
                 new Example
-        {
-            Name = "DataList",
+                {
+                    Name = "DataList",
                     Icon = "&#xe896",
                     Tags = new[] { "dataview", "grid", "table" },
                     Children = new[] {
@@ -896,8 +901,8 @@ namespace RadzenBlazorDemos
                     }
                 },
                 new Example
-        {
-            Name = "DataFilter",
+                {
+                    Name = "DataFilter",
                     Icon = "&#xef4f",
                     Tags = new[] { "dataview", "grid", "table", "filter" },
                     Children = new[] {
@@ -928,16 +933,25 @@ namespace RadzenBlazorDemos
                     }
                 },
                 new Example
-        {
-            Name = "Pager",
+                {
+                    Name = "Pager",
                     Path = "pager",
                     Description = "Demonstration and configuration of the Radzen Blazor Pager component.",
                     Icon = "&#xeb8d",
                     Tags = new[] { "pager", "paging" }
                 },
                 new Example
-        {
-            Name = "Scheduler",
+                {
+                    Name = "PickList",
+                    New = true,
+                    Description = "Use Radzen Blazor PickList component to transfer items between two collections.",
+                    Path = "picklist",
+                    Icon = "&#xe0b8",
+                    Tags = new[] { "picklist", "list", "listbox" }
+                },
+                new Example
+                {
+                    Name = "Scheduler",
                     Path = "scheduler",
                     Updated = true,
                     Description = "Blazor Scheduler component with daily, weekly and monthly views.",
@@ -945,8 +959,17 @@ namespace RadzenBlazorDemos
                     Tags = new[] { "scheduler", "calendar", "event", "appointment" }
                 },
                 new Example
-        {
-            Name = "Tree",
+                {
+                    Name = "Table",
+                    New = true,
+                    Description = "Blazor RadzenTable component is used to create a HTML table with rows and cells.",
+                    Path = "table",
+                    Icon = "&#xf101",
+                    Tags = new [] { "table", "cells", "row", "grid" }
+                },
+                new Example
+                {
+                    Name = "Tree",
                     Icon = "&#xe94b",
                     Tags = new[] { "tree", "treeview", "nodes", "hierarchy" },
                     Children = new[] {
@@ -1015,16 +1038,7 @@ namespace RadzenBlazorDemos
                             Tags = new [] { "tree", "treeview", "nodes" },
                         }
                     }
-                },
-                new Example
-                {
-                    Name = "PickList",
-                    New = true,
-                    Description = "Use Radzen Blazor PickList component to transfer items between two collections.",
-                    Path = "picklist",
-                    Icon = "&#xe0b8",
-                    Tags = new[] { "picklist", "list", "listbox" }
-                },
+                }
             }
 },
         new Example
