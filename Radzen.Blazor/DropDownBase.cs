@@ -762,8 +762,7 @@ namespace Radzen
                 var filteredItems = (!string.IsNullOrEmpty(TextProperty) ?
                     Query.Where(TextProperty, args.Key, StringFilterOperator.StartsWith, FilterCaseSensitivity.CaseInsensitive) :
                     Query)
-                    .Cast<object>()
-                    .ToList();
+                    .Cast(Query.ElementType).ToDynamicList();
 
 
                 if (previousKey != args.Key)
@@ -1255,7 +1254,7 @@ namespace Radzen
                 }
                 else
                 {
-                    selectedItems = selectedItems.AsQueryable().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).ToHashSet(ItemComparer);
+                    selectedItems = selectedItems.AsQueryable().Where(i => !object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).ToHashSet(ItemComparer);
                 }
             }
             else
