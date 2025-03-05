@@ -5,7 +5,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 
 namespace Radzen.Blazor
@@ -177,13 +176,13 @@ namespace Radzen.Blazor
                     propertyValueGetter = PropertyAccess.Getter<TItem, object>(Property);
                 }
 
-                if (_filterPropertyType == typeof(string) && filterOperator != FilterOperator.Custom && filterOperator == null)
+                if (_filterPropertyType == typeof(string) && filterOperator != FilterOperator.Custom && filterOperator == null && _filterOperator == null)
                 {
                     SetFilterOperator(FilterOperator.Contains);
                 }
             }
         }
-        
+
         int? orderIndex;
 
         /// <summary>
@@ -392,6 +391,14 @@ namespace Radzen.Blazor
         [Parameter]
         public string MinWidth { get; set; }
 
+
+        /// <summary>
+        /// Gets or sets the max-width.
+        /// </summary>
+        /// <value>The max-width.</value>
+        [Parameter]
+        public string MaxWidth { get; set; }
+
         /// <summary>
         /// Gets or sets the format string.
         /// </summary>
@@ -433,6 +440,18 @@ namespace Radzen.Blazor
         /// <value>The group footer CSS class applied to group footer cell.</value>
         [Parameter]
         public string GroupFooterCssClass { get; set; }
+
+        /// <summary>
+        /// Gets or sets the header white space style.
+        /// </summary>
+        [Parameter]
+        public WhiteSpace HeaderWhiteSpace { get; set; } = WhiteSpace.Truncate;
+
+        /// <summary>
+        /// Gets or sets the white space style.
+        /// </summary>
+        [Parameter]
+        public WhiteSpace WhiteSpace { get; set; } = WhiteSpace.Truncate;
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="RadzenDataGridColumn{TItem}"/> is filterable.
@@ -661,6 +680,11 @@ namespace Radzen.Blazor
                 style.Add($"min-width:{MinWidth}");
             }
 
+            if (!string.IsNullOrEmpty(MaxWidth))
+            {
+                style.Add($"max-width:{MaxWidth}");
+            }
+
             return string.Join(";", style);
         }
 
@@ -740,7 +764,7 @@ namespace Radzen.Blazor
 
         internal void SetSortOrder(SortOrder? order)
         {
-            var descriptor = Grid.sorts.Where(d => d.Property == GetSortProperty()).FirstOrDefault();
+            var descriptor = Grid.Sorts.Where(d => d.Property == GetSortProperty()).FirstOrDefault();
             if (descriptor == null)
             {
                 descriptor = new SortDescriptor() { Property = GetSortProperty() };
@@ -754,16 +778,16 @@ namespace Radzen.Blazor
             else
             {
                 SetSortOrderInternal(null);
-                if (Grid.sorts.Where(d => d.Property == GetSortProperty()).Any())
+                if (Grid.Sorts.Where(d => d.Property == GetSortProperty()).Any())
                 {
-                    Grid.sorts.Remove(descriptor);
+                    Grid.Sorts.Remove(descriptor);
                 }
                 descriptor = null;
             }
 
-            if (descriptor != null && !Grid.sorts.Where(d => d.Property == GetSortProperty()).Any())
+            if (descriptor != null && !Grid.Sorts.Where(d => d.Property == GetSortProperty()).Any())
             {
-                Grid.sorts.Add(descriptor);
+                Grid.Sorts.Add(descriptor);
             }
 
             sortOrder = new SortOrder?[] { order };
@@ -883,10 +907,10 @@ namespace Radzen.Blazor
 
                 if (Grid != null)
                 {
-                    var descriptor = Grid.sorts.Where(d => d.Property == GetSortProperty()).FirstOrDefault();
+                    var descriptor = Grid.Sorts.Where(d => d.Property == GetSortProperty()).FirstOrDefault();
                     if (descriptor == null)
                     {
-                        Grid.sorts.Add(new SortDescriptor() { Property = GetSortProperty(), SortOrder = sortOrder.FirstOrDefault() });
+                        Grid.Sorts.Add(new SortDescriptor() { Property = GetSortProperty(), SortOrder = sortOrder.FirstOrDefault() });
                         Grid._view = null;
                     }
                 }
@@ -1044,6 +1068,24 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
+        /// Get body column class.
+        /// </summary>
+        /// <returns></returns>
+        internal string GetCellClass()
+        {
+            return $"rz-cell-data rz-text-{Enum.GetName(typeof(WhiteSpace), WhiteSpace).ToLower()}";
+        }
+
+        /// <summary>
+        /// Get column header class.
+        /// </summary>
+        /// <returns></returns>
+        internal string GetHeaderClass()
+        {
+            return $"rz-column-title-content rz-text-{Enum.GetName(typeof(WhiteSpace), HeaderWhiteSpace).ToLower()}";
+        }
+
+        /// <summary>
         /// Set column filter value.
         /// </summary>
         public void SetFilterValue(object value, bool isFirst = true)
@@ -1054,7 +1096,19 @@ namespace Radzen.Blazor
                 value = offset;
             }
 
-            if (PropertyAccess.IsEnum(FilterPropertyType) || (PropertyAccess.IsNullableEnum(FilterPropertyType)))
+            if ((FilterPropertyType == typeof(TimeOnly) || FilterPropertyType == typeof(TimeOnly?)) && value != null && value is string)
+            {
+                var v = TimeOnly.Parse($"{value}");
+                value = FilterPropertyType == typeof(TimeOnly) ? v : (TimeOnly?)v;
+            }
+
+            if ((FilterPropertyType == typeof(Guid) || FilterPropertyType == typeof(Guid?)) && value != null && value is string)
+            {
+                var v = Guid.Parse($"{value}");
+                value = FilterPropertyType == typeof(Guid) ? v : (Guid?)v;
+            }
+
+            if (!QueryableExtension.IsEnumerable(value?.GetType() ?? typeof(object)) && (PropertyAccess.IsEnum(FilterPropertyType) || (PropertyAccess.IsNullableEnum(FilterPropertyType))))
             {
                 Type enumType = Enum.GetUnderlyingType(Nullable.GetUnderlyingType(FilterPropertyType) ?? FilterPropertyType);
                 value = value is not null ? Convert.ChangeType(value, enumType) : null;
@@ -1062,7 +1116,7 @@ namespace Radzen.Blazor
 
             if (isFirst)
             {
-                filterValue = CanSetCurrentValue(value) ? value : 
+                filterValue = CanSetCurrentValue(value) ? value :
                     GetFilterOperator() == FilterOperator.IsEmpty  || GetFilterOperator() == FilterOperator.IsNotEmpty ? string.Empty : null;
             }
             else
@@ -1167,7 +1221,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The filter operator.</value>
         [Parameter]
-        public FilterOperator FilterOperator 
+        public FilterOperator FilterOperator
         {
             get
             {
@@ -1451,10 +1505,10 @@ namespace Radzen.Blazor
         /// </summary>
         public int? GetSortIndex()
         {
-            var descriptor = Grid.sorts.Where(s => s.Property == GetSortProperty()).FirstOrDefault();
+            var descriptor = Grid.Sorts.Where(s => s.Property == GetSortProperty()).FirstOrDefault();
             if (descriptor != null)
             {
-                return Grid.sorts.IndexOf(descriptor);
+                return Grid.Sorts.IndexOf(descriptor);
             }
 
             return null;

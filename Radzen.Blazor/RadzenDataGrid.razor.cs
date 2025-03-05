@@ -7,9 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.Data.Common;
 using System.Linq;
-using System.Linq.Dynamic.Core;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -157,8 +155,8 @@ namespace Radzen.Blazor
 
             if (Groups.Any())
             {
-                query = view.AsQueryable().OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, Groups.Any() ? string.Join(',', Groups.Select(g => $"{(typeof(TItem) == typeof(object) ? g.Property : "np(" + g.Property + ")")}")) : "it");
-                _groupedPagedView = await Task.FromResult(query.GroupByMany(DynamicLinqCustomTypeProvider.ParsingConfig, Groups.Any() ? Groups.Select(g => $"{(typeof(TItem) == typeof(object) ? g.Property : "np(" + g.Property + ")")}").ToArray() : new string[] { "it" }).ToList());
+                query = view.AsQueryable().OrderBy(Groups.Any() ? string.Join(',', Groups.Select(g => g.Property)) : null);
+                _groupedPagedView = await Task.FromResult(query.GroupByMany(Groups.Any() ? Groups.Select(g => g.Property).ToArray() : new string[] { "it" }).ToList());
 
                 totalItemsCount = await Task.FromResult(_groupedPagedView.Count());
             }
@@ -365,9 +363,9 @@ namespace Radzen.Blazor
                 if (_groupedPagedView == null)
                 {
                     var orderBy = GetOrderBy();
-                    var query = Groups.Count(g => g.SortOrder == null) == Groups.Count || !string.IsNullOrEmpty(orderBy) ? View : View.OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, string.Join(',', Groups.Select(g => $"{(typeof(TItem) == typeof(object) ? g.Property : "np(" + g.Property + ")")} {(g.SortOrder == null ? "" : g.SortOrder == SortOrder.Ascending ? " asc" : " desc")}")));
+                    var query = Groups.Count(g => g.SortOrder == null) == Groups.Count || !string.IsNullOrEmpty(orderBy) ? View : View.OrderBy(string.Join(',', Groups.Select(g => $"{g.Property} {(g.SortOrder == null ? "" : g.SortOrder == SortOrder.Ascending ? " asc" : " desc")}")));
                     var v = (AllowPaging && !LoadData.HasDelegate ? query.Skip(skip).Take(PageSize) : query).ToList().AsQueryable();
-                    _groupedPagedView = v.GroupByMany(DynamicLinqCustomTypeProvider.ParsingConfig, Groups.Select(g => $"{(typeof(TItem) == typeof(object) ? g.Property : "np(" + g.Property + ")")}").ToArray()).ToList();
+                    _groupedPagedView = v.GroupByMany(Groups.Select(g => g.Property).ToArray()).ToList();
                 }
                 return _groupedPagedView;
             }
@@ -680,11 +678,11 @@ namespace Radzen.Blazor
                 }
             }
 
-            var descriptor = sorts.Where(d => d.Property == column?.GetSortProperty()).FirstOrDefault();
+            var descriptor = Sorts.Where(d => d.Property == column?.GetSortProperty()).FirstOrDefault();
             if (descriptor == null && column.SortOrder.HasValue)
             {
                 descriptor = new SortDescriptor() { Property = column.GetSortProperty(), SortOrder = column.SortOrder.Value };
-                sorts.Add(descriptor);
+                Sorts.Add(descriptor);
             }
 
             if (!allColumns.Contains(column))
@@ -1687,7 +1685,7 @@ namespace Radzen.Blazor
 
         internal string GetOrderBy()
         {
-            return string.Join(",", sorts.Select(d => GetSortOrderAsString(d, IsOData())));
+            return string.Join(",", Sorts.Select(d => GetSortOrderAsString(d, IsOData())));
         }
 
         internal string GetSortOrderAsString(SortDescriptor d, bool isOData)
@@ -1729,12 +1727,12 @@ namespace Radzen.Blazor
                     var firstItem = view.FirstOrDefault();
                     if (firstItem != null)
                     {
-                        view = view.Cast(firstItem.GetType()).AsQueryable().OrderBy(orderBy).Cast<TItem>();
+                        view = QueryableExtension.Cast(view, firstItem.GetType()).AsQueryable().OrderBy(orderBy).Cast<TItem>();
                     }
                 }
                 else
                 {
-                    view = view.OrderBy(orderBy);
+                    view = view.OrderBy<TItem>(orderBy);
                 }
             }
 
@@ -1760,7 +1758,7 @@ namespace Radzen.Blazor
                     var cd = childData[item].Data.AsQueryable();
                     if (!string.IsNullOrEmpty(orderBy))
                     {
-                        cd = cd.OrderBy(orderBy);
+                        cd = cd.OrderBy<TItem>(orderBy);
                     }
 
                     viewList.InsertRange(viewList.IndexOf(item) + 1, cd);
@@ -1815,12 +1813,13 @@ namespace Radzen.Blazor
                             var firstItem = view.FirstOrDefault();
                             if (firstItem != null)
                             {
-                                view = view.Cast(firstItem.GetType()).AsQueryable().OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, orderBy).Cast<TItem>();
+                                view = QueryableExtension.Cast(view, firstItem.GetType());
+                                view = view.OrderBy(orderBy).Cast<TItem>();
                             }
                         }
                         else
                         {
-                            view = view.OrderBy(DynamicLinqCustomTypeProvider.ParsingConfig, orderBy);
+                            view = view.OrderBy(orderBy);
                         }
                     }
                 }
@@ -2072,7 +2071,7 @@ namespace Radzen.Blazor
                     c.SetVisible(null);
                 });
                 selectedColumns = allColumns.Where(c => c.Pickable && c.GetVisible()).ToList();
-                sorts.Clear();
+                Sorts.Clear();
                 columns = allColumns.Where(c => c.Parent == null).ToList();
            }
         }
@@ -2185,7 +2184,7 @@ namespace Radzen.Blazor
                 .ToList();
 
             Query.Filters = filters;
-            Query.Sorts = sorts;
+            Query.Sorts = Sorts.ToList();
             if (LoadData.HasDelegate)
             {
                 await LoadData.InvokeAsync(new Radzen.LoadDataArgs()
@@ -2195,7 +2194,7 @@ namespace Radzen.Blazor
                     OrderBy = orderBy,
                     Filter = IsOData() ? allColumns.ToList().ToODataFilterString<TItem>() : filterString,
                     Filters = filters,
-                    Sorts = sorts
+                    Sorts = Sorts.ToList()
                 });
             }
         }
@@ -2420,6 +2419,17 @@ namespace Radzen.Blazor
             else if(settings == null)
             {
                 await base.ReloadOnFirstRender();
+            }
+        }
+
+        /// <summary>
+        /// Force load of the DataGrid Settings.
+        /// </summary>
+        public async Task ReloadSettings()
+        {
+            if (settings != null)
+            {
+                await LoadSettingsInternal(settings);
             }
         }
 
@@ -3022,48 +3032,46 @@ namespace Radzen.Blazor
             return isOData != null ? isOData.Value : false;
         }
 
-        internal List<SortDescriptor> sorts = new List<SortDescriptor>();
-
         internal void SetColumnSortOrder(RadzenDataGridColumn<TItem> column)
         {
+            var CurrentSortDescriptor = Sorts.FirstOrDefault(d => d.Property == column?.GetSortProperty());
             if (!AllowMultiColumnSorting)
             {
                 foreach (var c in allColumns.ToList().Where(c => c != column))
                 {
                     c.SetSortOrderInternal(null);
                 }
-                sorts.Clear();
+                Sorts.Clear();
             }
 
-            var descriptor = sorts.Where(d => d.Property == column?.GetSortProperty()).FirstOrDefault();
-            if (descriptor == null)
+            if (CurrentSortDescriptor == null)
             {
-                descriptor = new SortDescriptor() { Property = column.GetSortProperty() };
+                CurrentSortDescriptor = new SortDescriptor() { Property = column.GetSortProperty() };
             }
 
-            if (column.GetSortOrder() == null)
+            if (CurrentSortDescriptor.SortOrder == null)
             {
                 column.SetSortOrderInternal(SortOrder.Ascending);
-                descriptor.SortOrder = SortOrder.Ascending;
+                CurrentSortDescriptor.SortOrder = SortOrder.Ascending;
             }
-            else if (column.GetSortOrder() == SortOrder.Ascending)
+            else if (CurrentSortDescriptor.SortOrder == SortOrder.Ascending)
             {
                 column.SetSortOrderInternal(SortOrder.Descending);
-                descriptor.SortOrder = SortOrder.Descending;
+                CurrentSortDescriptor.SortOrder = SortOrder.Descending;
             }
-            else if (column.GetSortOrder() == SortOrder.Descending)
+            else if (CurrentSortDescriptor.SortOrder == SortOrder.Descending)
             {
                 column.SetSortOrderInternal(null);
-                if (sorts.Where(d => d.Property == column?.GetSortProperty()).Any())
+                if (Sorts.Any(d => d.Property == column?.GetSortProperty()))
                 {
-                    sorts.Remove(descriptor);
+                    Sorts.Remove(CurrentSortDescriptor);
                 }
-                descriptor = null;
+                CurrentSortDescriptor = null;
             }
 
-            if (descriptor != null && !sorts.Where(d => d.Property == column?.GetSortProperty()).Any())
+            if (CurrentSortDescriptor != null && !Sorts.Any(d => d.Property == column?.GetSortProperty()))
             {
-                sorts.Add(descriptor);
+                Sorts.Add(CurrentSortDescriptor);
             }
         }
 

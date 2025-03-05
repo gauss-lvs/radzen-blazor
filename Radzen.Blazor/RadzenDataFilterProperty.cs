@@ -3,10 +3,7 @@ using Microsoft.JSInterop;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Globalization;
 using System.Linq;
-using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 
 namespace Radzen.Blazor
@@ -282,6 +279,24 @@ namespace Radzen.Blazor
         [Parameter]
         public FilterOperator FilterOperator { get; set; }
 
+        IEnumerable<FilterOperator> _filterOperators;
+        /// <summary>
+        /// Gets or sets the filter operators.
+        /// </summary>
+        /// <value>The filter operators.</value>
+        [Parameter]
+        public IEnumerable<FilterOperator> FilterOperators
+        {
+            get
+            {
+                return _filterOperators;
+            }
+            set
+            {
+                _filterOperators = value;
+            }
+        }
+
         /// <summary>
         /// Set property filter operator.
         /// </summary>
@@ -300,6 +315,8 @@ namespace Radzen.Blazor
         /// </summary>
         public virtual IEnumerable<FilterOperator> GetFilterOperators()
         {
+            if (FilterOperators != null) return FilterOperators;
+
             if (PropertyAccess.IsEnum(FilterPropertyType))
                 return new FilterOperator[] { FilterOperator.Equals, FilterOperator.NotEquals };
 
