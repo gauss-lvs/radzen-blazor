@@ -22,7 +22,7 @@ namespace Radzen
         /// <summary>
         /// Projects each element of a sequence into a collection of property values.
         /// </summary>
-        public static IQueryable Select(this IQueryable source, string propertyName)
+        internal static IQueryable Select(this IQueryable source, string propertyName)
         {
             var parameter = Expression.Parameter(source.ElementType, "x");
 
@@ -154,16 +154,19 @@ namespace Radzen
 
             string methodAsc = "OrderBy";
             string methodDesc = "OrderByDescending";
+            string[] sortStrings = new string[] { "asc", "desc" }; 
 
             foreach (var o in (selector ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries))
             {
                 var nameAndOrder = o.Trim();
+                var name = string.Join(" ", nameAndOrder.Split(' ').Where(i => !sortStrings.Contains(i.Trim()))).Trim();
+                var order = nameAndOrder.Split(' ').FirstOrDefault(i => sortStrings.Contains(i.Trim())) ?? sortStrings.First();
 
                 Expression property = !string.IsNullOrEmpty(nameAndOrder) ?
-                        GetNestedPropertyExpression(parameters.FirstOrDefault(), nameAndOrder.Split(' ').FirstOrDefault()) : parameters.FirstOrDefault();
+                        GetNestedPropertyExpression(parameters.FirstOrDefault(), name) : parameters.FirstOrDefault();
 
                 expression = Expression.Call(
-                    typeof(Queryable), o.Split(' ').Contains("desc") ? methodDesc : methodAsc,
+                    typeof(Queryable), order.Equals(sortStrings.First(), StringComparison.OrdinalIgnoreCase) ? methodAsc : methodDesc,
                     new Type[] { source.ElementType, property.Type },
                     expression, Expression.Quote(Expression.Lambda(notNullCheck(property), parameters)));
 
@@ -303,6 +306,13 @@ namespace Radzen
                 {
                     throw new ArgumentException($"Invalid index format: {indexString}");
                 }
+            }
+            else if (expression.Type.IsInterface)
+            {
+                member = Expression.Property(expression,
+                    new[] { expression.Type }.Concat(expression.Type.GetInterfaces()).FirstOrDefault(t => t.GetProperty(currentPart) != null),
+                    currentPart
+                );
             }
             else
             {
