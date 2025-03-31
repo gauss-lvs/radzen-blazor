@@ -6,35 +6,57 @@ using Microsoft.AspNetCore.Components.Rendering;
 
 namespace Radzen.Blazor.Markdown;
 
-class BlazorMarkdownRenderer(RenderTreeBuilder builder, Action<RenderTreeBuilder, int> outlet) : NodeVisitorBase
+#nullable enable
+class BlazorMarkdownRendererOptions
+{
+    public int AutoLinkHeadingDepth { get; set; }
+}
+
+class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, RenderTreeBuilder builder, Action<RenderTreeBuilder, int> outlet) : NodeVisitorBase
 {
     public const string Outlet = "<!--rz-outlet-{0}-->";
+    private static readonly Regex OutletRegex = new (@"<!--rz-outlet-(\d+)-->");
+    private static readonly Regex HtmlTagRegex = new(@"<(\w+)((?:\s+[^>]*)?)\/?>");
+    private static readonly Regex HtmlClosingTagRegex = new(@"</(\w+)>");
+    private static readonly Regex AttributeRegex = new(@"(\w+)(?:\s*=\s*(?:([""'])(.*?)\2|([^\s>]+)))?");
 
     public override void VisitHeading(Heading heading)
     {
         builder.OpenComponent<RadzenText>(0);
         builder.AddAttribute(1, nameof(RadzenText.ChildContent), RenderChildren(heading.Children));
+
         switch (heading.Level)
         {
             case 1:
                 builder.AddAttribute(2, nameof(RadzenText.TextStyle), TextStyle.H1);
                 break;
             case 2:
-                builder.AddAttribute(2, nameof(RadzenText.TextStyle), TextStyle.H2);
+                builder.AddAttribute(3, nameof(RadzenText.TextStyle), TextStyle.H2);
                 break;
             case 3:
-                builder.AddAttribute(2, nameof(RadzenText.TextStyle), TextStyle.H3);
+                builder.AddAttribute(4, nameof(RadzenText.TextStyle), TextStyle.H3);
                 break;
             case 4:
-                builder.AddAttribute(2, nameof(RadzenText.TextStyle), TextStyle.H4);
+                builder.AddAttribute(5, nameof(RadzenText.TextStyle), TextStyle.H4);
                 break;
             case 5:
-                builder.AddAttribute(2, nameof(RadzenText.TextStyle), TextStyle.H5);
+                builder.AddAttribute(6, nameof(RadzenText.TextStyle), TextStyle.H5);
                 break;
             case 6:
-                builder.AddAttribute(2, nameof(RadzenText.TextStyle), TextStyle.H6);
+                builder.AddAttribute(7, nameof(RadzenText.TextStyle), TextStyle.H6);
                 break;
         }
+
+        if (heading.Level <= options.AutoLinkHeadingDepth)
+        {
+            var anchor = Regex.Replace(heading.Value, @"[^\w\s-]", string.Empty).Replace(' ', '-').ToLowerInvariant().Trim();
+            builder.AddAttribute(8, nameof(RadzenText.Anchor), anchor);
+        }
+        else
+        {
+            builder.AddAttribute(9, nameof(RadzenText.Anchor), (string?)null);
+        }
+
         builder.CloseComponent();
     }
 
@@ -55,7 +77,21 @@ class BlazorMarkdownRenderer(RenderTreeBuilder builder, Action<RenderTreeBuilder
     {
         builder.OpenComponent<RadzenTableCell>(0);
         builder.AddAttribute(1, nameof(RadzenTableCell.ChildContent), RenderChildren(cell.Children));
+        RenderCellAlignment(builder, cell.Alignment);
         builder.CloseComponent();
+    }
+
+    private static void RenderCellAlignment(RenderTreeBuilder builder, TableCellAlignment alignment)
+    {
+        switch (alignment)
+        {
+            case TableCellAlignment.Center:
+                builder.AddAttribute(2, nameof(RadzenTableCell.Style), "text-align: center");
+                break;
+            case TableCellAlignment.Right:
+                builder.AddAttribute(3, nameof(RadzenTableCell.Style), "text-align: right");
+                break;
+        }
     }
 
     public override void VisitTableHeaderRow(TableHeaderRow header)
@@ -70,6 +106,7 @@ class BlazorMarkdownRenderer(RenderTreeBuilder builder, Action<RenderTreeBuilder
                 {
                     headerRowBuilder.OpenComponent<RadzenTableHeaderCell>(0);
                     headerRowBuilder.AddAttribute(1, nameof(RadzenTableHeaderCell.ChildContent), RenderChildren(cell.Children));
+                    RenderCellAlignment(headerRowBuilder, cell.Alignment);
                     headerRowBuilder.CloseComponent();
                 }
             }));
@@ -105,7 +142,7 @@ class BlazorMarkdownRenderer(RenderTreeBuilder builder, Action<RenderTreeBuilder
     {
         return innerBuilder =>
         {
-            var inner = new BlazorMarkdownRenderer(innerBuilder, outlet);
+            var inner = new BlazorMarkdownRenderer(options, innerBuilder, outlet);
             inner.VisitChildren(children);
         };
     }
@@ -203,7 +240,18 @@ class BlazorMarkdownRenderer(RenderTreeBuilder builder, Action<RenderTreeBuilder
 
     public override void VisitHtmlBlock(HtmlBlock htmlBlock)
     {
-        VisitHtml(htmlBlock.Value);
+            var match = OutletRegex.Match(htmlBlock.Value);
+
+        if (match.Success)
+        {
+            var markerId = Convert.ToInt32(match.Groups[1].Value);
+            outlet(builder, markerId);
+            return;
+        }
+        else
+        {
+            builder.AddMarkupContent(0, htmlBlock.Value);
+        }
     }
 
     public override void VisitLineBreak(LineBreak lineBreak)
@@ -217,25 +265,84 @@ class BlazorMarkdownRenderer(RenderTreeBuilder builder, Action<RenderTreeBuilder
         builder.AddContent(0, text.Value);
     }
 
-    private static readonly Regex OutletRegex = new (@"<!--rz-outlet-(\d+)-->");
-
-    private void VisitHtml(string html)
+    private static bool IsVoidElement(string tagName)
     {
-        var match = OutletRegex.Match(html);
+        return tagName.ToLowerInvariant() switch
+        {
+            "area" => true,
+            "base" => true,
+            "br" => true,
+            "col" => true,
+            "embed" => true,
+            "hr" => true,
+            "img" => true,
+            "input" => true,
+            "link" => true,
+            "meta" => true,
+            "param" => true,
+            "source" => true,
+            "track" => true,
+            "wbr" => true,
+            _ => false
+        };
+
+    }
+
+    public override void VisitHtmlInline(HtmlInline html)
+    {
+        var match = OutletRegex.Match(html.Value);
 
         if (match.Success)
         {
             var markerId = Convert.ToInt32(match.Groups[1].Value);
-
             outlet(builder, markerId);
+            return;
         }
-        else
+
+        var closingMatch = HtmlClosingTagRegex.Match(html.Value);
+
+        if (closingMatch.Success)
         {
-            builder.AddMarkupContent(0, html);
+            builder.CloseElement();
+            return;
         }
-    }
-    public override void VisitHtmlInline(HtmlInline html)
-    {
-        VisitHtml(html.Value);
+
+        var openingMatch = HtmlTagRegex.Match(html.Value);
+
+        if (openingMatch.Success)
+        {
+            var tagName = openingMatch.Groups[1].Value;
+
+            builder.OpenElement(0, tagName);
+
+            var attributes = openingMatch.Groups[2].Value;
+
+            if (!string.IsNullOrEmpty(attributes))
+            {
+                var matches = AttributeRegex.Matches(attributes);
+
+                foreach (Match attribute in matches)
+                {
+                    var name = attribute.Groups[1].Value;
+                    var value = name;
+
+                    if (attribute.Groups[2].Success) // Quoted value (either single or double)
+                    {
+                        value = attribute.Groups[3].Value;
+                    }
+                    else if (attribute.Groups[4].Success) // Unquoted value
+                    {
+                        value = attribute.Groups[4].Value;
+                    }
+
+                    builder.AddAttribute(1, name, value);
+                }
+            }
+
+            if (html.Value.EndsWith("/>") || IsVoidElement(tagName))
+            {
+                builder.CloseElement();
+            }
+        }
     }
 }

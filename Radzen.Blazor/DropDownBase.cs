@@ -697,7 +697,7 @@ namespace Radzen
                     //
                 }
             }
-            else if (key == "Enter" || key == "NumpadEnter")
+            else if (key == "Enter" || key == "NumpadEnter" || key == "Space")
             {
                 preventKeydown = true;
 
@@ -717,11 +717,14 @@ namespace Radzen
 
                 if (!popupOpened)
                 {
-                    await OpenPopup(key, isFilter);
+                    if(key != "Space")
+                    {
+                        await OpenPopup(key, isFilter);
+                    }
                 }
                 else
                 {
-                    if (!Multiple)
+                    if (!Multiple && !isFilter)
                     {
                         await ClosePopup(key);
                     }
@@ -735,6 +738,8 @@ namespace Radzen
             }
             else if (key == "Escape" || key == "Tab")
             {
+                preventKeydown = false;
+
                 await ClosePopup(key);
             }
             else if (key == "Delete" && AllowClear)
