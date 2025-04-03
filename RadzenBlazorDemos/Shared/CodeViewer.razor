@@ -28,7 +28,9 @@
     }
     </RadzenColumn>
 </RadzenRow>
-<RadzenAlert Visible=@(error != null) AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">@error</RadzenAlert>
+<RadzenAlert Visible=@(error != null) AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+    @((MarkupString)error)
+</RadzenAlert>
 <Monaco Value=@source Language="@language" ValueChanged=@OnValueChanged @ref="@monaco" Style="border: var(--rz-border-disabled)" Disabled=@isBusy ReadOnly=@ReadOnly />
 @code {
     private string Copy => $"copy('{monaco?.Id}')";
