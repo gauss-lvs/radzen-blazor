@@ -472,7 +472,7 @@ namespace Radzen
                     var i = 0;
                     b.OpenElement(i++, "p");
                     b.AddAttribute(i++, "class", "rz-dialog-confirm-message");
-                    b.AddContent(i++, (MarkupString)message);
+                    b.AddContent(i++, message);
                     b.CloseElement();
 
                     b.OpenElement(i++, "div");
@@ -521,7 +521,7 @@ namespace Radzen
                     var i = 0;
                     b.OpenElement(i++, "p");
                     b.AddAttribute(i++, "class", "rz-dialog-alert-message");
-                    b.AddContent(i++, (MarkupString)message);
+                    b.AddContent(i++, message);
                     b.CloseElement();
 
                     b.OpenElement(i++, "div");
