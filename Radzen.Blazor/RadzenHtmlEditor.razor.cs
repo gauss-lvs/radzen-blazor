@@ -223,8 +223,8 @@ namespace Radzen.Blazor
             {
                 Html = html;
                 htmlChanged = true;
+                sourceChanged = true;
             }
-            await JSRuntime.InvokeVoidAsync("Radzen.innerHTML", ContentEditable, Html);
             await OnChange();
             StateHasChanged();
         }
@@ -284,6 +284,7 @@ namespace Radzen.Blazor
         }
 
         bool htmlChanged = false;
+        bool sourceChanged = false;
 
         bool visibleChanged = false;
         bool firstRender = true;
@@ -308,6 +309,8 @@ namespace Radzen.Blazor
                 }
             }
 
+            var requiresUpdate = false;
+
             if (valueChanged || visibleChanged)
             {
                 valueChanged = false;
@@ -317,8 +320,22 @@ namespace Radzen.Blazor
 
                 if (Visible)
                 {
-                    await JSRuntime.InvokeVoidAsync("Radzen.innerHTML", ContentEditable, Value);
+                    requiresUpdate = true;
                 }
+            }
+            else if (sourceChanged)
+            {
+                sourceChanged = false;
+
+                if (Visible)
+                {
+                    requiresUpdate = true;
+                }
+            }
+
+            if (requiresUpdate)
+            {
+                await JSRuntime.InvokeVoidAsync("Radzen.innerHTML", ContentEditable, Html);
             }
         }
 

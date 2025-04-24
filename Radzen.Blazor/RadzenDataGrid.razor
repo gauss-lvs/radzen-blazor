@@ -16,7 +16,6 @@
 
     <div @ref=@Element style="@Style" @attributes="Attributes" class="rz-data-grid @GetCssClass()" id="@GetId()"
         @onkeydown="@OnKeyDown" @onkeydown:preventDefault="preventKeyDown" @onkeydown:stopPropagation="true" tabindex=0
-        @onfocus=@(args => focusedIndex = focusedIndex == -1 ? 0: focusedIndex)
         @onblur=@(args => JSRuntime.InvokeVoidAsync("Radzen.clearFocusedHeaderCell", UniqueID))>
         @if (AllowGrouping || AllowColumnPicking)
         {
@@ -114,14 +113,14 @@
                                     @foreach (var g in Groups)
                                     {
                                         <th class="rz-col-icon rz-unselectable-text" scope="col" rowspan=@(deepestChildColumnLevel + 1)>
-                                            <span class="rz-column-title"></span>
+                                            <span class="rz-column-title"><span style="visibility:hidden">GEC</span></span>
                                         </th>
                                     }
                                 }
                                     @if (Template != null && ShowExpandColumn && i == 0)
                                     {
                                         <th class="rz-col-icon rz-unselectable-text" scope="col" rowspan=@(deepestChildColumnLevel + 1)>
-                                            <span class="rz-column-title"></span>
+                                            <span class="rz-column-title"><span style="visibility:hidden">EC</span></span>
                                         </th>
                                     }
                             }
@@ -284,7 +283,7 @@
 
         @if (AllowPaging && PagerPosition.HasFlag(PagerPosition.Bottom))
         {
-            <RadzenPager HorizontalAlign="@PagerHorizontalAlign" AlwaysVisible="@PagerAlwaysVisible" @ref="bottomPager" Count="@Count" PageSize="@PageSize" PageNumbersCount="@PageNumbersCount" PageChanged="@ChangePage" PageSizeChanged="@OnPageSizeChanged" PageSizeOptions="@PageSizeOptions" ShowPagingSummary="@ShowPagingSummary" PagingSummaryTemplate="@PagingSummaryTemplate" PageSizeText="@PageSizeText" Density="@Density" FirstPageTitle="@FirstPageTitle" FirstPageAriaLabel="@FirstPageAriaLabel" PrevPageAriaLabel="@PrevPageAriaLabel" PrevPageTitle="@PrevPageTitle" NextPageAriaLabel="@NextPageAriaLabel" NextPageTitle="@NextPageTitle" LastPageAriaLabel="@LastPageAriaLabel" LastPageTitle="@LastPageTitle" PageAriaLabelFormat="@PageAriaLabelFormat" PageTitleFormat="@PageTitleFormat" PrevPageLabel="@PrevPageLabel" NextPageLabel="@NextPageLabel" />
+            <RadzenPager HorizontalAlign="@PagerHorizontalAlign" AlwaysVisible="@PagerAlwaysVisible" @ref="bottomPager" Count="@Count" PageSize="@PageSize" PageNumbersCount="@PageNumbersCount" PageChanged="@ChangePage" PageSizeChanged="@OnPageSizeChanged" PageSizeOptions="@PageSizeOptions" ShowPagingSummary="@ShowPagingSummary" PagingSummaryFormat="@PagingSummaryFormat" PagingSummaryTemplate="@PagingSummaryTemplate" PageSizeText="@PageSizeText" Density="@Density" FirstPageTitle="@FirstPageTitle" FirstPageAriaLabel="@FirstPageAriaLabel" PrevPageAriaLabel="@PrevPageAriaLabel" PrevPageTitle="@PrevPageTitle" NextPageAriaLabel="@NextPageAriaLabel" NextPageTitle="@NextPageTitle" LastPageAriaLabel="@LastPageAriaLabel" LastPageTitle="@LastPageTitle" PageAriaLabelFormat="@PageAriaLabelFormat" PageTitleFormat="@PageTitleFormat" PrevPageLabel="@PrevPageLabel" NextPageLabel="@NextPageLabel" />
         }
         @if (@FooterTemplate != null)
         {
@@ -602,7 +601,24 @@
                                 {
                                     @if (this.IsRowInEditMode(Item) && column.EditTemplate != null)
                                     {
-                                        @column.EditTemplate(Item)
+                                        var isDefault = column.IsInEditMode == RadzenDataGridColumn<TItem>.DefaultIsInEditMode;
+
+                                        @if(isDefault)
+                                        {
+                                            @column.EditTemplate(Item)
+                                        }
+                                        else if (column.IsInEditMode(column.Property, Item))
+                                        {
+                                            @column.EditTemplate(Item)
+                                        }
+                                        else if (column.Template != null)
+                                        {
+                                            @column.Template(Item)
+                                        }
+                                        else
+                                        {
+                                            @column.GetValue(Item)
+                                        }
                                     }
                                     else if (column.Template != null)
                                     {
