@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Razor">
+﻿<Project Sdk="Microsoft.NET.Sdk.Razor">
   <PropertyGroup>
     <IncludeSymbols>true</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
@@ -10,7 +10,7 @@
     <IsPackable>true</IsPackable>
     <PackageId>Radzen.Blazor.GAUSS</PackageId>
     <Product>Radzen.Blazor</Product>
-    <Version>6.6.4.1</Version>
+    <Version>7.0.0</Version>
     <Copyright>Radzen Ltd.</Copyright>
     <Authors>Radzen Ltd. and GAUSS-LVS mbH</Authors>
     <Description>Radzen Blazor is a set of 90+ free native Blazor UI controls packed with DataGrid, Scheduler, Charts and robust theming including Material design and Fluent UI.</Description>
@@ -56,10 +56,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Sass Include="$(MSBuildProjectDirectory)/themes/*.scss" Exclude="$(MSBuildProjectDirectory)/themes/_*.scss" Condition="'$(TargetFramework)' == 'net8.0'" />
+    <Sass Include="$(MSBuildProjectDirectory)/themes/*.scss" Exclude="$(MSBuildProjectDirectory)/themes/_*.scss" Condition="'$(TargetFramework)' == 'net9.0'" />
   </ItemGroup>
 
- <Target Name="Sass" BeforeTargets="BeforeBuild" Condition="'$(TargetFramework)' == 'net8.0'">
+ <Target Name="Sass" BeforeTargets="BeforeBuild" Condition="'$(TargetFramework)' == 'net9.0'">
     <PropertyGroup>
       <_SassFileList>@(Sass-&gt;'"%(FullPath)"', ' ')</_SassFileList>
       <DartSassBuilderArgs>files $(_SassFileList) --outputstyle $(DartSassOutputStyle) --level $(DartSassOutputLevel)</DartSassBuilderArgs>
@@ -68,14 +68,14 @@
     <Message Text="Converted SassFile list to argument" Importance="$(DartSassMessageLevel)" />
   </Target>
 
-  <Target Name="MoveCss" AfterTargets="AfterCompile" Condition="'$(TargetFramework)' == 'net8.0'">
+  <Target Name="MoveCss" AfterTargets="AfterCompile" Condition="'$(TargetFramework)' == 'net9.0'">
     <ItemGroup>
         <CssFile Include="$(MSBuildProjectDirectory)/themes/*.css" />
     </ItemGroup>
     <Move SourceFiles="@(CssFile)" DestinationFolder="$(MSBuildProjectDirectory)/wwwroot/css/" />
   </Target>
 
-  <Target Name="MinifyTest" BeforeTargets="Build" Condition="'$(TargetFramework)' == 'net8.0'">
+  <Target Name="MinifyTest" BeforeTargets="Build" Condition="'$(TargetFramework)' == 'net9.0'">
     <TerserMinify InputFile="wwwroot\Radzen.Blazor.js" OutputFile="wwwroot\Radzen.Blazor.min.js" />
   </Target>
 
