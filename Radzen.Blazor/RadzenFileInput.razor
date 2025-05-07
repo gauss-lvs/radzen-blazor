@@ -17,7 +17,7 @@
       @if(!ShowPreview)
       {
         <div class="rz-fileupload-row">
-          <button disabled="@Disabled" type="button" class="@ButtonClassList" @onclick="@Remove" title="@DeleteText" tabindex="@(Disabled ? "-1" : $"{TabIndex}")">
+          <button disabled="@Disabled" type="button" class="@ButtonClass" @onclick="@Remove" title="@DeleteText" tabindex="@(Disabled ? "-1" : $"{TabIndex}")">
             <span class="rz-button-icon-left rz-icon-trash" style="display:block"></span>
           </button>
         </div>
