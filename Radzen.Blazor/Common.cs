@@ -1119,6 +1119,21 @@ namespace Radzen
     public class PreviewFileInfo : FileInfo
     {
         /// <summary>
+        /// Initializes a new instance of PreviewFileInfo from a browser file.
+        /// </summary>
+        /// <param name="files"></param>
+        public PreviewFileInfo(IBrowserFile files) : base(files)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new, empty instance of PreviewFileInfo.
+        /// </summary>
+        public PreviewFileInfo()
+        {
+        }
+
+        /// <summary>
         /// Gets the URL of the previewed file.
         /// </summary>
         public string Url { get; set; }
@@ -1129,11 +1144,41 @@ namespace Radzen
     /// </summary>
     public class Query
     {
+        Func<string> _getFilter;
+        internal Func<string> GetFilter 
+        {
+            get
+            { 
+                return _getFilter;
+            }
+            set
+            {
+                _filter = null;
+                _getFilter = value;
+            }
+        }
+
+        string _filter;
         /// <summary>
-        /// Gets or sets the filter.
+        /// Gets the filter expression as a string.
         /// </summary>
         /// <value>The filter.</value>
-        public string Filter { get; set; }
+        public string Filter
+        {
+            get
+            {
+                if (_filter == null && GetFilter != null)
+                {
+                    _filter = GetFilter();
+                }
+                return _filter;
+            }
+            set
+            {
+                _filter = value;
+            }
+        }
+
         /// <summary>
         /// Gets the filter expression as a collection of filter descriptors.
         /// </summary>
@@ -2574,11 +2619,43 @@ namespace Radzen
         /// Gets the sort expression as a string.
         /// </summary>
         public string OrderBy { get; set; }
+
+        Func<string> _getFilter;
+        internal Func<string> GetFilter
+        {
+            get
+            {
+                return _getFilter;
+            }
+            set
+            {
+                _filter = null;
+                _getFilter = value;
+            }
+        }
+
+        string _filter;
+
         /// <summary>
         /// Gets the filter expression as a string.
         /// </summary>
         /// <value>The filter.</value>
-        public string Filter { get; set; }
+        public string Filter
+        {
+            get
+            {
+                if (_filter == null && GetFilter != null)
+                {
+                    _filter = GetFilter();
+                }
+                return _filter;
+            }
+            set
+            {
+                _filter = value;
+            }
+        }
+
         /// <summary>
         /// Gets the filter expression as a collection of filter descriptors.
         /// </summary>

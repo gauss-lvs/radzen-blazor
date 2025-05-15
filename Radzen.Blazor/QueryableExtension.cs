@@ -269,14 +269,15 @@ namespace Radzen
             string currentPart = parts[0];
             Expression member;
 
-            if (typeof(IDictionary<string, object>).IsAssignableFrom(expression.Type))
+            if (expression.Type.IsGenericType && typeof(IDictionary<,>).IsAssignableFrom(expression.Type.GetGenericTypeDefinition()))
             {
                 var key = currentPart.Split('"')[1];
                 var typeString = currentPart.Split('(')[0];
 
+                var indexer = Expression.Property(expression, expression.Type.GetProperty("Item"), Expression.Constant(key));
                 member = Expression.Convert(
-                    Expression.Property(expression, expression.Type.GetProperty("Item"), Expression.Constant(key)),
-                    type ?? Type.GetType(typeString.EndsWith("?") ? $"System.Nullable`1[System.{typeString.TrimEnd('?')}]" : $"System.{typeString}") ?? typeof(object));
+                    indexer,
+                    parts.Length > 1 ? indexer.Type : type ?? Type.GetType(typeString.EndsWith("?") ? $"System.Nullable`1[System.{typeString.TrimEnd('?')}]" : $"System.{typeString}") ?? typeof(object));
             }
             else if (currentPart.Contains("[")) // Handle array or list indexing
             {
@@ -871,7 +872,7 @@ namespace Radzen
         /// </summary>
         public static bool IsEnumerable(Type type)
         {
-            return typeof(IEnumerable).IsAssignableFrom(type) || typeof(IEnumerable<>).IsAssignableFrom(type);
+            return (typeof(IEnumerable).IsAssignableFrom(type) || typeof(IEnumerable<>).IsAssignableFrom(type)) && type != typeof(string);
         }
 
         /// <summary>
