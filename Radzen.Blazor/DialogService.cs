@@ -54,7 +54,7 @@ namespace Radzen
                 return reference;
             }
         }
-
+        
         /// <summary>
         /// Gets or sets the URI helper.
         /// </summary>
@@ -85,7 +85,7 @@ namespace Radzen
                 Close();
             }
 
-            if (_sideDialogTask?.Task.IsCompleted == false)
+            if (sideDialogResultTask?.Task.IsCompleted == false)
             {
                 CloseSide();
             }
@@ -159,7 +159,7 @@ namespace Radzen
         /// The tasks
         /// </summary>
         protected List<TaskCompletionSource<dynamic>> tasks = new List<TaskCompletionSource<dynamic>>();
-        private TaskCompletionSource<dynamic> _sideDialogTask;
+        private TaskCompletionSource<dynamic> sideDialogResultTask;
 
         /// <summary>
         /// Opens a dialog with the specified arguments.
@@ -218,7 +218,7 @@ namespace Radzen
             where T : ComponentBase
         {
             CloseSide();
-            _sideDialogTask = new TaskCompletionSource<dynamic>();
+            sideDialogResultTask = new TaskCompletionSource<dynamic>();
             if (options == null)
             {
                 options = new SideDialogOptions();
@@ -226,7 +226,7 @@ namespace Radzen
 
             options.Title = title;
             OnSideOpen?.Invoke(typeof(T), parameters ?? new Dictionary<string, object>(), options);
-            return _sideDialogTask.Task;
+            return sideDialogResultTask.Task;
         }
 
         /// <summary>
@@ -246,7 +246,7 @@ namespace Radzen
             }
 
             CloseSide();
-            _sideDialogTask = new TaskCompletionSource<dynamic>();
+            sideDialogResultTask = new TaskCompletionSource<dynamic>();
 
             if (options == null)
             {
@@ -256,7 +256,7 @@ namespace Radzen
             options.Title = title;
             OnSideOpen?.Invoke(componentType, parameters ?? new Dictionary<string, object>(), options);
 
-            return _sideDialogTask.Task;
+            return sideDialogResultTask.Task;
         }
 
 
@@ -314,12 +314,33 @@ namespace Radzen
         /// <param name="result">The result of the Dialog</param>
         public void CloseSide(dynamic result = null)
         {
-            if (_sideDialogTask?.Task.IsCompleted == false)
+            if (sideDialogResultTask?.Task.IsCompleted == false)
             {
-                _sideDialogTask.TrySetResult(result);
+                sideDialogResultTask.TrySetResult(result);
             }
 
             OnSideClose?.Invoke(result);
+        }
+
+        private TaskCompletionSource sideDialogCloseTask;
+
+        internal void OnSideCloseComplete()
+        {
+            sideDialogCloseTask?.TrySetResult();
+            sideDialogCloseTask = null;
+        }
+
+        /// <summary>
+        /// Closes the side dialog and waits for the closing animation to finish.
+        /// </summary>
+        /// <param name="result">The result of the Dialog</param>
+        public async Task CloseSideAsync(dynamic result = null)
+        {
+            sideDialogCloseTask = new TaskCompletionSource();
+
+            CloseSide(result);
+
+            await sideDialogCloseTask.Task;
         }
 
         /// <summary>
@@ -934,7 +955,26 @@ namespace Radzen
 	/// </summary>
 	public class DialogOptions : DialogOptionsBase
 	{
-		private bool resizable;
+        /// <summary>
+        /// Gets or sets the icon in Title.
+        /// </summary>
+        /// <value>The icon.</value>
+
+        public string Icon { get; set; }
+        /// <summary>
+        /// Gets or sets the icon color in Title.
+        /// </summary>
+        /// <value>The icon color.</value>
+
+        public string IconColor { get; set; }
+
+        /// <summary>
+        /// Gets or sets the CSS style of the Icon in Title.
+        /// </summary>
+        public string IconStyle { get; set; } = "margin-right: 0.75rem";
+
+        
+        private bool resizable;
 		/// <summary>
 		/// Gets or sets a value indicating whether the dialog is resizable. Set to <c>false</c> by default.
 		/// </summary>
