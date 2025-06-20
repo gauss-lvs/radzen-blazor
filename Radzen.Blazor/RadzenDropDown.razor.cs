@@ -197,6 +197,12 @@ namespace Radzen.Blazor
         public string PopupStyle { get; set; } = "max-height:200px;overflow-x:hidden";
 
         /// <summary>
+        /// Gets or sets additional CSS classes for the Popup container.
+        /// </summary>
+        [Parameter]
+        public string PopupClasses { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the selected items will be displayed as chips. Set to <c>false</c> by default.
         /// Requires <see cref="DropDownBase{T}.Multiple" /> to be set to <c>true</c>.
         /// </summary>
