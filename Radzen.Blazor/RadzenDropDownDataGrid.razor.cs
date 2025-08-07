@@ -57,6 +57,13 @@ namespace Radzen.Blazor
         public bool Chips { get; set; }
 
         /// <summary>
+        /// Gets or sets the grid lines.
+        /// </summary>
+        /// <value>The grid lines.</value>
+        [Parameter]
+        public DataGridGridLines GridLines { get; set; } = DataGridGridLines.Default;
+
+        /// <summary>
         /// Gets or sets the Popup style.
         /// </summary>
         /// <value>The number Popup style.</value>
@@ -97,7 +104,7 @@ namespace Radzen.Blazor
         [Parameter]
         public bool OpenOnFocus { get; set; }
 
-        private async Task OnFocus(Microsoft.AspNetCore.Components.Web.FocusEventArgs args)
+        private async Task OnFocus()
         {
             if (OpenOnFocus)
             {
@@ -449,10 +456,17 @@ namespace Radzen.Blazor
             if (column.Type == typeof(string)) return true;
 
             var property = column.GetFilterProperty();
-            var itemType = Data != null ? Data.AsQueryable().ElementType : typeof(object);
-            var type = PropertyAccess.GetPropertyType(itemType, property);
+            if(property is not null)
+            {
+                var itemType = Data != null ? Data.AsQueryable().ElementType : typeof(object);
+                var type = PropertyAccess.GetPropertyType(itemType, property);
 
-            return type == typeof(string);
+                return type == typeof(string);
+            }
+            else
+            {
+                return false;
+            }
         }
 
         string prevSearch;
@@ -486,7 +500,7 @@ namespace Radzen.Blazor
                     {
                         if (AllowFilteringByWord)
                         {
-                            string[] words = searchText.Split(' ');
+                            var words = searchText.Split(' ').Take(AllowFilteringByWordCount);
 
                             foreach (string word in words)
                             {
@@ -506,7 +520,7 @@ namespace Radzen.Blazor
                     {
                         if (AllowFilteringByWord)
                         {
-                            string[] words = searchText.Split(' ');
+                            var words = searchText.Split(' ').Take(AllowFilteringByWordCount);
 
                             foreach (string word in words)
                             {
@@ -935,6 +949,13 @@ namespace Radzen.Blazor
         public bool AllowFilteringByWord { get; set; }
 
         /// <summary>
+        /// Gets or sets the AllowFilteringByWord max count.
+        /// </summary>
+        /// <value>The AllowFilteringByWord max count.</value>
+        [Parameter]
+        public int AllowFilteringByWordCount { get; set; } = 10;
+
+        /// <summary>
         /// Gets or sets a value indicating whether DataGrid row can be selected on row click.
         /// </summary>
         /// <value><c>true</c> if DataGrid row can be selected on row click; otherwise, <c>false</c>.</value>
@@ -969,7 +990,11 @@ namespace Radzen.Blazor
             OpenOnFocus = of;
         }
 
-        private async Task OnChipRemove(object item)
+        /// <summary>
+        /// Event handler for when an item is unselected by clicking a chip
+        /// </summary>
+        /// <param name="item">The item that is to be removed</param>
+        protected virtual async Task OnChipRemove(object item)
         {
             if (!Disabled)
             {
@@ -990,7 +1015,7 @@ namespace Radzen.Blazor
 
             if (IsJSRuntimeAvailable)
             {
-                JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", PopupID);
+                JSRuntime.InvokeVoid("Radzen.destroyPopup", PopupID);
             }
         }
 

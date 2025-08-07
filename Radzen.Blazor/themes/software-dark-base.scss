@@ -340,6 +340,9 @@ $datepicker-header-background-color: var(--rz-base-800) !default;
 $datepicker-calendar-border: var(--rz-border-base-700) !default;
 $timepicker-background-color: var(--rz-base-900) !default;
 
+// TimeSpanPicker
+$timespanpicker-panel-background-color: var(--rz-base-800) !default;
+
 // Upload
 $upload-button-bar-background-color: var(--rz-base-700) !default;
 $upload-files-remove-background-color: var(--rz-base-700) !default;
@@ -352,6 +355,8 @@ $grid-header-sorted-background-color: var(--rz-base-800) !default;
 $grid-filter-background-color: var(--rz-base-800) !default;
 $grid-filter-buttons-background-color: var(--rz-base-800) !default;
 $grid-detail-template-background-color: var(--rz-base-900) !default;
+$grid-simple-filter-icon-active-color: var(--rz-on-secondary-darker) !default;
+$grid-simple-filter-icon-active-background-color: var(--rz-secondary-darker) !default;
 
 // Pager
 $pager-back-button-background-color: var(--rz-base-700) !default;
@@ -428,6 +433,12 @@ $switch-background-color: var(--rz-base-700) !default;
 // FormField
 $form-field-filled-background-color: var(--rz-base-700) !default;
 $form-field-filled-hover-background-color: var(--rz-base-700) !default;
+
+// Toc 
+$rz-toc-link-color: var(--rz-text-secondary-color) !default;
+$rz-toc-link-hover-color: var(--rz-text-color) !default;
+$rz-toc-link-selected-color: var(--rz-text-title-color) !default;
+$rz-toc-horizontal-link-selected-color: var(--rz-text-title-color) !default;
 
 @import 'fonts';
 @import 'components';

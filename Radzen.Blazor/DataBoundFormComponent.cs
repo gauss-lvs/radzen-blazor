@@ -103,13 +103,13 @@ namespace Radzen
         /// <summary>
         /// The value
         /// </summary>
-        object _value;
+        private T _value = default;
         /// <summary>
         /// Gets or sets the value.
         /// </summary>
         /// <value>The value.</value>
         [Parameter]
-        public object Value
+        public T Value
         {
             get
             {
@@ -117,10 +117,14 @@ namespace Radzen
             }
             set
             {
-                if (_value != value)
+                if (value == null || value.Equals("null"))
                 {
-                    _value = object.Equals(value, "null") ? null : value;
+                    _value = default;
+                    return;
                 }
+
+                if (!value.Equals(_value))
+                    _value = value;
             }
         }
 
@@ -185,7 +189,7 @@ namespace Radzen
                 if (_data != value)
                 {
                     _view = null;
-                    _value = null;
+                    _value = default;
                     _data = value;
                     StateHasChanged();
                 }
@@ -282,7 +286,8 @@ namespace Radzen
         /// Gets the field identifier.
         /// </summary>
         /// <value>The field identifier.</value>
-        public FieldIdentifier FieldIdentifier { get; private set; }
+        [Parameter]
+        public FieldIdentifier FieldIdentifier { get; set; }
 
         /// <summary>
         /// Gets or sets the value expression.
@@ -297,22 +302,19 @@ namespace Radzen
         /// <returns>A Task representing the asynchronous operation.</returns>
         public override async Task SetParametersAsync(ParameterView parameters)
         {
-            var searchTextChanged = parameters.DidParameterChange(nameof(SearchText), SearchText);
-            if (searchTextChanged)
-            {
-                searchText = parameters.GetValueOrDefault<string>(SearchText);
-            }
-
+            // check for changes before setting the properties through the base call
             var dataChanged = parameters.DidParameterChange(nameof(Data), Data);
+            var disabledChanged = parameters.DidParameterChange(nameof(Disabled), Disabled);
+            
+            // allow the base class to process parameters and set the properties
+            // after this call the parameters object should be considered stale
+            await base.SetParametersAsync(parameters);
 
+            // handle changes
             if (dataChanged)
             {
                 await OnDataChanged();
             }
-
-            var disabledChanged = parameters.DidParameterChange(nameof(Disabled), Disabled);
-
-            var result = base.SetParametersAsync(parameters);
 
             if (EditContext != null && ValueExpression != null && FieldIdentifier.Model != EditContext.Model)
             {
@@ -325,8 +327,6 @@ namespace Radzen
             {
                 FormFieldContext?.DisabledChanged(Disabled);
             }
-
-            await result;
         }
 
         /// <summary>

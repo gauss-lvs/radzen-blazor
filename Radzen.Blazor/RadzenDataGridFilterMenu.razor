@@ -2,7 +2,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.JSInterop
 @inject IJSRuntime JSRuntime
- <button title=@Column.GetFilterOperatorText(Column.GetFilterOperator()) class="@FilterIconStyle()" onclick="@($"Radzen.togglePopup(this.parentNode, '{Grid.PopupID}{Column.GetFilterProperty()}')")">
+ <button title=@Column.GetFilterOperatorText(Column.GetFilterOperator()) class="@FilterIconStyle()" onclick="@($"Radzen.togglePopup(this.parentNode, '{filterId}')")">
      <i class="notranslate rzi">@Grid.FilterIcon</i>
     @if (Column.GetFilterOperator() == FilterOperator.DoesNotContain)
     {
@@ -13,11 +13,11 @@
         @Column.GetFilterOperatorSymbol(Column.GetFilterOperator())
     }
 </button>
-<div id="@($"{Grid.PopupID}{Column.GetFilterProperty()}")" class="rz-overlaypanel"
+<div id="@($"{filterId}")" class="rz-overlaypanel"
         style="display:none;" tabindex="0">
     <div class="rz-overlaypanel-content">
         <ul class="rz-listbox-list">
-            @if (QueryableExtension.IsEnumerable(Column.FilterPropertyType))
+            @if (QueryableExtension.IsEnumerable(Column.FilterPropertyType) || Column.FilterPropertyType == typeof(string))
             {
                 @if (Column.GetFilterOperators().Contains(FilterOperator.Contains))
                 {
@@ -53,18 +53,6 @@
                 {
             <li class="@(FilterOperatorStyle(Column, FilterOperator.EndsWith))" @onclick="@(args => ApplyFilter(FilterOperator.EndsWith))" style="display: block;">
                 <span class="rz-filter-menu-symbol">@Column.GetFilterOperatorSymbol(FilterOperator.EndsWith)</span><span>@Grid.EndsWithText</span>
-            </li>
-                }
-                @if (Column.GetFilterOperators().Contains(FilterOperator.IsEmpty) && Column.FilterPropertyType == typeof(string))
-                {
-            <li class="@(FilterOperatorStyle(Column, FilterOperator.IsEmpty))" @onclick="@(args => ApplyFilter(FilterOperator.IsEmpty))" style="display: block;">
-                <span class="rz-filter-menu-symbol">@Column.GetFilterOperatorSymbol(FilterOperator.IsEmpty)</span><span>@Grid.IsEmptyText</span>
-            </li>
-                }
-                @if (Column.GetFilterOperators().Contains(FilterOperator.IsNotEmpty) && Column.FilterPropertyType == typeof(string))
-                {
-            <li class="@(FilterOperatorStyle(Column, FilterOperator.IsNotEmpty))" @onclick="@(args => ApplyFilter(FilterOperator.IsNotEmpty))" style="display: block;">
-                <span class="rz-filter-menu-symbol">@Column.GetFilterOperatorSymbol(FilterOperator.IsNotEmpty)</span><span>@Grid.IsNotEmptyText</span>
             </li>
                 }
             }
@@ -116,6 +104,18 @@
                 <span class="rz-filter-menu-symbol">@Column.GetFilterOperatorSymbol(FilterOperator.IsNotNull)</span><span>@Grid.IsNotNullText</span>
             </li>
                 }
+            @if (Column.GetFilterOperators().Contains(FilterOperator.IsEmpty) && Column.FilterPropertyType == typeof(string))
+            {
+                <li class="@(FilterOperatorStyle(Column, FilterOperator.IsEmpty))" @onclick="@(args => ApplyFilter(FilterOperator.IsEmpty))" style="display: block;">
+                    <span class="rz-filter-menu-symbol">@Column.GetFilterOperatorSymbol(FilterOperator.IsEmpty)</span><span>@Grid.IsEmptyText</span>
+                </li>
+            }
+            @if (Column.GetFilterOperators().Contains(FilterOperator.IsNotEmpty) && Column.FilterPropertyType == typeof(string))
+            {
+                <li class="@(FilterOperatorStyle(Column, FilterOperator.IsNotEmpty))" @onclick="@(args => ApplyFilter(FilterOperator.IsNotEmpty))" style="display: block;">
+                    <span class="rz-filter-menu-symbol">@Column.GetFilterOperatorSymbol(FilterOperator.IsNotEmpty)</span><span>@Grid.IsNotEmptyText</span>
+                </li>
+            }
             <li class="rz-multiselect-item" @onclick="@(args => ClearFilter())" style="display:block;">
                 <span class="rz-filter-menu-symbol">x</span><span>@Grid.ClearFilterText</span>
             </li>
@@ -128,6 +128,15 @@
 
     [Parameter]
     public RadzenDataGrid<TItem> Grid { get; set; }
+
+    string filterId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        filterId = $"{Grid.PopupID}{Column.GetFilterProperty()}{Column.UniqueID}fm";
+    }
 
     protected string FilterOperatorStyle(RadzenDataGridColumn<TItem> column, FilterOperator value)
     {
@@ -166,7 +175,7 @@
             LogicalFilterOperator = Column.GetLogicalFilterOperator()
         });
 
-        await JSRuntime.InvokeVoidAsync("Radzen.closePopup", $"{Grid.PopupID}{Column.GetFilterProperty()}");
+        await JSRuntime.InvokeVoidAsync("Radzen.closePopup", $"{filterId}");
         await Grid.ReloadInternal();
     }
 
@@ -176,7 +185,7 @@
 
         Grid.SaveSettings();
 
-        await JSRuntime.InvokeVoidAsync("Radzen.closePopup", $"{Grid.PopupID}{Column.GetFilterProperty()}");
+        await JSRuntime.InvokeVoidAsync("Radzen.closePopup", $"{filterId}");
 
         await Grid.FilterCleared.InvokeAsync(new DataGridColumnFilterEventArgs<TItem>()
         {

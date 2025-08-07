@@ -292,7 +292,7 @@ namespace Radzen.Blazor
         {
             year = Culture.Calendar.GetYear(new DateTime(year, 1, 1));
 
-            var date = new DateTime(year, 1, 1);
+            var date = new DateTime(year, 1, 1, Culture.Calendar);
 
             return date.ToString(YearFormat, Culture);
         }
@@ -770,6 +770,13 @@ namespace Radzen.Blazor
         [Parameter]
         public bool ShowButton { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets a value indicating whether the input box is shown. Ignored if ShowButton is false.
+        /// </summary>
+        /// <value><c>true</c> to show the input box; <c>false</c> to hide the input box.</value>
+        [Parameter]
+        public bool ShowInput { get; set; } = true;
+
         private bool IsReadonly => ReadOnly || !AllowInput;
 
         /// <summary>
@@ -1071,7 +1078,8 @@ namespace Radzen.Blazor
         /// Gets the field identifier.
         /// </summary>
         /// <value>The field identifier.</value>
-        public FieldIdentifier FieldIdentifier { get; private set; }
+        [Parameter]
+        public FieldIdentifier FieldIdentifier { get; set; }
 
         /// <summary>
         /// Gets or sets the value expression.
@@ -1154,8 +1162,8 @@ namespace Radzen.Blazor
 
             if (IsJSRuntimeAvailable)
             {
-                JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", PopupID);
-                JSRuntime.InvokeVoidAsync("Radzen.destroyDatePicker", UniqueID, Element);
+                JSRuntime.InvokeVoid("Radzen.destroyPopup", PopupID);
+                JSRuntime.InvokeVoid("Radzen.destroyDatePicker", UniqueID, Element);
             }
         }
 
@@ -1344,12 +1352,17 @@ namespace Radzen.Blazor
         /// <inheritdoc/>
         public async ValueTask FocusAsync()
         {
-           try
-           {
-               await input.FocusAsync();
+            // If ShowButton is false, the input box is always shown
+            if (ShowInput || !ShowButton)
+            {
+                try
+                {
+                    await input.FocusAsync();
+                }
+                catch
+                { }
             }
-            catch
-            {}
+            
         }
     }
 }

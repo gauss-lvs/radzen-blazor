@@ -15,6 +15,7 @@ using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -369,6 +370,40 @@ namespace Radzen
         /// December
         /// </summary>
         December = 11,
+    }
+
+        /// <summary>
+    /// Specifies the time unit of <see cref="TimeSpan"/>.
+    /// </summary>
+    public enum TimeSpanUnit
+    {
+        /// <summary>
+        /// Day.
+        /// </summary>
+        Day = 0,
+        /// <summary>
+        /// Hour.
+        /// </summary>
+        Hour = 1,
+        /// <summary>
+        /// Minute.
+        /// </summary>
+        Minute = 2,
+        /// <summary>
+        /// Second.
+        /// </summary>
+        Second = 3,
+        /// <summary>
+        /// Millisecond.
+        /// </summary>
+        Millisecond = 4
+    #if NET7_0_OR_GREATER
+        ,
+        /// <summary>
+        /// Microsecond.
+        /// </summary>
+        Microsecond = 5
+    #endif
     }
 
     /// <summary>
@@ -1085,6 +1120,21 @@ namespace Radzen
     public class PreviewFileInfo : FileInfo
     {
         /// <summary>
+        /// Initializes a new instance of PreviewFileInfo from a browser file.
+        /// </summary>
+        /// <param name="files"></param>
+        public PreviewFileInfo(IBrowserFile files) : base(files)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new, empty instance of PreviewFileInfo.
+        /// </summary>
+        public PreviewFileInfo()
+        {
+        }
+
+        /// <summary>
         /// Gets the URL of the previewed file.
         /// </summary>
         public string Url { get; set; }
@@ -1095,11 +1145,41 @@ namespace Radzen
     /// </summary>
     public class Query
     {
+        Func<string> _getFilter;
+        internal Func<string> GetFilter 
+        {
+            get
+            { 
+                return _getFilter;
+            }
+            set
+            {
+                _filter = null;
+                _getFilter = value;
+            }
+        }
+
+        string _filter;
         /// <summary>
-        /// Gets or sets the filter.
+        /// Gets the filter expression as a string.
         /// </summary>
         /// <value>The filter.</value>
-        public string Filter { get; set; }
+        public string Filter
+        {
+            get
+            {
+                if (_filter == null && GetFilter != null)
+                {
+                    _filter = GetFilter();
+                }
+                return _filter;
+            }
+            set
+            {
+                _filter = value;
+            }
+        }
+
         /// <summary>
         /// Gets the filter expression as a collection of filter descriptors.
         /// </summary>
@@ -2325,6 +2405,7 @@ namespace Radzen
         /// Gets or sets the property type.
         /// </summary>
         /// <value>The property type.</value>
+        [JsonIgnore]
         public Type Type { get; set; }
 
         /// <summary>
@@ -2540,11 +2621,43 @@ namespace Radzen
         /// Gets the sort expression as a string.
         /// </summary>
         public string OrderBy { get; set; }
+
+        Func<string> _getFilter;
+        internal Func<string> GetFilter
+        {
+            get
+            {
+                return _getFilter;
+            }
+            set
+            {
+                _filter = null;
+                _getFilter = value;
+            }
+        }
+
+        string _filter;
+
         /// <summary>
         /// Gets the filter expression as a string.
         /// </summary>
         /// <value>The filter.</value>
-        public string Filter { get; set; }
+        public string Filter
+        {
+            get
+            {
+                if (_filter == null && GetFilter != null)
+                {
+                    _filter = GetFilter();
+                }
+                return _filter;
+            }
+            set
+            {
+                _filter = value;
+            }
+        }
+
         /// <summary>
         /// Gets the filter expression as a collection of filter descriptors.
         /// </summary>
@@ -3501,7 +3614,7 @@ namespace Radzen
         /// Gets the field identifier.
         /// </summary>
         /// <value>The field identifier.</value>
-        FieldIdentifier FieldIdentifier { get; }
+        FieldIdentifier FieldIdentifier { get; set; }
 
         /// <summary>
         /// Sets the focus.

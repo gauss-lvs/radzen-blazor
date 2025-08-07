@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+using Radzen.Blazor.Rendering;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -46,6 +47,18 @@ namespace Radzen.Blazor
                 }
 
                 return editContexts.All(c => !c.Value.GetValidationMessages().Any());
+            }
+        }
+
+        /// <summary>
+        /// Returns wether the FilterRow is visible on the DataGrid.
+        /// </summary>
+        /// <value><c>true</c> if all conditions for showing the row with the filter controls are met otherwise <c>false</c>.</value>
+        public bool FilterRowActive
+        {
+            get
+            {
+                return AllowFiltering && (columns.Where(c => c.GetVisible()).Any(c => c.FilterMode == FilterMode.Simple || c.FilterMode == FilterMode.SimpleWithMenu) || FilterMode == FilterMode.Simple || FilterMode == FilterMode.SimpleWithMenu) && columns.Where(column => column.Filterable && (!string.IsNullOrEmpty(column.GetFilterProperty()) || column.FilterTemplate != null)).Any();
             }
         }
 
@@ -560,7 +573,12 @@ namespace Radzen.Blazor
                 }
                 else
                 {
-                    var itemToSelect = PagedView.ElementAtOrDefault(focusedIndex - 1);
+                    var pagedViewIndex = focusedIndex - 1;
+                    if (FilterRowActive)
+                    {
+                        pagedViewIndex = pagedViewIndex - 1;
+                    }
+                    var itemToSelect = PagedView.ElementAtOrDefault(pagedViewIndex);
                     if (itemToSelect != null)
                     {
                         if (SelectionMode == DataGridSelectionMode.Multiple && !args.ShiftKey)
@@ -1718,7 +1736,7 @@ namespace Radzen.Blazor
         [Parameter]
         public EventCallback<DataGridColumnReorderedEventArgs<TItem>> ColumnReordered { get; set; }
 
-        IQueryable<TItem> GetSelfRefView(IQueryable<TItem> view, string orderBy)
+        internal IQueryable<TItem> GetSelfRefView(IQueryable<TItem> view, string orderBy)
         {
             if (!string.IsNullOrEmpty(orderBy))
             {
@@ -2069,6 +2087,7 @@ namespace Radzen.Blazor
                     c.SetOrderIndex(null);
                     c.SetWidth(null);
                     c.SetVisible(null);
+                    c.SetCustomFilterExpression(null);
                 });
                 selectedColumns = allColumns.Where(c => c.Pickable && c.GetVisible()).ToList();
                 sorts.Clear();
@@ -2165,8 +2184,7 @@ namespace Radzen.Blazor
             Query.Top = PageSize;
             Query.OrderBy = orderBy;
 
-            var filterString = allColumns.ToList().ToFilterString<TItem>();
-            Query.Filter = filterString;
+            Query.GetFilter = () => allColumns.ToList().ToFilterString<TItem>();
 
             filters = allColumns.ToList()
                 .Where(c => c.Filterable && c.GetVisible() && (c.GetFilterValue() != null
@@ -2174,12 +2192,14 @@ namespace Radzen.Blazor
                     || c.GetFilterOperator() == FilterOperator.IsEmpty | c.GetFilterOperator() == FilterOperator.IsNotEmpty))
                 .Select(c => new FilterDescriptor()
                 {
-                    Property = c.GetFilterProperty(),
+                    Property = !string.IsNullOrEmpty(c.FilterProperty) && c.FilterProperty != c.Property ? c.Property : c.GetFilterProperty(),
+                    FilterProperty = !string.IsNullOrEmpty(c.FilterProperty) && c.FilterProperty != c.Property ? c.FilterProperty : null,
                     FilterValue = c.GetFilterValue(),
                     FilterOperator = c.GetFilterOperator(),
                     SecondFilterValue = c.GetSecondFilterValue(),
                     SecondFilterOperator = c.GetSecondFilterOperator(),
-                    LogicalFilterOperator = c.GetLogicalFilterOperator()
+                    LogicalFilterOperator = c.GetLogicalFilterOperator(),
+                    Type = c.Type
                 })
                 .ToList();
 
@@ -2192,7 +2212,7 @@ namespace Radzen.Blazor
                     Skip = start,
                     Top = top,
                     OrderBy = orderBy,
-                    Filter = IsOData() ? allColumns.ToList().ToODataFilterString<TItem>() : filterString,
+                    GetFilter = () => IsOData() ? allColumns.ToList().ToODataFilterString<TItem>() : allColumns.ToList().ToFilterString<TItem>(),
                     Filters = filters,
                     Sorts = sorts
                 });
@@ -3303,32 +3323,12 @@ namespace Radzen.Blazor
         }
 
         /// <inheritdoc />
-        protected override string GetComponentCssClass()
-        {
-            var additionalClasses = new List<string>();
-
-            if (CurrentStyle.ContainsKey("height"))
-            {
-                additionalClasses.Add("rz-has-height");
-            }
-
-            if (RowSelect.HasDelegate || ValueChanged.HasDelegate || SelectionMode == DataGridSelectionMode.Multiple)
-            {
-                additionalClasses.Add("rz-selectable");
-            }
-
-            if (Responsive)
-            {
-                additionalClasses.Add("rz-datatable-reflow");
-            }
-
-            if (Density == Density.Compact)
-            {
-                additionalClasses.Add("rz-density-compact");
-            }
-
-            return $"rz-has-pager rz-datatable  rz-datatable-scrollable {String.Join(" ", additionalClasses)}";
-        }
+        protected override string GetComponentCssClass() => ClassList.Create("rz-has-pager rz-datatable rz-datatable-scrollable")
+            .Add("rz-has-height", CurrentStyle.ContainsKey("height"))
+            .Add("rz-datatable-reflow", Responsive)
+            .Add("rz-density-compact", Density == Density.Compact)
+            .Add("rz-selectable", RowSelect.HasDelegate || ValueChanged.HasDelegate || SelectionMode == DataGridSelectionMode.Multiple)
+            .ToString();
 
         internal string getHeaderStyle()
         {
@@ -3364,7 +3364,7 @@ namespace Radzen.Blazor
             {
                 foreach (var column in allColumns.ToList().Where(c => c.GetVisible()))
                 {
-                    JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", $"{PopupID}{column.GetFilterProperty()}");
+                    JSRuntime.InvokeVoid("Radzen.destroyPopup", $"{PopupID}{column.GetFilterProperty()}");
                 }
             }
         }
@@ -3621,6 +3621,18 @@ namespace Radzen.Blazor
                 {
                     return element.GetInt64();
                 }
+                else if (type == typeof(UInt16) || type == typeof(UInt16?))
+                {
+                    return element.GetUInt16();
+                }
+                else if (type == typeof(UInt32) || type == typeof(UInt32?))
+                {
+                    return element.GetUInt32();
+                }
+                else if (type == typeof(UInt64) || type == typeof(UInt64?))
+                {
+                    return element.GetUInt64();
+                }
                 else if (type == typeof(double) || type == typeof(double?))
                 {
                     return element.GetDouble();
@@ -3640,6 +3652,14 @@ namespace Radzen.Blazor
                 else if (type == typeof(DateTime) || type == typeof(DateTime?))
                 {
                     return element.GetDateTime();
+                }
+                else if (type == typeof(DateOnly) || type == typeof(DateOnly?))
+                {
+                    return DateOnly.FromDateTime(element.GetDateTime());
+                }
+                else if (type == typeof(TimeOnly) || type == typeof(TimeOnly?))
+                {
+                    return TimeOnly.FromDateTime(element.GetDateTime());
                 }
                 else if (type == typeof(DateTimeOffset) || type == typeof(DateTimeOffset?))
                 {
@@ -3736,6 +3756,14 @@ namespace Radzen.Blazor
             SaveSettings();
 
             await OnPageChanged(args);
+        }
+
+        /// <inheritdoc />
+        protected override void OnInitialized()
+        {
+            focusedIndex = focusedIndex == -1 ? 0 : focusedIndex;
+
+            base.OnInitialized();
         }
     }
 }

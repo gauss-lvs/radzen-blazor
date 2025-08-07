@@ -155,9 +155,9 @@
                                     {
                                         <RadzenProgressBarCircular Style="position:absolute;width:100%;" Visible="@isLoading" Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
                                         <RadzenListBox AllowVirtualization="@Column.AllowCheckBoxListVirtualization" AllowClear="true" Multiple="true" Style="height: 300px"
-                                        TValue="IEnumerable<object>" Value=@Column.GetFilterValue() Change="@ListBoxChange" 
+                                        TValue="IEnumerable" Value=@(Column.GetFilterValue() as IEnumerable) Change="@ListBoxChange" 
                                         Data=@filterValues Count=@filterValuesCount LoadData="@LoadFilterValues" 
-                                        AllowFiltering="@(!string.IsNullOrEmpty(Column.GetFilterProperty()) && PropertyAccess.GetPropertyType(typeof(TItem), Column.GetFilterProperty()) == typeof(string))"
+                                        AllowFiltering="@(!string.IsNullOrEmpty(Column.GetFilterProperty()))"
                                         Disabled="@(!Column.CanSetFilterValue())" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                         InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", Column.Title + Grid.FilterValueAriaLabel  + Column.GetFilterValue() }})">
                                             <Template>
@@ -241,12 +241,14 @@ else
 
             if(!string.IsNullOrEmpty(loadDataArgs.Filter))
             {
-                query = Column.Grid.Data.AsQueryable().Where<TItem>(Column.Grid.allColumns.Where(c => c != Column))
+                query = (Column.Grid.childData.Any() ? Column.Grid.GetSelfRefView(Column.Grid.Data.AsQueryable(), "") :
+                    Column.Grid.Data.AsQueryable()).Where<TItem>(Column.Grid.allColumns.Where(c => c != Column))
                     .Where(property, loadDataArgs.Filter, StringFilterOperator.Contains, FilterCaseSensitivity.CaseInsensitive);
             }
             else
             {
-                query = Column.Grid.Data.AsQueryable().Where<TItem>(Column.Grid.allColumns.Where(c => c != Column));
+                query = (Column.Grid.childData.Any() ? Column.Grid.GetSelfRefView(Column.Grid.Data.AsQueryable(), "") :
+                    Column.Grid.Data.AsQueryable()).Where<TItem>(Column.Grid.allColumns.Where(c => c != Column));
             }
 
             if (Column.Property != Column.FilterProperty && !string.IsNullOrEmpty(Column.FilterProperty))
@@ -271,7 +273,8 @@ else
                 query = query.Cast<object>().Take(loadDataArgs.Top.Value);
             }
 
-            filterValues = query.Cast(propertyType);
+            filterValues = await Task.FromResult(Column.Grid.childData.Any() ?
+                query.Cast<object>().ToList().AsQueryable().Cast(propertyType) : query.Cast(propertyType));
 
             if (!Column.AllowCheckBoxListVirtualization)
             {

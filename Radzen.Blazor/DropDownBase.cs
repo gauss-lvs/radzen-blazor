@@ -213,6 +213,13 @@ namespace Radzen
         public bool Multiple { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating the selected index should reset to the top item when filtering, resulting in a down arrow action will start moving from the top.
+        /// </summary>
+        /// <value><c>true</c> to reset selected index to -1 when filtering; otherwise, <c>false</c>.</value>
+        [Parameter]
+        public bool ResetSelectedIndexOnFilter { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether the user can select all values in multiple selection. Set to <c>true</c> by default.
         /// </summary>
         /// <value><c>true</c> if select all values is allowed; otherwise, <c>false</c>.</value>
@@ -276,6 +283,18 @@ namespace Radzen
         /// The selected item
         /// </summary>
         protected object selectedItem = null;
+        Type GetItemType(IEnumerable items)
+        {
+            var firstType = items.Cast<object>().FirstOrDefault()?.GetType() ?? typeof(object);
+            var hasNull = items.Cast<object>().Where(i => i == null).Any();
+
+            if (hasNull && firstType.IsValueType && Nullable.GetUnderlyingType(firstType) == null)
+            {
+                return typeof(Nullable<>).MakeGenericType(firstType);
+            }
+
+            return firstType;
+        }
 
         /// <summary>
         /// Selects all.
@@ -304,7 +323,8 @@ namespace Radzen
             }
             else
             {
-                var type = typeof(T).IsGenericType ? typeof(T).GetGenericArguments()[0] : typeof(T);
+                var type = typeof(T).IsGenericType ? typeof(T).GetGenericArguments()[0] :
+                    QueryableExtension.IsEnumerable(typeof(T)) ? GetItemType(selectedItems) : typeof(T);
                 internalValue = selectedItems.AsQueryable().Cast(type);
             }
 
@@ -647,7 +667,7 @@ namespace Radzen
         /// <param name="shouldSelectOnChange">Should select item on item change with keyboard.</param>
         protected virtual async System.Threading.Tasks.Task HandleKeyPress(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args, bool isFilter = false, bool? shouldSelectOnChange = null)
         {
-            if (Disabled)
+            if (Disabled || Data == null)
                 return;
 
             List<object> items = Enumerable.Empty<object>().ToList();
@@ -697,7 +717,7 @@ namespace Radzen
                     //
                 }
             }
-            else if (key == "Enter" || key == "NumpadEnter")
+            else if (key == "Enter" || key == "NumpadEnter" || (key == "Space" && !isFilter))
             {
                 preventKeydown = true;
 
@@ -717,11 +737,14 @@ namespace Radzen
 
                 if (!popupOpened)
                 {
-                    await OpenPopup(key, isFilter);
+                    if(key != "Space")
+                    {
+                        await OpenPopup(key, isFilter);
+                    }
                 }
                 else
                 {
-                    if (!Multiple)
+                    if (!Multiple && !isFilter)
                     {
                         await ClosePopup(key);
                     }
@@ -735,6 +758,8 @@ namespace Radzen
             }
             else if (key == "Escape" || key == "Tab")
             {
+                preventKeydown = false;
+
                 await ClosePopup(key);
             }
             else if (key == "Delete" && AllowClear)
@@ -756,10 +781,16 @@ namespace Radzen
             {
                 preventKeydown = true;
 
+                if (ResetSelectedIndexOnFilter)
+                {
+                    selectedIndex = -1;
+                }                                
+
                 Debounce(DebounceFilter, FilterDelay);
             }
-            else
+            else if (args.Key.Length == 1 && !args.CtrlKey && !args.AltKey && !args.ShiftKey)
             {
+                // searching for element
                 var filteredItems = (!string.IsNullOrEmpty(TextProperty) ?
                     Query.Where(TextProperty, args.Key, StringFilterOperator.StartsWith, FilterCaseSensitivity.CaseInsensitive) :
                     Query)
@@ -947,33 +978,34 @@ namespace Radzen
         /// <returns>A Task representing the asynchronous operation.</returns>
         public override async Task SetParametersAsync(ParameterView parameters)
         {
+            // check for changes before setting the properties through the base call
+            var selectedItemChanged = parameters.DidParameterChange(nameof(SelectedItem), SelectedItem);
+            var visibleChanged = parameters.DidParameterChange(nameof(Visible), Visible);
+            var valueChanged = parameters.DidParameterChange(nameof(Value), Value);
+
+            // manually set properties that are not set through the base call
+            if (valueChanged)
+            {
+                internalValue = parameters.GetValueOrDefault<object>(nameof(Value));
+            }
+            
             var pageSize = parameters.GetValueOrDefault<int>(nameof(PageSize));
             if (pageSize != default(int))
             {
                 PageSize = pageSize;
             }
+            
+            // allow the base class to process parameters and set the properties
+            // after this call the parameters object should be considered stale
+            await base.SetParametersAsync(parameters);
 
-            var selectedItemChanged = parameters.DidParameterChange(nameof(SelectedItem), SelectedItem);
+            // handle changes
             if (selectedItemChanged)
             {
                 await SelectItem(selectedItem, false);
             }
 
-            var shouldClose = false;
-
-            if (parameters.DidParameterChange(nameof(Visible), Visible))
-            {
-                var visible = parameters.GetValueOrDefault<bool>(nameof(Visible));
-                shouldClose = !visible;
-            }
-
-            if (parameters.DidParameterChange(nameof(Value), Value))
-            {
-                internalValue = parameters.GetValueOrDefault<object>(nameof(Value));
-            }
-
-            await base.SetParametersAsync(parameters);
-
+            var shouldClose = visibleChanged && !Visible;
             if (shouldClose && !firstRender)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", PopupID);

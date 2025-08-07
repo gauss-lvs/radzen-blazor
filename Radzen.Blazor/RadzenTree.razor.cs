@@ -386,7 +386,7 @@ namespace Radzen.Blazor
             // implementation could be swapped with a different one without
             // breaking the public API.
             if (item == null) {
-                foreach (var i in this.items) {
+                foreach (var i in this.items.ToList()) {
                     await this.ExpandItem(i);
                 }
             } else {
@@ -619,6 +619,14 @@ namespace Radzen.Blazor
         internal async Task ChangeState()
         {
             await InvokeAsync(StateHasChanged);
+        }
+
+        /// <inheritdoc />
+        protected override void OnInitialized()
+        {
+            focusedIndex = focusedIndex == -1 ? 0 : focusedIndex;
+
+            base.OnInitialized();
         }
     }
 }

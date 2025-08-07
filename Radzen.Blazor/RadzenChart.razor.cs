@@ -52,7 +52,7 @@ namespace Radzen.Blazor
         /// </summary>
         [Parameter]
         public EventCallback<LegendClickEventArgs> LegendClick { get; set; }
-        
+
         [Inject]
         TooltipService TooltipService { get; set; }
 
@@ -114,6 +114,11 @@ namespace Radzen.Blazor
         {
             Series.Remove(series);
         }
+        /// <summary>
+        /// Returns the Series used by the Chart.
+        /// </summary>
+        /// <returns></returns>
+        public IReadOnlyList<IChartSeries> GetSeries() => Series.ToList();
 
         /// <summary>
         /// Returns whether the chart should render axes.
@@ -427,6 +432,26 @@ namespace Radzen.Blazor
             }
         }
 
+        /// <summary>
+        /// Displays a Tooltip on a chart without user interaction, given a series, and the data associated with it.
+        /// </summary>
+        /// <param name="series"></param>
+        /// <param name="data"></param>
+        /// <exception cref="ArgumentException"></exception>
+        public async Task DisplayTooltipFor(IChartSeries series, object data)
+        {
+            if (!Series.Contains(series))
+            {
+                throw new ArgumentException($"Series:{series.GetTitle()} does not exist in {nameof(this.Series)}");
+            }
+
+            if (IsJSRuntimeAvailable)
+            {
+                var point = series.GetTooltipPosition(data);
+                await MouseMove(point.X + MarginLeft, point.Y + MarginTop);
+            }
+        }
+
         private bool widthAndHeightAreSet = false;
         private bool firstRender = true;
 
@@ -561,7 +586,7 @@ namespace Radzen.Blazor
 
             if (Visible && IsJSRuntimeAvailable)
             {
-                JSRuntime.InvokeVoidAsync("Radzen.destroyChart", Element);
+                JSRuntime.InvokeVoid("Radzen.destroyChart", Element);
             }
         }
 

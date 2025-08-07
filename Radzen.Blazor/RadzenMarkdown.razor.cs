@@ -32,10 +32,37 @@ public partial class RadzenMarkdown : RadzenComponent
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
+    /// Gets or sets a value indicating whether to allow HTML content in the markdown. Certain dangerous HTML tags (script, style, object, iframe) and attributes are removed.
+    /// Set to <c>true</c> by default.
+    /// </summary>
+    [Parameter]
+    public bool AllowHtml { get; set; } = true;
+
+    /// <summary>
+    /// Gets or sets a list of allowed HTML tags. If set, only these tags will be allowed in the markdown content. By default would use a list of safe HTML tags.
+    /// Considered only if <see cref="AllowHtml"/> is set to <c>true</c>.
+    /// </summary>
+    [Parameter]
+    public IEnumerable<string>? AllowedHtmlTags { get; set; }
+
+    /// <summary>
+    /// Gets or sets a list of allowed HTML attributes. If set, only these attributes will be allowed in the markdown content. By default would use a list of safe HTML attributes.
+    /// Considered only if <see cref="AllowHtml"/> is set to <c>true</c>.
+    /// </summary>
+    [Parameter]
+    public IEnumerable<string>? AllowedHtmlAttributes { get; set; }
+
+    /// <summary>
     /// Gets or sets the markdown content as a string. Overrides <see cref="ChildContent"/> if set.
     /// </summary>
     [Parameter]
     public string? Text { get; set; }
+
+    /// <summary>
+    /// The maximum heading depth to create anchor links for. Set to <c>0</c> to disable auto-linking.
+    /// </summary>
+    [Parameter]
+    public int AutoLinkHeadingDepth { get; set; }
 
     /// <inheritdoc />
     protected override string GetComponentCssClass()
@@ -58,21 +85,34 @@ public partial class RadzenMarkdown : RadzenComponent
         else
         {
             var document = MarkdownParser.Parse(Text);
-            
-            var visitor = new BlazorMarkdownRenderer(builder, Empty);
 
-            document.Accept(visitor);
+            Render(document, builder, Empty);
         }
+    }
+
+    private void Render(Document document, RenderTreeBuilder builder, Action<RenderTreeBuilder, int> outlet)
+    {
+        var options = new BlazorMarkdownRendererOptions
+        {
+            AutoLinkHeadingDepth = AutoLinkHeadingDepth,
+            AllowHtml = AllowHtml,
+            AllowedHtmlAttributes = AllowedHtmlAttributes,
+            AllowedHtmlTags = AllowedHtmlTags,
+        };
+
+        var visitor = new BlazorMarkdownRenderer(options, builder, outlet);
+
+        document.Accept(visitor);
     }
 
     private static void Empty(RenderTreeBuilder builder, int marker) 
     { 
     }
 
-    private static void ProcessFramesWithMarkers(RenderTreeBuilder builder, ArrayRange<RenderTreeFrame> frames)
+    private void ProcessFramesWithMarkers(RenderTreeBuilder builder, ArrayRange<RenderTreeFrame> frames)
     {
-        var markdownBuilder = new StringBuilder();
-        var componentFrames = new Dictionary<int, (int startIndex, int endIndex)>();
+        var markdown = new StringBuilder();
+        var outletFrames = new Dictionary<int, (int startIndex, int endIndex)>();
         var markerId = 0;
         var index = 0;
 
@@ -83,18 +123,18 @@ public partial class RadzenMarkdown : RadzenComponent
             if (frame.FrameType == RenderTreeFrameType.Text || frame.FrameType == RenderTreeFrameType.Markup)
             {
                 var content = frame.FrameType == RenderTreeFrameType.Text ? frame.TextContent : frame.MarkupContent;
-                markdownBuilder.Append(content);
+                markdown.Append(content);
                 index++;
             }
             else if (frame.FrameType == RenderTreeFrameType.Component || frame.FrameType == RenderTreeFrameType.Element)
             {
                 // Insert a marker for this component
                 var marker = string.Format(BlazorMarkdownRenderer.Outlet, markerId);
-                markdownBuilder.Append(marker);
+                markdown.Append(marker);
 
                 // Store the component information for later
                 var subtreeLength = GetSubtreeLength(frame);
-                componentFrames.Add(markerId, (index, index + subtreeLength));
+                outletFrames.Add(markerId, (index, index + subtreeLength));
 
                 // Increment marker ID and skip past this component
                 markerId++;
@@ -107,19 +147,17 @@ public partial class RadzenMarkdown : RadzenComponent
             }
         }
 
-        var document = MarkdownParser.Parse(markdownBuilder.ToString());
+        var document = MarkdownParser.Parse(markdown.ToString());
 
         void RenderOutlet(RenderTreeBuilder outletBuilder, int markerId)
         {
-            if (componentFrames.TryGetValue(markerId, out var componentFrame))
+            if (outletFrames.TryGetValue(markerId, out var componentFrame))
             {
                 CopyFrames(outletBuilder, frames, componentFrame.startIndex, componentFrame.endIndex);
             }
         }
 
-        var visitor = new BlazorMarkdownRenderer(builder, RenderOutlet);
-
-        document.Accept(visitor);
+        Render(document, builder, RenderOutlet);
     }
 
     private static void CopyFrames(RenderTreeBuilder builder, ArrayRange<RenderTreeFrame> frames, int startIndex, int endIndex)

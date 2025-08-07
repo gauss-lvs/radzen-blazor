@@ -102,7 +102,7 @@ namespace Radzen.Blazor
             return args;
         }
 
-        private async Task OnFocus(Microsoft.AspNetCore.Components.Web.FocusEventArgs args)
+        private async Task OnFocus()
         {
             if (OpenOnFocus)
             {
@@ -195,6 +195,12 @@ namespace Radzen.Blazor
         /// <value>The number Popup height.</value>
         [Parameter]
         public string PopupStyle { get; set; } = "max-height:200px;overflow-x:hidden";
+
+        /// <summary>
+        /// Gets or sets additional CSS classes for the Popup container.
+        /// </summary>
+        [Parameter]
+        public string PopupClasses { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the selected items will be displayed as chips. Set to <c>false</c> by default.
@@ -366,7 +372,7 @@ namespace Radzen.Blazor
 
             if (IsJSRuntimeAvailable)
             {
-                JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", PopupID);
+                JSRuntime.InvokeVoid("Radzen.destroyPopup", PopupID);
             }
         }
 

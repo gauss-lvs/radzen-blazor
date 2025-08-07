@@ -17,7 +17,7 @@
     <div class="rz-view-content">
         <Hours Start=@StartTime End=@EndTime TimeFormat=@TimeFormat MinutesPerSlot=@MinutesPerSlot />
         <div @ref=view class="rz-week-view-content" tabindex="0" @onkeydown="@(args => OnKeyPress(args))" @onkeydown:preventDefault="@preventKeyPress" @onkeydown:stopPropagation
-             @onfocus=@(args => {if(CurrentDate == default(DateTime)) { CurrentDate = StartDate; }})>
+             @onfocus=@this.AsNonRenderingEventHandler(OnFocus)>
         @for (var day = StartDate; day < EndDate; day = day.AddDays(1))
         {
             var start = day.Add(StartTime);
@@ -35,6 +35,14 @@
     </div>
 </div>
 @code {
+    void OnFocus()
+    {
+        if (CurrentDate == default(DateTime)) 
+        { 
+            CurrentDate = StartDate; 
+        }
+    }
+
     ElementReference view;
 
     [Parameter]
@@ -88,7 +96,7 @@
 
     IDictionary<string, object> Attributes(DateTime date)
     {
-        var attributes = Scheduler.GetSlotAttributes(date, date.AddMinutes(MinutesPerSlot));
+        var attributes = Scheduler.GetSlotAttributes(date, date.AddMinutes(MinutesPerSlot), () => AppointmentsInSlot(date, date.AddMinutes(MinutesPerSlot)));
         attributes["class"] = ClassList.Create("rz-slot").Add("rz-slot-minor", (date.Minute / MinutesPerSlot) % 2 == 1).Add(attributes).ToString();
         attributes["dropzone"] = "move";
         return attributes;

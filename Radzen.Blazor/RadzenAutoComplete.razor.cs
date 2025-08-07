@@ -1,14 +1,13 @@
-﻿using Radzen;
-using Radzen.Blazor.Rendering;
-using System.Collections;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
-using Microsoft.JSInterop;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using System.Linq;
+using Microsoft.JSInterop;
+using Radzen.Blazor.Rendering;
 using System;
-using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Radzen.Blazor
 {
@@ -151,7 +150,7 @@ namespace Radzen.Blazor
                     //
                 }
             }
-            else if (key == "Enter" || key == "Tab")
+            else if (key == "Enter" || key == "NumpadEnter" || key == "Tab")
             {
                 if (selectedIndex >= 0 && selectedIndex <= items.Count() - 1)
                 {
@@ -250,7 +249,7 @@ namespace Radzen.Blazor
         /// <param name="args">The <see cref="ChangeEventArgs"/> instance containing the event data.</param>
         protected async System.Threading.Tasks.Task OnChange(ChangeEventArgs args)
         {
-            Value = args.Value;
+            Value = args.Value?.ToString();
 
             await ValueChanged.InvokeAsync($"{Value}");
             if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
@@ -263,11 +262,11 @@ namespace Radzen.Blazor
         {
             if (!string.IsNullOrEmpty(TextProperty))
             {
-                Value = PropertyAccess.GetItemOrValueFromProperty(item, TextProperty);
+                Value = PropertyAccess.GetItemOrValueFromProperty(item, TextProperty)?.ToString();
             }
             else
             {
-                Value = item;
+                Value = item?.ToString();
             }
 
             await ValueChanged.InvokeAsync($"{Value}");
@@ -279,8 +278,9 @@ namespace Radzen.Blazor
             StateHasChanged();
         }
 
-        ClassList InputClassList => ClassList.Create("rz-inputtext rz-autocomplete-input")
-                                             .AddDisabled(Disabled);
+        string InputClass => ClassList.Create("rz-inputtext rz-autocomplete-input")
+                                      .AddDisabled(Disabled)
+                                      .ToString();
 
         private string OpenScript()
         {
@@ -293,10 +293,7 @@ namespace Radzen.Blazor
         }
 
         /// <inheritdoc />
-        protected override string GetComponentCssClass()
-        {
-            return GetClassList("rz-autocomplete").ToString();
-        }
+        protected override string GetComponentCssClass() => GetClassList("rz-autocomplete").ToString();
 
         /// <inheritdoc />
         public override void Dispose()
@@ -305,7 +302,7 @@ namespace Radzen.Blazor
 
             if (IsJSRuntimeAvailable)
             {
-                JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", PopupID);
+                JSRuntime.InvokeVoid("Radzen.destroyPopup", PopupID);
             }
         }
 
@@ -338,7 +335,7 @@ namespace Radzen.Blazor
             {
                 var item = parameters.GetValueOrDefault<object>(nameof(SelectedItem));
                 if (item != null)
-                { 
+                {
                     await SelectItem(item);
                 }
             }
@@ -347,7 +344,7 @@ namespace Radzen.Blazor
 
             if (parameters.DidParameterChange(nameof(Value), Value))
             {
-                Value = parameters.GetValueOrDefault<object>(nameof(Value));
+                Value = parameters.GetValueOrDefault<string>(nameof(Value));
             }
 
             if (shouldClose && !firstRender)
