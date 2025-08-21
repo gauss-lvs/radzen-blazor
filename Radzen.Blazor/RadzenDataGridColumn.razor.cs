@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 
 namespace Radzen.Blazor
@@ -49,6 +50,12 @@ namespace Radzen.Blazor
         /// </summary>
         [Parameter]
         public bool AllowCheckBoxListVirtualization { get; set; } = true;
+
+        /// <summary>
+        /// Specifies whether the CheckBoxList filter should always show all data, ignoring filtering from other columns. Set to <c>false</c> by default.
+        /// </summary>
+        [Parameter]
+        public bool AlwaysShowAllCheckBoxListData { get; set; } = false;
 
         /// <summary>
         /// Gets or sets the column filter mode.
@@ -178,7 +185,13 @@ namespace Radzen.Blazor
                 {
                     _filterPropertyType = Type;
                 }
-                else if(!string.IsNullOrEmpty(Property))
+                else if (!string.IsNullOrEmpty(Property))
+                {
+                    propertyValueGetter = PropertyAccess.Getter<TItem, object>(Property);
+                }
+
+                if (!string.IsNullOrEmpty(Property) && (typeof(TItem).IsGenericType && typeof(IDictionary<,>).IsAssignableFrom(typeof(TItem).GetGenericTypeDefinition()) ||
+                    typeof(IDictionary).IsAssignableFrom(typeof(TItem)) || typeof(System.Data.DataRow).IsAssignableFrom(typeof(TItem))))
                 {
                     propertyValueGetter = PropertyAccess.Getter<TItem, object>(Property);
                 }
@@ -1202,7 +1215,7 @@ namespace Radzen.Blazor
         /// <summary>
         /// Sets to default column filter values and operators.
         /// </summary>
-        public void ClearFilters()
+        public virtual void ClearFilters()
         {
             var fo = FilterOperator == FilterOperator.Custom
                 ? FilterOperator.Custom

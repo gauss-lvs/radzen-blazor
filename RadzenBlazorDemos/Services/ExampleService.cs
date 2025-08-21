@@ -28,6 +28,16 @@ namespace RadzenBlazorDemos
         },
         new Example
         {
+            Name = "AI",
+            Path = "/ai",
+            Title = "AI and Radzen Blazor",
+            Description = "Learn now how to integrate AI with the Radzen Blazor Components library.",
+            Icon = "\uefac",
+            Tags = new [] { "chat", "ai", "conversation", "message", "streaming", "mcp", "nuget" },
+            New = true
+        },
+        new Example
+        {
             Name = "Support",
             Path = "/support",
             Title = "Support | Free UI Components by Radzen",
@@ -417,6 +427,14 @@ namespace RadzenBlazorDemos
                             Title = "Blazor DataGrid Component - Dynamic Data | Free UI Components by Radzen",
                             Description = "Blazor Data Grid supports dynamic data sources.",
                             Tags = new [] { "datagrid", "bind", "load", "data", "loaddata", "dynamic" }
+                        },
+                        new Example
+                        {
+                            Name = "DataTable data",
+                            Path = "datagrid-datatable",
+                            Title = "Blazor DataGrid Component - DataTable Data | Free UI Components by Radzen",
+                            Description = "Blazor Data Grid supports DataTable sources.",
+                            Tags = new [] { "datagrid", "bind", "load", "data", "loaddata", "datatable" }
                         },
                         new Example
                         {
@@ -1425,6 +1443,15 @@ namespace RadzenBlazorDemos
             Children = new[] {
                 new Example
                 {
+                    Name = "AIChat",
+                    Path = "aichat",
+                    New = true,
+                    Description = "A modern chat component with AI integration that provides a conversational interface similar to popular chat applications.",
+                    Icon = "\ue0b7",
+                    Tags = new [] { "chat", "ai", "conversation", "message", "streaming" }
+                },
+                new Example
+                {
                     Toc = [ new () { Text = "Get and Set the value of AutoComplete", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of AutoComplete using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Get the selected item of AutoComplete", Anchor = "#get-selected" }, new () { Text = "Define AutoComplete placeholder", Anchor = "#placeholder" }, new () { Text = "Define AutoComplete template", Anchor = "#template" }, new () { Text = "Change AutoComplete filter operator, case sensitivity and delay", Anchor = "#filter-operator" }, new () { Text = "Load data on-demand in AutoComplete and apply custom filter and sort", Anchor = "#load-on-demand" }, new () { Text = "AutoComplete with a List of Strings", Anchor = "#list-of-strings" }, new () { Text = "Multiline AutoComplete", Anchor = "#multiline" }, new () { Text = "Open on Focus", Anchor = "#open-on-focus" }, new () { Text = "Disabled AutoComplete", Anchor = "#disabled-autocomplete" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "AutoComplete",
                     Path = "autocomplete",
@@ -1979,6 +2006,15 @@ namespace RadzenBlazorDemos
                     Description = "Demonstration and configuration of Radzen SSRS Viewer Radzen Blazor Arc Gauge component.",
                     Icon = "\ue9e4",
                     Tags = new [] { "report", "ssrs" }
+                },
+                new Example
+                {
+                    Name = "Sankey Diagram",
+                    Path = "sankey-diagram",
+                    Description = "Radzen Blazor Sankey Diagram for visualizing flow and relationships between nodes.",
+                    Icon = "\uf38d",
+                    Tags = new [] { "sankey", "flow", "diagram", "visualization", "relationships" },
+                    New = true
                 },
             }
         },

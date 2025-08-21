@@ -293,6 +293,7 @@ namespace Radzen
             services.AddScoped<TooltipService>();
             services.AddScoped<ContextMenuService>();
             services.AddScoped<ThemeService>();
+            services.AddAIChatService();
 
             return services;
         }
@@ -2728,6 +2729,12 @@ namespace Radzen
         public string Filter { get; internal set; }
 
         /// <summary>
+        /// Gets or sets filter property used to limit and distinct values, if not set, args.Data are used as values.
+        /// </summary>
+        /// <value>The filter property.</value>
+        public string Property { get; internal set; }
+
+        /// <summary>
         /// Gets the column.
         /// </summary>
         /// <value>The column.</value>
@@ -3540,6 +3547,32 @@ namespace Radzen
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Gets the property by its name. If the type is an interface, it will search through all interfaces implemented by the type.
+        /// </summary>
+        /// <param name="type">The type.</param>
+        /// <param name="property">The property.</param>
+        /// <returns>PropertyInfo.</returns>
+        public static PropertyInfo GetProperty(Type type, string property)
+        {
+            if (type.IsInterface)
+            {
+                var interfaces = type.GetInterfaces();
+
+                foreach (var @interface in interfaces)
+                {
+                    var propertyInfo = @interface.GetProperty(property);
+
+                    if (propertyInfo != null)
+                    {
+                        return propertyInfo;
+                    }
+                }
+            }
+
+            return type.GetProperty(property);
         }
 
         /// <summary>

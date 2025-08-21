@@ -131,7 +131,7 @@ namespace Radzen.Blazor.Tests
         public void Serializes_ArrayNotContainsValue()
         {
             Expression<Func<TestEntity, bool>> expr = e => !e.Scores.Contains(100);
-            Assert.Equal("e => (!e.Scores.Contains(100))", _serializer.Serialize(expr));
+            Assert.Equal("e => (!(e.Scores.Contains(100)))", _serializer.Serialize(expr));
         }
 
         [Fact]
@@ -173,7 +173,7 @@ namespace Radzen.Blazor.Tests
         public void Serializes_IntArrayNotInValueOposite()
         {
             Expression<Func<TestEntity, bool>> expr = e => !new[] { 100 }.Intersect(e.Scores).Any();
-            Assert.Equal("e => (!new [] { 100 }.Intersect(e.Scores).Any())", _serializer.Serialize(expr));
+            Assert.Equal("e => (!(new [] { 100 }.Intersect(e.Scores).Any()))", _serializer.Serialize(expr));
         }
 
         [Fact]
@@ -282,7 +282,7 @@ namespace Radzen.Blazor.Tests
         public void Serializes_ListNotContainsValue()
         {
             Expression<Func<TestEntity, bool>> expr = e => !e.Tags.Contains("VIP");
-            Assert.Equal("e => (!e.Tags.Contains(\"VIP\"))", _serializer.Serialize(expr));
+            Assert.Equal("e => (!(e.Tags.Contains(\"VIP\")))", _serializer.Serialize(expr));
         }
 
         [Fact]
@@ -296,7 +296,7 @@ namespace Radzen.Blazor.Tests
         public void Serializes_ListNotAnyCheck()
         {
             Expression<Func<TestEntity, bool>> expr = e => !e.Children.Any(c => c.Age > 18);
-            Assert.Equal("e => (!e.Children.Any(c => (c.Age > 18)))", _serializer.Serialize(expr));
+            Assert.Equal("e => (!(e.Children.Any(c => (c.Age > 18))))", _serializer.Serialize(expr));
         }
 
         [Fact]
@@ -311,6 +311,13 @@ namespace Radzen.Blazor.Tests
         {
             Expression<Func<TestEntity, bool>> expr = e => e.Age > 18 && e.Tags.Contains("Member") || e.Address.City == "London";
             Assert.Equal("e => (((e.Age > 18) && e.Tags.Contains(\"Member\")) || (e.Address.City == \"London\"))", _serializer.Serialize(expr));
+        }
+
+        [Fact]
+        public void Serializes_NotContains()
+        {
+            Expression<Func<TestEntity, bool>> expr = e => !e.Tags.Contains("Member");
+            Assert.Equal("e => (!(e.Tags.Contains(\"Member\")))", _serializer.Serialize(expr));
         }
     }
 }
