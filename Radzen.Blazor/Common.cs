@@ -2732,7 +2732,7 @@ namespace Radzen
         /// Gets or sets filter property used to limit and distinct values, if not set, args.Data are used as values.
         /// </summary>
         /// <value>The filter property.</value>
-        public string Property { get; internal set; }
+        public string Property { get; set; }
 
         /// <summary>
         /// Gets the column.
@@ -4051,5 +4051,43 @@ namespace Radzen
         /// Freeze column to the right
         /// </summary>
         Right
+    }
+
+    /// <summary>
+    /// Skeleton shape variants.
+    /// </summary>
+    public enum SkeletonVariant
+    {
+        /// <summary>
+        /// Text skeleton shape.
+        /// </summary>
+        Text,
+        /// <summary>
+        /// Circular skeleton shape.
+        /// </summary>
+        Circular,
+        /// <summary>
+        /// Rectangular skeleton shape.
+        /// </summary>
+        Rectangular
+    }
+
+    /// <summary>
+    /// Skeleton animation types.
+    /// </summary>
+    public enum SkeletonAnimation
+    {
+        /// <summary>
+        /// No animation.
+        /// </summary>
+        None,
+        /// <summary>
+        /// Wave animation.
+        /// </summary>
+        Wave,
+        /// <summary>
+        /// Pulse animation.
+        /// </summary>
+        Pulse
     }
 }
