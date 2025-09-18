@@ -2011,6 +2011,18 @@ window.Radzen = {
       } else if (paste) {
         e.preventDefault();
         var data = e.clipboardData.getData('text/html') || e.clipboardData.getData('text/plain');
+        
+        const startMarker = "<!--StartFragment-->";
+        const endMarker = "<!--EndFragment-->";
+
+        const startIndex = data.indexOf(startMarker);
+        const endIndex = data.indexOf(endMarker);
+
+        // check if the pasted data contains fragment markers
+        if (startIndex != -1 || endIndex != -1 || endIndex > startIndex) {
+            // only paste the fragment
+            data = data.substring(startIndex + startMarker.length, endIndex).trim();
+        }
 
         instance.invokeMethodAsync('OnPaste', data)
           .then(function (html) {
@@ -2070,7 +2082,11 @@ window.Radzen = {
       if (target.nodeType == 3) {
         target = target.parentElement;
       } else {
-        target = target.childNodes[selection.focusOffset];
+        if (img) {
+          target = target.childNodes[range.startOffset]
+        } else {
+          target = target.childNodes[selection.focusOffset];
+        }
         if (target) {
           innerHTML = target.outerHTML;
         }
