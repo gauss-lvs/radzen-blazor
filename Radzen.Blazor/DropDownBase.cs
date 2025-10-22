@@ -717,7 +717,7 @@ namespace Radzen
 
                 if (!popupOpened)
                 {
-                    if(key != "Space")
+                    if (key != "Space")
                     {
                         await OpenPopup(key, isFilter);
                     }
@@ -764,7 +764,7 @@ namespace Radzen
                 if (ResetSelectedIndexOnFilter)
                 {
                     selectedIndex = -1;
-                }                                
+                }
 
                 Debounce(DebounceFilter, FilterDelay);
             }
@@ -846,15 +846,14 @@ namespace Radzen
                         {
                             await virtualize.RefreshDataAsync();
                         }
-                        await InvokeAsync(() => { StateHasChanged(); });
                     }
-                    else
-                    {
-                        await InvokeAsync(() => { StateHasChanged(); });
-                    }
+
+                    await InvokeAsync(() => { StateHasChanged(); });
                 }
                 else
                 {
+                    var args = await GetLoadDataArgs();
+
                     if (IsVirtualizationAllowed())
                     {
                         if (virtualize != null)
@@ -863,22 +862,22 @@ namespace Radzen
                         }
                         else
                         {
-                            await LoadData.InvokeAsync(await GetLoadDataArgs());
+                            await InvokeAsync(() => LoadData.InvokeAsync(args));
                         }
                         await InvokeAsync(() => { StateHasChanged(); });
                     }
                     else
                     {
-                        await LoadData.InvokeAsync(await GetLoadDataArgs());
+                        await InvokeAsync(() => LoadData.InvokeAsync(args));
                     }
                 }
+
+                if (Multiple)
+                    selectedIndex = -1;
+
+                await JSRuntime.InvokeAsync<string>("Radzen.repositionPopup", Element, PopupID);
+                await InvokeAsync(() => SearchTextChanged.InvokeAsync(SearchText));
             }
-
-            if (Multiple)
-                selectedIndex = -1;
-
-            await JSRuntime.InvokeAsync<string>("Radzen.repositionPopup", Element, PopupID);
-            await SearchTextChanged.InvokeAsync(SearchText);
         }
 
         /// <summary>
@@ -907,7 +906,10 @@ namespace Radzen
         /// <param name="args">The <see cref="ChangeEventArgs"/> instance containing the event data.</param>
         protected virtual async System.Threading.Tasks.Task OnFilter(ChangeEventArgs args)
         {
-            await DebounceFilter(!LoadDataOnOpenPopup);
+            if (!FilterAsYouType)
+            {
+                await DebounceFilter(!LoadDataOnOpenPopup);
+            }
         }
 
         /// <summary>
@@ -972,13 +974,13 @@ namespace Radzen
                     collectionAssignment = new ReferenceGenericCollectionAssignment((T)internalValue);
                 }
             }
-            
+
             var pageSize = parameters.GetValueOrDefault<int>(nameof(PageSize));
             if (pageSize != default(int))
             {
                 PageSize = pageSize;
             }
-            
+
             // allow the base class to process parameters and set the properties
             // after this call the parameters object should be considered stale
             await base.SetParametersAsync(parameters);
@@ -1139,7 +1141,7 @@ namespace Radzen
         }
 
         internal object internalValue;
-        
+
         /// <summary>
         /// Will add/remove selected items from a bound ICollection&lt;T&gt;, instead of replacing it.
         /// </summary>
@@ -1277,18 +1279,18 @@ namespace Radzen
                     {
                         System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
                         if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || SelectItemFromValueForceObjectEquals)
-                            {
+                        {
                             SelectedItem = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).FirstOrDefault();
                         }
                         else
                         {
-                            SelectedItem = view.AsQueryable().Where(new FilterDescriptor[] 
-                            { 
-                                new FilterDescriptor() 
-                                { 
-                                    Property = ValueProperty, 
-                                    FilterValue = value 
-                                } 
+                            SelectedItem = view.AsQueryable().Where(new FilterDescriptor[]
+                            {
+                                new FilterDescriptor()
+                                {
+                                    Property = ValueProperty,
+                                    FilterValue = value
+                                }
                             },
                             LogicalFilterOperator.And,
                             FilterCaseSensitivity.Default).FirstOrDefault();
@@ -1384,121 +1386,122 @@ namespace Radzen
 
             keys.Clear();
         }
-        
-        private class DefaultCollectionAssignment
-        {
-            public virtual async Task MakeAssignment(IEnumerable selectedItems, EventCallback<T> valueChanged)
-            {
-                if (typeof(IList).IsAssignableFrom(typeof(T)))
-                {
-                    if (object.Equals(selectedItems, null))
-                    {
-                        await valueChanged.InvokeAsync(default(T));
-                    }
-                    else
-                    {
-                        var list = (IList)Activator.CreateInstance(typeof(T));
-                        foreach (var i in (IEnumerable)selectedItems)
-                        {
-                            list.Add(i);
-                        }
-                        await valueChanged.InvokeAsync((T)(object)list);
-                    }
-                }
-                else if (typeof(T).IsGenericType && typeof(ICollection<>).MakeGenericType(typeof(T).GetGenericArguments()[0]).IsAssignableFrom(typeof(T)))
-                {
-                    if (object.Equals(selectedItems, null))
-                    {
-                        await valueChanged.InvokeAsync(default(T));
-                    }
-                    else
-                    {
 
-                            var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(typeof(T).GetGenericArguments()[0]));
-                            foreach (var i in (IEnumerable)selectedItems)
-                            {
-                                list.Add(i);
-                            }
-                            await valueChanged.InvokeAsync((T)(object)list);
-                    }
+
+        private class DefaultCollectionAssignment
+    {
+        public virtual async Task MakeAssignment(IEnumerable selectedItems, EventCallback<T> valueChanged)
+        {
+            if (typeof(IList).IsAssignableFrom(typeof(T)))
+            {
+                if (object.Equals(selectedItems, null))
+                {
+                    await valueChanged.InvokeAsync(default(T));
                 }
                 else
                 {
-                    await valueChanged.InvokeAsync(object.Equals(selectedItems, null) ? default(T) : (T)selectedItems);
+                    var list = (IList)Activator.CreateInstance(typeof(T));
+                    foreach (var i in (IEnumerable)selectedItems)
+                    {
+                        list.Add(i);
+                    }
+                    await valueChanged.InvokeAsync((T)(object)list);
                 }
             }
-
-            public virtual T GetCleared()
+            else if (typeof(T).IsGenericType && typeof(ICollection<>).MakeGenericType(typeof(T).GetGenericArguments()[0]).IsAssignableFrom(typeof(T)))
             {
-                return default(T);
+                if (object.Equals(selectedItems, null))
+                {
+                    await valueChanged.InvokeAsync(default(T));
+                }
+                else
+                {
+
+                    var list = (IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(typeof(T).GetGenericArguments()[0]));
+                    foreach (var i in (IEnumerable)selectedItems)
+                    {
+                        list.Add(i);
+                    }
+                    await valueChanged.InvokeAsync((T)(object)list);
+                }
+            }
+            else
+            {
+                await valueChanged.InvokeAsync(object.Equals(selectedItems, null) ? default(T) : (T)selectedItems);
             }
         }
 
-        private class ReferenceGenericCollectionAssignment : DefaultCollectionAssignment
+        public virtual T GetCleared()
         {
-            private readonly T originalCollection;
-            private readonly bool canHandle;
-            private readonly System.Reflection.MethodInfo clearMethod;
-            private readonly System.Reflection.MethodInfo addMethod;
-            private readonly System.Reflection.MethodInfo removeMethod;
+            return default(T);
+        }
+    }
 
-            public ReferenceGenericCollectionAssignment(T originalCollection)
+    private class ReferenceGenericCollectionAssignment : DefaultCollectionAssignment
+    {
+        private readonly T originalCollection;
+        private readonly bool canHandle;
+        private readonly System.Reflection.MethodInfo clearMethod;
+        private readonly System.Reflection.MethodInfo addMethod;
+        private readonly System.Reflection.MethodInfo removeMethod;
+
+        public ReferenceGenericCollectionAssignment(T originalCollection)
+        {
+            this.originalCollection = originalCollection;
+            // Pre-calculate if we can handle this instance and get method info
+            if (originalCollection != null)
             {
-                this.originalCollection = originalCollection;
-                // Pre-calculate if we can handle this instance and get method info
-                if (originalCollection != null)
+                var actualType = originalCollection.GetType();
+                if (actualType.IsGenericType && !actualType.IsArray)
                 {
-                    var actualType = originalCollection.GetType();
-                    if (actualType.IsGenericType && !actualType.IsArray)
-                    {
-                        var elementType = actualType.GetGenericArguments()[0];
-                        var genericCollectionType = typeof(ICollection<>).MakeGenericType(elementType);
+                    var elementType = actualType.GetGenericArguments()[0];
+                    var genericCollectionType = typeof(ICollection<>).MakeGenericType(elementType);
 
-                        if (genericCollectionType.IsAssignableFrom(actualType))
-                        {
-                            clearMethod = actualType.GetMethod("Clear");
-                            addMethod = actualType.GetMethod("Add");
-                            removeMethod = typeof(T).GetMethod("Remove");
-                            canHandle = true;
-                        }
+                    if (genericCollectionType.IsAssignableFrom(actualType))
+                    {
+                        clearMethod = actualType.GetMethod("Clear");
+                        addMethod = actualType.GetMethod("Add");
+                        removeMethod = typeof(T).GetMethod("Remove");
+                        canHandle = true;
                     }
                 }
             }
+        }
 
-            public override async Task MakeAssignment(IEnumerable selectedItems, EventCallback<T> valueChanged)
+        public override async Task MakeAssignment(IEnumerable selectedItems, EventCallback<T> valueChanged)
+        {
+            if (!canHandle)
             {
-                if (!canHandle)
-                {
-                    // Fallback to default behavior when we can't handle the type
-                    await base.MakeAssignment(selectedItems, valueChanged);
-                    return;
-                }
-
-                var currentItems = selectedItems.Cast<object>().ToHashSet();
-                var existingItems = ((IEnumerable)originalCollection).Cast<object>().ToHashSet();
-                foreach (var i in currentItems)
-                {
-                    if (!existingItems.Contains(i))
-                        addMethod.Invoke(originalCollection, [i]);
-                }
-                foreach (var i in existingItems)
-                {
-                    if (!currentItems.Contains(i))
-                        removeMethod.Invoke(originalCollection, [i]);
-                }
-
-                await valueChanged.InvokeAsync(originalCollection);
+                // Fallback to default behavior when we can't handle the type
+                await base.MakeAssignment(selectedItems, valueChanged);
+                return;
             }
 
-            public override T GetCleared()
+            var currentItems = selectedItems.Cast<object>().ToHashSet();
+            var existingItems = ((IEnumerable)originalCollection).Cast<object>().ToHashSet();
+            foreach (var i in currentItems)
             {
-                if (canHandle)
-                {
-                    clearMethod.Invoke(originalCollection, null);
-                    return originalCollection;
-                }
-                return base.GetCleared();
+                if (!existingItems.Contains(i))
+                    addMethod.Invoke(originalCollection, [i]);
             }
+            foreach (var i in existingItems)
+            {
+                if (!currentItems.Contains(i))
+                    removeMethod.Invoke(originalCollection, [i]);
+            }
+
+            await valueChanged.InvokeAsync(originalCollection);
+        }
+
+        public override T GetCleared()
+        {
+            if (canHandle)
+            {
+                clearMethod.Invoke(originalCollection, null);
+                return originalCollection;
+            }
+            return base.GetCleared();
         }
     }
+}
 }

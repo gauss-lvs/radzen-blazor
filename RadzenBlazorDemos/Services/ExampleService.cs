@@ -200,8 +200,7 @@ namespace RadzenBlazorDemos
                     Description = "RadzenSkeleton component displays loading placeholders with various shapes and animations.",
                     Path = "skeleton",
                     Icon = "\uf486",
-                    Tags = new [] { "skeleton", "load", "loading", "placeholder", "animation", "wave", "pulse", "text", "circular", "rectangular", "rounded" },
-                    New = true
+                    Tags = new [] { "skeleton", "load", "loading", "placeholder", "animation", "wave", "pulse", "text", "circular", "rectangular", "rounded" }
                 },
                 new Example
                 {
@@ -222,15 +221,13 @@ namespace RadzenBlazorDemos
             Icon = "\uf552",
             Path = "markdown",
             Description = "Use Radzen Blazor Markdown component to render markdown content.",
-            Tags = new[] { "markdown", "text", "content" },
-            New = true
+            Tags = new[] { "markdown", "text", "content" }
         },
         new Example
         {
             Toc = [ new () { Text = "Centered CTA", Anchor = "#centered-cta" }, new () { Text = "Left-aligned CTA", Anchor = "#left-aligned-cta" }, new () { Text = "Justified CTA", Anchor = "#left-aligned-cta" }, new () { Text = "Image to the left", Anchor = "#image-to-the-left" }, new () { Text = "Image to the right", Anchor = "#image-to-the-right" } ],
             Name = "UI Blocks",
             Pro = true,
-            New = true,
             Title = "Blazor UI Blocks",
             Description = "Ready to use UI building blocks and templates",
             Icon = "\uf51d",
@@ -258,7 +255,6 @@ namespace RadzenBlazorDemos
                 {
                     Toc = [ new () { Text = "FAQ in 2 columns", Anchor = "#faq-in-2-columns" }, new () { Text = "FAQ to the right", Anchor = "#faq-to-the-right" }, new () { Text = "FAQ Accordion to the right", Anchor = "#faq-accordion-to-the-right" }, new () { Text = "FAQ in centered Accordion", Anchor = "#faq-in-centered-accordion" } ],
                     Name = "FAQ",
-                    New = true,
                     Title = "Blazor FAQ - Frequently Asked Questions | UI Blocks by Radzen",
                     Icon = "\uf04c",
                     Description = "Examples of FAQ Blocks",
@@ -289,7 +285,6 @@ namespace RadzenBlazorDemos
                 {
                     Toc = [ new () { Text = "Centered Logos", Anchor = "#centered-logos" }, new () { Text = "Logos to the right", Anchor = "#logos-to-the-right" } ],
                     Name = "Logo Clouds",
-                    New = true,
                     Title = "Blazor Logo Clouds | UI Blocks by Radzen",
                     Icon = "\ue574",
                     Description = "Examples of Customers Logo Blocks",
@@ -300,7 +295,6 @@ namespace RadzenBlazorDemos
                 {
                     Toc = [ new () { Text = "Centered layout", Anchor = "#centered-layout" }, new () { Text = "Left-aligned with image", Anchor = "#left-aligned-with-image" } ],
                     Name = "Newsletter",
-                    New = true,
                     Title = "Blazor Newsletter | UI Blocks by Radzen",
                     Icon = "\uf18c",
                     Description = "Examples of Newsletter subscription form UI Blocks",
@@ -321,7 +315,6 @@ namespace RadzenBlazorDemos
                 {
                     Toc = [ new () { Text = "Pricing Cards", Anchor = "#pricing-cards" }, new () { Text = "Basic pricing", Anchor = "#basic-pricing" } ],
                     Name = "Pricing",
-                    New = true,
                     Title = "Blazor Pricing | UI Blocks by Radzen",
                     Icon = "\uf05b",
                     Description = "Examples of Pricing UI Blocks",
@@ -332,7 +325,6 @@ namespace RadzenBlazorDemos
                 {
                     Toc = [ new () { Text = "Quotes in Carousel", Anchor = "#quotes-in-carousel" }, new () { Text = "Quotes on a row", Anchor = "#quotes-on-a-row" }, new () { Text = "Quotes in Cards", Anchor = "#quotes-in-cards" }, new () { Text = "Quotes in a CardGroup", Anchor = "#quotes-in-cardgroup" }, new () { Text = "Centered quotes", Anchor = "#centered-quotes" }, new () { Text = "Single quote", Anchor = "#single-quote" } ],
                     Name = "Testimonials",
-                    New = true,
                     Title = "Blazor Customer Testimonials | UI Blocks by Radzen",
                     Icon = "\uf054",
                     Description = "Examples of Customer Testimonials UI Blocks",
@@ -345,7 +337,6 @@ namespace RadzenBlazorDemos
         new Example
         {
             Name = "App Templates",
-            New = true,
             Title = "Blazor App Templates",
             Description = "Ready to use Blazor application and website templates",
             Icon = "\ue5c3",
@@ -361,7 +352,6 @@ namespace RadzenBlazorDemos
                 new Example
                 {
                     Name = "Healthcare",
-                    New = true,
                     Pro = true,
                     Title = "Healthcare Blazor Website | Premium App Templates by Radzen",
                     Icon = "\ueb4c",
@@ -372,7 +362,6 @@ namespace RadzenBlazorDemos
                 new Example
                 {
                     Name = "Real Estate",
-                    New = true,
                     Pro = true,
                     Title = "Real Estate Blazor Website | Premium App Templates by Radzen",
                     Icon = "\ue73a",
@@ -383,7 +372,6 @@ namespace RadzenBlazorDemos
                 new Example
                 {
                     Name = "Repair Workshop",
-                    New = true,
                     Pro = true,
                     Title = "Repair Workshop Blazor Website | Premium App Templates by Radzen",
                     Icon = "\uf56c",
@@ -564,7 +552,6 @@ namespace RadzenBlazorDemos
                         new Example
                         {
                             Name = "Conditional Columns",
-                            New = true,
                             Path = "datagrid-conditional-columns-render",
                             Title = "Blazor DataGrid Component - Conditional Columns Render | Free UI Components by Radzen",
                             Description = "Use RadzenDataGridColumn Columns property to define child columns conditionally.",
@@ -605,7 +592,6 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
-                            New = true,
                             Name = "CheckBoxList (Excel like)",
                             Path = "datagrid-checkboxlist-filter",
                             Title = "Blazor DataGrid Component - Excel like filtering | Free UI Components by Radzen",
@@ -614,7 +600,6 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
-                            New = true,
                             Name = "CheckBoxList with OData",
                             Path = "datagrid-checkboxlist-filter-odata",
                             Title = "Blazor DataGrid Component - Excel like filtering with OData | Free UI Components by Radzen",
@@ -639,7 +624,6 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
-                            New = true,
                             Name = "Filtering sub properties",
                             Path = "datagrid-sub-properties-filter",
                             Title = "Blazor DataGrid Component - Sub Properties Filtering | Free UI Components by Radzen",
@@ -664,7 +648,6 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
-                            New = true,
                             Name = "Filter Value Template",
                             Path = "datagrid-filtervalue-template",
                             Title = "Blazor DataGrid Component - Custom Filtering template | Free UI Components by Radzen",
@@ -740,7 +723,6 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
-                            New = true,
                             Name = "Cell selection",
                             Path = "datagrid-cell-selection",
                             Title = "Blazor DataGrid Component - Cell Selection | Free UI Components by Radzen",
@@ -952,7 +934,6 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
-                            New = true,
                             Name = "Drag row between DataGrid and Scheduler",
                             Path = "/datagrid-rowdrag-scheduler",
                             Title = "Blazor DataGrid Component - Drag rows from DataGrid to Scheduler | Free UI Components by Radzen",
@@ -974,7 +955,6 @@ namespace RadzenBlazorDemos
 
                 new Example
                 {
-                    New = true,
                     Name = "InCell Editing",
                     Path = "datagrid-incell-edit",
                     Title = "Blazor DataGrid Component - InCell Editing | Free UI Components by Radzen",
@@ -1018,6 +998,40 @@ namespace RadzenBlazorDemos
                     Description = "This example demonstrates Blazor DataGrid without data.",
                     Icon = "\ue661",
                     Tags = new [] { "datagrid", "databinding" }
+                }
+            }
+        },
+        new Example
+        {
+            New = true,
+            Name = "PivotDataGrid",
+            Icon = "\ue9ce",
+            Tags = new [] { "pivot", "crosstab", "analysis", "aggregation", "drill-down", "datagrid", "table" },
+            Children = new[]
+            {
+                new Example
+                {
+                    Name = "IQueryable",
+                    Path = "/pivot-data-grid",
+                    Title = "Blazor Pivot DataGrid Component - IQueryable data-binding | Free UI Components by Radzen",
+                    Description = "The RadzenPivotDataGrid component allows you to create cross-tabulation aggregates from IQueryable.",
+                    Tags = new [] { "pivot", "crosstab", "analysis", "aggregation", "drill-down", "datagrid", "table", "query", "IQueryable" }
+                },
+                new Example
+                {
+                    Name = "LoadData",
+                    Path = "/pivot-data-grid-load-data",
+                    Title = "Blazor Pivot DataGrid custom data-binding via the LoadData event.",
+                    Description = "The RadzenPivotDataGrid component allows you to create cross-tabulation aggregates from IQueryable.",
+                    Tags = new [] { "pivot", "crosstab", "analysis", "aggregation", "drill-down", "datagrid", "table", "query", "IQueryable" }
+                },
+                new Example
+                {
+                    Name = "OData",
+                    Path = "/pivot-data-grid-odata",
+                    Title = "Blazor Pivot DataGrid custom data-binding to OData service.",
+                    Description = "The RadzenPivotDataGrid component allows you to create cross-tabulation aggregates from IQueryable.",
+                    Tags = new [] { "odata", "pivot", "crosstab", "analysis", "aggregation", "drill-down", "datagrid", "table", "query", "IQueryable" }
                 }
             }
         },
@@ -1117,7 +1131,6 @@ namespace RadzenBlazorDemos
                 {
                     Toc = [ new () { Text = "Dynamic Table", Anchor = "#dynamic" }, new () { Text = "Scrollable Table", Anchor = "#scrollable" }, new () { Text = "Table with merged cells", Anchor = "#scrollable" } ],
                     Name = "Table",
-                    New = true,
                     Description = "Blazor RadzenTable component is used to create a HTML table with rows and cells.",
                     Path = "table",
                     Icon = "\uf101",
@@ -1196,7 +1209,6 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
-                            New = true,
                             Name = "Tree filtering",
                             Title = "Blazor Tree Component - Filtering | Free UI Components by Radzen",
                             Description = "This example demonstrates how to filter RadzenTree.",
@@ -1206,7 +1218,7 @@ namespace RadzenBlazorDemos
                     }
                 }
             }
-},
+        },
         new Example
         {
             Toc = [ new () { Text = "Gravatar with email (info@radzen.com)", Anchor = "#gravatar-with-email" } ],
@@ -1238,8 +1250,9 @@ namespace RadzenBlazorDemos
             Children = new[] {
                 new Example
                 {
-                    Toc = [ new () { Text = "Sidebar, Header and Footer", Anchor = "#sidebar-header-footer" }, new () { Text = "Full height Sidebar", Anchor = "#full-height-sidebar" }, new () { Text = "Overlay Sidebar", Anchor = "#overlay" }, new () { Text = "Full height overlay Sidebar", Anchor = "#overlay-full" }, new () { Text = "Right Sidebar", Anchor = "#right-sidebar" }, new () { Text = "Right full height Sidebar", Anchor = "#right-full-height-sidebar" }, new () { Text = "Right and Left Sidebar", Anchor = "#right-left-sidebar" }, new () { Text = "Icon Sidebar", Anchor = "#icon-sidebar" } ],
+                    Toc = [ new () { Text = "Sidebar, Header and Footer", Anchor = "#sidebar-header-footer" }, new () { Text = "Full height Sidebar", Anchor = "#full-height-sidebar" }, new () { Text = "Overlay Sidebar", Anchor = "#overlay" }, new () { Text = "Full height overlay Sidebar", Anchor = "#overlay-full" }, new () { Text = "Right Sidebar", Anchor = "#right-sidebar" }, new () { Text = "Right full height Sidebar", Anchor = "#right-full-height-sidebar" }, new () { Text = "Right and Left Sidebar", Anchor = "#right-left-sidebar" }, new () { Text = "Start and End Sidebar", Anchor = "#start-end-sidebar" }, new () { Text = "Icon Sidebar", Anchor = "#icon-sidebar" } ],
                     Name = "Layout",
+                    Updated = true,
                     Description = "Blazor RadzenLayout allows you to define the global layout of your application.",
                     Path = "layout",
                     Icon = "\ue8f1",
@@ -1442,7 +1455,6 @@ namespace RadzenBlazorDemos
                     Description = "Table of contents component",
                     Path = "toc",
                     Icon = "\ue241",
-                    New = true,
                     Tags = [ "toc", "content", "navigation" ]
                 }
             }
@@ -1456,10 +1468,19 @@ namespace RadzenBlazorDemos
                 {
                     Name = "AIChat",
                     Path = "aichat",
-                    New = true,
+                    Updated = true,
                     Description = "A modern chat component with AI integration that provides a conversational interface similar to popular chat applications.",
                     Icon = "\ue0b7",
                     Tags = new [] { "chat", "ai", "conversation", "message", "streaming" }
+                },
+                new Example
+                {
+                    Name = "Chat",
+                    Path = "chat",
+                    New = true,
+                    Description = "A modern chat component for multi-participant conversations with support for distinct user identities and real-time messaging.",
+                    Icon = "\uefd1",
+                    Tags = new [] { "chat", "conversation", "message", "users", "team", "group" }
                 },
                 new Example
                 {
@@ -1591,6 +1612,26 @@ namespace RadzenBlazorDemos
                     Description = "Blazor DropDown component with columns and multiple selection support.",
                     Icon = "\ue99c",
                     Tags = new [] { "select", "picker", "form", "edit" }
+                },
+                new Example
+                {
+                    Toc = [ new () { Text = "Basic usage", Anchor = "#basic-usage" }, new () { Text = "FAB position", Anchor = "#position" }, new () { Text = "Multiple FABs", Anchor = "#multiple-fabs" }, new () { Text = "Busy FAB", Anchor = "#busy-fab" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Name = "Fab",
+                    Path = "fab",
+                    Description = "Demonstration and configuration of the Radzen Blazor Fab component.",
+                    Icon = "\ue147",
+                    New = true,
+                    Tags = new [] { "fab", "button", "floating", "action" }
+                },
+                new Example
+                {
+                    Toc = [ new () { Text = "Basic usage", Anchor = "#basic-usage" }, new () { Text = "FAB menu with icon only buttons", Anchor = "#icons" }, new () { Text = "Expand direction", Anchor = "#direction" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Name = "FabMenu",
+                    Path = "fab-menu",
+                    Description = "Demonstration and configuration of the Radzen Blazor FabMenu component.",
+                    Icon = "\ue091",
+                    New = true,
+                    Tags = new [] { "fab", "menu", "button", "floating", "action" }
                 },
                 new Example
                 {
@@ -1779,7 +1820,6 @@ namespace RadzenBlazorDemos
                     Toc = [ new () { Text = "Bind the value of TimeSpanPicker", Anchor = "#bind-value" }, new () { Text = "Get and Set the value of TimeSpanPicker using Value and Change event.", Anchor = "#value-and-change-event" }, new () { Text = "Min and Max values", Anchor = "#min-max-values" }, new () { Text = "Inline picker", Anchor = "#inline" }, new () { Text = "Various configurations", Anchor = "#various-config" }, new () { Text = "Time span format", Anchor = "#format" }, new () { Text = "Custom input parsing", Anchor = "#custom-input-parsing" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "TimeSpanPicker",
                     Path = "timespanpicker",
-                    New = true,
                     Description = "Demonstration and configuration of the Radzen Blazor TimeSpanPicker component.",
                     Icon = "\ue425",
                     Tags = new [] { "duration", "form", "edit" }
@@ -1923,7 +1963,6 @@ namespace RadzenBlazorDemos
                             Path = "chart-label-rotation",
                             Title = "Blazor Chart Component - Label Rotation | Free UI Components by Radzen",
                             Description = "The Radzen Blazor Chart can rotate the labels of the horizontal axis.",
-                            New = true,
                             Tags = new [] { "chart", "label", "rotate", "rotation" }
                         },
                         new Example
@@ -1995,6 +2034,16 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Toc = [ new () { Text = "Basic", Anchor = "#basic" }, new () { Text = "Styled", Anchor = "#styled" } ],
+                    Name = "QRCode",
+                    Description = "Generate and display QR codes as SVG using RadzenQRCode.",
+                    Path = "qrcode",
+                    Icon = "\uef6b",
+                    Tags = new [] { "qr", "qrcode", "barcode", "svg" },
+                    New = true
+                },
+                new Example
+                {
                     Toc = [ new () { Text = "Basic Usage", Anchor = "#basic-usage" }, new () { Text = "Orientation and Position", Anchor = "#orientation-and-position" }, new () { Text = "Align Items", Anchor = "#align-items" }, new () { Text = "Styling", Anchor = "#line-width" }, new () { Text = "Point Size", Anchor = "#point-size" }, new () { Text = "Point Style", Anchor = "#point-style" }, new () { Text = "Point Variant", Anchor = "#point-variant" }, new () { Text = "Point Shadow", Anchor = "#point-shadow" }, new () { Text = "Point Content", Anchor = "#point-content" } ],
                     Name = "Timeline",
                     Path = "timeline",
@@ -2024,8 +2073,7 @@ namespace RadzenBlazorDemos
                     Path = "sankey-diagram",
                     Description = "Radzen Blazor Sankey Diagram for visualizing flow and relationships between nodes.",
                     Icon = "\uf38d",
-                    Tags = new [] { "sankey", "flow", "diagram", "visualization", "relationships" },
-                    New = true
+                    Tags = new [] { "sankey", "flow", "diagram", "visualization", "relationships" }
                 },
             }
         },
@@ -2246,12 +2294,12 @@ namespace RadzenBlazorDemos
                 return example.Title ?? $"Blazor {example.Name} Component | Free UI Components by Radzen";
             }
 
-            return "Free Blazor Components | 90+ UI controls by Radzen";
+            return "Free Blazor Components | 100+ UI controls by Radzen";
         }
 
         public string DescriptionFor(Example example)
         {
-            return example?.Description ?? "The Radzen Blazor component library provides more than 90 UI controls for building rich ASP.NET Core web applications.";
+            return example?.Description ?? "The Radzen Blazor component library provides more than 100 UI controls for building rich ASP.NET Core web applications.";
         }
     }
 }
