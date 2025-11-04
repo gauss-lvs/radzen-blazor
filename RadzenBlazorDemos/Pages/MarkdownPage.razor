@@ -7,6 +7,10 @@
     Demonstration and configuration of the Radzen Blazor <strong>Markdown</strong> component.
 </RadzenText>
 
+<RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.P" class="rz-pb-4">
+    In this demo markdown content renders with <strong>headings</strong>, <strong>bold text</strong>, <strong>lists</strong>, and <strong>code blocks</strong>, with a dropdown to select <code>AutoLinkHeadingDepth</code> (0-6) which automatically generates anchor links for headings up to the specified depth level.
+</RadzenText>
+
 <RadzenExample ComponentName="Markdown" Example="MarkdownConfig">
     <MarkdownConfig />
 </RadzenExample>
@@ -38,8 +42,11 @@ Blazor tags inside RadzenMarkdown will be processed. To avoid that you can use a
     <MarkdownText />
 </RadzenExample>
 
-<RadzenText Anchor="markdown#blazor" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12 rz-mb-6">
+<RadzenText Anchor="markdown#blazor" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
 Markdown with Blazor components inside
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Body1" class="rz-mb-8">
+    Embed Blazor components within Markdown content for interactive documentation and rich content.
 </RadzenText>
 <RadzenExample ComponentName="Markdown" Example="MarkdownBlazor">
     <MarkdownBlazor />

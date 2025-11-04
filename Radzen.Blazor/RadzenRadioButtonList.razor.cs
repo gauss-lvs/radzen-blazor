@@ -10,17 +10,29 @@ using System.Threading.Tasks;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenRadioButtonList component.
+    /// A radio button group component that allows users to select a single option from a list of choices.
+    /// RadzenRadioButtonList displays multiple radio buttons with configurable layout, orientation, and data binding.
+    /// Presents mutually exclusive options where only one can be selected at a time.
+    /// Supports data binding via Data property or static item declaration, configurable layout including orientation (Horizontal/Vertical), gap spacing, wrapping, alignment, and justification,
+    /// custom item templates for complex radio button content, disabled items individually or for the entire list, and keyboard navigation (Arrow keys, Space, Enter) for accessibility.
+    /// Use for forms where users must choose one option from several, like payment methods, shipping options, or preference settings.
     /// </summary>
-    /// <typeparam name="TValue">The type of the value.</typeparam>
+    /// <typeparam name="TValue">The type of the selected value. Each radio button option has a value of this type.</typeparam>
     /// <example>
+    /// Static radio button list:
     /// <code>
-    /// &lt;RadzenRadioButtonList @bind-Value=@value TValue="int" Orientation="Orientation.Vertical" &gt;
+    /// &lt;RadzenRadioButtonList @bind-Value=@selectedOption TValue="string" Orientation="Orientation.Vertical"&gt;
     ///     &lt;Items&gt;
-    ///         &lt;RadzenRadioButtonListItem Text="Orders" Value="1" /&gt;
-    ///         &lt;RadzenRadioButtonListItem Text="Employees" Value="2" /&gt;
+    ///         &lt;RadzenRadioButtonListItem Text="Option 1" Value="option1" /&gt;
+    ///         &lt;RadzenRadioButtonListItem Text="Option 2" Value="option2" /&gt;
+    ///         &lt;RadzenRadioButtonListItem Text="Option 3" Value="option3" /&gt;
     ///     &lt;/Items&gt;
     /// &lt;/RadzenRadioButtonList&gt;
+    /// </code>
+    /// Data-bound radio list with disabled item:
+    /// <code>
+    /// &lt;RadzenRadioButtonList @bind-Value=@paymentMethod TValue="int" Data=@paymentMethods 
+    ///                         TextProperty="Name" ValueProperty="Id" DisabledProperty="IsDisabled" /&gt;
     /// </code>
     /// </example>
     public partial class RadzenRadioButtonList<TValue> : FormComponent<TValue>
@@ -229,8 +241,7 @@ namespace Radzen.Blazor
             Value = item.Value;
 
             await ValueChanged.InvokeAsync(Value);
-            if (FieldIdentifier.FieldName != null)
-            { EditContext?.NotifyFieldChanged(FieldIdentifier); }
+            EditContext?.NotifyFieldChanged(FieldIdentifier);
             await Change.InvokeAsync(Value);
 
             StateHasChanged();

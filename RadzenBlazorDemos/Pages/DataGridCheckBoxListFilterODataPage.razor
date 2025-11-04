@@ -3,6 +3,13 @@
 <RadzenText TextStyle="TextStyle.H2" TagName="TagName.H1" class="rz-pt-8">
     DataGrid <strong>CheckBox list (Excel like) Filter</strong>
 </RadzenText>
+<RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.P" class="rz-pb-4">
+    Use Excel-style checkbox filtering with OData services for server-side filtering.
+</RadzenText>
+
+<RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.P" class="rz-pb-4">
+    In this demo <code>LoadColumnFilterData</code> event queries the OData service to get distinct column values using <code>groupby</code> and <code>$expand</code> for nested properties like <strong>Customer.CompanyName</strong>, with searchable checkbox lists for server-side filtering.
+</RadzenText>
 
 <RadzenExample ComponentName="DataGrid" Example="DataGridCheckBoxListFilterOData">
     <DataGridCheckBoxListFilterOData />

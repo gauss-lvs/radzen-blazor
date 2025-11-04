@@ -9,27 +9,40 @@ using System.Threading.Tasks;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenUpload component.
+    /// A file upload component with progress tracking, multiple file support, and drag-and-drop capability.
+    /// RadzenUpload provides a full-featured file upload interface with automatic or manual upload, server communication, and comprehensive event handling.
+    /// Handles file selection and upload to a server endpoint with automatic upload on file selection or manual triggering via Upload() method,
+    /// real-time upload progress with percentage and bytes loaded, file type restriction via Accept property (MIME types or extensions),
+    /// custom authentication or HTTP headers, Complete/Error/Progress/Change events for tracking upload lifecycle,
+    /// automatic image preview for image files, file removal support, and built-in drag-and-drop for file selection.
+    /// Uploads files to the URL endpoint via HTTP POST multipart/form-data. Server-side endpoint must accept file uploads and return appropriate responses.
     /// </summary>
     /// <example>
+    /// Basic upload with auto-upload:
     /// <code>
-    /// &lt;RadzenUpload Url="upload/single" Progress=@(args => OnProgress(args, "Single file upload"))/&gt;
+    /// &lt;RadzenUpload Url="api/upload" Complete=@OnComplete /&gt;
     /// @code {
-    ///  void OnProgress(UploadProgressArgs args, string name)
-    ///  {
-    ///    this.info = $"% '{name}' / {args.Loaded} of {args.Total} bytes.";
-    ///    this.progress = args.Progress;
-    ///    if (args.Progress == 100)
-    ///    {
-    ///        console.Clear();
-    ///
-    ///        foreach (var file in args.Files)
-    ///        {
-    ///            console.Log($"Uploaded: {file.Name} / {file.Size} bytes");
-    ///        }
-    ///    }
-    ///  }
+    ///     void OnComplete(UploadCompleteEventArgs args)
+    ///     {
+    ///         Console.WriteLine($"Uploaded {args.Files.Count} files");
+    ///     }
     /// }
+    /// </code>
+    /// Manual upload with progress tracking:
+    /// <code>
+    /// &lt;RadzenUpload @ref=upload Url="api/upload" Auto="false" Multiple="true" Progress=@OnProgress /&gt;
+    /// &lt;RadzenButton Text="Upload" Click=@(() => upload.Upload()) /&gt;
+    /// @code {
+    ///     RadzenUpload upload;
+    ///     void OnProgress(UploadProgressArgs args)
+    ///     {
+    ///         Console.WriteLine($"Progress: {args.Progress}% ({args.Loaded}/{args.Total} bytes)");
+    ///     }
+    /// }
+    /// </code>
+    /// Upload with file type filtering:
+    /// <code>
+    /// &lt;RadzenUpload Url="api/upload/images" Accept="image/*" MaxFileSize="5000000" /&gt;
     /// </code>
     /// </example>
     public partial class RadzenUpload : RadzenComponent
@@ -311,7 +324,7 @@ namespace Radzen.Blazor
         protected async System.Threading.Tasks.Task OnRemove(PreviewFileInfo file, bool fireChangeEvent = true)
         {
             files.Remove(file);
-            await JSRuntime.InvokeVoidAsync("Radzen.removeFileFromUpload", fileUpload, file.Name);
+            await JSRuntime.InvokeVoidAsync("Radzen.removeFileFromUpload", Reference, file.Name, Name ?? GetId());
             if (fireChangeEvent) await Change.InvokeAsync(CreateUploadChangeEventArgs(files));
         }
 

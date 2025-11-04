@@ -13,54 +13,86 @@ namespace Radzen.Blazor;
 #pragma warning disable ASP0006 // Do not use non-literal sequence numbers
 
 /// <summary>
-/// A component which renders markdown content.
+/// A markdown rendering component that parses and displays Markdown syntax as formatted HTML.
+/// RadzenMarkdown converts Markdown text (headings, lists, links, code blocks, etc.) into rich HTML content with security features.
+/// Parses CommonMark-compliant markdown and renders it as HTML. Ideal for documentation, blog posts, README files, or any content authored in Markdown format.
+/// Features full support for standard Markdown syntax (headings, bold, italic, lists, links, images, code, blockquotes, tables), optional HTML tag support within markdown with security filtering,
+/// dangerous tag filtering (script, iframe, object) to prevent XSS attacks, automatic anchor link creation for headings (configurable depth),
+/// control over allowed HTML tags and attributes, and flexible input via child content or Text property.
+/// Parses markdown and renders it as Blazor components/HTML for display. Use AllowHtml = false to strictly render only Markdown syntax without any HTML pass-through.
 /// </summary>
 /// <example>
+/// Basic markdown rendering:
+/// <code>
 /// &lt;RadzenMarkdown&gt;
-/// # Hello, world!
-/// - This is a list item
-/// - This is another list item
-/// > This is a blockquote
+/// # Welcome
+/// This is **bold** and this is *italic*.
+/// - List item 1
+/// - List item 2
+/// [Link to Radzen](https://radzen.com)
 /// &lt;/RadzenMarkdown&gt;
+/// </code>
+/// Markdown from variable:
+/// <code>
+/// &lt;RadzenMarkdown Text=@markdownContent /&gt;
+/// @code {
+///     string markdownContent = "## Documentation\nThis is the content...";
+/// }
+/// </code>
+/// Markdown with auto-linking headings:
+/// <code>
+/// &lt;RadzenMarkdown AutoLinkHeadingDepth="3" Text=@readme /&gt;
+/// </code>
 /// </example>
 public partial class RadzenMarkdown : RadzenComponent
 {
     /// <summary>
-    /// Gets or sets the markdown content.
+    /// Gets or sets the markdown content as a render fragment.
+    /// The markdown text should be placed directly inside the component tags. Overridden by <see cref="Text"/> if both are set.
     /// </summary>
+    /// <value>The markdown content render fragment.</value>
     [Parameter]
     public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether to allow HTML content in the markdown. Certain dangerous HTML tags (script, style, object, iframe) and attributes are removed.
-    /// Set to <c>true</c> by default.
+    /// Gets or sets whether HTML tags within the markdown are rendered or escaped.
+    /// When true (default), safe HTML tags are allowed. Dangerous tags (script, iframe, style, object) are always filtered.
+    /// When false, all HTML is treated as plain text and displayed literally.
     /// </summary>
+    /// <value><c>true</c> to allow safe HTML; <c>false</c> to escape all HTML. Default is <c>true</c>.</value>
     [Parameter]
     public bool AllowHtml { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets a list of allowed HTML tags. If set, only these tags will be allowed in the markdown content. By default would use a list of safe HTML tags.
-    /// Considered only if <see cref="AllowHtml"/> is set to <c>true</c>.
+    /// Gets or sets a whitelist of HTML tags permitted in the markdown when <see cref="AllowHtml"/> is true.
+    /// If set, only these tags will be rendered; others are stripped. If not set, uses a default list of safe tags.
     /// </summary>
+    /// <value>The allowed HTML tag names, or null to use the default safe tag list.</value>
     [Parameter]
     public IEnumerable<string>? AllowedHtmlTags { get; set; }
 
     /// <summary>
-    /// Gets or sets a list of allowed HTML attributes. If set, only these attributes will be allowed in the markdown content. By default would use a list of safe HTML attributes.
-    /// Considered only if <see cref="AllowHtml"/> is set to <c>true</c>.
+    /// Gets or sets a whitelist of HTML attributes permitted on HTML tags when <see cref="AllowHtml"/> is true.
+    /// If set, only these attributes are rendered; others are stripped. If not set, uses a default list of safe attributes.
     /// </summary>
+    /// <value>The allowed HTML attribute names, or null to use the default safe attribute list.</value>
     [Parameter]
     public IEnumerable<string>? AllowedHtmlAttributes { get; set; }
 
     /// <summary>
-    /// Gets or sets the markdown content as a string. Overrides <see cref="ChildContent"/> if set.
+    /// Gets or sets the markdown content as a string.
+    /// When set, takes precedence over <see cref="ChildContent"/>. Use this to bind markdown from a variable.
     /// </summary>
+    /// <value>The markdown text content.</value>
     [Parameter]
     public string? Text { get; set; }
 
     /// <summary>
-    /// The maximum heading depth to create anchor links for. Set to <c>0</c> to disable auto-linking.
+    /// Gets or sets the maximum heading level (1-6) for which to automatically generate anchor links.
+    /// For example, setting to 3 creates anchors for h1, h2, and h3 headings.
+    /// Set to 0 to disable auto-linking. Auto-links enable table of contents navigation.
     /// </summary>
+    /// <value>The maximum heading depth for auto-linking (0-6). Default is 0 (disabled).</value>
     [Parameter]
     public int AutoLinkHeadingDepth { get; set; }
 
@@ -114,38 +146,73 @@ public partial class RadzenMarkdown : RadzenComponent
         var markdown = new StringBuilder();
         var outletFrames = new Dictionary<int, (int startIndex, int endIndex)>();
         var markerId = 0;
-        var index = 0;
 
-        while (index < frames.Count)
+        void ProcessRange(int start, int end)
         {
-            var frame = frames.Array[index];
+            var index = start;
 
-            if (frame.FrameType == RenderTreeFrameType.Text || frame.FrameType == RenderTreeFrameType.Markup)
+            while (index < end)
             {
-                var content = frame.FrameType == RenderTreeFrameType.Text ? frame.TextContent : frame.MarkupContent;
-                markdown.Append(content);
-                index++;
-            }
-            else if (frame.FrameType == RenderTreeFrameType.Component || frame.FrameType == RenderTreeFrameType.Element)
-            {
-                // Insert a marker for this component
-                var marker = string.Format(BlazorMarkdownRenderer.Outlet, markerId);
-                markdown.Append(marker);
+                var frame = frames.Array[index];
 
-                // Store the component information for later
-                var subtreeLength = GetSubtreeLength(frame);
-                outletFrames.Add(markerId, (index, index + subtreeLength));
+                if (frame.FrameType == RenderTreeFrameType.Text || frame.FrameType == RenderTreeFrameType.Markup)
+                {
+                    var content = frame.FrameType == RenderTreeFrameType.Text ? frame.TextContent : frame.MarkupContent;
+                    markdown.Append(content);
+                    index++;
+                }
+                else if (frame.FrameType == RenderTreeFrameType.Element)
+                {
+                    // Special-case: flatten <span class="rbs-text"> by inlining its children into markdown
+                    if (string.Equals(frame.ElementName, "span", StringComparison.OrdinalIgnoreCase) && ElementHasCssClass(frames, index, "rbs-text"))
+                    {
+                        var subtreeEnd = index + frame.ElementSubtreeLength;
 
-                // Increment marker ID and skip past this component
-                markerId++;
-                index += subtreeLength;
-            }
-            else
-            {
-                // Skip other frame types
-                index++;
+                        // Skip over attribute frames to reach first child
+                        var childIndex = index + 1;
+                        while (childIndex < subtreeEnd && frames.Array[childIndex].FrameType == RenderTreeFrameType.Attribute)
+                        {
+                            childIndex++;
+                        }
+
+                        // Inline-process children
+                        ProcessRange(childIndex, subtreeEnd);
+
+                        // Skip the entire element subtree
+                        index = subtreeEnd;
+                    }
+                    else
+                    {
+                        // Insert a marker for this element and skip its subtree
+                        var marker = string.Format(BlazorMarkdownRenderer.Outlet, markerId);
+                        markdown.Append(marker);
+
+                        var subtreeLength = frame.ElementSubtreeLength;
+                        outletFrames.Add(markerId, (index, index + subtreeLength));
+                        markerId++;
+                        index += subtreeLength;
+                    }
+                }
+                else if (frame.FrameType == RenderTreeFrameType.Component)
+                {
+                    // Insert a marker for this component and skip its subtree
+                    var marker = string.Format(BlazorMarkdownRenderer.Outlet, markerId);
+                    markdown.Append(marker);
+
+                    var subtreeLength = frame.ComponentSubtreeLength;
+                    outletFrames.Add(markerId, (index, index + subtreeLength));
+                    markerId++;
+                    index += subtreeLength;
+                }
+                else
+                {
+                    // Skip other frame types
+                    index++;
+                }
             }
         }
+
+        ProcessRange(0, frames.Count);
 
         var document = MarkdownParser.Parse(markdown.ToString());
 
@@ -185,7 +252,7 @@ public partial class RadzenMarkdown : RadzenComponent
 
                     builder.CloseComponent();
 
-                    startIndex += frame.ElementSubtreeLength;
+                    startIndex += frame.ComponentSubtreeLength;
                     break;
                 case RenderTreeFrameType.Attribute:
                     builder.AddAttribute(frame.Sequence, frame.AttributeName, frame.AttributeValue);
@@ -220,15 +287,36 @@ public partial class RadzenMarkdown : RadzenComponent
         }
     }
 
-    private static int GetSubtreeLength(RenderTreeFrame frame)
+    private static bool ElementHasCssClass(ArrayRange<RenderTreeFrame> frames, int elementIndex, string value)
     {
-        return frame.FrameType switch
+        var elementFrame = frames.Array[elementIndex];
+        var end = elementIndex + elementFrame.ElementSubtreeLength;
+        var index = elementIndex + 1;
+
+        while (index < end && frames.Array[index].FrameType == RenderTreeFrameType.Attribute)
         {
-            RenderTreeFrameType.Element => frame.ElementSubtreeLength,
-            RenderTreeFrameType.Component => frame.ComponentSubtreeLength,
-            RenderTreeFrameType.Region => frame.RegionSubtreeLength,
-            _ => 1,
-        };
+            var attributeFrame = frames.Array[index];
+
+            if (string.Equals(attributeFrame.AttributeName, "class", StringComparison.OrdinalIgnoreCase))
+            {
+                if (attributeFrame.AttributeValue is string className)
+                {
+                    var parts = className.Split([' ', '\t', '\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
+
+                    for (var i = 0; i < parts.Length; i++)
+                    {
+                        if (string.Equals(parts[i], value, StringComparison.Ordinal))
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            index++;
+        }
+
+        return false;
     }
 }
 #pragma warning restore BL0006 // Do not use RenderTree types

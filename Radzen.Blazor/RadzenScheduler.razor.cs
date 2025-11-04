@@ -9,31 +9,44 @@ using System.Threading.Tasks;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// Displays a collection of <see cref="AppointmentData" /> in day, week or month view.
+    /// A scheduler component for displaying and managing calendar appointments in multiple view types (day, week, month, year).
+    /// RadzenScheduler provides a rich calendar interface with drag-and-drop, inline editing, recurring events, and customizable views.
+    /// Displays time-based events in various calendar views, ideal for appointment booking, event calendars, resource scheduling, or any time-based data visualization.
+    /// Features multiple views (Day, Week, Month, Year Planner, Year Timeline), drag &amp; drop to move appointments between time slots, resize to adjust appointment duration by dragging edges,
+    /// inline editing to create and edit appointments directly in the calendar, tooltips for quick info on hover, customizable appointment templates,
+    /// support for all-day and multi-day events, and timezone-aware appointments.
+    /// Define data properties using StartProperty, EndProperty, and TextProperty. Add view components (RadzenDayView, RadzenWeekView, RadzenMonthView) as child content.
     /// </summary>
-    /// <typeparam name="TItem">The type of the value item.</typeparam>
+    /// <typeparam name="TItem">The type of appointment data items. Must have DateTime properties for start/end times and a string property for text.</typeparam>
     /// <example>
+    /// Basic scheduler with month view:
     /// <code>
-    /// &lt;RadzenScheduler Data="@data" TItem="DataItem" StartProperty="Start" EndProperty="End" TextProperty="Text"&gt;
+    /// &lt;RadzenScheduler Data=@appointments TItem="Appointment" StartProperty="Start" EndProperty="End" TextProperty="Title"&gt;
     ///     &lt;RadzenMonthView /&gt;
+    ///     &lt;RadzenWeekView /&gt;
+    ///     &lt;RadzenDayView /&gt;
     /// &lt;/RadzenScheduler&gt;
     /// @code {
-    ///     class DataItem
+    ///     class Appointment
     ///     {
     ///         public DateTime Start { get; set; }
     ///         public DateTime End { get; set; }
-    ///         public string Text { get; set; }
+    ///         public string Title { get; set; }
     ///     }
-    ///     DataItem[] data = new DataItem[]
-    ///     {
-    ///         new DataItem
-    ///         {
-    ///             Start = DateTime.Today,
-    ///             End = DateTime.Today.AddDays(1),
-    ///             Text = "Birthday"
-    ///         },
-    ///     };
+    ///     List&lt;Appointment&gt; appointments = new();
     /// }
+    /// </code>
+    /// Scheduler with editing and custom template:
+    /// <code>
+    /// &lt;RadzenScheduler Data=@appointments TItem="Appointment" 
+    ///                  StartProperty="Start" EndProperty="End" TextProperty="Title"
+    ///                  SlotSelect=@OnSlotSelect AppointmentSelect=@OnAppointmentSelect&gt;
+    ///     &lt;Template Context="appointment"&gt;
+    ///         &lt;strong&gt;@appointment.Title&lt;/strong&gt;
+    ///         &lt;div&gt;@appointment.Description&lt;/div&gt;
+    ///     &lt;/Template&gt;
+    ///     &lt;RadzenWeekView /&gt;
+    /// &lt;/RadzenScheduler&gt;
     /// </code>
     /// </example>
     public partial class RadzenScheduler<TItem> : RadzenComponent, IScheduler

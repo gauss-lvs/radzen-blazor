@@ -63,15 +63,30 @@ namespace Radzen.Blazor
     }
 
     /// <summary>
-    /// RadzenChat component that provides a modern chat interface for multi-participant conversations.
+    /// A chat interface component for displaying and sending messages in multi-participant conversations.
+    /// RadzenChat provides a complete chat UI with message history, user avatars, typing indicators, and message composition.
+    /// Creates a messaging interface similar to modern chat applications, ideal for customer support chats, team collaboration, messaging features, or AI chatbots.
+    /// Features multi-user support displaying messages from multiple participants with avatars and names, chronological message list with sender identification,
+    /// user avatars showing photos or initials with customizable colors, optional "User is typing..." feedback, text input with Send button for new messages,
+    /// customizable templates for message rendering/empty state/typing indicator, automatic scrolling to newest messages, and message send time stamps.
+    /// Provide a list of ChatUser objects for participants and ChatMessage objects for message history. Set CurrentUserId to distinguish the current user's messages (typically right-aligned) from others (left-aligned).
+    /// Handle MessageSent to process new messages (save to database, send to server, etc.).
     /// </summary>
     /// <example>
+    /// Basic chat:
     /// <code>
-    /// &lt;RadzenChat Title="Team Chat" 
-    ///              CurrentUserId="@currentUserId"
-    ///              Users="@users" 
-    ///              Messages="@messages"
-    ///              MessageSent="@OnMessageSent" /&gt;
+    /// &lt;RadzenChat CurrentUserId=@currentUserId Users=@users Messages=@messages MessageSent=@OnMessageSent /&gt;
+    /// @code {
+    ///     string currentUserId = "user1";
+    ///     List&lt;ChatUser&gt; users = new() { new ChatUser { Id = "user1", Name = "John" }, new ChatUser { Id = "user2", Name = "Jane" } };
+    ///     List&lt;ChatMessage&gt; messages = new();
+    ///     
+    ///     async Task OnMessageSent(ChatMessage message)
+    ///     {
+    ///         messages.Add(message);
+    ///         await SaveMessage(message);
+    ///     }
+    /// }
     /// </code>
     /// </example>
     public partial class RadzenChat : RadzenComponent

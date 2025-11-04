@@ -10,23 +10,57 @@ using System.Threading.Tasks;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenSplitter component.
+    /// A splitter component that divides space between resizable panes with draggable dividers.
+    /// RadzenSplitter creates layouts with user-adjustable panel sizes, ideal for multi-column interfaces or resizable sidebars.
+    /// Allows users to customize their workspace by dragging dividers to resize panes.
+    /// Common use cases include code editors with resizable file explorer/code/output panes, email clients with adjustable folder list/message list/message preview,
+    /// admin dashboards with resizable navigation and content areas, and data analysis tools with adjustable grid/chart/filter panels.
+    /// Features resizable panes (drag dividers between panes to adjust sizes), Horizontal (side-by-side) or Vertical (top-to-bottom) orientation,
+    /// size control with fixed pixel sizes/percentages/auto-sized panes, min/max constraints to prevent panes from becoming too small or large,
+    /// optional collapse/expand functionality per pane, and nested splitters to create complex layouts.
+    /// Panes are defined using RadzenSplitterPane components. Use Size property for fixed widths/heights.
     /// </summary>
+    /// <example>
+    /// Basic horizontal splitter:
+    /// <code>
+    /// &lt;RadzenSplitter Style="height: 400px;"&gt;
+    ///     &lt;RadzenSplitterPane Size="30%"&gt;
+    ///         Left sidebar content
+    ///     &lt;/RadzenSplitterPane&gt;
+    ///     &lt;RadzenSplitterPane&gt;
+    ///         Main content (auto-sized)
+    ///     &lt;/RadzenSplitterPane&gt;
+    /// &lt;/RadzenSplitter&gt;
+    /// </code>
+    /// Vertical splitter with min/max sizes:
+    /// <code>
+    /// &lt;RadzenSplitter Orientation="Orientation.Vertical" Style="height: 600px;"&gt;
+    ///     &lt;RadzenSplitterPane Size="200px" Min="100px" Max="400px"&gt;
+    ///         Top pane (resizable 100-400px)
+    ///     &lt;/RadzenSplitterPane&gt;
+    ///     &lt;RadzenSplitterPane&gt;
+    ///         Bottom pane (fills remaining space)
+    ///     &lt;/RadzenSplitterPane&gt;
+    /// &lt;/RadzenSplitter&gt;
+    /// </code>
+    /// </example>
     public partial class RadzenSplitter : RadzenComponent
     {
         private int _sizeautopanes = 0;
 
         /// <summary>
-        /// Gets or sets the child content.
+        /// Gets or sets the panes to display within the splitter.
+        /// Each RadzenSplitterPane represents one resizable section of the splitter.
         /// </summary>
-        /// <value>The child content.</value>
+        /// <value>The panes render fragment containing RadzenSplitterPane definitions.</value>
         [Parameter]
         public RenderFragment ChildContent { get; set; }
 
         /// <summary>
-        /// Gets or sets the orientation.
+        /// Gets or sets the layout direction of the splitter.
+        /// Horizontal arranges panes side-by-side (resizable width), Vertical stacks panes top-to-bottom (resizable height).
         /// </summary>
-        /// <value>The orientation.</value>
+        /// <value>The orientation. Default is <see cref="Orientation.Horizontal"/>.</value>
         [Parameter]
         public Orientation Orientation { get; set; } = Orientation.Horizontal;
 

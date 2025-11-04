@@ -5,32 +5,38 @@ using System.Threading.Tasks;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenLogin component. Must be placed in RadzenTemplateForm.
+    /// A pre-built login form component with username/password fields and optional "Remember Me", "Register", and "Reset Password" features.
+    /// RadzenLogin provides a ready-to-use authentication UI that can be customized with events for login, registration, and password reset flows.
+    /// Must be placed inside a <see cref="RadzenTemplateForm{TItem}"/>.
+    /// Eliminates the need to manually create login forms by providing a complete, styled login interface.
+    /// Features pre-configured text and password inputs, optional switch for persistent sessions (Remember Me), optional link to registration page/modal,
+    /// optional link for password recovery (Reset Password), browser password manager integration with autocomplete, customizable labels/button text/layout via parameters,
+    /// Login/Register/ResetPassword event callbacks for implementing auth logic, and built-in required field validation.
+    /// Handle the Login event to authenticate users with your backend. Use AllowRegister and AllowResetPassword to show/hide those links based on your auth requirements.
     /// </summary>
     /// <example>
+    /// Basic login form:
     /// <code>
     /// &lt;RadzenTemplateForm Data=@("Login")&gt;
-    ///         &lt;RadzenLogin AllowRegister="true" AllowResetPassword="true"
-    ///                         Login=@OnLogin
-    ///                         ResetPassword=@OnResetPassword
-    ///                         Register=@OnRegister /&gt;
+    ///     &lt;RadzenLogin Login=@OnLogin /&gt;
     /// &lt;/RadzenTemplateForm&gt;
     /// @code {
-    ///   void OnLogin(LoginArgs args, string name)
-    ///   {
-    ///     Console.WriteLine($"{name} -> Username: {args.Username} and password: {args.Password}");
-    ///   }
-    ///
-    ///   void OnRegister(string name)
-    ///   {
-    ///     Console.WriteLine($"{name} -> Register");
-    ///   }
-    ///
-    ///   void OnResetPassword(string value, string name)
-    ///   {
-    ///     Console.WriteLine($"{name} -> ResetPassword for user: {value}");
-    ///   }
+    ///     async Task OnLogin(LoginArgs args)
+    ///     {
+    ///         // Authenticate with backend
+    ///         var result = await authService.Login(args.Username, args.Password);
+    ///         if (result.Success)
+    ///             NavigationManager.NavigateTo("/dashboard");
+    ///     }
     /// }
+    /// </code>
+    /// Full-featured login with all options:
+    /// <code>
+    /// &lt;RadzenTemplateForm Data=@("Login")&gt;
+    ///     &lt;RadzenLogin AllowRegister="true" AllowResetPassword="true"
+    ///                  Login=@OnLogin Register=@OnRegister ResetPassword=@OnResetPassword
+    ///                  UserText="Email" RememberMe="true" /&gt;
+    /// &lt;/RadzenTemplateForm&gt;
     /// </code>
     /// </example>
     public partial class RadzenLogin : RadzenComponent

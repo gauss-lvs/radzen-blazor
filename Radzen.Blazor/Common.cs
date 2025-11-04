@@ -567,6 +567,14 @@ namespace Radzen
         /// CustomFilterExpression.
         /// </summary>
         public string CustomFilterExpression { get; set; }
+
+        /// <summary>
+        /// Gets or sets the mode that determines whether the filter applies to any or all items in a collection.
+        /// </summary>
+        /// <value>
+        /// A <see cref="CollectionFilterMode"/> value indicating whether the filter is satisfied by any or all items.
+        /// </value>
+        public CollectionFilterMode CollectionFilterMode { get; set; }
     }
 #if NET7_0_OR_GREATER
 #else
@@ -2135,6 +2143,22 @@ namespace Radzen
     }
 
     /// <summary>
+    /// Specifies how the filter should be applied to a collection of items.
+    /// </summary>
+    public enum CollectionFilterMode
+    {
+        /// <summary>
+        /// The filter condition is satisfied if at least one item in the collection matches.
+        /// </summary>
+        Any,
+
+        /// <summary>
+        /// The filter condition is satisfied only if all items in the collection match.
+        /// </summary>
+        All
+    }
+
+    /// <summary>
     /// Specifies the string comparison operator of a filter.
     /// </summary>
     public enum StringFilterOperator
@@ -2554,6 +2578,14 @@ namespace Radzen
         /// </summary>
         /// <value>The logical filter operator.</value>
         public LogicalFilterOperator LogicalFilterOperator { get; set; }
+
+        /// <summary>
+        /// Gets or sets the mode that determines whether the filter applies to any or all items in a collection.
+        /// </summary>
+        /// <value>
+        /// A <see cref="CollectionFilterMode"/> value indicating whether the filter is satisfied by any or all items.
+        /// </value>
+        public CollectionFilterMode CollectionFilterMode { get; set; }
     }
 
     /// <summary>

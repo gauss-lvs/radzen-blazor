@@ -12,18 +12,35 @@ using System.Timers;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenCarousel component.
+    /// A carousel/slideshow component for cycling through content items (images, cards, or custom content) with navigation and paging controls.
+    /// RadzenCarousel displays one item at a time with automatic or manual advancement and various navigation options.
+    /// Perfect for image galleries, product showcases, hero sections, or any content that benefits from sequential presentation.
+    /// Features automatic advancement with configurable interval, Previous/Next buttons with customizable icons and text, dot indicators or page numbers for direct item selection,
+    /// infinite loop for continuous cycling from last to first item, keyboard control (Arrow keys for navigation, Page Up/Down for first/last), swipe gestures on touch devices,
+    /// and customization of button styles, pager position (top/bottom/overlay), and navigation visibility.
+    /// Items are defined using RadzenCarouselItem components. Each item can contain images, text, or complex layouts. Use Auto property to enable automatic cycling, and Interval to control slide duration.
     /// </summary>
     /// <example>
+    /// Basic image carousel:
     /// <code>
-    /// &lt;RadzenCarousel Change=@(args => Console.WriteLine($"Selected index is: {args}"))&gt;
+    /// &lt;RadzenCarousel Style="height: 400px;"&gt;
     ///     &lt;Items&gt;
     ///         &lt;RadzenCarouselItem&gt;
-    ///             Details for Orders
+    ///             &lt;RadzenImage Path="images/slide1.jpg" Style="width: 100%; height: 100%; object-fit: cover;" /&gt;
     ///         &lt;/RadzenCarouselItem&gt;
-    ///         &lt;RadzenCarousel&gt;
-    ///             Details for Employees
+    ///         &lt;RadzenCarouselItem&gt;
+    ///             &lt;RadzenImage Path="images/slide2.jpg" Style="width: 100%; height: 100%; object-fit: cover;" /&gt;
     ///         &lt;/RadzenCarouselItem&gt;
+    ///     &lt;/Items&gt;
+    /// &lt;/RadzenCarousel&gt;
+    /// </code>
+    /// Auto-play carousel with custom navigation:
+    /// <code>
+    /// &lt;RadzenCarousel Auto="true" Interval="3000" AllowNavigation="true" PagerPosition="PagerPosition.Bottom"&gt;
+    ///     &lt;Items&gt;
+    ///         &lt;RadzenCarouselItem&gt;Slide 1 content&lt;/RadzenCarouselItem&gt;
+    ///         &lt;RadzenCarouselItem&gt;Slide 2 content&lt;/RadzenCarouselItem&gt;
+    ///         &lt;RadzenCarouselItem&gt;Slide 3 content&lt;/RadzenCarouselItem&gt;
     ///     &lt;/Items&gt;
     /// &lt;/RadzenCarousel&gt;
     /// </code>

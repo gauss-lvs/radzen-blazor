@@ -36,74 +36,78 @@ namespace Radzen.Blazor
     }
 
     /// <summary>
-    /// A Blazor component that wraps another component and adds a label, helper text, start and end content.
+    /// A form field container component that wraps input components with labels, icons, helper text, and validation messages.
+    /// RadzenFormField provides a Material Design-style field layout with floating labels and consistent spacing.
+    /// Enhances form inputs by adding structure, labels, and supplementary content in a cohesive layout.
+    /// Features top-aligned or floating labels via Text property, Start/End content for icons or buttons before/after the input (e.g., search icon, clear button),
+    /// helper text for explanatory text or validation messages below the input, Filled/Outlined/Flat variants matching Material Design,
+    /// floating labels that animate upward when input is focused or has value, and automatic display of validation messages when used with validators.
+    /// Compatible with RadzenTextBox, RadzenTextArea, RadzenPassword, RadzenDropDown, RadzenNumeric, RadzenDatePicker, and similar input components.
+    /// Use Start for leading icons (search, email), End for trailing icons (visibility toggle, clear button).
     /// </summary>
     /// <example>
+    /// Basic form field with label:
     /// <code>
-    /// &lt;RadzenFormField Text="Search"&gt;
-    ///   &lt;RadzenTextBox @bind-Value="@text" /&gt;
+    /// &lt;RadzenFormField Text="Email Address"&gt;
+    ///     &lt;RadzenTextBox @bind-Value=@email /&gt;
+    /// &lt;/RadzenFormField&gt;
+    /// </code>
+    /// Form field with icon and validation:
+    /// <code>
+    /// &lt;RadzenTemplateForm Data=@model&gt;
+    ///     &lt;RadzenFormField Text="Search" Variant="Variant.Outlined"&gt;
+    ///         &lt;Start&gt;&lt;RadzenIcon Icon="search" /&gt;&lt;/Start&gt;
+    ///         &lt;ChildContent&gt;
+    ///             &lt;RadzenTextBox Name="SearchTerm" @bind-Value=@model.SearchTerm /&gt;
+    ///         &lt;/ChildContent&gt;
+    ///         &lt;Helper&gt;
+    ///             &lt;RadzenRequiredValidator Component="SearchTerm" Text="Search term is required" /&gt;
+    ///         &lt;/Helper&gt;
+    ///     &lt;/RadzenFormField&gt;
+    /// &lt;/RadzenTemplateForm&gt;
+    /// </code>
+    /// Floating label form field:
+    /// <code>
+    /// &lt;RadzenFormField Text="Username" AllowFloatingLabel="true" Variant="Variant.Filled"&gt;
+    ///     &lt;RadzenTextBox /&gt;
     /// &lt;/RadzenFormField&gt;
     /// </code>
     /// </example>
     public partial class RadzenFormField : RadzenComponent
     {
         /// <summary>
-        /// Gets or sets the child content. The child content is wrapped by the form field. Can be used with RadzenTextBox, RadzenTextArea, RadzenPassword, RadzenDropDown, RadzenDropDownList, RadzenNumeric.
+        /// Gets or sets the input component to wrap.
+        /// Place the input component (RadzenTextBox, RadzenDropDown, etc.) here.
+        /// The form field automatically integrates with the input for labels and validation.
         /// </summary>
+        /// <value>The input component render fragment.</value>
         [Parameter]
         public RenderFragment ChildContent { get; set; }
 
         /// <summary>
-        /// Gets or sets the optional content that will be rendered before the child content. Usually used with RadzenIcon.
+        /// Gets or sets content to render before (leading position of) the input field.
+        /// Typically used for icons like search, email, lock, or prefix text like currency symbols.
+        /// Appears inside the form field border, before the input element.
         /// </summary>
-        /// <example>
-        /// <code>
-        /// &lt;RadzenFormField Text="Search"&gt;
-        ///   &lt;Start&gt;
-        ///     &lt;RadzenIcon Icon="search" /&gt;
-        ///   &lt;/Start&gt;
-        ///   &lt;ChildContent&gt;
-        ///     &lt;RadzenTextBox @bind-Value="@text" /&gt;
-        ///   &lt;/ChildContent&gt;
-        /// &lt;/RadzenFormField&gt;
-        /// </code>
-        /// </example>
+        /// <value>The start content render fragment.</value>
         [Parameter]
         public RenderFragment Start { get; set; }
 
         /// <summary>
-        /// Gets or sets the optional content that will be rendered after the child content. Usually used with RadzenIcon.
+        /// Gets or sets content to render after (trailing position of) the input field.
+        /// Typically used for icons like visibility toggle, clear button, or suffix text like units.
+        /// Appears inside the form field border, after the input element.
         /// </summary>
-        /// <example>
-        /// <code>
-        /// &lt;RadzenFormField&gt;
-        ///   &lt;End&gt;
-        ///     &lt;RadzenIcon Icon="search" /&gt;
-        ///   &lt;/End&gt;
-        ///   &lt;ChildContent&gt;
-        ///     &lt;RadzenTextBox @bind-Value="@text" /&gt;
-        ///   &lt;/ChildContent&gt;
-        /// &lt;/RadzenFormField&gt;
-        /// </code>
-        /// </example>
+        /// <value>The end content render fragment.</value>
         [Parameter]
         public RenderFragment End { get; set; }
 
         /// <summary>
-        /// Gets or sets the optional content that will be rendered below the child content. Used with a validator or to display some additional information.
+        /// Gets or sets content to render below the input field.
+        /// Used for helper text, hints, character counters, or validation messages.
+        /// Validators placed here are automatically displayed when validation fails.
         /// </summary>
-        /// <example>
-        /// <code>
-        /// &lt;RadzenFormField&gt;
-        ///   &lt;Helper&gt;
-        ///    &lt;RadzenRequiredValidator Component="Text" /&gt;
-        ///   &lt;/Helper&gt;
-        ///   &lt;ChildContent&gt;
-        /// .   &lt;RadzenTextBox @bind-Value="@text" Name="Text" /&gt;
-        ///   &lt;/ChildContent&gt;
-        /// &lt;/RadzenFormField&gt;
-        /// </code>
-        /// </example>
+        /// <value>The helper content render fragment.</value>
         [Parameter]
         public RenderFragment Helper { get; set; }
         /// <summary>

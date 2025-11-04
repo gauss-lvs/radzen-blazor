@@ -8,28 +8,54 @@ using System.Threading.Tasks;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenSteps component.
+    /// A wizard-style steps component that guides users through a multi-step process with numbered navigation.
+    /// RadzenSteps displays a visual progress indicator and manages sequential navigation through each step, ideal for forms, checkout flows, or setup wizards.
+    /// Provides a structured way to break complex processes into manageable sequential stages.
+    /// Features numbered circles showing current/completed/upcoming steps for visual progress, Next/Previous buttons for moving between steps or clicking on step numbers,
+    /// optional form validation integration to prevent advancing with invalid data, CanChange event to control when users can move between steps,
+    /// navigation to specific steps via SelectedIndex binding, and optional built-in Next/Previous buttons or use your own custom navigation.
+    /// Each step is defined using RadzenStepsItem components. Use the CanChange event to validate data before allowing step transitions. Integrates with Blazor EditContext for form validation.
     /// </summary>
     /// <example>
+    /// Basic wizard with steps:
     /// <code>
-    /// &lt;RadzenSteps Change=@(args => Console.WriteLine($"Selected index is: {args}"))&gt;
+    /// &lt;RadzenSteps @bind-SelectedIndex=@currentStep&gt;
     ///     &lt;Steps&gt;
-    ///         &lt;RadzenStepsItem Text="Orders"&gt;
-    ///             Details for Orders
+    ///         &lt;RadzenStepsItem Text="Personal Info"&gt;
+    ///             &lt;RadzenTextBox @bind-Value=@name Placeholder="Name" /&gt;
+    ///             &lt;RadzenTextBox @bind-Value=@email Placeholder="Email" /&gt;
     ///         &lt;/RadzenStepsItem&gt;
-    ///         &lt;RadzenStepsItem Text="Employees"&gt;
-    ///             Details for Employees
+    ///         &lt;RadzenStepsItem Text="Address"&gt;
+    ///             &lt;RadzenTextBox @bind-Value=@street Placeholder="Street" /&gt;
+    ///             &lt;RadzenTextBox @bind-Value=@city Placeholder="City" /&gt;
+    ///         &lt;/RadzenStepsItem&gt;
+    ///         &lt;RadzenStepsItem Text="Review"&gt;
+    ///             Review and submit...
     ///         &lt;/RadzenStepsItem&gt;
     ///     &lt;/Steps&gt;
-    /// &lt;/RadzenTabs&gt;
+    /// &lt;/RadzenSteps&gt;
+    /// </code>
+    /// Steps with validation and custom buttons:
+    /// <code>
+    /// &lt;RadzenSteps ShowStepsButtons="false" CanChange=@OnCanChange&gt;
+    ///     &lt;Steps&gt;
+    ///         &lt;RadzenStepsItem Text="Step 1"&gt;Content...&lt;/RadzenStepsItem&gt;
+    ///         &lt;RadzenStepsItem Text="Step 2"&gt;Content...&lt;/RadzenStepsItem&gt;
+    ///     &lt;/Steps&gt;
+    /// &lt;/RadzenSteps&gt;
+    /// &lt;RadzenStack Orientation="Orientation.Horizontal" Gap="1rem"&gt;
+    ///     &lt;RadzenButton Text="Previous" Click=@PrevStep /&gt;
+    ///     &lt;RadzenButton Text="Next" Click=@NextStep /&gt;
+    /// &lt;/RadzenStack&gt;
     /// </code>
     /// </example>
     public partial class RadzenSteps : RadzenComponent
     {
         /// <summary>
-        /// Gets or sets a value indicating whether to show steps buttons.
+        /// Gets or sets whether to display the built-in Next and Previous navigation buttons below the step content.
+        /// When false, you must provide your own navigation buttons using NextStep() and PrevStep() methods.
         /// </summary>
-        /// <value><c>true</c> if steps buttons are shown; otherwise, <c>false</c>.</value>
+        /// <value><c>true</c> to show built-in navigation buttons; <c>false</c> to use custom navigation. Default is <c>true</c>.</value>
         [Parameter]
         public bool ShowStepsButtons { get; set; } = true;
 
@@ -69,8 +95,10 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
-        /// Goes to next step.
+        /// Programmatically navigates to the next visible step in the sequence.
+        /// If already at the last step, this method does nothing. Respects CanChange validation.
         /// </summary>
+        /// <returns>A task representing the asynchronous navigation operation.</returns>
         public async System.Threading.Tasks.Task NextStep()
         {
             if (!IsLastVisibleStep())
@@ -92,8 +120,10 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
-        /// Goes to previous step.
+        /// Programmatically navigates to the previous visible step in the sequence.
+        /// If already at the first step, this method does nothing. Respects CanChange validation.
         /// </summary>
+        /// <returns>A task representing the asynchronous navigation operation.</returns>
         public async System.Threading.Tasks.Task PrevStep()
         {
             if (!IsFirstVisibleStep())

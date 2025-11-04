@@ -164,6 +164,16 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Toc = [ new () { Text = "Basic Usage", Anchor = "#basic-usage" }, new () { Text = "Show/Hide Content Based on Screen Size", Anchor = "#responsive-content" }, new () { Text = "Multiple Breakpoints", Anchor = "#multiple-breakpoints" }, new () { Text = "Device Orientation", Anchor = "#orientation" } ],
+                    Name = "MediaQuery",
+                    Title = "Blazor MediaQuery Component | Free UI Components by Radzen",
+                    Description = "Respond to browser viewport size changes using CSS media queries. Perfect for creating responsive Blazor applications.",
+                    Path = "media-query",
+                    Icon = "\ue337",
+                    Tags = new [] { "mediaquery", "media", "query", "responsive", "breakpoint", "viewport", "screen", "mobile", "tablet", "desktop", "orientation", "utility"}
+                },
+                new Example
+                {
                     Toc = [ new () { Text = "Ripple RadzenButton", Anchor = "#ripple-button" }, new () { Text = "Ripple RadzenLink", Anchor = "#ripple-link" }, new () { Text = "Ripple HTML div", Anchor = "#ripple-div" } ],
                     Name = "Ripple",
                     Title = "Blazor Ripple Effect | Free UI Components by Radzen",
@@ -1320,7 +1330,6 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    Toc = [ new () { Text = "Templates", Anchor = "#templates" }, new () { Text = "Expand/Collapse", Anchor = "#expand-collapse" } ],
                     Name = "Panel",
                     Description = "Demonstration and configuration of the Blazor RadzenPanel component.",
                     Path = "panel",
@@ -1481,6 +1490,16 @@ namespace RadzenBlazorDemos
                     Description = "A modern chat component for multi-participant conversations with support for distinct user identities and real-time messaging.",
                     Icon = "\uefd1",
                     Tags = new [] { "chat", "conversation", "message", "users", "team", "group" }
+                },
+                new Example
+                {
+                    Toc = [ new () { Text = "Basic Label with Input", Anchor = "#basic-usage" }, new () { Text = "Labels with Different Input Types", Anchor = "#input-types" }, new () { Text = "Label with Custom Content", Anchor = "#custom-content" }, new () { Text = "Required Field Indicators", Anchor = "#required-fields" }, new () { Text = "Label Styling", Anchor = "#styling" } ],
+                    Name = "Label",
+                    Title = "Blazor Label Component | Free UI Components by Radzen",
+                    Description = "Associate descriptive text labels with form inputs for better accessibility and usability. Clicking a label focuses its associated input.",
+                    Path = "label",
+                    Icon = "\ue893",
+                    Tags = new [] { "label", "form", "input", "accessibility", "required", "validation", "formfield", "association", "aria" }
                 },
                 new Example
                 {

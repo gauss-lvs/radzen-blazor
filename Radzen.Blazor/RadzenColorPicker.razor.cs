@@ -8,11 +8,29 @@ using Microsoft.JSInterop;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenColorPicker component.
+    /// A color picker component that allows users to select colors through various input methods including color palette, RGB sliders, hex input, and predefined swatches.
+    /// RadzenColorPicker provides a comprehensive color selection interface with alpha channel support.
+    /// Displays a button showing the current color. Clicking opens a popup with multiple color selection methods including visual picker (click on hue/saturation gradient to select colors visually),
+    /// hue/alpha sliders to fine-tune hue and transparency, RGB input to enter specific Red/Green/Blue values (0-255), hex input to enter hex color codes (#RRGGBB or #RRGGBBAA),
+    /// and predefined swatches for quick selection.
+    /// The Value is a hex color string (e.g., "#FF0000" for red, "#FF0000AA" for semi-transparent red). Supports alpha channel (transparency) in RGBA format.
+    /// Use for applications requiring color customization like themes, charts, or design tools.
     /// </summary>
     /// <example>
+    /// Basic color picker:
     /// <code>
-    /// &lt;RadzenColorPicker @bind-Value=@color Change=@(args => Console.WriteLine($"Selected color: {args}")) /&gt;
+    /// &lt;RadzenColorPicker @bind-Value=@backgroundColor /&gt;
+    /// @code {
+    ///     string backgroundColor = "#FF5733";
+    /// }
+    /// </code>
+    /// Color picker with predefined swatches:
+    /// <code>
+    /// &lt;RadzenColorPicker @bind-Value=@color Change=@OnColorChange&gt;
+    ///     &lt;RadzenColorPickerItem Value="#FF0000" /&gt;
+    ///     &lt;RadzenColorPickerItem Value="#00FF00" /&gt;
+    ///     &lt;RadzenColorPickerItem Value="#0000FF" /&gt;
+    /// &lt;/RadzenColorPicker&gt;
     /// </code>
     /// </example>
     public partial class RadzenColorPicker : FormComponent<string>
@@ -213,10 +231,7 @@ namespace Radzen.Blazor
         {
             await ValueChanged.InvokeAsync(Color);
 
-            if (FieldIdentifier.FieldName != null)
-            {
-                EditContext?.NotifyFieldChanged(FieldIdentifier);
-            }
+            EditContext?.NotifyFieldChanged(FieldIdentifier);
 
             await Change.InvokeAsync(Color);
         }

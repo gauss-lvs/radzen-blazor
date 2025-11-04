@@ -11,56 +11,96 @@ using System.Threading.Tasks;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenDataGridColumn component.
-    /// Must be placed inside a <see cref="RadzenDataGrid{TItem}" />
+    /// Defines a column in a RadzenDataGrid, specifying how data is displayed, sorted, filtered, and edited.
+    /// RadzenDataGridColumn supports data binding via Property, custom templates, formatting, sorting, filtering, grouping, aggregation, and inline editing.
+    /// Must be placed inside a <see cref="RadzenDataGrid{TItem}"/> within the Columns template.
+    /// Each column represents one field or computed value from the data source.
+    /// Features data binding using Property to bind to a data field or Template for custom content, display properties (Title, FormatString, TextAlign, Width, Frozen for locked scrolling),
+    /// Sortable property enabling/disabling sorting, Filterable property with FilterTemplate for custom filter UI and FilterValue for programmatic filtering,
+    /// EditTemplate for inline editing with Editable property to control edit permission, GroupProperty for hierarchical data grouping,
+    /// FooterTemplate with Sum()/Average()/Count() aggregation functions, child columns for multi-level headers,
+    /// and Visible property with responsive breakpoint properties (visible-sm, visible-md, etc.).
+    /// Use Template for complete control over cell rendering, or EditTemplate for edit mode cells.
     /// </summary>
-    /// <typeparam name="TItem">The type of the DataGrid item.</typeparam>
+    /// <typeparam name="TItem">The type of data items in the parent DataGrid. Must match the grid's TItem type.</typeparam>
+    /// <example>
+    /// Simple data-bound column:
+    /// <code>
+    /// &lt;RadzenDataGridColumn TItem="Order" Property="OrderId" Title="Order ID" /&gt;
+    /// </code>
+    /// Formatted column with custom width:
+    /// <code>
+    /// &lt;RadzenDataGridColumn TItem="Order" Property="OrderDate" Title="Date" FormatString="{0:d}" Width="120px" /&gt;
+    /// </code>
+    /// Column with custom template:
+    /// <code>
+    /// &lt;RadzenDataGridColumn TItem="Order" Title="Actions" Sortable="false" Filterable="false"&gt;
+    ///     &lt;Template Context="order"&gt;
+    ///         &lt;RadzenButton Icon="edit" Click="@(args =&gt; EditOrder(order))" /&gt;
+    ///         &lt;RadzenButton Icon="delete" Click="@(args =&gt; DeleteOrder(order))" /&gt;
+    ///     &lt;/Template&gt;
+    /// &lt;/RadzenDataGridColumn&gt;
+    /// </code>
+    /// </example>
     public partial class RadzenDataGridColumn<TItem> : ComponentBase, IDisposable
     {
         /// <summary>
-        /// Gets or sets the grid.
+        /// Gets or sets the parent RadzenDataGrid that contains this column.
+        /// This is set automatically via cascading parameter and provides access to grid functionality.
         /// </summary>
-        /// <value>The grid.</value>
+        /// <value>The parent DataGrid component.</value>
         [CascadingParameter]
         public RadzenDataGrid<TItem> Grid { get; set; }
 
         /// <summary>
-        /// Gets or sets the columns.
+        /// Gets or sets the child columns render fragment for creating composite/hierarchical column headers.
+        /// When set, this column becomes a header grouping column, and child columns are rendered beneath it.
+        /// Useful for creating multi-level column headers where related columns are grouped under a common header.
         /// </summary>
-        /// <value>The columns.</value>
+        /// <value>The render fragment containing child column definitions.</value>
         [Parameter]
         public RenderFragment Columns { get; set; }
 
         /// <summary>
-        /// Gets or sets the parent column.
+        /// Gets or sets the parent column when this column is nested within a composite column structure.
+        /// This is set automatically via cascading parameter for child columns in hierarchical headers.
         /// </summary>
-        /// <value>The parent column.</value>
+        /// <value>The parent column, or null if this is a top-level column.</value>
         [CascadingParameter]
         public RadzenDataGridColumn<TItem> Parent { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether cell data should be shown as tooltip.
+        /// Gets or sets whether cell values should automatically display as tooltips on hover.
+        /// Useful for columns that may contain truncated text, allowing users to see the full value.
         /// </summary>
-        /// <value><c>true</c> if cell data is shown as tooltip; otherwise, <c>false</c>.</value>
+        /// <value><c>true</c> to show cell data as tooltips; otherwise, <c>false</c>. Default is <c>false</c>.</value>
         [Parameter]
         public bool ShowCellDataAsTooltip { get; set; }
 
         /// <summary>
-        /// Specifies wether CheckBoxList filter list virtualization is enabled. Set to <c>true</c> by default.
+        /// Gets or sets whether virtualization is enabled for the CheckBoxList filter dropdown.
+        /// When enabled, only visible checkbox items are rendered for better performance with large datasets.
+        /// Only applicable when using FilterMode.CheckBoxList.
         /// </summary>
+        /// <value><c>true</c> to enable filter list virtualization; otherwise, <c>false</c>. Default is <c>true</c>.</value>
         [Parameter]
         public bool AllowCheckBoxListVirtualization { get; set; } = true;
 
         /// <summary>
-        /// Specifies whether the CheckBoxList filter should always show all data, ignoring filtering from other columns. Set to <c>false</c> by default.
+        /// Gets or sets whether the CheckBoxList filter should display all distinct values regardless of filters applied to other columns.
+        /// When false (default), the filter list is dynamically filtered based on other active column filters.
+        /// Set to true to always show the complete list of distinct values from the original dataset.
         /// </summary>
+        /// <value><c>true</c> to show all data in filter list; <c>false</c> to filter the list based on other active filters. Default is <c>false</c>.</value>
         [Parameter]
         public bool AlwaysShowAllCheckBoxListData { get; set; } = false;
 
         /// <summary>
-        /// Gets or sets the column filter mode.
+        /// Gets or sets the filtering UI mode for this column.
+        /// Controls whether the column uses simple filter controls (textbox in header), advanced filter menu, CheckBoxList, or no filtering.
+        /// If not set, inherits from the parent grid's FilterMode setting.
         /// </summary>
-        /// <value>The column filter mode.</value>
+        /// <value>The filter mode, or null to use the grid's default FilterMode. Default is null.</value>
         [Parameter]
         public FilterMode? FilterMode { get; set; }
 
@@ -613,6 +653,15 @@ namespace Radzen.Blazor
         public LogicalFilterOperator LogicalFilterOperator { get; set; } = LogicalFilterOperator.And;
 
         /// <summary>
+        /// Gets or sets the mode that determines whether the filter applies to any or all items in a collection.
+        /// </summary>
+        /// <value>
+        /// A <see cref="CollectionFilterMode"/> value indicating whether the filter is satisfied by any or all items.
+        /// </value>
+        [Parameter]
+        public CollectionFilterMode CollectionFilterMode { get; set; }
+
+        /// <summary>
         /// Gets or sets the data type.
         /// </summary>
         /// <value>The data type.</value>
@@ -879,6 +928,7 @@ namespace Radzen.Blazor
         object secondFilterValue;
         FilterOperator? secondFilterOperator;
         LogicalFilterOperator? logicalFilterOperator;
+        CollectionFilterMode? collectionFilterMode;
         string customFilterExpression;
 
         /// <summary>
@@ -1013,6 +1063,30 @@ namespace Radzen.Blazor
                 }
             }
 
+            if (parameters.DidParameterChange(nameof(CollectionFilterMode), CollectionFilterMode))
+            {
+                collectionFilterMode = parameters.GetValueOrDefault<CollectionFilterMode>(nameof(CollectionFilterMode));
+
+                if (FilterTemplate != null || FilterValueTemplate != null)
+                {
+                    CollectionFilterMode = collectionFilterMode ?? default(CollectionFilterMode);
+                    Grid.SaveSettings();
+                    if (Grid.IsVirtualizationAllowed())
+                    {
+                        if (Grid.virtualize != null)
+                        {
+                            await Grid.virtualize.RefreshDataAsync();
+                        }
+                    }
+                    else
+                    {
+                        await Grid.Reload();
+                    }
+
+                    return;
+                }
+            }
+
             if (filterOperator == null && (parameters.DidParameterChange(nameof(FilterOperator), FilterOperator) || _filterOperator != null))
             {
                 filterOperator = _filterOperator ?? parameters.GetValueOrDefault<FilterOperator>(nameof(FilterOperator));
@@ -1090,6 +1164,14 @@ namespace Radzen.Blazor
         public LogicalFilterOperator GetLogicalFilterOperator()
         {
             return logicalFilterOperator ?? LogicalFilterOperator;
+        }
+
+        /// <summary>
+        /// Get column collection filter mode.
+        /// </summary>
+        public CollectionFilterMode GetCollectionFilterMode()
+        {
+            return collectionFilterMode ?? CollectionFilterMode;
         }
 
         /// <summary>
@@ -1314,13 +1396,20 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
-        /// Set column second logical operator.
+        /// Set column logical operator.
         /// </summary>
         public void SetLogicalFilterOperator(LogicalFilterOperator value)
         {
             LogicalFilterOperator = value;
         }
 
+        /// <summary>
+        /// Set column collection filter mode.
+        /// </summary>
+        public void SetCollectionFilterMode(CollectionFilterMode? value)
+        {
+            collectionFilterMode = value;
+        }
 
         /// <summary>
         /// Closes this column filter popup.

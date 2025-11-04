@@ -12,11 +12,23 @@ using System.Threading.Tasks;
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenAutoComplete component.
+    /// An autocomplete text input component that provides real-time suggestions as users type based on a data source.
+    /// RadzenAutoComplete combines a text input with a suggestion dropdown that filters and displays matching items, enabling quick selection without typing complete values.
+    /// Features configurable filter operators (Contains, StartsWith, etc.) and case sensitivity, binding to any IEnumerable data source with TextProperty to specify display field,
+    /// MinLength to require typing before showing suggestions, FilterDelay for debouncing, custom templates for rendering suggestion items,
+    /// LoadData event for on-demand server-side filtering, textarea-style multiline input support, and option to show all items when field gains focus.
+    /// Unlike dropdown, allows free-text entry and suggests matching items. The Value is the entered text, while SelectedItem provides access to the selected data object.
     /// </summary>
     /// <example>
+    /// Basic autocomplete:
     /// <code>
-    /// &lt;RadzenAutoComplete Data=@customers TextProperty="CompanyName" Change=@(args => Console.WriteLine($"Selected text: {args}")) /&gt;
+    /// &lt;RadzenAutoComplete @bind-Value=@customerName Data=@customers TextProperty="CompanyName" /&gt;
+    /// </code>
+    /// Autocomplete with custom filtering and delay:
+    /// <code>
+    /// &lt;RadzenAutoComplete @bind-Value=@search Data=@products TextProperty="ProductName"
+    ///                      FilterOperator="StringFilterOperator.Contains" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
+    ///                      MinLength="2" FilterDelay="300" Placeholder="Type to search products..." /&gt;
     /// </code>
     /// </example>
     public partial class RadzenAutoComplete : DataBoundFormComponent<string>
@@ -100,11 +112,8 @@ namespace Radzen.Blazor
         public int FilterDelay { get; set; } = 500;
 
         /// <summary>
-        /// Gets or sets the underlying input type.
+        /// Gets or sets the underlying input type. This does not apply when <see cref="Multiline"/> is <c>true</c>.
         /// </summary>
-        /// <remarks>
-        /// This does not apply when <see cref="Multiline"/> is <c>true</c>.
-        /// </remarks>
         /// <value>The input type.</value>
         [Parameter]
         public string InputType { get; set; } = "text";
@@ -252,7 +261,7 @@ namespace Radzen.Blazor
             Value = args.Value?.ToString();
 
             await ValueChanged.InvokeAsync($"{Value}");
-            if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
+            EditContext?.NotifyFieldChanged(FieldIdentifier);
             await Change.InvokeAsync(Value);
 
             await SelectedItemChanged.InvokeAsync(null);
@@ -270,7 +279,7 @@ namespace Radzen.Blazor
             }
 
             await ValueChanged.InvokeAsync($"{Value}");
-            if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
+            EditContext?.NotifyFieldChanged(FieldIdentifier);
             await Change.InvokeAsync(Value);
 
             await SelectedItemChanged.InvokeAsync(item);

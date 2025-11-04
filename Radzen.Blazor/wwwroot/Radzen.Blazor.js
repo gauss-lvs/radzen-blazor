@@ -340,13 +340,15 @@ window.Radzen = {
 
     var inputs = el.getElementsByTagName('input');
 
-    if (Radzen[id].keyPress && Radzen[id].paste) {
+    if (Radzen[id].keyPress && Radzen[id].keyDown && Radzen[id].paste) {
+        var isAndroid = navigator.userAgent.match(/Android/i);
         for (var i = 0; i < inputs.length; i++) {
-            inputs[i].removeEventListener('keypress', Radzen[id].keyPress);
+            inputs[i].removeEventListener(isAndroid ? 'textInput' : 'keypress', Radzen[id].keyPress);
             inputs[i].removeEventListener('keydown', Radzen[id].keyDown);
             inputs[i].removeEventListener('paste', Radzen[id].paste);
         }
         delete Radzen[id].keyPress;
+        delete Radzen[id].keyDown;
         delete Radzen[id].paste;
     }
 
@@ -360,6 +362,8 @@ window.Radzen = {
       Radzen[id] = {};
 
       Radzen[id].inputs = [...el.querySelectorAll('.rz-security-code-input')];
+
+      var isAndroid = navigator.userAgent.match(/Android/i);
 
       Radzen[id].paste = function (e) {
           if (e.clipboardData) {
@@ -402,6 +406,11 @@ window.Radzen = {
               return;
           }
 
+          // Android-specific: prevent default to avoid double input
+          if (isAndroid && e.type === 'textInput') {
+              e.preventDefault();
+          }
+
           if (e.currentTarget.value == ch) {
               return;
           }
@@ -420,7 +429,7 @@ window.Radzen = {
       }
 
       Radzen[id].keyDown = function (e) {
-          var keyCode = e.data ? e.data.charCodeAt(0) : e.which;
+          var keyCode = e.which || e.keyCode;
           if (keyCode == 8) {
               e.currentTarget.value = '';
 
@@ -437,8 +446,8 @@ window.Radzen = {
       }
 
       for (var i = 0; i < Radzen[id].inputs.length; i++) {
-          Radzen[id].inputs[i].addEventListener(navigator.userAgent.match(/Android/i) ? 'textInput' : 'keypress', Radzen[id].keyPress);
-          Radzen[id].inputs[i].addEventListener(navigator.userAgent.match(/Android/i) ? 'textInput' : 'keydown', Radzen[id].keyDown);
+          Radzen[id].inputs[i].addEventListener(isAndroid ? 'textInput' : 'keypress', Radzen[id].keyPress);
+          Radzen[id].inputs[i].addEventListener('keydown', Radzen[id].keyDown);
           Radzen[id].inputs[i].addEventListener('paste', Radzen[id].paste);
       }
   },
@@ -829,8 +838,8 @@ window.Radzen = {
       }
     }
   },
-  removeFileFromUpload: function (fileInput, name) {
-    var uploadComponent = Radzen.uploadComponents && Radzen.uploadComponents[fileInput.id];
+  removeFileFromUpload: function (ref, name, id) {
+    var uploadComponent = Radzen.uploadComponents && Radzen.uploadComponents[ref];
     if (!uploadComponent) return;
     var file = uploadComponent.files.find(function (f) { return f.name == name; })
     if (!file) { return; }
@@ -842,7 +851,10 @@ window.Radzen = {
     if (index != -1) {
         uploadComponent.files.splice(index, 1);
     }
-    fileInput.value = '';
+    var fileInput = document.getElementById(id);
+    if (fileInput && uploadComponent.files.length == 0) {
+        fileInput.value = '';
+    }
   },
   removeFileFromFileInput: function (fileInput) {
     fileInput.value = '';
@@ -1351,7 +1363,10 @@ window.Radzen = {
     if (Radzen.activeElement && Radzen.activeElement == document.activeElement ||
         Radzen.activeElement && document.activeElement == document.body ||
         Radzen.activeElement && document.activeElement &&
-            (document.activeElement.classList.contains('rz-dropdown-filter') || document.activeElement.classList.contains('rz-lookup-search-input'))) {
+            (document.activeElement.classList.contains('rz-dropdown-filter') || 
+             document.activeElement.classList.contains('rz-lookup-search-input') ||
+             document.activeElement.classList.contains('rz-multiselect-filter-container') ||
+             document.activeElement.closest('.rz-multiselect-filter-container') !== null)) {
         setTimeout(function () {
             if (e && e.target && e.target.tabIndex != -1) {
                 Radzen.activeElement = e.target;
@@ -1408,23 +1423,20 @@ window.Radzen = {
   },
   focusFirstFocusableElement: function (el) {
       var focusable = Radzen.getFocusableElements(el);
-      var editor = el.querySelector('.rz-html-editor');
+      if (!focusable || !focusable.length) return;
 
-      if (editor && !focusable.includes(editor.previousElementSibling)) {
-          var editable = el.querySelector('.rz-html-editor-content');
-          if (editable) {
-              var selection = window.getSelection();
-              var range = document.createRange();
-              range.setStart(editable, 0);
-              range.setEnd(editable, 0);
-              selection.removeAllRanges();
-              selection.addRange(range);
-          }
+      var first = focusable[0];
+      
+      if (first.classList.contains('rz-html-editor-content')) {
+          var sel = window.getSelection();
+          var range = document.createRange();
+          range.setStart(first, 0);
+          range.setEnd(first, 0);
+          sel.removeAllRanges();
+          sel.addRange(range);
+          first.focus();
       } else {
-          var firstFocusable = focusable[0];
-          if (firstFocusable) {
-              firstFocusable.focus();
-          }
+          first.focus();
       }
   },
   openSideDialog: function (options) {
@@ -1546,8 +1558,17 @@ window.Radzen = {
       e.preventDefault();
   },
   getFocusableElements: function (element) {
-    return [...element.querySelectorAll('a, button, input, textarea, select, details, iframe, embed, object, summary dialog, audio[controls], video[controls], [contenteditable], [tabindex]')]
-        .filter(el => el && el.tabIndex > -1 && !el.hasAttribute('disabled') && el.offsetParent !== null);
+    return [...element.querySelectorAll('a, button, input, textarea, select, details, iframe, embed, object, summary, dialog, audio[controls], video[controls], [contenteditable], [tabindex]')]
+      .filter(el => {
+        if (!el || el.hasAttribute('disabled') || el.offsetParent === null) return false;
+    
+        // If this is inside a .rz-html-editor with tabindex="-1", skip it
+        var editorParent = el.closest('.rz-html-editor');
+        if (editorParent && editorParent.hasAttribute('tabindex') && editorParent.tabIndex === -1) return false;
+        else if (editorParent) return true;
+    
+        return el.tabIndex > -1;
+    });
   },
   focusTrap: function (e) {
     e = e || window.event;
