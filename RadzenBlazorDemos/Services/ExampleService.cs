@@ -74,6 +74,7 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Toc = [ new () { Text = "Persist the Theme", Anchor = "#persist" }, new () { Text = "Changing themes at runtime in Radzen Blazor Studio", Anchor = "#video-changing-themes-at-runtime" } ],
                     Name = "ThemeService",
                     Path = "theme-service",
                     Title = "ThemeService",
@@ -83,7 +84,7 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    Toc = [ new () { Text = "Switch between light and dark mode", Anchor = "#light-dark-mode" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Toc = [ new () { Text = "Switch between light and dark mode", Anchor = "#light-dark-mode" }, new () { Text = "RadzenAppearanceToggle in Radzen Blazor Studio", Anchor = "#video-radzen-blazor-studio-config" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "AppearanceToggle",
                     Path = "appearance-toggle",
                     Title = "Blazor Themes | Free UI Components by Radzen",
@@ -93,7 +94,7 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    Toc = [ new () { Text = "Theme Colors", Anchor = "#theme-colors" }, new () { Text = "Utility CSS Classes", Anchor = "#utility-css-classes" } ],
+                    Toc = [ new () { Text = "Theme Colors", Anchor = "#theme-colors" }, new () { Text = "Utility CSS Classes", Anchor = "#utility-css-classes" }, new () { Text = "Theme Colors in Radzen Blazor Studio", Anchor = "#video-theme-colors" } ],
                     Name = "Colors",
                     Path = "colors",
                     Title = "Blazor Color Utilities | Free UI Components by Radzen",
@@ -1034,6 +1035,14 @@ namespace RadzenBlazorDemos
                     Title = "Blazor Pivot DataGrid custom data-binding via the LoadData event.",
                     Description = "The RadzenPivotDataGrid component allows you to create cross-tabulation aggregates from IQueryable.",
                     Tags = new [] { "pivot", "crosstab", "analysis", "aggregation", "drill-down", "datagrid", "table", "query", "IQueryable" }
+                },
+                new Example
+                {
+                    Name = "Dynamic data",
+                    Path = "/pivot-data-grid-dynamic",
+                    Title = "Blazor Pivot DataGrid Component - dynamic data sets | Free UI Components by Radzen",
+                    Description = "Bind RadzenPivotDataGrid to schema-less IDictionary<string, object> records and configure fields dynamically.",
+                    Tags = new [] { "pivot", "dynamic", "dictionary", "analysis", "aggregation", "drill-down", "datagrid", "table" }
                 },
                 new Example
                 {

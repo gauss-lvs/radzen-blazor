@@ -43,8 +43,8 @@ namespace Radzen.Blazor
         public IReadOnlyDictionary<string, object> InputAttributes { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the dropdown is read-only and cannot be opened or changed by user interaction.
-        /// When true, the dropdown displays the selected value but prevents opening the popup or changing the selection.
+        /// Gets or sets whether the dropdown is read-only and cannot be changed by user interaction.
+        /// When true, the dropdown displays the selected value but prevents changing the selection.
         /// </summary>
         /// <value><c>true</c> if the dropdown is read-only; otherwise, <c>false</c>. Default is <c>false</c>.</value>
         [Parameter]
@@ -65,6 +65,13 @@ namespace Radzen.Blazor
         /// <value>The render fragment for the empty state.</value>
         [Parameter]
         public RenderFragment EmptyTemplate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the footer template.
+        /// </summary>
+        /// <value>The footer template.</value>
+        [Parameter]
+        public RenderFragment FooterTemplate { get; set; }
 
         /// <summary>
         /// Gets or sets whether the dropdown popup should automatically open when the input receives focus.
@@ -125,13 +132,22 @@ namespace Radzen.Blazor
             return args;
         }
 
+        /// <summary>
+        /// Gets or sets the keyboard key that triggers opening the popup when <see cref="OpenOnFocus"/> is enabled.
+        /// Default is <c>"Enter"</c>.
+        /// </summary>
+        /// <value>The keyboard key used to open the popup.</value>
+        [Parameter]
+        public string OpenPopupKey { get; set; } = "Enter";
+
         private async Task OnFocus()
         {
             if (OpenOnFocus)
             {
-                await OpenPopup("Enter", false);
+                await OpenPopup(OpenPopupKey, false);
             }
         }
+
         internal override async Task ClosePopup(string key)
         {
             bool of = false;

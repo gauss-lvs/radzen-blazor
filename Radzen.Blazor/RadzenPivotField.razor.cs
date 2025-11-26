@@ -31,6 +31,12 @@ namespace Radzen.Blazor
         public SortOrder? SortOrder { get; set; }
 
         /// <summary>
+        /// Gets or sets the sequence of the <see cref="Radzen.SortOrder"/>s to use when sorting the column interactively.
+        /// </summary>
+        [Parameter]
+        public SortOrder?[] SortOrderSequence { get; set; } = [Radzen.SortOrder.Ascending, Radzen.SortOrder.Descending, null];
+
+        /// <summary>
         /// Gets or sets a value indicating whether this column is sortable.
         /// </summary>
         [Parameter]
@@ -100,14 +106,14 @@ namespace Radzen.Blazor
         [Parameter]
         public RenderFragment<RadzenPivotField<TItem>> SecondFilterValueTemplate { get; set; }
 
-        private SortOrder? _internalSortOrder;
+        private SortOrder? internalSortOrder;
 
         /// <summary>
         /// Gets the current sort order (internal state).
         /// </summary>
         public SortOrder? GetSortOrder()
         {
-            return _internalSortOrder ?? SortOrder;
+            return internalSortOrder ?? SortOrder;
         }
 
         /// <summary>
@@ -115,7 +121,7 @@ namespace Radzen.Blazor
         /// </summary>
         internal void SetSortOrderInternal(SortOrder? sortOrder)
         {
-            _internalSortOrder = sortOrder;
+            internalSortOrder = sortOrder;
         }
 
         /// <summary>
@@ -123,20 +129,20 @@ namespace Radzen.Blazor
         /// </summary>
         internal void ResetSortOrder()
         {
-            _internalSortOrder = null;
+            internalSortOrder = null;
         }
 
-        private object _internalFilterValue;
-        private object _internalSecondFilterValue;
-        private FilterOperator? _internalSecondFilterOperator;
-        private LogicalFilterOperator? _internalLogicalFilterOperator;
+        private object internalFilterValue;
+        private object internalSecondFilterValue;
+        private FilterOperator? internalSecondFilterOperator;
+        private LogicalFilterOperator? internalLogicalFilterOperator;
 
         /// <summary>
         /// Gets the current filter value (internal state).
         /// </summary>
         public object GetFilterValue()
         {
-            return _internalFilterValue ?? FilterValue;
+            return internalFilterValue ?? FilterValue;
         }
 
         /// <summary>
@@ -144,7 +150,7 @@ namespace Radzen.Blazor
         /// </summary>
         internal void SetFilterValueInternal(object filterValue)
         {
-            _internalFilterValue = filterValue;
+            internalFilterValue = filterValue;
         }
 
         /// <summary>
@@ -152,7 +158,7 @@ namespace Radzen.Blazor
         /// </summary>
         public object GetSecondFilterValue()
         {
-            return _internalSecondFilterValue ?? SecondFilterValue;
+            return internalSecondFilterValue ?? SecondFilterValue;
         }
 
         /// <summary>
@@ -160,7 +166,7 @@ namespace Radzen.Blazor
         /// </summary>
         internal void SetSecondFilterValueInternal(object filterValue)
         {
-            _internalSecondFilterValue = filterValue;
+            internalSecondFilterValue = filterValue;
         }
 
         /// <summary>
@@ -184,7 +190,7 @@ namespace Radzen.Blazor
         /// </summary>
         public FilterOperator GetSecondFilterOperator()
         {
-            return _internalSecondFilterOperator ?? SecondFilterOperator;
+            return internalSecondFilterOperator ?? SecondFilterOperator;
         }
 
         /// <summary>
@@ -192,7 +198,7 @@ namespace Radzen.Blazor
         /// </summary>
         internal void SetSecondFilterOperatorInternal(FilterOperator? filterOperator)
         {
-            _internalSecondFilterOperator = filterOperator;
+            internalSecondFilterOperator = filterOperator;
         }
 
         /// <summary>
@@ -200,7 +206,7 @@ namespace Radzen.Blazor
         /// </summary>
         public LogicalFilterOperator GetLogicalFilterOperator()
         {
-            return _internalLogicalFilterOperator ?? LogicalFilterOperator;
+            return internalLogicalFilterOperator ?? LogicalFilterOperator;
         }
 
         /// <summary>
@@ -208,7 +214,7 @@ namespace Radzen.Blazor
         /// </summary>
         internal void SetLogicalFilterOperatorInternal(LogicalFilterOperator? logicalFilterOperator)
         {
-            _internalLogicalFilterOperator = logicalFilterOperator;
+            internalLogicalFilterOperator = logicalFilterOperator;
         }
 
         /// <summary>
@@ -232,8 +238,8 @@ namespace Radzen.Blazor
         /// </summary>
         internal void ClearFilterValues()
         {
-            _internalFilterValue = null;
-            _internalSecondFilterValue = null;
+            internalFilterValue = null;
+            internalSecondFilterValue = null;
         }
 
         /// <summary>

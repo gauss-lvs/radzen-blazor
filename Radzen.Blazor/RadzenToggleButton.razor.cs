@@ -47,7 +47,7 @@ namespace Radzen.Blazor
         [Parameter]
         public string ToggleIcon { get; set; }
 
-        private string getIcon()
+        private string GetIcon()
         {
             return Value && !string.IsNullOrEmpty(ToggleIcon) ? ToggleIcon : Icon;
         }
@@ -259,7 +259,7 @@ namespace Radzen.Blazor
             Value = !Value;
 
             await ValueChanged.InvokeAsync(Value);
-            EditContext?.NotifyFieldChanged(FieldIdentifier);
+            if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
             await Change.InvokeAsync(Value);
         }
 

@@ -162,7 +162,7 @@ namespace Radzen
                 var name = string.Join(" ", nameAndOrder.Split(' ').Where(i => !sortStrings.Contains(i.Trim()))).Trim();
                 var order = nameAndOrder.Split(' ').FirstOrDefault(i => sortStrings.Contains(i.Trim())) ?? sortStrings.First();
 
-                Expression property = !string.IsNullOrEmpty(nameAndOrder) ?
+                Expression property = !string.IsNullOrEmpty(name) && name != "x" && name != "it" ?
                         GetNestedPropertyExpression(parameters.FirstOrDefault(), name) : parameters.FirstOrDefault();
 
                 expression = Expression.Call(
@@ -185,7 +185,7 @@ namespace Radzen
         public static dynamic FirstOrDefault(this IQueryable source)
         {
             return source.Provider.Execute(Expression.Call(null,
-                typeof(Queryable).GetTypeInfo().GetDeclaredMethods(nameof(Queryable.FirstOrDefault)).FirstOrDefault(mi => mi.IsGenericMethod).MakeGenericMethod(source.ElementType),
+                typeof(Queryable).GetTypeInfo().GetDeclaredMethods(nameof(Queryable.FirstOrDefault)).FirstOrDefault(mi => mi.IsGenericMethod && mi.GetParameters().Length == 1).MakeGenericMethod(source.ElementType),
                 source.Expression));
         }
 
@@ -197,7 +197,7 @@ namespace Radzen
         public static dynamic LastOrDefault(this IQueryable source)
         {
             return source.Provider.Execute(Expression.Call(null,
-                typeof(Queryable).GetTypeInfo().GetDeclaredMethods(nameof(Queryable.LastOrDefault)).FirstOrDefault(mi => mi.IsGenericMethod).MakeGenericMethod(source.ElementType),
+                typeof(Queryable).GetTypeInfo().GetDeclaredMethods(nameof(Queryable.LastOrDefault)).FirstOrDefault(mi => mi.IsGenericMethod && mi.GetParameters().Length == 1).MakeGenericMethod(source.ElementType),
                 source.Expression));
         }
 
@@ -210,7 +210,7 @@ namespace Radzen
         public static IQueryable Cast(this IQueryable source, Type type)
         {
             return source.Provider.CreateQuery(Expression.Call(null,
-                typeof(Queryable).GetTypeInfo().GetDeclaredMethods(nameof(Queryable.Cast)).FirstOrDefault(mi => mi.IsGenericMethod).MakeGenericMethod(type),
+                typeof(Queryable).GetTypeInfo().GetDeclaredMethods(nameof(Queryable.Cast)).FirstOrDefault(mi => mi.IsGenericMethod && mi.GetParameters().Length == 1).MakeGenericMethod(type),
                 source.Expression));
         }
 
@@ -275,7 +275,7 @@ namespace Radzen
         public static IQueryable Distinct(this IQueryable source)
         {
             return source.Provider.CreateQuery(Expression.Call(null,
-                typeof(Queryable).GetTypeInfo().GetDeclaredMethods(nameof(Queryable.Distinct)).FirstOrDefault(mi => mi.IsGenericMethod).MakeGenericMethod(source.ElementType),
+                typeof(Queryable).GetTypeInfo().GetDeclaredMethods(nameof(Queryable.Distinct)).FirstOrDefault(mi => mi.IsGenericMethod && mi.GetParameters().Length == 1).MakeGenericMethod(source.ElementType),
                 source.Expression));
         }
 
@@ -385,7 +385,8 @@ namespace Radzen
             }
             else
             {
-                member = Expression.PropertyOrField(expression, currentPart);
+                var p = expression.Type.GetProperty(currentPart, BindingFlags.Public | BindingFlags.Instance);
+                member = p != null ? Expression.Property(expression, p) : Expression.PropertyOrField(expression, currentPart);
             }
 
             if (expression.Type.IsValueType && Nullable.GetUnderlyingType(expression.Type) == null)
@@ -788,7 +789,8 @@ namespace Radzen
                 : (string)Convert.ChangeType(filterValue is DateTimeOffset ?
                             ((DateTimeOffset)filterValue).UtcDateTime : filterValue is DateOnly ?
                                 ((DateOnly)filterValue).ToString("yyy-MM-dd", CultureInfo.InvariantCulture) :
-                                    filterValue, typeof(string), CultureInfo.InvariantCulture);
+                                    filterValue is Guid ? ((Guid)filterValue).ToString() : 
+                                        filterValue, typeof(string), CultureInfo.InvariantCulture);
 
             if (column.Grid.FilterCaseSensitivity == FilterCaseSensitivity.CaseInsensitive && column.FilterPropertyType == typeof(string))
             {

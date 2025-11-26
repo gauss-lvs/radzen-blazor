@@ -66,6 +66,13 @@ namespace Radzen.Blazor
         public Action<DataGridCellRenderEventArgs<object>> CellRender { get; set; }
 
         /// <summary>
+        /// Gets or sets the load child data callback.
+        /// </summary>
+        /// <value>The load child data callback.</value>
+        [Parameter]
+        public EventCallback<Radzen.DataGridLoadChildDataEventArgs<object>> LoadChildData { get; set; }
+
+        /// <summary>
         /// Gets or sets the footer template.
         /// </summary>
         /// <value>The footer template.</value>
@@ -128,11 +135,19 @@ namespace Radzen.Blazor
         [Parameter]
         public bool OpenOnFocus { get; set; }
 
+        /// <summary>
+        /// Gets or sets the keyboard key that triggers opening the popup when <see cref="OpenOnFocus"/> is enabled.
+        /// Default is <c>"Enter"</c>.
+        /// </summary>
+        /// <value>The keyboard key used to open the popup.</value>
+        [Parameter]
+        public string OpenPopupKey { get; set; } = "Enter";
+
         private async Task OnFocus()
         {
             if (OpenOnFocus)
             {
-                await OpenPopup("Enter", false);
+                await OpenPopup(OpenPopupKey, false);
             }
         }
 
@@ -207,6 +222,20 @@ namespace Radzen.Blazor
         public bool AllowColumnResize { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether column reorder is allowed.
+        /// </summary>
+        /// <value><c>true</c> if column reorder is allowed; otherwise, <c>false</c>.</value>
+        [Parameter]
+        public bool AllowColumnReorder { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether column picking is allowed.
+        /// </summary>
+        /// <value><c>true</c> if column picking is allowed; otherwise, <c>false</c>.</value>
+        [Parameter]
+        public bool AllowColumnPicking { get; set; }
+
+        /// <summary>
         /// Gets or sets the width of all columns.
         /// </summary>
         /// <value>The width of all columns.</value>
@@ -245,6 +274,12 @@ namespace Radzen.Blazor
         /// <value>Row selection preservation on pageing.</value>
         [Parameter]
         public bool PreserveRowSelectionOnPaging { get; set; } = false;
+
+        /// <summary>
+        /// Gets or sets the page size options.</summary>
+        /// <value>The page size options.</value>
+        [Parameter]
+        public IEnumerable<int> PageSizeOptions { get; set; }
 
         /// <summary>
         /// Gets or sets the page numbers count.
@@ -567,7 +602,7 @@ namespace Radzen.Blazor
 
                 pagedData = await Task.FromResult(query.Cast<object>().Skip(skip.HasValue ? skip.Value : 0).Take(args.Top.HasValue ? args.Top.Value : PageSize).ToList());
 
-                _internalView = query;
+                internalView = query;
 
                 if (prevOrder != args.OrderBy)
                 {
@@ -592,7 +627,7 @@ namespace Radzen.Blazor
 
         }
 
-        IEnumerable _internalView = Enumerable.Empty<object>();
+        private IEnumerable internalView = Enumerable.Empty<object>();
 
         /// <summary>
         /// Gets the view. The data with sorting, filtering and paging applied.
@@ -602,7 +637,7 @@ namespace Radzen.Blazor
         {
             get
             {
-                return _internalView;
+                return internalView;
             }
         }
 
@@ -725,7 +760,7 @@ namespace Radzen.Blazor
             selectedItems.Clear();
 
             await ValueChanged.InvokeAsync((TValue)internalValue);
-            EditContext?.NotifyFieldChanged(FieldIdentifier);
+            if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
             await Change.InvokeAsync(internalValue);
 
             if (!Multiple)

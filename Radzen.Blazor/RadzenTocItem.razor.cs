@@ -1,7 +1,7 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components;
 using Radzen.Blazor.Rendering;
+using System;
+using System.Threading.Tasks;
 namespace Radzen.Blazor;
 
 #nullable enable
@@ -9,14 +9,8 @@ namespace Radzen.Blazor;
 /// <summary>
 /// Represents a table of contents item.
 /// </summary>
-public partial class RadzenTocItem : ComponentBase, IAsyncDisposable
+public partial class RadzenTocItem : RadzenComponentWithChildren, IAsyncDisposable
 {
-    /// <summary>
-    /// Gets or sets the child content.
-    /// </summary>
-    [Parameter]
-    public RenderFragment? ChildContent { get; set; }
-
     /// <summary>
     /// Gets or sets the text displayed in the table of contents.
     /// </summary>
@@ -43,10 +37,14 @@ public partial class RadzenTocItem : ComponentBase, IAsyncDisposable
 
     private bool selected;
 
-    private string Class => ClassList.Create("rz-toc-item")
+    /// <inheritdoc />
+    protected override string GetComponentCssClass()
+    {
+        return ClassList.Create("rz-toc-item")
         .Add("rz-toc-item-selected", selected)
         .ToString();
-        
+    }
+
     private string WrapperClass => ClassList.Create("rz-toc-item-wrapper")
         .Add(Level switch
         {
@@ -59,7 +57,7 @@ public partial class RadzenTocItem : ComponentBase, IAsyncDisposable
 
     private string LinkClass => ClassList.Create("rz-toc-link")
         .ToString();
-    
+
     internal void Activate()
     {
         selected = true;

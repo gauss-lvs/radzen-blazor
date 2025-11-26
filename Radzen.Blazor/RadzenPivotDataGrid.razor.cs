@@ -410,8 +410,44 @@ namespace Radzen.Blazor
         private List<List<object>> _cachedColumnLeaves;
 
         // Filter functionality
-        private RadzenPivotField<TItem> _currentFilterField;
-        private Popup _filterPopup;
+        private RadzenPivotField<TItem> currentFilterField;
+        private Popup filterPopup;
+
+        /// <summary>
+        /// Gets the columns collection.
+        /// </summary>
+        /// <value>The columns collection.</value>
+        public IList<RadzenPivotColumn<TItem>> ColumnsCollection
+        {
+            get
+            {
+                return pivotColumns;
+            }
+        }
+
+        /// <summary>
+        /// Gets the rows collection.
+        /// </summary>
+        /// <value>The rows collection.</value>
+        public IList<RadzenPivotRow<TItem>> RowsCollection
+        {
+            get
+            {
+                return pivotRows;
+            }
+        }
+
+        /// <summary>
+        /// Gets the aggregates collection.
+        /// </summary>
+        /// <value>The aggregates collection.</value>
+        public IList<RadzenPivotAggregate<TItem>> AggregatesCollection
+        {
+            get
+            {
+                return pivotAggregates;
+            }
+        }
 
         /// <summary>
         /// Gets the cached column header rows.
@@ -637,7 +673,11 @@ namespace Radzen.Blazor
             }
         }
 
-        internal void AddPivotField(RadzenPivotField<TItem> field)
+        /// <summary>
+        /// Adds a pivot field to the pivot grid if it does not already exist.
+        /// </summary>
+        /// <param name="field">The pivot field to add.</param>
+        public void AddPivotField(RadzenPivotField<TItem> field)
         {
             if (!pivotFields.Any(f => f.Property == field.Property))
             {
@@ -652,7 +692,11 @@ namespace Radzen.Blazor
             }
         }
 
-        internal void AddPivotColumn(RadzenPivotColumn<TItem> column)
+        /// <summary>
+        /// Adds a pivot column to the pivot grid if it does not already exist.
+        /// </summary>
+        /// <param name="column">The pivot column to add.</param>
+        public void AddPivotColumn(RadzenPivotColumn<TItem> column)
         {
             if (!allPivotColumns.Contains(column))
             {
@@ -670,7 +714,11 @@ namespace Radzen.Blazor
             }
         }
 
-        internal void AddPivotRow(RadzenPivotRow<TItem> row)
+        /// <summary>
+        /// Adds a pivot row to the pivot grid if it does not already exist.
+        /// </summary>
+        /// <param name="row">The pivot row to add.</param>
+        public void AddPivotRow(RadzenPivotRow<TItem> row)
         {
             if (!allPivotRows.Contains(row))
             {
@@ -950,7 +998,11 @@ namespace Radzen.Blazor
 
                         for (int i = 0; i < colPath.Count; i++)
                         {
-                            items = items.Where($"i => i.{pivotColumns[i].Property} == {ExpressionSerializer.FormatValue(colPath[i])}");
+                            var property = pivotColumns[i].Property;
+                            var value = ExpressionSerializer.FormatValue(colPath[i]);
+                            items = property.Contains("it[") ? 
+                                items.Where($"it => {property} == {value}") : items.Where($"i => i.{property} == {value}");
+
                         }
 
                         var total = GetAggregateValue(items, aggregate);
@@ -1023,7 +1075,10 @@ namespace Radzen.Blazor
                     continue; // Skip padding cells added to align depths
                 }
 
-                items = items.Where($@"i => i.{pivotRows[i].Property} == {ExpressionSerializer.FormatValue(cell.Value)}");
+                var property = pivotRows[i].Property;
+                var value = ExpressionSerializer.FormatValue(cell.Value);
+                items = property.Contains("it[") ?
+                       items.Where($@"it => {property} == {value}") : items.Where($@"i => i.{property} == {value}");
             }
 
             return items;
@@ -1131,7 +1186,7 @@ namespace Radzen.Blazor
                 }
                 else
                 {
-                    values = items.Select(aggregate.Property).Cast(propertyType);
+                    values = propertyType != null ? items.Select(aggregate.Property).Cast(propertyType) : items.Select(aggregate.Property);
                 }
 
                 switch (aggregate.Aggregate)
@@ -1249,7 +1304,10 @@ namespace Radzen.Blazor
                         var items = node.Items;
                         for (int i = 0; i < colPath.Count; i++)
                         {
-                            items = items.Where($"i => i.{pivotColumns[i].Property} == {ExpressionSerializer.FormatValue(colPath[i])}");
+                            var property = pivotColumns[i].Property;
+                            var value = ExpressionSerializer.FormatValue(colPath[i]);
+                            items = property.Contains("it[") ?
+                                items.Where($"it => {property} == {value}") : items.Where($"i => i.{property} == {value}");
                         }
                         row.ValueCells.Add(items.Count() > 0 ? GetAggregateValue(items, aggregate) : null);
                     }
@@ -1289,12 +1347,18 @@ namespace Radzen.Blazor
                                 // Filter by row path
                                 for (int i = 0; i < newPrefix.Count && i < pivotRows.Count; i++)
                                 {
-                                    items = items.Where($@"i => i.{pivotRows[i].Property} == {ExpressionSerializer.FormatValue(newPrefix[i].Value)}");
+                                    var property = pivotRows[i].Property;
+                                    var value = ExpressionSerializer.FormatValue(newPrefix[i].Value);
+                                    items = property.Contains("it[") ?
+                                        items.Where($@"it => {property} == {value}") : items.Where($@"i => i.{property} == {value}");
                                 }
                                 // Filter by column path
                                 for (int i = 0; i < colPath.Count; i++)
                                 {
-                                    items = items.Where($"i => i.{pivotColumns[i].Property} == {ExpressionSerializer.FormatValue(colPath[i])}");
+                                    var property = pivotColumns[i].Property;
+                                    var value = ExpressionSerializer.FormatValue(colPath[i]);
+                                    items = property.Contains("it[") ?
+                                        items.Where($"it => {property} == {value}") : items.Where($"i => i.{property} == {value}");
                                 }
                                 collapsedRow.ValueCells.Add(items.Count() > 0 ? GetAggregateValue(items, aggregate) : null);
                             }
@@ -1473,39 +1537,19 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
+        /// Handles aggregate click for sorting.
+        /// </summary>
+        internal async Task OnAggregateSort(EventArgs args, RadzenPivotAggregate<TItem> aggregate)
+        {
+            await HandleFieldSort(pivotAggregates, aggregate);
+        }
+
+        /// <summary>
         /// Handles column header click for sorting.
         /// </summary>
-        internal async Task OnColumnSort(EventArgs args, RadzenPivotField<TItem> column)
+        internal async Task OnColumnSort(EventArgs args, RadzenPivotColumn<TItem> column)
         {
-            if (AllowSorting && column.Sortable)
-            {
-                // Toggle sort order: None -> Ascending -> Descending -> None
-                if (column.GetSortOrder() == null)
-                {
-                    column.SetSortOrderInternal(SortOrder.Ascending);
-                }
-                else if (column.GetSortOrder() == SortOrder.Ascending)
-                {
-                    column.SetSortOrderInternal(SortOrder.Descending);
-                }
-                else
-                {
-                    column.SetSortOrderInternal(null);
-                }
-
-                // Clear other column sorts if single column sorting
-                if (column.GetSortOrder() != null)
-                {
-                    foreach (var col in pivotColumns.Where(c => c != column))
-                    {
-                        col.SetSortOrderInternal(null);
-                    }
-                }
-
-                await Reload();
-            }
-
-            await Task.CompletedTask;
+            await HandleFieldSort(pivotColumns, column);
         }
 
         /// <summary>
@@ -1513,28 +1557,31 @@ namespace Radzen.Blazor
         /// </summary>
         internal async Task OnRowSort(EventArgs args, RadzenPivotRow<TItem> row)
         {
-            if (AllowSorting && row.Sortable)
-            {
-                // Toggle sort order: None -> Ascending -> Descending -> None
-                if (row.GetSortOrder() == null)
-                {
-                    row.SetSortOrderInternal(SortOrder.Ascending);
-                }
-                else if (row.GetSortOrder() == SortOrder.Ascending)
-                {
-                    row.SetSortOrderInternal(SortOrder.Descending);
-                }
-                else
-                {
-                    row.SetSortOrderInternal(null);
-                }
+            await HandleFieldSort(pivotRows, row);
+        }
 
-                // Clear other row sorts if single row sorting
-                if (row.GetSortOrder() != null)
+        private async Task HandleFieldSort<T>(List<T> allFields, T sortedField)
+            where T : RadzenPivotField<TItem>
+        {
+            if (AllowSorting && sortedField.Sortable)
+            {
+                // Toggle sort order
+                var sequence = sortedField.SortOrderSequence;
+
+                var pos = Array.IndexOf(sequence, sortedField.GetSortOrder());
+
+                var nextSortOrder = pos == -1 || pos + 1 >= sequence.Length
+                    ? sequence.FirstOrDefault()
+                    : sequence[pos + 1];
+
+                sortedField.SetSortOrderInternal(nextSortOrder);
+
+                // Clear other column sorts if single column sorting
+                if (sortedField.GetSortOrder() != null)
                 {
-                    foreach (var r in pivotRows.Where(r => r != row))
+                    foreach (var col in allFields.Where(c => c != sortedField))
                     {
-                        r.SetSortOrderInternal(null);
+                        col.SetSortOrderInternal(null);
                     }
                 }
 
@@ -1583,24 +1630,24 @@ namespace Radzen.Blazor
         /// <summary>
         /// Gets or sets the current filter icon reference.
         /// </summary>
-        private Dictionary<RadzenPivotField<TItem>, ElementReference> FilterIconRef = new();
+        private Dictionary<string, ElementReference> FilterIconRef = new();
 
         /// <summary>
         /// Toggles the filter popup for a field.
         /// </summary>
-        private async Task ToggleFilter(RadzenPivotField<TItem> field)
+        private async Task ToggleFilter(RadzenPivotField<TItem> field, string filterIconRefKey)
         {
             if (field == null || !AllowFiltering || !field.Filterable)
                 return;
 
-            _currentFilterField = field;
+            currentFilterField = field;
             StateHasChanged();
 
             await Task.Yield();
 
-            if (_filterPopup != null)
+            if (filterPopup != null)
             {
-                await _filterPopup.ToggleAsync(FilterIconRef[field]);
+                await filterPopup.ToggleAsync(FilterIconRef[filterIconRefKey]);
             }
         }
 
@@ -1752,23 +1799,23 @@ namespace Radzen.Blazor
                 {
                     field.SetSecondFilterValueInternal(value);
                 }
-                StateHasChanged();
+                InvokeAsync(OnFilterChanged);
             }
         }
 
         /// <summary>
         /// Applies the current filter.
         /// </summary>
-        private async Task ApplyFilter()
+        private async Task ApplyFilter(string filterIconRefKey)
         {
-            if (_currentFilterField != null)
+            if (currentFilterField != null)
             {
                 // Trigger filter change event
                 await OnFilterChanged();
                 
-                if (_filterPopup != null)
+                if (filterPopup != null)
                 {
-                    await _filterPopup.CloseAsync(FilterIconRef[_currentFilterField]);
+                    await filterPopup.CloseAsync(FilterIconRef[filterIconRefKey]);
                 }
             }
         }
@@ -1776,19 +1823,19 @@ namespace Radzen.Blazor
         /// <summary>
         /// Clears the current filter.
         /// </summary>
-        private async Task ClearFilter()
+        private async Task ClearFilter(string filterIconRefKey)
         {
-            if (_currentFilterField != null)
+            if (currentFilterField != null)
             {
-                _currentFilterField.ClearFilterValues();
+                currentFilterField.ClearFilterValues();
                 StateHasChanged();
                 
                 // Trigger filter change event
                 await OnFilterChanged();
                 
-                if (_filterPopup != null)
+                if (filterPopup != null)
                 {
-                    await _filterPopup.CloseAsync(FilterIconRef[_currentFilterField]);
+                    await filterPopup.CloseAsync(FilterIconRef[filterIconRefKey]);
                 }
             }
         }
@@ -1796,14 +1843,14 @@ namespace Radzen.Blazor
         /// <summary>
         /// Handles filter popup key pressed events.
         /// </summary>
-        private async Task OnFilterPopupKeyPressed(KeyboardEventArgs args)
+        private async Task OnFilterPopupKeyPressed(KeyboardEventArgs args, string filterIconRefKey)
         {
             var key = args.Code ?? args.Key;
             if (key == "Escape")
             {
-                if (_filterPopup != null && _currentFilterField != null)
+                if (filterPopup != null && currentFilterField != null)
                 {
-                    await _filterPopup.CloseAsync(FilterIconRef[_currentFilterField]);
+                    await filterPopup.CloseAsync(FilterIconRef[filterIconRefKey]);
                 }
             }
         }
@@ -1960,12 +2007,12 @@ namespace Radzen.Blazor
 
                     var innerFilterExpressions = new List<CompositeFilterDescriptor>();
 
-                    var filterExpression = BuildFilterExpression(property, filterValue, filterOperator);
+                    var filterExpression = BuildFilterExpression(property, filterValue, filterOperator, column.Type);
                     innerFilterExpressions.Add(filterExpression);
 
                     if (secondFilterValue != null)
                     {
-                        var secondFilterExpression = BuildFilterExpression(property, secondFilterValue, secondFilterOperator);
+                        var secondFilterExpression = BuildFilterExpression(property, secondFilterValue, secondFilterOperator, column.Type);
                         innerFilterExpressions.Add(secondFilterExpression);
                     }
 
@@ -1992,12 +2039,12 @@ namespace Radzen.Blazor
 
                     var innerFilterExpressions = new List<CompositeFilterDescriptor>();
 
-                    var filterExpression = BuildFilterExpression(property, filterValue, filterOperator);
+                    var filterExpression = BuildFilterExpression(property, filterValue, filterOperator, row.Type);
                     innerFilterExpressions.Add(filterExpression);
 
                     if (secondFilterValue != null)
                     {
-                        var secondFilterExpression = BuildFilterExpression(property, secondFilterValue, secondFilterOperator);
+                        var secondFilterExpression = BuildFilterExpression(property, secondFilterValue, secondFilterOperator, row.Type);
                         innerFilterExpressions.Add(secondFilterExpression);
                     }
 
@@ -2016,13 +2063,14 @@ namespace Radzen.Blazor
         /// <summary>
         /// Builds a filter expression for a property and value.
         /// </summary>
-        private CompositeFilterDescriptor BuildFilterExpression(string property, object value, FilterOperator filterOperator)
+        private CompositeFilterDescriptor BuildFilterExpression(string property, object value, FilterOperator filterOperator, Type type)
         {
             return new CompositeFilterDescriptor
             {
                 Property = property,
                 FilterValue = value,
-                FilterOperator = filterOperator
+                FilterOperator = filterOperator,
+                Type = type
             };
         }
 
@@ -2166,4 +2214,4 @@ namespace Radzen.Blazor
             await Reload();
         }
     }
-} 
+}

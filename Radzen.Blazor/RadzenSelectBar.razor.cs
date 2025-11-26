@@ -81,7 +81,7 @@ namespace Radzen.Blazor
 
         List<RadzenSelectBarItem> allItems;
 
-        IEnumerable _data = null;
+        private IEnumerable data = null;
 
         /// <summary>
         /// Gets or sets the data.
@@ -92,13 +92,13 @@ namespace Radzen.Blazor
         {
             get
             {
-                return _data;
+                return data;
             }
             set
             {
-                if (_data != value)
+                if (data != value)
                 {
-                    _data = value;
+                    data = value;
                     StateHasChanged();
                 }
             }
@@ -239,7 +239,7 @@ namespace Radzen.Blazor
             }
 
             await ValueChanged.InvokeAsync(Value);
-            EditContext?.NotifyFieldChanged(FieldIdentifier);
+            if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
             await Change.InvokeAsync(Value);
 
             StateHasChanged();

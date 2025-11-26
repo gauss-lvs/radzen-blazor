@@ -633,6 +633,7 @@ namespace Radzen.Blazor
                             else if (value is TimeOnly timeOnly)
                             {
                                 _dateTimeValue = new DateTime(CurrentDate.Year, CurrentDate.Month, CurrentDate.Day, timeOnly.Hour, timeOnly.Minute, timeOnly.Second, timeOnly.Millisecond, Kind);
+                                _currentDate = _dateTimeValue.Value;
                             }
 #endif
                             else
@@ -861,7 +862,10 @@ namespace Radzen.Blazor
                     await ValueChanged.InvokeAsync(Value == null ? default(TValue) : (TValue)Value);
                 }
 
-                EditContext?.NotifyFieldChanged(FieldIdentifier);
+                if (FieldIdentifier.FieldName != null)
+                {
+                    EditContext?.NotifyFieldChanged(FieldIdentifier);
+                }
 
                 await Change.InvokeAsync(DateTimeValue);
                 StateHasChanged();
@@ -915,7 +919,10 @@ namespace Radzen.Blazor
 
                 await ValueChanged.InvokeAsync(default(TValue));
 
-                EditContext?.NotifyFieldChanged(FieldIdentifier);
+                if (FieldIdentifier.FieldName != null)
+                {
+                    EditContext?.NotifyFieldChanged(FieldIdentifier);
+                }
 
                 await Change.InvokeAsync(null);
                 StateHasChanged();
@@ -926,7 +933,10 @@ namespace Radzen.Blazor
 
                 await ValueChanged.InvokeAsync(default(TValue));
 
-                EditContext?.NotifyFieldChanged(FieldIdentifier);
+                if (FieldIdentifier.FieldName != null)
+                {
+                    EditContext?.NotifyFieldChanged(FieldIdentifier);
+                }
 
                 await Change.InvokeAsync(DateTimeValue);
                 StateHasChanged();
@@ -1171,7 +1181,7 @@ namespace Radzen.Blazor
 
         string contentStyle = "display:none;";
 
-        private string getStyle()
+        private string GetStyle()
         {
             return $"{(Inline ? "overflow:auto;" : "")}{(Style != null ? Style : "")}";
         }
@@ -1236,7 +1246,7 @@ namespace Radzen.Blazor
                 await ValueChanged.InvokeAsync((TValue)Value);
             }
 
-            EditContext?.NotifyFieldChanged(FieldIdentifier);
+            if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
             await Change.InvokeAsync(DateTimeValue);
 
         }
@@ -1357,7 +1367,10 @@ namespace Radzen.Blazor
                 await ValueChanged.InvokeAsync((TValue)(object)newValue);
             }
 
-            EditContext?.NotifyFieldChanged(FieldIdentifier);
+            if (FieldIdentifier.FieldName != null)
+            {
+                EditContext?.NotifyFieldChanged(FieldIdentifier);
+            }
 
             await Change.InvokeAsync(_dateTimeValue);
             StateHasChanged();
