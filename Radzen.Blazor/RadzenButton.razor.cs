@@ -87,6 +87,24 @@ namespace Radzen.Blazor
         public string Image { get; set; }
 
         /// <summary>
+        /// Get or sets GAUSS specific icon for the button.
+        /// </summary>
+        /// <remarks>
+        /// GIcon overwrites the value of <see cref="Icon"/>.
+        /// </remarks>
+        [Parameter]
+        public Data.Icons.IRadzenFontIcon GIcon
+        {
+            get => _GIcon;
+            set
+            {
+                _GIcon = value;
+                Icon = value?.CodePoint;
+            }
+        }
+        private Data.Icons.IRadzenFontIcon _GIcon;
+
+        /// <summary>
         /// Gets or sets the semantic color style of the button.
         /// Determines the button's color scheme based on its purpose (e.g., Primary for main actions, Danger for destructive actions).
         /// </summary>
@@ -201,6 +219,7 @@ namespace Radzen.Blazor
                                                                      .AddDisabled(IsDisabled)
                                                                      .AddShade(Shade)
                                                                      .Add($"rz-button-icon-only", string.IsNullOrEmpty(Text) && !string.IsNullOrEmpty(Icon))
+                                                                     .Add(GIcon?.IconSetCssClass())
                                                                      .ToString();
     }
 }
