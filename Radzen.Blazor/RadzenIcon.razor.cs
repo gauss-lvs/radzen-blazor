@@ -54,10 +54,28 @@ namespace Radzen.Blazor
         [Parameter]
         public IconStyle? IconStyle { get; set; }
 
+        /// <summary>
+        /// Get or sets GAUSS specific icon for the button.
+        /// </summary>
+        /// <remarks>
+        /// GIcon overwrites the value of <see cref="Icon"/>.
+        /// </remarks>
+        [Parameter]
+        public GRadzenBase.Icons.IRadzenFontIcon GIcon
+        {
+            get => _GIcon;
+            set
+            {
+                _GIcon = value;
+                Icon = value?.CodePoint;
+            }
+        }
+        private GRadzenBase.Icons.IRadzenFontIcon _GIcon;
+
         /// <inheritdoc />
         protected override string GetComponentCssClass()
         {
-            return $"notranslate rzi{(IconStyle.HasValue ? $" rzi-{IconStyle.Value.ToString().ToLowerInvariant()}" : "")}";
+            return $"notranslate rzi{(IconStyle.HasValue ? $" rzi-{IconStyle.Value.ToString().ToLowerInvariant()}" : "")} {GIcon?.IconSetCssClass()}";
         }
 
         string getStyle()
