@@ -93,7 +93,7 @@ namespace Radzen.Blazor
         /// GIcon overwrites the value of <see cref="Icon"/>.
         /// </remarks>
         [Parameter]
-        public Data.Icons.IRadzenFontIcon GIcon
+        public GRadzenBase.Icons.IRadzenFontIcon GIcon
         {
             get => _GIcon;
             set
@@ -102,7 +102,7 @@ namespace Radzen.Blazor
                 Icon = value?.CodePoint;
             }
         }
-        private Data.Icons.IRadzenFontIcon _GIcon;
+        private GRadzenBase.Icons.IRadzenFontIcon _GIcon;
 
         /// <summary>
         /// Gets or sets the semantic color style of the button.
