@@ -73,6 +73,36 @@ namespace Radzen.Blazor
         public EventCallback<Radzen.DataGridLoadChildDataEventArgs<object>> LoadChildData { get; set; }
 
         /// <summary>
+        /// Gets or sets the column resized callback.
+        /// </summary>
+        /// <value>The column resized callback.</value>
+        [Parameter]
+        public EventCallback<DataGridColumnResizedEventArgs<object>> ColumnResized { get; set; }
+
+        /// <summary>
+        /// Gets or sets the column reordering callback.
+        /// </summary>
+        /// <value>The column reordering callback.</value>
+        [Parameter]
+        public EventCallback<DataGridColumnReorderingEventArgs<object>> ColumnReordering { get; set; }
+
+        /// <summary>
+        /// Gets or sets the column reordered callback.
+        /// </summary>
+        /// <value>The column reordered callback.</value>
+        [Parameter]
+        public EventCallback<DataGridColumnReorderedEventArgs<object>> ColumnReordered { get; set; }
+
+        /// <summary>
+        /// Gets or sets the callback invoked when the user right-clicks the component.
+        /// Commonly used with <see cref="ContextMenuService"/> to display context menus.
+        /// Receives mouse event arguments containing click position.
+        /// </summary>
+        /// <value>The context menu (right-click) event callback.</value>
+        [Parameter]
+        public EventCallback<Microsoft.AspNetCore.Components.Web.MouseEventArgs> ContextMenuDataGrid { get; set; }
+
+        /// <summary>
         /// Gets or sets the footer template.
         /// </summary>
         /// <value>The footer template.</value>
@@ -445,21 +475,26 @@ namespace Radzen.Blazor
 
                 StateHasChanged();
 
-                if (!Multiple && grid != null && SelectedItem != null)
-                {
-                    var items = (LoadData.HasDelegate ? Data != null ? Data : Enumerable.Empty<object>() : (pagedData != null ? pagedData : Enumerable.Empty<object>())).OfType<object>().ToList();
-                    if (items.Any())
-                    {
-                        selectedIndex = items.IndexOf(SelectedItem);
-                        if (selectedIndex >= 0)
-                        {
-                            await JSRuntime.InvokeAsync<int[]>("Radzen.focusTableRow", grid.GridId(), "ArrowDown", selectedIndex - 1, null);
-                        }
-                    }
-                }
+                await FocusItem();
             }
 
             await base.OnAfterRenderAsync(firstRender);
+        }
+
+        async Task FocusItem()
+        {
+            if (!Multiple && grid != null && SelectedItem != null)
+            {
+                var items = (LoadData.HasDelegate ? Data != null ? Data : Enumerable.Empty<object>() : (pagedData != null ? pagedData : Enumerable.Empty<object>())).OfType<object>().ToList();
+                if (items.Any())
+                {
+                    selectedIndex = items.IndexOf(SelectedItem);
+                    if (selectedIndex >= 0)
+                    {
+                        await JSRuntime.InvokeAsync<int[]>("Radzen.focusTableRow", grid.GridId(), "ArrowDown", selectedIndex - 1, null);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -1028,6 +1063,7 @@ namespace Radzen.Blazor
             if (AllowRowSelectOnRowClick)
             {
                 await SelectItem(item);
+                await FocusItem();
             }
         }
         /// <summary>

@@ -701,6 +701,11 @@ namespace Radzen
             {
                 preventKeydown = true;
 
+                if (selectedIndex == -1 && items.Count() == 1)
+                {
+                    selectedIndex = 0;
+                }
+
                 if (selectedIndex >= 0 && selectedIndex <= items.Count() - 1)
                 {
                     var itemToSelect = items.ElementAtOrDefault(selectedIndex);
@@ -724,7 +729,7 @@ namespace Radzen
                 }
                 else
                 {
-                    if (!Multiple && !isFilter)
+                    if (!Multiple && (!isFilter || key != "Space"))
                     {
                         await ClosePopup(key);
                     }
@@ -771,9 +776,7 @@ namespace Radzen
             else if (args.Key.Length == 1 && !args.CtrlKey && !args.AltKey && !args.ShiftKey)
             {
                 // searching for element
-                var filteredItems = (!string.IsNullOrEmpty(TextProperty) ?
-                    Query.Where(TextProperty, args.Key, StringFilterOperator.StartsWith, FilterCaseSensitivity.CaseInsensitive) :
-                    Query)
+                var filteredItems = Query.Where(TextProperty, args.Key, StringFilterOperator.StartsWith, FilterCaseSensitivity.CaseInsensitive)
                     .Cast(Query.ElementType).Cast<dynamic>().ToList();
 
 
@@ -1223,7 +1226,7 @@ namespace Radzen
                     }
                     else
                     {
-                        await ValueChanged.InvokeAsync((T)internalValue);
+                        await ValueChanged.InvokeAsync(internalValue != null ? (T)internalValue : default);
                     }
                 }
 

@@ -1,23 +1,48 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0
+# =============================
+# BUILD STAGE
+# =============================
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
 
-COPY Radzen.Blazor /app/Radzen.Blazor
-COPY Radzen.DocFX /app/Radzen.DocFX
-COPY RadzenBlazorDemos /app/RadzenBlazorDemos
-COPY RadzenBlazorDemos.Host /app/RadzenBlazorDemos.Host
+# Copy project files first for better caching
+COPY Radzen.Blazor/*.csproj Radzen.Blazor/
+COPY RadzenBlazorDemos/*.csproj RadzenBlazorDemos/
+COPY RadzenBlazorDemos.Host/*.csproj RadzenBlazorDemos.Host/
 
-WORKDIR /app
+# Radzen.DocFX usually has no csproj → copy full folder
+COPY Radzen.DocFX/ Radzen.DocFX/
 
+# Restore dependencies
+RUN dotnet restore RadzenBlazorDemos.Host/RadzenBlazorDemos.Host.csproj
+
+# Copy full source after restore layer
+COPY . .
+
+# Install docfx (build stage only)
 RUN dotnet tool install -g docfx
 ENV PATH="$PATH:/root/.dotnet/tools"
-RUN wget https://dot.net/v1/dotnet-install.sh \
-    && bash dotnet-install.sh --channel 8.0 --runtime dotnet --install-dir /usr/share/dotnet
+
+# Build shared project (keep net8.0 if required)
 RUN dotnet build -c Release Radzen.Blazor/Radzen.Blazor.csproj -f net8.0
+
+# Generate documentation
 RUN docfx Radzen.DocFX/docfx.json
 
-WORKDIR /app/RadzenBlazorDemos.Host
-RUN dotnet publish -c Release -o out
+# Publish the Blazor host app
+WORKDIR /src/RadzenBlazorDemos.Host
+RUN dotnet publish -c Release -o /app/out
 
-ENV ASPNETCORE_URLS=http://*:5000
-WORKDIR /app/RadzenBlazorDemos.Host/out
+
+# =============================
+# RUNTIME STAGE
+# =============================
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+WORKDIR /app
+
+# Copy only published output
+COPY --from=build /app/out ./
+
+# Set runtime URL
+ENV ASPNETCORE_URLS=http://+:5000
 
 ENTRYPOINT ["dotnet", "RadzenBlazorDemos.Host.dll"]

@@ -376,14 +376,14 @@ namespace Radzen.Blazor
             {
                 if (!Multiple && !isFromKey)
                 {
-                    isOpen = false;
-                    await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID, Reference, nameof(OnClose));
+                    await ClosePopup("Enter");
                 }
 
                 if (ClearSearchAfterSelection)
                 {
                     await JSRuntime.InvokeAsync<string>("Radzen.setInputValue", search, string.Empty);
                     searchText = null;
+                    _view = null;
                     await SearchTextChanged.InvokeAsync(searchText);
                     await OnFilter(null);
                 }

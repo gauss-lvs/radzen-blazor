@@ -15,6 +15,8 @@ using Radzen;
 using RadzenBlazorDemos;
 using RadzenBlazorDemos.Data;
 using RadzenBlazorDemos.Services;
+using RadzenBlazorDemos.Host.Services;
+using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
@@ -52,6 +54,14 @@ builder.Services.AddSingleton<GitHubService>();
 
 builder.Services.AddAIChatService(options =>
     builder.Configuration.GetSection("AIChatService").Bind(options));
+
+builder.Services.Configure<PlaygroundOptions>(builder.Configuration.GetSection("Playground"));
+builder.Services.AddSingleton<PlaygroundService>();
+
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-CSRF-TOKEN";
+});
 
 builder.Services.AddLocalization();
 
@@ -114,9 +124,24 @@ if (!app.Environment.IsDevelopment())
             Path.Combine(app.Environment.WebRootPath, "demos")),
         RequestPath = "/demos"
     });
+
+    app.UseStaticFiles(new StaticFileOptions {
+        FileProvider = new PhysicalFileProvider(
+            Path.Combine(app.Environment.WebRootPath)),
+        RequestPath = "/images"
+    });
 }
+
 app.UseRouting();
 app.UseAntiforgery();
+app.MapGet("/llms.txt", () =>
+{
+    var path = Path.Combine(app.Environment.WebRootPath, "llms.txt");
+
+    return File.Exists(path)
+        ? Results.File(path, "text/plain")
+        : Results.NotFound();
+});
 app.MapRazorPages();
 app.MapRazorComponents<RadzenBlazorDemos.Host.App>()
     .AddInteractiveWebAssemblyRenderMode().AddAdditionalAssemblies(typeof(RadzenBlazorDemos.Routes).Assembly);
