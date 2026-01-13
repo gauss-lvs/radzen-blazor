@@ -418,10 +418,10 @@ namespace Radzen.Blazor
         public async Task Reload(object value = null)
         {
             // mde
-            // Diese Methode habe ich erg�nzt, da das originale Reload() zwei Unzul�nglichkeiten hat:
-            // 1) Es gibt keine M�glichkeit, von au�en an ein RadzenTreeItem zu kommen.
-            // 2) Der Aufruf mit item == null funktioniert nicht mit Lazy Loading der Children, da sich die Liste 'items' dann w�hrend
-            //    der Aufz�hlung �ndert, was eine Exception verursacht.
+            // Diese Methode habe ich ergänzt, da das originale Reload() zwei Unzulänglichkeiten hat:
+            // 1) Es gibt keine Möglichkeit, von außen an ein RadzenTreeItem zu kommen.
+            // 2) Der Aufruf mit item == null funktioniert nicht mit Lazy Loading der Children, da sich die Liste 'items' dann während
+            //    der Aufzählung ändert, was eine Exception verursacht.
 
             var item = items.FirstOrDefault(i => i.Value == value);
             if (item != null)
