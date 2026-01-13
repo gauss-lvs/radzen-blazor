@@ -922,6 +922,7 @@ namespace Radzen
                         await InvokeAsync(() => LoadData.InvokeAsync(args));
                     }
                 }
+            }
 
             if (Multiple)
                 selectedIndex = -1;
