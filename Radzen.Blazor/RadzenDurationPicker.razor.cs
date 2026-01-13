@@ -28,7 +28,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The attributes.</value>
         [Parameter]
-        public IReadOnlyDictionary<string, object> InputAttributes { get; set; }
+        public IReadOnlyDictionary<string, object>? InputAttributes { get; set; }
 
         int? hour;
 
@@ -114,7 +114,10 @@ namespace Radzen.Blazor
         {
             if (PopupRenderMode == PopupRenderMode.OnDemand && !Disabled && !ReadOnly && !Inline)
             {
-                await popup.CloseAsync(Element);
+                if (popup != null)
+                {
+                    await popup.CloseAsync(Element);
+                }
             }
 
             if (Min.HasValue && CurrentTimeSpan < Min.Value || Max.HasValue && CurrentTimeSpan > Max.Value)
@@ -153,7 +156,7 @@ namespace Radzen.Blazor
             /// Gets or sets the name.
             /// </summary>
             /// <value>The name.</value>
-            public string Name { get; set; }
+            public string? Name { get; set; }
             /// <summary>
             /// Gets or sets the value.
             /// </summary>
@@ -180,14 +183,14 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The name.</value>
         [Parameter]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Gets or sets the input CSS class.
         /// </summary>
         /// <value>The input CSS class.</value>
         [Parameter]
-        public string InputClass { get; set; }
+        public string InputClass { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the Minimum Selectable TimeSpan.
@@ -233,7 +236,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The timespan render callback.</value>
         [Parameter]
-        public Action<DurationRenderEventArgs> TimeSpanRender { get; set; }
+        public Action<DurationRenderEventArgs>? TimeSpanRender { get; set; }
 
         DurationRenderEventArgs DurationAttributes(TimeSpan value)
         {
@@ -247,14 +250,14 @@ namespace Radzen.Blazor
             return args;
         }
 
-        object _value;
+        object? _value;
 
         /// <summary>
         /// Gets or sets the value.
         /// </summary>
         /// <value>The value.</value>
         [Parameter]
-        public object Value
+        public object? Value
         {
             get
             {
@@ -280,7 +283,7 @@ namespace Radzen.Blazor
             }
         }
 
-        private static object ConvertToTValue(object value)
+        private static object? ConvertToTValue(object? value)
         {
             return value;
         }
@@ -293,7 +296,7 @@ namespace Radzen.Blazor
             {
                 if (_currentTimeSpan == default(TimeSpan))
                 {
-                    _currentTimeSpan = HasValue ? TimeSpanValue.Value : InitialViewTimeSpan ?? default(TimeSpan);
+                    _currentTimeSpan = HasValue ? TimeSpanValue!.Value : InitialViewTimeSpan ?? default(TimeSpan);
                 }
                 return _currentTimeSpan;
             }
@@ -344,23 +347,23 @@ namespace Radzen.Blazor
             {
                 if (HasValue)
                 {
-                    if (TimeFormat.ToLowerInvariant().EndsWith(":ss"))
-                        return (int)TimeSpanValue?.TotalHours + TimeSpanValue?.ToString(@"\:mm\:ss");
+                    if (TimeFormat.ToLowerInvariant().EndsWith(":ss", StringComparison.Ordinal) == true)
+                        return ((int)TimeSpanValue!.Value.TotalHours) + TimeSpanValue!.Value.ToString(@"\:mm\:ss", CultureInfo.InvariantCulture);
                     else
-                        return (int)TimeSpanValue?.TotalHours + TimeSpanValue?.ToString(@"\:mm");
+                        return ((int)TimeSpanValue!.Value.TotalHours) + TimeSpanValue!.Value.ToString(@"\:mm", CultureInfo.InvariantCulture);
                 }
                 return "";
             }
         }
 
-        IRadzenForm _form;
+        IRadzenForm? _form;
 
         /// <summary>
         /// Gets or sets the form.
         /// </summary>
         /// <value>The form.</value>
         [CascadingParameter]
-        public IRadzenForm Form
+        public IRadzenForm? Form
         {
             get
             {
@@ -386,6 +389,7 @@ namespace Radzen.Blazor
         /// </summary>
         protected async Task ParseTimeSpan()
         {
+            if (JSRuntime == null) return;
             TimeSpan? newValue;
             var inputValue = await JSRuntime.InvokeAsync<string>("Radzen.getInputValue", input);
             bool valid = TryParseInput(inputValue, out TimeSpan value);
@@ -414,7 +418,7 @@ namespace Radzen.Blazor
             if (TimeSpanValue != newValue && (newValue != null || nullable))
             {
                 TimeSpanValue = newValue;
-                await ValueChanged.InvokeAsync((TValue)Value);
+                await ValueChanged.InvokeAsync(Value == null ? default : (TValue)Value);
 
                 if (FieldIdentifier.FieldName != null)
                 {
@@ -430,7 +434,7 @@ namespace Radzen.Blazor
         /// Parse the input using an function outside the Radzen-library
         /// </summary>
         [Parameter]
-        public Func<string, TimeSpan?> ParseInput { get; set; }
+        public Func<string, TimeSpan?>? ParseInput { get; set; }
 
         private bool TryParseInput(string inputValue, out TimeSpan value)
         {
@@ -523,7 +527,7 @@ namespace Radzen.Blazor
         /// <summary>
         /// Gets or sets the FormFieldContext of the component
         /// </summary>
-        public IFormFieldContext FormFieldContext { get; set; } = null;
+        public IFormFieldContext? FormFieldContext { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether days part is shown.
@@ -551,21 +555,21 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The hours step.</value>
         [Parameter]
-        public string HoursStep { get; set; }
+        public string HoursStep { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the minutes step.
         /// </summary>
         /// <value>The minutes step.</value>
         [Parameter]
-        public string MinutesStep { get; set; }
+        public string MinutesStep { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the seconds step.
         /// </summary>
         /// <value>The seconds step.</value>
         [Parameter]
-        public string SecondsStep { get; set; }
+        public string SecondsStep { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets a value indicating whether the hour picker is padded with a leading zero.
@@ -626,7 +630,7 @@ namespace Radzen.Blazor
 
         double parseStep(string step)
         {
-            return string.IsNullOrEmpty(step) || step == "any" ? 1 : double.Parse(step.Replace(",", "."), CultureInfo.InvariantCulture);
+            return string.IsNullOrEmpty(step) || step == "any" ? 1 : double.Parse(step.Replace(",", ".", StringComparison.Ordinal), CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -641,14 +645,14 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The timespan format.</value>
         [Parameter]
-        public string TimeFormat { get; set; }
+        public string TimeFormat { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the input placeholder.
         /// </summary>
         /// <value>The input placeholder.</value>
         [Parameter]
-        public string Placeholder { get; set; }
+        public string Placeholder { get; set; } = string.Empty;
 
         /// <summary>
         /// Gets or sets the change callback.
@@ -669,7 +673,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The footer template.</value>
         [Parameter]
-        public RenderFragment FooterTemplate { get; set; }
+        public RenderFragment? FooterTemplate { get; set; }
 
         string contentStyle = "display:none;";
 
@@ -685,7 +689,10 @@ namespace Radzen.Blazor
         {
             if (PopupRenderMode == PopupRenderMode.OnDemand && !Disabled && !ReadOnly && !Inline)
             {
-                InvokeAsync(() => popup.CloseAsync(Element));
+                if (popup != null)
+                {
+                    InvokeAsync(() => popup.CloseAsync(Element));
+                }
             }
 
             if (!Disabled)
@@ -712,7 +719,7 @@ namespace Radzen.Blazor
 
         async Task OnChange()
         {
-            await ValueChanged.InvokeAsync((TValue)Value);
+            await ValueChanged.InvokeAsync(Value != null ? (TValue)Value : default);
 
             if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
             await Change.InvokeAsync(TimeSpanValue);
@@ -762,7 +769,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The edit context.</value>
         [CascadingParameter]
-        public EditContext EditContext { get; set; }
+        public EditContext? EditContext { get; set; }
 
         /// <summary>
         /// Gets the field identifier.
@@ -775,7 +782,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The value expression.</value>
         [Parameter]
-        public Expression<Func<TValue>> ValueExpression { get; set; }
+        public Expression<Func<TValue>>? ValueExpression { get; set; }
 
         /// <inheritdoc />
         public override async Task SetParametersAsync(ParameterView parameters)
@@ -790,7 +797,7 @@ namespace Radzen.Blazor
 
             await base.SetParametersAsync(parameters);
 
-            if (shouldClose && !firstRender)
+            if (shouldClose && !firstRender && JSRuntime != null)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", PopupID);
             }
@@ -803,7 +810,7 @@ namespace Radzen.Blazor
             }
         }
 
-        private void ValidationStateChanged(object sender, ValidationStateChangedEventArgs e)
+        private void ValidationStateChanged(object? sender, ValidationStateChangedEventArgs e)
         {
             StateHasChanged();
         }
@@ -820,7 +827,7 @@ namespace Radzen.Blazor
 
             Form?.RemoveComponent(this);
 
-            if (IsJSRuntimeAvailable)
+            if (IsJSRuntimeAvailable && JSRuntime != null)
             {
                 JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", PopupID);
             }
@@ -830,7 +837,7 @@ namespace Radzen.Blazor
         /// Gets the value.
         /// </summary>
         /// <returns>System.Object.</returns>
-        public object GetValue()
+        public object? GetValue()
         {
             return Value;
         }
@@ -857,7 +864,7 @@ namespace Radzen.Blazor
             return base.OnAfterRenderAsync(firstRender);
         }
 
-        Popup popup;
+        Popup? popup;
 
         /// <summary>
         /// Gets or sets the render mode.
@@ -870,7 +877,10 @@ namespace Radzen.Blazor
         {
             if (PopupRenderMode == PopupRenderMode.OnDemand && !Disabled && !ReadOnly && !Inline)
             {
-                await popup.ToggleAsync(Element);
+                if (popup != null)
+                {
+                    await popup.ToggleAsync(Element);
+                }
 #if NET5_0_OR_GREATER
                 await FocusAsync();
 #endif

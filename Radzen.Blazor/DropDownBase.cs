@@ -449,7 +449,7 @@ namespace Radzen
         /// Is used to set the internal selectedItem field, if <see cref="LoadDataOnOpenPopup"/> is enabled.
         /// </summary>
         [Parameter]
-        public object LoadDataOnOpenPopupSelectedItem { private get; set; }
+        public object? LoadDataOnOpenPopupSelectedItem { private get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether the method <see cref="object.Equals(object?, object?)" /> should be used to select the item based on the current value.
@@ -1200,8 +1200,6 @@ namespace Radzen
             await SelectItem(item, raiseChange);
         }
 
-        internal object internalValue;
-
         internal object? internalValue;
 
         /// <summary>
@@ -1349,7 +1347,6 @@ namespace Radzen
                 {
                     if (!string.IsNullOrEmpty(ValueProperty))
                     {
-                        System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
                         if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || SelectItemFromValueForceObjectEquals)
                         {
                             SelectedItem = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).FirstOrDefault();
@@ -1382,7 +1379,6 @@ namespace Radzen
                     {
                         if (!string.IsNullOrEmpty(ValueProperty))
                         {
-                            System.Reflection.PropertyInfo pi = PropertyAccess.GetElementType(Data.GetType()).GetProperty(ValueProperty);
                             foreach (object v in values.Cast<dynamic>().ToList())
                             {
                                 dynamic item;
@@ -1399,7 +1395,7 @@ namespace Radzen
                                         {
                                             Property = ValueProperty,
                                             FilterValue = v
-                                }
+                                        }
                                     },
                                     LogicalFilterOperator.And,
                                     FilterCaseSensitivity.Default).FirstOrDefault()!;

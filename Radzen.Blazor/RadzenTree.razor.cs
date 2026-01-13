@@ -342,8 +342,8 @@ namespace Radzen.Blazor
             {
                 var cancelArgs = new TreeCancelEventArgs()
                 {
-                    Text = item?.Text,
-                    Value = item?.Value
+                    Text = item.Text,
+                    Value = item.Value
                 };
 
                 await BeforeChange.InvokeAsync(cancelArgs);
@@ -365,8 +365,8 @@ namespace Radzen.Blazor
 
                 await Change.InvokeAsync(new TreeEventArgs()
                 {
-                    Text = item?.Text,
-                    Value = item?.Value
+                    Text = item.Text,
+                    Value = item.Value
                 });
             }
         }
@@ -415,7 +415,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public async Task Reload(object value = null)
+        public async Task Reload(object? value = null)
         {
             // mde
             // Diese Methode habe ich ergänzt, da das originale Reload() zwei Unzulänglichkeiten hat:

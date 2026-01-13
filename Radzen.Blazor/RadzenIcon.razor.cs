@@ -61,7 +61,7 @@ namespace Radzen.Blazor
         /// GIcon overwrites the value of <see cref="Icon"/>.
         /// </remarks>
         [Parameter]
-        public GRadzenBase.Icons.IRadzenFontIcon GIcon
+        public GRadzenBase.Icons.IRadzenFontIcon? GIcon
         {
             get => _GIcon;
             set
@@ -70,7 +70,7 @@ namespace Radzen.Blazor
                 Icon = value?.CodePoint;
             }
         }
-        private GRadzenBase.Icons.IRadzenFontIcon _GIcon;
+        private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
 
         /// <inheritdoc />
         protected override string GetComponentCssClass()

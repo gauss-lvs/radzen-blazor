@@ -1,4 +1,4 @@
-namespace Radzen;
+namespace Radzen.Blazor;
 
 /// <summary>
 /// Supplies information about a <see cref="RadzenTree.BeforeChange" /> event that is being raised.

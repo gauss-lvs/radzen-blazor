@@ -226,7 +226,7 @@ namespace Radzen
         /// <summary>
         /// Gets or sets additional css classes.
         /// </summary>
-        public string CssClass { get; set; }
+        public string? CssClass { get; set; }
     }
 
     /// <summary>

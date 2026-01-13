@@ -248,7 +248,7 @@ namespace Radzen.Blazor
         /// Gets or sets additional CSS classes for the Popup container.
         /// </summary>
         [Parameter]
-        public string PopupClasses { get; set; }
+        public string? PopupClasses { get; set; }
 
         /// <summary>
         /// Gets or sets whether selected items should be displayed as removable chips in the input area.

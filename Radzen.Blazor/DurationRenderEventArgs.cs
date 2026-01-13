@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Radzen;
+namespace Radzen.Blazor;
 
 /// <summary>
 /// Supplies information about a <see cref="RadzenDurationPicker{TValue}.TimeSpanRender" /> event that is being raised.
