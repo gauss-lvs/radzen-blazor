@@ -12,7 +12,7 @@ namespace Radzen.Blazor
         /// The <see cref="RadzenLayout" /> this component is nested in.
         /// </summary>
         [CascadingParameter]
-        public RadzenLayout Layout { get; set; }
+        public RadzenLayout? Layout { get; set; }
 
         /// <summary>
         /// Controls whether the CSS class "fixed" is added to the classlist.

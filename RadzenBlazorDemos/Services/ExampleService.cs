@@ -125,7 +125,7 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    Toc = [ new () { Text = "Border radius", Anchor = "#border-radius" }, new () { Text = "Add or remove borders arbitrarily", Anchor = "#add-remove-css-classes" }, new () { Text = "Border color utility CSS classes", Anchor = "#color-css-classes" }, new () { Text = "Border with color utility CSS classes", Anchor = "#utility-css-classes" }, new () { Text = "Set border width via CSS variable", Anchor = "#border-width" }, new () { Text = "Borders with CSS variables", Anchor = "#css-variables" } ],
+                    Toc = [ new () { Text = "Video: Styling Borders in Radzen Blazor Studio", Anchor = "#video-borders" }, new () { Text = "Border radius", Anchor = "#border-radius" }, new () { Text = "Add or remove borders arbitrarily", Anchor = "#add-remove-css-classes" }, new () { Text = "Border color utility CSS classes", Anchor = "#color-css-classes" }, new () { Text = "Border with color utility CSS classes", Anchor = "#utility-css-classes" }, new () { Text = "Set border width via CSS variable", Anchor = "#border-width" }, new () { Text = "Borders with CSS variables", Anchor = "#css-variables" } ],
                     Name = "Borders",
                     Path = "borders",
                     Title = "Blazor Border Utilities | Free UI Components by Radzen",
@@ -2068,6 +2068,15 @@ namespace RadzenBlazorDemos
                     Path = "qrcode",
                     Icon = "\uef6b",
                     Tags = new [] { "qr", "qrcode", "barcode", "svg" },
+                    New = true
+                },
+                new Example
+                {
+                    Name = "Barcode",
+                    Description = "Generate and display 1D barcodes as SVG using RadzenBarcode.",
+                    Path = "barcode",
+                    Icon = "\ue70b",
+                    Tags = new [] { "barcode", "svg" },
                     New = true
                 },
                 new Example

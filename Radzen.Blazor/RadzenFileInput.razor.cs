@@ -46,7 +46,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The attributes.</value>
         [Parameter]
-        public IReadOnlyDictionary<string, object> InputAttributes { get; set; }
+        public IReadOnlyDictionary<string, object>? InputAttributes { get; set; }
 
         /// <summary>
         /// Gets or sets the choose button text.
@@ -74,7 +74,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The title.</value>
         [Parameter]
-        public string Title { get; set; }
+        public string? Title { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether a preview is shown or not.
@@ -108,11 +108,11 @@ namespace Radzen.Blazor
                 }
                 else if (Value is string)
                 {
-                    return $"{Value}".StartsWith("data:image");
+                    return $"{Value}".StartsWith("data:image", StringComparison.Ordinal);
                 }
                 else if (Value is byte[])
                 {
-                    return $"{System.Text.Encoding.Default.GetString((byte[])(object)Value)}".StartsWith("data:image");
+                    return $"{System.Text.Encoding.Default.GetString((byte[])(object)Value)}".StartsWith("data:image", StringComparison.Ordinal);
                 }
 
                 return false;
@@ -132,7 +132,7 @@ namespace Radzen.Blazor
                     return System.Text.Encoding.Default.GetString(bytes);
                 }
 
-                return Value.ToString();
+                return Value.ToString() ?? string.Empty;
             }
         }
 
@@ -140,6 +140,7 @@ namespace Radzen.Blazor
         {
             string uploadValue;
 
+            if (JSRuntime == null) return;
             try
             {
                 uploadValue = await JSRuntime.InvokeAsync<string>("Radzen.readFileAsBase64", fileUpload, MaxFileSize, MaxWidth, MaxHeight);
@@ -178,6 +179,7 @@ namespace Radzen.Blazor
             }
 
             var file = files.FirstOrDefault();
+            if (file == null) return;
 
             FileSize = file.Size;
             await FileSizeChanged.InvokeAsync(FileSize);
@@ -188,7 +190,7 @@ namespace Radzen.Blazor
             await OnChange();
         }
 
-        private bool visibleChanged = false;
+        private bool visibleChanged;
 
         /// <inheritdoc />
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -199,7 +201,7 @@ namespace Radzen.Blazor
             {
                 visibleChanged = false;
 
-                if (Visible)
+                if (Visible && JSRuntime != null)
                 {
                     await JSRuntime.InvokeVoidAsync("Radzen.uploads", Reference, Name ?? GetId());
                 }
@@ -230,7 +232,7 @@ namespace Radzen.Blazor
 
         bool clicking;
         /// <summary>
-        /// Handles the <see cref="E:ImageClick" /> event.
+        /// Handles the image click event.
         /// </summary>
         /// <param name="args">The <see cref="MouseEventArgs"/> instance containing the event data.</param>
         public async Task OnImageClick(MouseEventArgs args)
@@ -254,7 +256,7 @@ namespace Radzen.Blazor
 
         async System.Threading.Tasks.Task Remove(EventArgs args)
         {
-            Value = default(TValue);
+            Value = default(TValue)!;
             FileSize = null;
             FileName = null;
 
@@ -266,7 +268,10 @@ namespace Radzen.Blazor
 
             await FileNameChanged.InvokeAsync(FileName);
 
-            await JSRuntime.InvokeVoidAsync("Radzen.removeFileFromFileInput", fileUpload);
+            if (JSRuntime != null)
+            {
+                await JSRuntime.InvokeVoidAsync("Radzen.removeFileFromFileInput", fileUpload);
+            }
 
             StateHasChanged();
         }
@@ -311,7 +316,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The image file name.</value>
         [Parameter]
-        public string FileName { get; set; }
+        public string? FileName { get; set; }
 
         /// <summary>
         /// Gets or sets the FileName changed.

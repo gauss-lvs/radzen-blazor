@@ -27,7 +27,7 @@ namespace Radzen.Blazor
     ///         @Body
     ///     &lt;/RadzenBody&gt;
     ///     &lt;RadzenFooter&gt;
-    ///         © 2025 My Company
+    ///         © 2026 My Company
     ///     &lt;/RadzenFooter&gt;
     /// &lt;/RadzenLayout&gt;
     /// </code>
@@ -35,14 +35,14 @@ namespace Radzen.Blazor
     public partial class RadzenLayout : RadzenComponentWithChildren
     {
         [Inject]
-        private IServiceProvider ServiceProvider { get; set; }
+        private IServiceProvider? ServiceProvider { get; set; }
 
-        private ThemeService themeService;
+        private ThemeService? themeService;
 
         /// <inheritdoc />
         protected override void OnInitialized()
         {
-            themeService = ServiceProvider.GetService<ThemeService>();
+            themeService = ServiceProvider?.GetService<ThemeService>();
 
             if (themeService != null)
             {
