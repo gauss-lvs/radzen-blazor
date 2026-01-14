@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Routing;
+using Radzen.Blazor.Rendering;
 
 namespace Radzen.Blazor
 {
@@ -79,6 +80,24 @@ namespace Radzen.Blazor
         public string? Image { get; set; }
 
         /// <summary>
+        /// Get or sets GAUSS specific icon for the button.
+        /// </summary>
+        /// <remarks>
+        /// GIcon overwrites the value of <see cref="Icon"/>.
+        /// </remarks>
+        [Parameter]
+        public GRadzenBase.Icons.IRadzenFontIcon? GIcon
+        {
+            get => _GIcon;
+            set
+            {
+                _GIcon = value;
+                Icon = value?.CodePoint;
+            }
+        }
+        private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
+
+        /// <summary>
         /// Gets or sets the link text to display.
         /// For simple text links, use this property. For complex content, use <see cref="ChildContent"/> instead.
         /// </summary>
@@ -113,7 +132,9 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         protected override string GetComponentCssClass()
         {
-            return Disabled ? "rz-link rz-link-disabled" : "rz-link";
+            return ClassList.Create(Disabled ? "rz-link rz-link-disabled" : "rz-link")
+                            .Add(GIcon?.IconSetCssClass())
+                            .ToString();
         }
 
         /// <summary>

@@ -89,6 +89,24 @@ namespace Radzen.Blazor
         public string? Image { get; set; }
 
         /// <summary>
+        /// Get or sets GAUSS specific icon for the button.
+        /// </summary>
+        /// <remarks>
+        /// GIcon overwrites the value of <see cref="Icon"/>.
+        /// </remarks>
+        [Parameter]
+        public GRadzenBase.Icons.IRadzenFontIcon? GIcon
+        {
+            get => _GIcon;
+            set
+            {
+                _GIcon = value;
+                Icon = value?.CodePoint;
+            }
+        }
+        private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
+
+        /// <summary>
         /// Gets or sets the button style.
         /// </summary>
         /// <value>The button style.</value>
@@ -236,6 +254,7 @@ namespace Radzen.Blazor
                                        .AddShade(Shade)
                                        .Add("rz-button-icon-only", string.IsNullOrEmpty(Text) && !string.IsNullOrEmpty(Icon))
                                        .AddDisabled(IsDisabled)
+                                       .Add(GIcon?.IconSetCssClass())
                                        .ToString();
 
         string PopupButtonClass => ClassList.Create("rz-splitbutton-menubutton rz-button rz-button-icon-only")

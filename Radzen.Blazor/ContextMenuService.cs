@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Radzen.Blazor.Rendering;
 using System;
 using System.Collections.Generic;
 
@@ -213,6 +214,25 @@ namespace Radzen
         /// </summary>
         /// <value>The image.</value>
         public string? Image { get; set; }
+
+        /// <summary>
+        /// Get or sets GAUSS specific icon for the button.
+        /// </summary>
+        /// <remarks>
+        /// GIcon overwrites the value of <see cref="Icon"/>.
+        /// </remarks>
+        [Parameter]
+        public GRadzenBase.Icons.IRadzenFontIcon? GIcon
+        {
+            get => _GIcon;
+            set
+            {
+                _GIcon = value;
+                Icon = value?.CodePoint;
+            }
+        }
+        private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
+
         /// <summary>
         /// Gets or sets the image style.
         /// </summary>
@@ -226,7 +246,22 @@ namespace Radzen
         /// <summary>
         /// Gets or sets additional css classes.
         /// </summary>
-        public string? CssClass { get; set; }
+        public string? CssClass
+        {
+            get
+            {
+                if (_CssClass != null)
+                    return ClassList.Create(CssClass)
+                                    .Add(GIcon?.IconSetCssClass())
+                                    .ToString();
+                else if (GIcon != null)
+                    return GIcon.IconSetCssClass();
+                else
+                    return null;
+            }
+            set => _CssClass = value;
+        }
+        private string? _CssClass;
     }
 
     /// <summary>
