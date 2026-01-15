@@ -758,10 +758,7 @@ namespace Radzen
                     {
                         if (!Multiple && (!isFilter || key != "Space"))
                         {
-                            if (!Multiple && !isFilter)
-                            {
-                                await ClosePopup(key);
-                            }
+                            await ClosePopup(key);
                         }
                     }
                 }
