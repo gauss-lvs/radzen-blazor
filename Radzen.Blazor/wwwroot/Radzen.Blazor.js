@@ -871,7 +871,7 @@ window.Radzen = {
     if (!uploadComponent.files || clear) {
         uploadComponent.files = Array.from(fileInput.files);
     }
-    
+
 	function asFormData() {
 		var data = new FormData();
 		var files = [];
@@ -882,7 +882,7 @@ window.Radzen = {
 		}
 		return {data, files}
 	}
-	
+
 	function asStream() {
 		if (uploadComponent.files.length > 0) {
 			var file = uploadComponent.files[0];
@@ -893,7 +893,7 @@ window.Radzen = {
 
   	var cancelled = false;
 	var {data, files} = stream ? asStream() : asFormData();
-	
+
     var xhr = new XMLHttpRequest();
     xhr.withCredentials = true;
     xhr.upload.onprogress = function (e) {
@@ -1426,7 +1426,7 @@ window.Radzen = {
     if (Radzen.activeElement && Radzen.activeElement == document.activeElement ||
         Radzen.activeElement && document.activeElement == document.body ||
         Radzen.activeElement && document.activeElement &&
-            (document.activeElement.classList.contains('rz-dropdown-filter') || 
+            (document.activeElement.classList.contains('rz-dropdown-filter') ||
              document.activeElement.classList.contains('rz-lookup-search-input') ||
              document.activeElement.classList.contains('rz-multiselect-filter-container') ||
              document.activeElement.closest('.rz-multiselect-filter-container') !== null)) {
@@ -1434,7 +1434,10 @@ window.Radzen = {
             if (e && e.target && e.target.tabIndex != -1) {
                 Radzen.activeElement = e.target;
             }
-            if (Radzen.activeElement) {
+            // If users actively click on the background of the website, they have decided to leave the focus of the control.
+            // In this case, the focus must not be set back to another control.
+            var skipFocus = e && e instanceof MouseEvent && document.activeElement == document.body;
+            if (Radzen.activeElement && !skipFocus) {
                Radzen.activeElement.focus();
             }
             Radzen.activeElement = null;
@@ -1489,7 +1492,7 @@ window.Radzen = {
       if (!focusable || !focusable.length) return;
 
       var first = focusable[0];
-      
+
       if (first.classList.contains('rz-html-editor-content')) {
           var sel = window.getSelection();
           var range = document.createRange();
@@ -1695,12 +1698,12 @@ window.Radzen = {
     return [...element.querySelectorAll('a, button, input, textarea, select, details, iframe, embed, object, summary, dialog, audio[controls], video[controls], [contenteditable], [tabindex]')]
       .filter(el => {
         if (!el || el.hasAttribute('disabled') || el.offsetParent === null) return false;
-    
+
         // If this is inside a .rz-html-editor with tabindex="-1", skip it
         var editorParent = el.closest('.rz-html-editor');
         if (editorParent && editorParent.hasAttribute('tabindex') && editorParent.tabIndex === -1) return false;
         else if (editorParent) return true;
-    
+
         return el.tabIndex > -1;
     });
   },
@@ -1783,7 +1786,7 @@ window.Radzen = {
       input.value = value;
     }
   },
-  blur: function (el, e) { 
+  blur: function (el, e) {
     if (el) {
         e.preventDefault();
         el.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, cancelable: true, keyCode: 9 }));
@@ -2773,7 +2776,7 @@ window.Radzen = {
                 if (diff < min) {
                     match = selectors[i];
                     min = diff;
-                }                
+                }
             }
 
             if (match && match !== currentSelector) {
