@@ -1064,10 +1064,7 @@ namespace Radzen
                 }
             }
 
-            if (internalValue != null)
-            {
                 SelectItemFromValue(internalValue);
-            }
 
             return base.OnParametersSetAsync();
         }
@@ -1335,7 +1332,7 @@ namespace Radzen
         /// Selects the item from value.
         /// </summary>
         /// <param name="value">The value.</param>
-        protected virtual void SelectItemFromValue(object value)
+        protected virtual void SelectItemFromValue(object? value)
         {
             var view = LoadData.HasDelegate ? Data : View;
             if (value != null && view != null)
