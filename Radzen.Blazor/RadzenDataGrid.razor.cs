@@ -146,7 +146,7 @@ namespace Radzen.Blazor
         /// Gets or sets the size of each item in pixels. Defaults to 50px (determined by the Virtualize component).
         /// </summary>
         [Parameter]
-        public int VirtualizationItemSize { get; set; }
+        public float VirtualizationItemSize { get; set; }
 
         internal void SetAllowVirtualization(bool allowVirtualization)
         {
