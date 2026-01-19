@@ -319,7 +319,7 @@ namespace Radzen.Blazor
                             builder.AddAttribute(3, "OverscanCount", VirtualizationOverscanCount);
                         }
 
-                        if (VirtualizationItemSize != default(int))
+                        if (VirtualizationItemSize != default(float))
                         {
                             builder.AddAttribute(4, nameof(Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<TItem>.ItemSize), VirtualizationItemSize);
                         }
