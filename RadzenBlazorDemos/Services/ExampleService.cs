@@ -2037,6 +2037,16 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Name = "Spider Chart",
+                    Path = "spider-chart",
+                    Title = "Blazor Spider Chart Component | Free UI Components by Radzen",
+                    Description = "Radzen Blazor Spider Chart for displaying multivariate data in a radial format.",
+                    Tags = new [] { "spider", "radar", "chart", "multivariate", "radial", "web" },
+                    Icon = "\ueb39",
+                    New = true
+                },
+                new Example
+                {
                     Name = "Arc Gauge",
                     Path = "arc-gauge",
                     Description = "Demonstration and configuration of Radzen Blazor Arc Gauge component.",

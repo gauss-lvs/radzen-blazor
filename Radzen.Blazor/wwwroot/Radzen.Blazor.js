@@ -38,6 +38,17 @@ window.Radzen = {
             }
         };
     },
+    downloadFile: function (fileName, data, mimeType) {
+        const blob = new Blob([data], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+
+        URL.revokeObjectURL(url);
+    },
     mask: function (id, mask, pattern, characterPattern) {
       var el = document.getElementById(id);
       if (el) {
@@ -2318,6 +2329,12 @@ window.Radzen = {
     var rect = el.getBoundingClientRect();
     return { left: rect.left, top: rect.top, width: rect.width, height: rect.height };
   },
+  outerHTML: function (arg) {
+    var el = arg instanceof Element || arg instanceof HTMLDocument
+        ? arg
+        : document.getElementById(arg);
+    return el ? el.outerHTML : '';
+  },
   endDrag: function (ref) {
     document.removeEventListener('mousemove', ref.mouseMoveHandler);
     document.removeEventListener('mouseup', ref.mouseUpHandler);
@@ -2349,16 +2366,26 @@ window.Radzen = {
           var el = document.getElementById(id + 'visual');
           if (el) {
               document.body.removeChild(el);
-              Radzen[id + 'end'] = null;
-              Radzen[id + 'move'] = null;
               var resizers = Radzen[id + 'cell'].parentNode.querySelectorAll('.rz-column-resizer');
               for (let i = 0; i < resizers.length; i++) {
                   resizers[i].style.display = 'block';
               }
           }
+
+          grid.removeEventListener('mousemove', Radzen[id + 'move']);
+          grid.removeEventListener('click', Radzen[id + 'end']);
+          document.removeEventListener('mouseup', Radzen[id + 'end']);
+          document.removeEventListener('touchend', Radzen[id + 'end']);
+
+          Radzen[id + 'end'] = null;
+          Radzen[id + 'move'] = null;
       }
       grid.removeEventListener('click', Radzen[id + 'end']);
       grid.addEventListener('click', Radzen[id + 'end']);
+      document.removeEventListener('mouseup', Radzen[id + 'end']);
+      document.addEventListener('mouseup', Radzen[id + 'end']);
+      document.removeEventListener('touchend', Radzen[id + 'end']);
+      document.addEventListener('touchend', Radzen[id + 'end'], { passive: true });
 
       Radzen[id + 'move'] = function (e) {
           var el = document.getElementById(id + 'visual');
