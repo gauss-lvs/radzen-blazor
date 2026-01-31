@@ -126,6 +126,14 @@ namespace Radzen.Blazor
         public long? MaxLength { get; set; }
 
         /// <summary>
+        /// Handles change event of the built-in <c>input</c> element.
+        /// Gets or sets a value indicating whether the component should update the value 
+        /// immediately when the user types. Set to <c>false</c> by default.
+        /// </summary>
+        [Parameter]
+        public bool Immediate { get; set; }
+
+        /// <summary>
         /// Gets search input reference.
         /// </summary>
         protected ElementReference search;
@@ -195,7 +203,7 @@ namespace Radzen.Blazor
             var value = await JSRuntime.InvokeAsync<string>("Radzen.getInputValue", search);
 
             value = $"{value}";
-            
+
             if (value.Length < MinLength && !OpenOnFocus)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
@@ -301,6 +309,20 @@ namespace Radzen.Blazor
         string InputClass => ClassList.Create("rz-inputtext rz-autocomplete-input")
                                       .AddDisabled(Disabled)
                                       .ToString();
+
+        private async Task OpenScript(ChangeEventArgs args)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+            if (Immediate)
+            {
+                await OnChange(args);
+            }
+
+            if (IsJSRuntimeAvailable && JSRuntime != null)
+            {
+                await JSRuntime.InvokeVoidAsync("Radzen.openPopup", Element, PopupID, true);
+            }
+        }
 
         private string OpenScript()
         {
