@@ -55,7 +55,7 @@
             this.subsidiary = null;
             await this.AddSubsidiary(args.Text);
             // Force the tree to re-evaluate LoadSubsidiaries to make the change visible.
-            await this.tree.Reload();
+            await this.tree.Reload(item: null);
         });
     }
 
