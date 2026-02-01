@@ -186,6 +186,7 @@ namespace Radzen.Blazor
                 {
                     await OnSelectItem(items.ElementAt(selectedIndex));
                     selectedIndex = -1;
+                    await SelectedIndexChanged.InvokeAsync(selectedIndex);
                 }
 
                 if (key == "Tab" && JSRuntime != null)
@@ -199,7 +200,10 @@ namespace Radzen.Blazor
             }
             else
             {
+                int prevSelectedIndex = selectedIndex;
                 selectedIndex = -1;
+                if (prevSelectedIndex != selectedIndex)
+                    await SelectedIndexChanged.InvokeAsync(selectedIndex);
 
                 Debounce(DebounceFilter, FilterDelay);
             }
