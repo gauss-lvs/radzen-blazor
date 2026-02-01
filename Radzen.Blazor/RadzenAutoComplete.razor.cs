@@ -63,6 +63,13 @@ namespace Radzen.Blazor
         public EventCallback<object> SelectedItemChanged { get; set; }
 
         /// <summary>
+        /// Gets or sets the selected index changed.
+        /// </summary>
+        /// <value>The selected index changed.</value>
+        [Parameter]
+        public EventCallback<int> SelectedIndexChanged { get; set; }
+
+        /// <summary>
         /// Specifies additional custom attributes that will be rendered by the input.
         /// </summary>
         /// <value>The attributes.</value>
@@ -165,6 +172,7 @@ namespace Radzen.Blazor
                     if (JSRuntime != null)
                     {
                         selectedIndex = await JSRuntime.InvokeAsync<int>("Radzen.focusListItem", search, list, key == "ArrowDown", selectedIndex);
+                        await SelectedIndexChanged.InvokeAsync(selectedIndex);
                     }
                 }
                 catch (Exception)
