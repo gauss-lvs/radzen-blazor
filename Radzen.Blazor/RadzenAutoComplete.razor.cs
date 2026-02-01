@@ -275,6 +275,14 @@ namespace Radzen.Blazor
         /// <param name="args">The <see cref="ChangeEventArgs"/> instance containing the event data.</param>
         protected async System.Threading.Tasks.Task OnChange(ChangeEventArgs args)
         {
+            if (!Immediate)
+            {
+                await OnChangeInternal(args);
+            }
+        }
+
+        private async Task OnChangeInternal(ChangeEventArgs args)
+        {
             ArgumentNullException.ThrowIfNull(args);
 
             Value = args.Value?.ToString();
@@ -315,7 +323,7 @@ namespace Radzen.Blazor
             ArgumentNullException.ThrowIfNull(args);
             if (Immediate)
             {
-                await OnChange(args);
+                await OnChangeInternal(args);
             }
 
             if (IsJSRuntimeAvailable && JSRuntime != null)
