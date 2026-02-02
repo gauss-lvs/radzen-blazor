@@ -191,12 +191,12 @@ namespace Radzen.Blazor
 
                 if (key == "Tab" && JSRuntime != null)
                 {
-                    await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+                    await ClosePopup();
                 }
             }
             else if (key == "Escape" && JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+                await ClosePopup();
             }
             else
             {
@@ -218,7 +218,7 @@ namespace Radzen.Blazor
 
             if (value.Length < MinLength && !OpenOnFocus)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+                await ClosePopup();
                 return;
             }
 
@@ -244,11 +244,7 @@ namespace Radzen.Blazor
 
         private async Task OnSelectItem(object item)
         {
-            if (JSRuntime != null)
-            {
-                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
-            }
-
+            await ClosePopup();
             await SelectItem(item);
         }
 
@@ -338,10 +334,7 @@ namespace Radzen.Blazor
                 await OnChangeInternal(args);
             }
 
-            if (IsJSRuntimeAvailable && JSRuntime != null)
-            {
-                await JSRuntime.InvokeVoidAsync("Radzen.openPopup", Element, PopupID, true);
-            }
+            await OpenPopup();
         }
 
         private string OpenScript()
@@ -354,6 +347,19 @@ namespace Radzen.Blazor
             return $"Radzen.openPopup(this.parentNode, '{PopupID}', true)";
         }
 
+        private bool popupState;
+
+        private async Task OpenPopup()
+        {
+            if (popupState) return;
+
+            if (IsJSRuntimeAvailable && JSRuntime != null)
+            {
+                popupState = true;
+                await JSRuntime.InvokeVoidAsync("Radzen.openPopup", Element, PopupID, true);
+            }
+        }
+
         /// <summary>
         /// Allows parent components to close the auto complete popup.
         /// </summary>
@@ -361,6 +367,7 @@ namespace Radzen.Blazor
         {
             if (IsJSRuntimeAvailable && JSRuntime != null)
             {
+                popupState = false;
                 await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
             }
         }
