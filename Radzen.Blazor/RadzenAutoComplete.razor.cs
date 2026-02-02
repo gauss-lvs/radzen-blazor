@@ -354,6 +354,17 @@ namespace Radzen.Blazor
             return $"Radzen.openPopup(this.parentNode, '{PopupID}', true)";
         }
 
+        /// <summary>
+        /// Allows parent components to close the auto complete popup.
+        /// </summary>
+        public async Task ClosePopup()
+        {
+            if (IsJSRuntimeAvailable && JSRuntime != null)
+            {
+                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+            }
+        }
+
         /// <inheritdoc />
         protected override string GetComponentCssClass() => GetClassList("rz-autocomplete").ToString();
 
