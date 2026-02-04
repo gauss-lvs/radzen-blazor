@@ -2521,7 +2521,7 @@ namespace Radzen.Blazor
 
         internal Tuple<GroupRowRenderEventArgs, IReadOnlyDictionary<string, object>> GroupRowAttributes(RadzenDataGridGroupRow<TItem> item)
         {
-            var args = new Radzen.GroupRowRenderEventArgs() { Group = item.Group, FirstRender = firstRender };
+            var args = new Radzen.GroupRowRenderEventArgs() { Group = item.Group, FirstRender = firstRender, Expandable = item.GroupResult.Count > 0 };
 
             if (GroupRowRender != null)
             {
@@ -3602,6 +3602,59 @@ namespace Radzen.Blazor
                     JSRuntime.InvokeVoid("Radzen.destroyPopup", $"{PopupID}{column.GetFilterProperty()}");
                 }
             }
+
+            if (expandedItems != null)
+            {
+                expandedItems.Clear();
+            }
+
+            if (editedItems != null)
+            {
+                editedItems.Clear();
+            }
+
+            if (editContexts != null)
+            {
+                editContexts.Clear();
+            }
+
+            if (childData != null)
+            {
+                childData.Clear();
+            }
+
+            if (selectedItems != null)
+            {
+                selectedItems.Clear();
+            }
+
+            if (rowSpans != null)
+            {
+                rowSpans.Clear();
+            }
+
+            if (columns != null)
+            {
+                columns.Clear();
+            }
+
+            if (allPickableColumns != null)
+            {
+                allPickableColumns.Clear();
+            }
+
+            if (allColumns != null)
+            {
+                allColumns.Clear();
+            }
+
+            if (childColumns != null)
+            {
+                childColumns.Clear();
+            }
+
+            _value = null;
+            Data = null;
 
             GC.SuppressFinalize(this);
         }
