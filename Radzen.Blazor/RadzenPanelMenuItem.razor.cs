@@ -17,7 +17,6 @@ namespace Radzen.Blazor
         protected override string GetComponentCssClass() => ClassList.Create("rz-navigation-item")
             .Add("rz-state-focused", Parent?.IsFocused(this) == true)
             .AddDisabled(Disabled)
-            .Add(GIcon?.IconSetCssClass())
             .ToString();
 
         /// <summary>
@@ -192,6 +191,12 @@ namespace Radzen.Blazor
         {
             return $"{(Parent?.DisplayStyle == MenuItemDisplayStyle.Icon ? "margin-inline-end:0px;" : "")}{(!string.IsNullOrEmpty(IconColor) ? $"color:{IconColor}" : "")}";
         }
+
+        string getIconCssClass() => ClassList.Create("notranslate")
+            .Add("rzi")
+            .Add("rz-navigation-item-icon")
+            .Add(GIcon?.IconSetCssClass())
+            .ToString();
 
         void Expand()
         {
