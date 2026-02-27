@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
@@ -15,9 +16,11 @@ using System.IO;
 using Radzen;
 using RadzenBlazorDemos;
 using RadzenBlazorDemos.Data;
+using RadzenBlazorDemos.Host;
 using RadzenBlazorDemos.Services;
 using RadzenBlazorDemos.Host.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.StaticFiles;
 
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
@@ -133,16 +136,37 @@ if (!app.Environment.IsDevelopment())
     });
 }
 
-app.UseRouting();
-app.UseAntiforgery();
-app.MapGet("/llms.txt", () =>
+var contentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
 {
-    var path = Path.Combine(app.Environment.WebRootPath, "llms.txt");
-
-    return File.Exists(path)
-        ? Results.File(path, "text/plain")
-        : Results.NotFound();
+    [".txt"] = "text/plain; charset=utf-8",
+    [".md"] = "text/plain; charset=utf-8"
 });
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = contentTypeProvider,
+    OnPrepareResponse = ctx =>
+    {
+        if (ctx.File.Name == "llms.txt")
+        {
+            ctx.Context.Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
+        }
+    }
+});
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(app.Environment.WebRootPath, "md")),
+    ContentTypeProvider = contentTypeProvider,
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers["X-Robots-Tag"] = "noindex, nofollow";
+    }
+});
+
+app.UseCanonicalRedirects();
+app.UseTrailingSlashRedirect();
+app.UseAntiforgery();
 app.MapRazorPages();
 app.MapRazorComponents<RadzenBlazorDemos.Host.App>()
     .AddInteractiveWebAssemblyRenderMode().AddAdditionalAssemblies(typeof(RadzenBlazorDemos.Routes).Assembly)

@@ -83,9 +83,7 @@ namespace Radzen.Blazor
     /// }
     /// </code>
     /// </example>
-#if NET6_0_OR_GREATER
     [CascadingTypeParameter(nameof(TItem))]
-#endif
     public partial class RadzenDataGrid<TItem> : PagedDataBoundComponent<TItem> where TItem : notnull
     {
         private static readonly string[] DefaultGroupProperty = new string[] { "it" };
@@ -3595,6 +3593,11 @@ namespace Radzen.Blazor
                 groups.CollectionChanged -= GroupsCollectionChanged;
             }
 
+            if (sortDescriptors != null)
+            {
+                sortDescriptors.CollectionChanged -= SortsCollectionChanged;
+            }
+
             if (IsJSRuntimeAvailable && JSRuntime != null)
             {
                 foreach (var column in allColumns.ToList().Where(c => c.GetVisible()))
@@ -3655,6 +3658,15 @@ namespace Radzen.Blazor
 
             _value = null;
             Data = null;
+            _view = null;
+            _groupedPagedView = null;
+
+            if (Query != null)
+            {
+                Query.GetFilter = null;
+                Query.Filters = null;
+                Query.Sorts = null;
+            }
 
             GC.SuppressFinalize(this);
         }

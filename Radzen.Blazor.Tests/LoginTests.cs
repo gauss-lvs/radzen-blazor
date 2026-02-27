@@ -119,7 +119,7 @@ namespace Radzen.Blazor.Tests
                 parameters.Add(p => p.AllowResetPassword, true);
             });
 
-            Assert.Contains(@$"Forgot password?</a>", component.Markup);
+            Assert.Contains(@$"Forgot password?</span>", component.Markup);
         }
 
         [Fact]
@@ -134,7 +134,7 @@ namespace Radzen.Blazor.Tests
                 parameters.Add(p => p.ResetPasswordText, "Test");
             });
 
-            Assert.Contains(@$"Test</a>", component.Markup);
+            Assert.Contains(@$"Test</span>", component.Markup);
         }
 
         [Fact]
@@ -195,7 +195,7 @@ namespace Radzen.Blazor.Tests
                 parameters.Add(p => p.Register, args => { clicked = true; });
             });
 
-            component.Find(".rz-secondary").Click();
+            component.Find(".rz-secondary.rz-variant-flat").Click();
 
             Assert.True(clicked);
         }
@@ -215,7 +215,7 @@ namespace Radzen.Blazor.Tests
                 parameters.Add(p => p.ResetPassword, args => { clicked = true; });
             });
 
-            component.Find("a").Click();
+            component.Find(".rz-secondary.rz-variant-text").Click();
 
             Assert.True(clicked);
         }
@@ -234,7 +234,7 @@ namespace Radzen.Blazor.Tests
                 parameters.Add(p => p.ResetPassword, args => { clicked = true; });
             });
 
-            component.Find("a").Click();
+            component.Find(".rz-secondary.rz-variant-text").Click();
 
             Assert.True(clicked);
         }

@@ -67,18 +67,6 @@ namespace Radzen.Blazor
         internal List<RadzenSplitterPane> Panes = new List<RadzenSplitterPane>();
 
         /// <summary>
-        /// Gets or sets whether StateHasChanged is invoked while resizing the pane.
-        /// </summary>
-        [Parameter]
-        public bool InvokeStateHasChangedOnPaneResizing { get; set; } = true;
-
-        /// <summary>
-        /// Gets or sets whether StateHasChanged is invoked after the pane was resized.
-        /// </summary>
-        [Parameter]
-        public bool InvokeStateHasChangedOnPaneResized { get; set; } = true;
-
-        /// <summary>
         /// Adds the pane.
         /// </summary>
         /// <param name="pane">The pane.</param>
@@ -168,6 +156,12 @@ namespace Radzen.Blazor
         public bool IsResizing { get; private set; }
 
         /// <summary>
+        /// Value indicating if the splitter should call StateHasChanged on resizing.
+        /// </summary>
+        [Parameter]
+        public bool ChangeStateOnResize { get; set; } = true;
+
+        /// <summary>
         /// Called on pane resizing.
         /// </summary>
         [JSInvokable("RadzenSplitter.OnPaneResizing")]
@@ -175,11 +169,19 @@ namespace Radzen.Blazor
         {
             IsResizing = true;
 
-            if (InvokeStateHasChangedOnPaneResizing)
+            if (ChangeStateOnResize)
+            {
                 StateHasChanged();
+            }
 
             await Task.CompletedTask;
         }
+
+        /// <summary>
+        /// Gets or sets whether StateHasChanged is invoked after the pane was resized.
+        /// </summary>
+        [Parameter]
+        public bool ChangeStateOnResized { get; set; } = true;
 
         /// <summary>
         /// Called when pane resized.
@@ -203,10 +205,10 @@ namespace Radzen.Blazor
                 {
                     var oldSize = pane.SizeRuntine;
                     pane.SizeRuntine = "0";
-                    if (InvokeStateHasChangedOnPaneResized)
+                    if (ChangeStateOnResized)
                         await InvokeAsync(StateHasChanged);
                     pane.SizeRuntine = oldSize;
-                    if (InvokeStateHasChangedOnPaneResized)
+                    if (ChangeStateOnResized)
                         await InvokeAsync(StateHasChanged);
                     return;
                 }
@@ -229,7 +231,7 @@ namespace Radzen.Blazor
                     paneNext.SizeRuntine = sizeNextNew.Value.ToString("0.##", CultureInfo.InvariantCulture) + "%";
             }
 
-            if (InvokeStateHasChangedOnPaneResized)
+            if (ChangeStateOnResized)
                 StateHasChanged();
         }
 

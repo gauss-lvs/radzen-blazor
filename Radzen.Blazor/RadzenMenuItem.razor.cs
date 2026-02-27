@@ -129,6 +129,8 @@ namespace Radzen.Blazor
         [Parameter]
         public RenderFragment? ChildContent { get; set; }
 
+        internal string? SubmenuId => ChildContent != null ? $"{GetId()}-submenu" : null;
+
         /// <summary>
         /// Gets or sets the click callback.
         /// </summary>

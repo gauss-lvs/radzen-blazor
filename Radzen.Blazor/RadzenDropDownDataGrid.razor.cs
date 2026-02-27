@@ -198,9 +198,18 @@ namespace Radzen.Blazor
                 await grid.RefreshDataAsync();
             }
 
+            isPopupOpen = true;
+
             if (JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync(OpenOnFocus ? "Radzen.openPopup" : "Radzen.togglePopup", Element, PopupID, true);
+                if (OpenOnFocus)
+                {
+                    await JSRuntime.InvokeVoidAsync("Radzen.openPopup", Element, PopupID, true, null, null, null, Reference, nameof(OnClose));
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("Radzen.togglePopup", Element, PopupID, true, Reference, nameof(OnClose));
+                }
 
                 if (FocusFilterOnPopup)
                 {
@@ -212,6 +221,26 @@ namespace Radzen.Blazor
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.selectListItem", search, list, selectedIndex);
             }
+        }
+
+        internal override async Task ClosePopup(string key)
+        {
+            if (JSRuntime != null)
+            {
+                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID, Reference, nameof(OnClose));
+            }
+
+            isPopupOpen = false;
+        }
+
+        /// <summary>
+        /// Called when popup is closed.
+        /// </summary>
+        [JSInvokable]
+        public Task OnClose()
+        {
+            isPopupOpen = false;
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -622,18 +651,12 @@ namespace Radzen.Blazor
 
                             foreach (string word in words)
                             {
-                                if (TextProperty != null)
-                                {
-                                    query = query.Where(TextProperty, word, FilterOperator, FilterCaseSensitivity);
-                                }
+                                query = query.Where(TextProperty!, word, FilterOperator, FilterCaseSensitivity);
                             }
                         }
                         else
                         {
-                            if (TextProperty != null)
-                            {
-                                query = query.Where(TextProperty, searchText, FilterOperator, FilterCaseSensitivity);
-                            }
+                            query = query.Where(TextProperty!, searchText, FilterOperator, FilterCaseSensitivity);
                         }
                     }
                 }
@@ -914,8 +937,7 @@ namespace Radzen.Blazor
             else if (key == "Escape" && JSRuntime != null)
             {
                 preventKeydown = false;
-
-                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+                await ClosePopup(key);
             }
             else if (key == "Tab")
             {
@@ -923,7 +945,7 @@ namespace Radzen.Blazor
 
                 if (!ShowSearch && !ShowAdd && JSRuntime != null)
                 {
-                    await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+                    await ClosePopup(key);
                 }
             }
             else if (key == "Delete" && AllowClear)
@@ -944,9 +966,7 @@ namespace Radzen.Blazor
             else if (AllowFiltering && isFilter && FilterAsYouType)
             {
                 preventKeydown = true;
-
                 selectedIndex = -1;
-                Debounce(DebounceFilter, FilterDelay);
             }
             else
             {
@@ -956,13 +976,19 @@ namespace Radzen.Blazor
 
         async Task DebounceFilter()
         {
+            if (JSRuntime != null)
+            {
+                searchText = await JSRuntime.InvokeAsync<string>("Radzen.getInputValue", search) ?? string.Empty;
+            }
+
             if (searchText != previousSearch)
             {
                 previousSearch = searchText;
                 _view = null;
-
                 await InvokeAsync(RefreshAfterFilter);
             }
+
+            await InvokeAsync(() => SearchTextChanged.InvokeAsync(SearchText));
         }
 
         async Task CloseOnEscape(KeyboardEventArgs args)
@@ -970,7 +996,7 @@ namespace Radzen.Blazor
             var key = args.Code != null ? args.Code : args.Key;
             if (key == "Escape" && JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+                await ClosePopup(key);
             }
         }
 
@@ -1020,6 +1046,23 @@ namespace Radzen.Blazor
             {
                 await JSRuntime.InvokeAsync<string>("Radzen.repositionPopup", Element, PopupID);
             }
+        }
+
+        /// <inheritdoc />
+        protected override Task OnFilterInput(ChangeEventArgs args)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+
+            if (FilterAsYouType)
+            {
+                if (ResetSelectedIndexOnFilter)
+                {
+                    selectedIndex = -1;
+                }
+
+                Debounce(DebounceFilter, FilterDelay);
+            }
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -1098,7 +1141,7 @@ namespace Radzen.Blazor
         {
             if (!Disabled && !Multiple && JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+                await ClosePopup("Enter");
             }
 
             var of = OpenOnFocus;

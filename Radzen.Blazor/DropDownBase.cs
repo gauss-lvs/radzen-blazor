@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.JSInterop;
 using System;
@@ -255,6 +255,13 @@ namespace Radzen
         public string RemoveChipTitle { get; set; } = "Remove";
 
         /// <summary>
+        /// Gets or sets the clear button aria label text.
+        /// </summary>
+        /// <value>The clear button aria label text.</value>
+        [Parameter]
+        public string ClearAriaLabel { get; set; } = "Clear";
+
+        /// <summary>
         /// Gets or sets the search aria label text.
         /// </summary>
         /// <value>The search aria label text.</value>
@@ -356,7 +363,8 @@ namespace Radzen
             if (LoadData.HasDelegate && !string.IsNullOrEmpty(ValueProperty))
             {
                 return View != null && notDisabledItemsInList.Count > 0 && notDisabledItemsInList
-                    .All(i => {
+                    .All(i =>
+                    {
                         var value = GetItemOrValueFromProperty(i, ValueProperty);
                         return value != null ? IsItemSelectedByValue(value) : false;
                     });
@@ -577,6 +585,18 @@ namespace Radzen
         }
 
         /// <summary>
+        /// Gets the listbox identifier.
+        /// </summary>
+        /// <value>The listbox identifier.</value>
+        protected string ListId
+        {
+            get
+            {
+                return $"{GetId()}-list";
+            }
+        }
+
+        /// <summary>
         /// Gets the search identifier.
         /// </summary>
         /// <value>The search identifier.</value>
@@ -653,6 +673,8 @@ namespace Radzen
                 await JSRuntime.InvokeVoidAsync("Radzen.focusElement", isFilter ? UniqueID : SearchID);
             }
 
+            isPopupOpen = true;
+
             if (list != null && JSRuntime != null)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.selectListItem", search, list, selectedIndex);
@@ -669,7 +691,11 @@ namespace Radzen
         /// <param name="shouldSelectOnChange">Should select item on item change with keyboard.</param>
         protected virtual async Task HandleKeyPress(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args, bool isFilter = false, bool? shouldSelectOnChange = null)
         {
-            if (Disabled || Data == null || args == null)
+            ArgumentNullException.ThrowIfNull(args);
+
+            var key = args.Code != null ? args.Code : args.Key;
+
+            if (Disabled || Data == null || args == null || key == null)
                 return;
 
             List<object> items = Enumerable.Empty<object>().ToList();
@@ -692,8 +718,6 @@ namespace Radzen
                     items = View != null ? View.Cast<object>().ToList() : Enumerable.Empty<object>().ToList();
                 }
             }
-
-            var key = args.Code != null ? args.Code : args.Key;
 
             if (!args.AltKey && (key == "ArrowDown" || key == "ArrowLeft" || key == "ArrowUp" || key == "ArrowRight"))
             {
@@ -798,8 +822,6 @@ namespace Radzen
                 {
                     selectedIndex = -1;
                 }
-
-                Debounce(DebounceFilter, FilterDelay);
             }
             else if (args.Key.Length == 1 && !args.CtrlKey && !args.AltKey && !args.ShiftKey)
             {
@@ -859,7 +881,14 @@ namespace Radzen
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
             }
+
+            isPopupOpen = false;
         }
+
+        /// <summary>
+        /// Gets a value indicating whether the popup is open.
+        /// </summary>
+        protected bool isPopupOpen;
 
         int itemIndex;
         string? previousKey;
@@ -885,6 +914,11 @@ namespace Radzen
         {
             if (reloadData)
             {
+                if (JSRuntime != null)
+                {
+                    searchText = await JSRuntime.InvokeAsync<string>("Radzen.getInputValue", search) ?? string.Empty;
+                }
+
                 if (!LoadData.HasDelegate)
                 {
                     _view = null;
@@ -960,6 +994,40 @@ namespace Radzen
             {
                 await DebounceFilter(!LoadDataOnOpenPopup);
             }
+        }
+
+        /// <summary>
+        /// Handles filter input changes (e.g. paste).
+        /// </summary>
+        /// <param name="args">The <see cref="ChangeEventArgs"/> instance containing the event data.</param>
+        protected virtual Task OnFilterInput(ChangeEventArgs args)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+
+            if (ResetSelectedIndexOnFilter)
+            {
+                selectedIndex = -1;
+            }
+
+            Debounce(DebounceFilter, FilterDelay);
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// Handles filter input changes (e.g. paste).
+        /// </summary>
+        /// <param name="args">The <see cref="ChangeEventArgs"/> instance containing the event data.</param>
+        protected virtual Task OnFilterInput(ChangeEventArgs args)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+
+            if (ResetSelectedIndexOnFilter)
+            {
+                selectedIndex = -1;
+            }
+
+            Debounce(DebounceFilter, FilterDelay);
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -1063,8 +1131,12 @@ namespace Radzen
                     selectedItems.Clear();
                 }
             }
+            else if (internalValue == null && Multiple && selectedItems.Count > 0)
+            {
+                selectedItems.Clear();
+            }
 
-                SelectItemFromValue(internalValue);
+            SelectItemFromValue(internalValue);
 
             return base.OnParametersSetAsync();
         }
@@ -1241,7 +1313,7 @@ namespace Radzen
                 {
                     var elementType = PropertyAccess.GetElementType(Data.GetType());
                     System.Reflection.PropertyInfo? pi = PropertyAccess.GetProperty(elementType, ValueProperty);
-                    if(pi != null)
+                    if (pi != null)
                     {
                         internalValue = selectedItems.Select(i => GetItemOrValueFromProperty(i, ValueProperty)).AsQueryable().Cast(pi.PropertyType);
                     }
@@ -1295,7 +1367,23 @@ namespace Radzen
 
                 await Change.InvokeAsync(internalValue);
             }
+
             StateHasChanged();
+        }
+
+        /// <summary>
+        /// Handles keyboard activation for the select-all action.
+        /// </summary>
+        /// <param name="args">The <see cref="Microsoft.AspNetCore.Components.Web.KeyboardEventArgs"/> instance containing the event data.</param>
+        protected async Task OnSelectAllKeyDown(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
+        {
+            ArgumentNullException.ThrowIfNull(args);
+
+            var key = args.Code != null ? args.Code : args.Key;
+            if (key == "Enter" || key == "Space")
+            {
+                await SelectAll();
+            }
         }
 
         /// <inheritdoc />
@@ -1522,28 +1610,28 @@ namespace Radzen
             private readonly System.Reflection.MethodInfo? addMethod;
             private readonly System.Reflection.MethodInfo? removeMethod;
 
-        public ReferenceGenericCollectionAssignment(T originalCollection)
-        {
-            this.originalCollection = originalCollection;
-            // Pre-calculate if we can handle this instance and get method info
-            if (originalCollection != null)
+            public ReferenceGenericCollectionAssignment(T originalCollection)
             {
-                var actualType = originalCollection.GetType();
-                if (actualType.IsGenericType && !actualType.IsArray)
+                this.originalCollection = originalCollection;
+                // Pre-calculate if we can handle this instance and get method info
+                if (originalCollection != null)
                 {
-                    var elementType = actualType.GetGenericArguments()[0];
-                    var genericCollectionType = typeof(ICollection<>).MakeGenericType(elementType);
-
-                    if (genericCollectionType.IsAssignableFrom(actualType))
+                    var actualType = originalCollection.GetType();
+                    if (actualType.IsGenericType && !actualType.IsArray)
                     {
-                        clearMethod = actualType.GetMethod("Clear");
-                        addMethod = actualType.GetMethod("Add");
-                        removeMethod = typeof(T).GetMethod("Remove");
-                        canHandle = true;
+                        var elementType = actualType.GetGenericArguments()[0];
+                        var genericCollectionType = typeof(ICollection<>).MakeGenericType(elementType);
+
+                        if (genericCollectionType.IsAssignableFrom(actualType))
+                        {
+                            clearMethod = actualType.GetMethod("Clear");
+                            addMethod = actualType.GetMethod("Add");
+                            removeMethod = typeof(T).GetMethod("Remove");
+                            canHandle = true;
+                        }
                     }
                 }
             }
-        }
 
             public override async Task MakeAssignment(IEnumerable selectedItems, EventCallback<T> valueChanged)
             {
@@ -1567,8 +1655,8 @@ namespace Radzen
                         removeMethod!.Invoke(originalCollection, [i]);
                 }
 
-            await valueChanged.InvokeAsync(originalCollection);
-        }
+                await valueChanged.InvokeAsync(originalCollection);
+            }
 
             public override T? GetCleared()
             {

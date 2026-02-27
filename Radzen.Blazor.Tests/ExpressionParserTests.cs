@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -67,6 +67,9 @@ public class ExpressionParserTests
         public string? ProductName { get; set; }
 
         public Category? Category { get; set; }
+
+        public bool IsDiscontinued { get; set; }
+        public int UnitsInStock { get; set; }
     }
 
     [Fact]
@@ -1026,6 +1029,36 @@ public class ExpressionParserTests
         Assert.True(func(new Person { BirthDate = DateTime.Parse("5/5/2000 12:00:00 AM") }));
     }
 
+    class EmployeeWithHireDate
+    {
+        public DateTime? HireDate { get; set; }
+        public DateOnly? HireDateOnly { get; set; }
+    }
+
+    [Fact]
+    public void Should_SupportNullableDateTimeArrayWithSpecifyKindAndNullableProperty()
+    {
+        var predicate = "x => new System.DateTime?[] { DateTime.SpecifyKind(DateTime.Parse(\"2012-04-01\", CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind), DateTimeKind.Unspecified) }.Contains((x.HireDate ?? null))";
+        var expression = ExpressionParser.ParsePredicate<EmployeeWithHireDate>(predicate);
+        var func = expression.Compile();
+
+        var hireDate = DateTime.SpecifyKind(DateTime.Parse("2012-04-01", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind), DateTimeKind.Unspecified);
+        Assert.True(func(new EmployeeWithHireDate { HireDate = hireDate }));
+        Assert.False(func(new EmployeeWithHireDate { HireDate = DateTime.Parse("2013-01-01") }));
+    }
+
+    [Fact]
+    public void Should_SupportNullableDateOnlyArrayAndNullableProperty()
+    {
+        var predicate = "x => new System.DateOnly?[] { DateOnly.Parse(\"2012-04-01\") }.Contains((x.HireDateOnly ?? null))";
+        var expression = ExpressionParser.ParsePredicate<EmployeeWithHireDate>(predicate);
+        var func = expression.Compile();
+
+        var hireDate = DateOnly.Parse("2012-04-01");
+        Assert.True(func(new EmployeeWithHireDate { HireDateOnly = hireDate }));
+        Assert.False(func(new EmployeeWithHireDate { HireDateOnly = DateOnly.Parse("2013-01-01") }));
+    }
+
     [Fact]
     public void Should_SupportNumericConversion()
     {
@@ -1553,5 +1586,41 @@ public class ExpressionParserTests
         expression = ExpressionParser.ParseLambda<ItemWithGenericProperty<int>, int>("p => ((p.Value & 7) << 2) | (15 & (3 + 2))");
         func = expression.Compile();
         Assert.Equal(((25 & 7) << 2) | (15 & (3 + 2)), func(new ItemWithGenericProperty<int> { Value = 25 }));
+    }
+
+    [Fact]
+    public void Should_ParseDefaultBool()
+    {
+        var expression = ExpressionParser.ParsePredicate<OrderDetail>(
+            "x => ((x.Product == null ? default(bool) : x.Product.IsDiscontinued) == true)");
+
+        var func = expression.Compile();
+
+        Assert.True(func(new OrderDetail { Product = new Product { IsDiscontinued = true } }));
+        Assert.False(func(new OrderDetail { Product = new Product { IsDiscontinued = false } }));
+        Assert.False(func(new OrderDetail { Product = null }));
+    }
+
+    [Fact]
+    public void Should_ParseDefaultInt()
+    {
+        var expression = ExpressionParser.ParseLambda<OrderDetail, int>(
+            "x => (x.Product == null ? default(int) : x.Product.UnitsInStock)");
+
+        var func = expression.Compile();
+
+        Assert.Equal(42, func(new OrderDetail { Product = new Product { UnitsInStock = 42 } }));
+        Assert.Equal(0, func(new OrderDetail { Product = null }));
+    }
+
+    [Fact]
+    public void Should_ParseDefaultNullableBool()
+    {
+        var expression = ExpressionParser.ParsePredicate<Person>(
+            "x => (default(bool?) == null)");
+
+        var func = expression.Compile();
+
+        Assert.True(func(new Person()));
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
@@ -161,6 +161,19 @@ namespace Radzen.Blazor
         /// </summary>
         [Parameter]
         public string TogglePopupAriaLabel { get; set; } = "Toggle popup";
+
+        /// <summary>
+        /// Specifies the aria label for the popup.
+        /// </summary>
+        [Parameter]
+        public string PopupAriaLabel { get; set; } = "Time span picker";
+
+        /// <summary>
+        /// Gets or sets the clear button aria label text.
+        /// </summary>
+        /// <value>The clear button aria label text.</value>
+        [Parameter]
+        public string ClearAriaLabel { get; set; } = "Clear";
         #endregion
 
         #region Parameters: panel config
@@ -227,13 +240,11 @@ namespace Radzen.Blazor
         [Parameter]
         public string? MillisecondsStep { get; set; }
 
-        #if NET7_0_OR_GREATER
         /// <summary>
         /// Specifies the step of the microseconds field in the picker panel.
         /// </summary>
         [Parameter]
         public string? MicrosecondsStep { get; set; }
-#endif
         #endregion
 
         #region Parameters: panel texts
@@ -297,13 +308,11 @@ namespace Radzen.Blazor
         [Parameter]
         public string MillisecondsUnitText { get; set; } = "Milliseconds";
 
-#if NET7_0_OR_GREATER
         /// <summary>
         /// Specifies the microseconds label text.
         /// </summary>
         [Parameter]
         public string MicrosecondsUnitText { get; set; } = "Microseconds";
-        #endif
         #endregion
 
         #region Parameters: other config
@@ -716,6 +725,8 @@ namespace Radzen.Blazor
         private Task ClosePopup()
             => Inline ? Task.CompletedTask : popup?.CloseAsync(Element) ?? Task.CompletedTask;
 
+        private bool isPopupOpen;
+
         private async Task PopupKeyDown(KeyboardEventArgs args)
         {
             var key = args.Code ?? args.Key;
@@ -728,11 +739,13 @@ namespace Radzen.Blazor
 
         private void OnPopupOpen()
         {
+            isPopupOpen = true;
             ResetUnconfirmedValue();
             preventKeyPress = true;
         }
         private void OnPopupClose()
         {
+            isPopupOpen = false;
             ResetUnconfirmedValue();
             preventKeyPress = false;
         }
@@ -747,9 +760,7 @@ namespace Radzen.Blazor
                 TimeSpanUnit.Minute => TimeSpan.FromMinutes(value),
                 TimeSpanUnit.Second => TimeSpan.FromSeconds(value),
                 TimeSpanUnit.Millisecond => TimeSpan.FromMilliseconds(value),
-                #if NET7_0_OR_GREATER
                 TimeSpanUnit.Microsecond => TimeSpan.FromMicroseconds(value),
-                #endif
                 _ => TimeSpan.Zero,
             };
         private static int GetTimeSpanUnitValue(TimeSpanUnit unit, TimeSpan timeSpan)
@@ -760,9 +771,7 @@ namespace Radzen.Blazor
                 TimeSpanUnit.Minute => timeSpan.Minutes,
                 TimeSpanUnit.Second => timeSpan.Seconds,
                 TimeSpanUnit.Millisecond => timeSpan.Milliseconds,
-                #if NET7_0_OR_GREATER
                 TimeSpanUnit.Microsecond => timeSpan.Microseconds,
-                #endif
                 _ => 0,
             };
         private static readonly Dictionary<TimeSpanUnit, int> _timeUnitMaxAbsoluteValues = new()
@@ -771,10 +780,8 @@ namespace Radzen.Blazor
                 { TimeSpanUnit.Hour, 23 },
                 { TimeSpanUnit.Minute, 59 },
                 { TimeSpanUnit.Second, 59 },
-                { TimeSpanUnit.Millisecond, 999 }
-                #if NET7_0_OR_GREATER
-                , { TimeSpanUnit.Microsecond, 999 }
-                #endif
+                { TimeSpanUnit.Millisecond, 999 },
+                { TimeSpanUnit.Microsecond, 999 }
             };
         private static readonly Dictionary<TimeSpanUnit, int> _timeUnitZeroValues = Enum
             .GetValues<TimeSpanUnit>()
@@ -836,14 +843,12 @@ namespace Radzen.Blazor
             }
             timeUnitMaxValues[TimeSpanUnit.Millisecond] = 0;
 
-#if NET7_0_OR_GREATER
             if (boundary.Microseconds != 0)
             {
                 timeUnitMaxValues[TimeSpanUnit.Microsecond] = Math.Abs(boundary.Microseconds);
                 return timeUnitMaxValues;
             }
             timeUnitMaxValues[TimeSpanUnit.Microsecond] = 0;
-#endif
 
             return timeUnitMaxValues;
         }

@@ -92,6 +92,7 @@ window.Radzen = {
         var handler = function (e) {
             e.stopPropagation();
             e.preventDefault();
+            try {
             ref.invokeMethodAsync('RadzenComponent.RaiseContextMenu',
                 {
                     ClientX: e.clientX,
@@ -105,6 +106,7 @@ window.Radzen = {
                     Button: e.button,
                     Buttons: e.buttons,
                 });
+            } catch { }
             return false;
         };
         Radzen[id + 'contextmenu'] = handler;
@@ -115,7 +117,7 @@ window.Radzen = {
      var el = document.getElementById(id);
      if (el) {
         var handler = function (e) {
-            ref.invokeMethodAsync('RadzenComponent.RaiseMouseEnter');
+            try { ref.invokeMethodAsync('RadzenComponent.RaiseMouseEnter'); } catch { }
         };
         Radzen[id + 'mouseenter'] = handler;
         el.addEventListener('mouseenter', handler, false);
@@ -125,7 +127,7 @@ window.Radzen = {
      var el = document.getElementById(id);
      if (el) {
         var handler = function (e) {
-            ref.invokeMethodAsync('RadzenComponent.RaiseMouseLeave');;
+            try { ref.invokeMethodAsync('RadzenComponent.RaiseMouseLeave'); } catch { }
         };
         Radzen[id + 'mouseleave'] = handler;
         el.addEventListener('mouseleave', handler, false);
@@ -254,9 +256,9 @@ window.Radzen = {
       });
 
       Radzen[id].instance.addListener('click', function (e) {
-        Radzen[id].invokeMethodAsync('RadzenGoogleMap.OnMapClick', {
+        try { Radzen[id].invokeMethodAsync('RadzenGoogleMap.OnMapClick', {
           Position: {Lat: e.latLng.lat(), Lng: e.latLng.lng()}
-        });
+        }); } catch { }
       });
 
       Radzen.updateMap(id, apiKey, zoom, center, markers, options, fitBoundsToMarkersOnUpdate, language);
@@ -302,11 +304,11 @@ window.Radzen = {
                     });
 
                     marker.addListener('click', function (e) {
-                        Radzen[id].invokeMethodAsync('RadzenGoogleMap.OnMarkerClick', {
+                        try { Radzen[id].invokeMethodAsync('RadzenGoogleMap.OnMarkerClick', {
                             Title: marker.title,
                             Label: marker.content.innerText,
                             Position: marker.position
-                        });
+                        }); } catch { }
                     });
 
                     marker.setMap(Radzen[id].instance);
@@ -392,7 +394,7 @@ window.Radzen = {
                   var code = Radzen[id].inputs.map(i => i.value).join('').trim();
                   hidden.value = code;
 
-                  ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', code);
+                  try { ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', code); } catch { }
 
                   Radzen[id].inputs[Radzen[id].inputs.length - 1].focus();
               }
@@ -432,7 +434,7 @@ window.Radzen = {
           var value = Radzen[id].inputs.map(i => i.value).join('').trim();
           hidden.value = value;
 
-          ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', value);
+          try { ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', value); } catch { }
 
           var index = Radzen[id].inputs.indexOf(e.currentTarget);
           if (index < Radzen[id].inputs.length - 1) {
@@ -448,7 +450,7 @@ window.Radzen = {
               var value = Radzen[id].inputs.map(i => i.value).join('').trim();
               hidden.value = value;
 
-              ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', value);
+              try { ref.invokeMethodAsync('RadzenSecurityCode.OnValueChange', value); } catch { }
 
               var index = Radzen[id].inputs.indexOf(e.currentTarget);
               if (index > 0) {
@@ -510,11 +512,11 @@ window.Radzen = {
         newValue >= min &&
         newValue <= max
       ) {
-        slider.invokeMethodAsync(
+        try { slider.invokeMethodAsync(
           'RadzenSlider.OnValueChange',
           newValue,
           !!slider.isMin
-        );
+        ); } catch { }
       }
     };
 
@@ -546,11 +548,11 @@ window.Radzen = {
         var newValue = percent * (max - min) + min;
         var oldValue = range ? value[slider.isMin ? 0 : 1] : value;
         if (newValue >= min && newValue <= max && newValue != oldValue) {
-          slider.invokeMethodAsync(
+          try { slider.invokeMethodAsync(
             'RadzenSlider.OnValueChange',
             newValue,
             !!slider.isMin
-          );
+          ); } catch { }
         }
       }
     };
@@ -840,7 +842,7 @@ window.Radzen = {
 
       uploadComponent.files = Array.from(fileInput.files);
       uploadComponent.localFiles = files;
-      uploadComponent.invokeMethodAsync('RadzenUpload.OnChange', files);
+      try { uploadComponent.invokeMethodAsync('RadzenUpload.OnChange', files); } catch { }
     }
 
     for (var i = 0; i < fileInput.files.length; i++) {
@@ -913,7 +915,7 @@ window.Radzen = {
           Radzen.uploadComponents && Radzen.uploadComponents[fileInput.id];
         if (uploadComponent) {
           var progress = parseInt((e.loaded / e.total) * 100);
-          uploadComponent.invokeMethodAsync(
+          try { uploadComponent.invokeMethodAsync(
             'RadzenUpload.OnProgress',
             progress,
             e.loaded,
@@ -925,7 +927,7 @@ window.Radzen = {
                   cancelled = true;
                   xhr.abort();
               }
-          });
+          }); } catch { }
         }
       }
     };
@@ -936,27 +938,27 @@ window.Radzen = {
           Radzen.uploadComponents && Radzen.uploadComponents[fileInput.id];
         if (uploadComponent) {
           if (status === 0 || (status >= 200 && status < 400)) {
-            uploadComponent.invokeMethodAsync(
+            try { uploadComponent.invokeMethodAsync(
               'RadzenUpload.OnComplete',
                 xhr.responseText,
                 cancelled
-            );
+            ); } catch { }
           } else {
-            uploadComponent.invokeMethodAsync(
+            try { uploadComponent.invokeMethodAsync(
               'RadzenUpload.OnError',
               xhr.responseText
-            );
+            ); } catch { }
           }
         }
       }
     };
-    uploadComponent.invokeMethodAsync('GetHeaders').then(function (headers) {
+    try { uploadComponent.invokeMethodAsync('GetHeaders').then(function (headers) {
       xhr.open(method, url, true);
       for (var name in headers) {
         xhr.setRequestHeader(name, headers[name]);
       }
       xhr.send(data);
-    });
+    }); } catch { }
   },
   getCookie: function (name) {
     var value = '; ' + decodeURIComponent(document.cookie);
@@ -1179,9 +1181,24 @@ window.Radzen = {
 
       popup.style.top = top + 'px';
   },
+  setPopupAriaExpanded: function (parent, id, expanded) {
+    if (!parent || !id) return;
+    var control = null;
+    if (parent.getAttribute && parent.getAttribute('aria-controls') === id) {
+      control = parent;
+    } else if (parent.querySelector) {
+      control = parent.querySelector('[aria-controls="' + id + '"]');
+    }
+    if (!control && parent.getAttribute && parent.getAttribute('role') === 'combobox') {
+      control = parent;
+    }
+    if (control) {
+      control.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    }
+  },
   openPopup: function (parent, id, syncWidth, position, x, y, instance, callback, closeOnDocumentClick = true, autoFocusFirstElement = false, disableSmartPosition = false) {
     var popup = document.getElementById(id);
-    if (!popup) return;
+      if (!popup || popup && popup.style.display == 'block' && popup.classList.contains('rz-autocomplete-panel')) return;
 
     Radzen.activeElement = document.activeElement;
 
@@ -1218,10 +1235,17 @@ window.Radzen = {
     popup.onanimationend = null;
     popup.classList.add("rz-open");
     popup.classList.remove("rz-close");
+    Radzen.setPopupAriaExpanded(parent, id, true);
 
     var rect = popup.getBoundingClientRect();
     rect.width = x ? rect.width + 20 : rect.width;
     rect.height = y ? rect.height + 20 : rect.height;
+
+    var isRTL = Radzen.isRTL(popup);
+
+    if (isRTL && (position == 'bottom' || position == 'top')) {
+      left = parentRect.right - rect.width;
+    }
 
     var smartPosition = !position || position == 'bottom';
 
@@ -1263,6 +1287,24 @@ window.Radzen = {
       }
     }
 
+    if (smartPosition && isRTL && left < 0 && window.innerWidth > rect.width) {
+      left = !position ? 0 : rect.left;
+
+      if (position) {
+        top = y || parentRect.top;
+        var tooltipContent = popup.children[0];
+        var tooltipContentClassName = 'rz-' + position + '-tooltip-content';
+        if (tooltipContent.classList.contains(tooltipContentClassName)) {
+          tooltipContent.classList.remove(tooltipContentClassName);
+          tooltipContent.classList.add('rz-right-tooltip-content');
+          position = 'right';
+          if (instance && callback) {
+              try { instance.invokeMethodAsync(callback, position); } catch { }
+          }
+        }
+      }
+    }
+
     if (smartPosition) {
       if (position) {
         top = top + 20;
@@ -1281,7 +1323,7 @@ window.Radzen = {
 
     if (position == 'top') {
       top = parentRect.top - rect.height + 5;
-      left = parentRect.left;
+      left = isRTL ? parentRect.right - rect.width : parentRect.left;
     }
 
     popup.style.zIndex = 2000;
@@ -1387,6 +1429,10 @@ window.Radzen = {
   closePopup: function (id, instance, callback, e) {
     var popup = document.getElementById(id);
     if (!popup) return;
+    var popupInfo = (Radzen.popups || []).find(function (p) { return p.id === id; });
+    if (popupInfo && popupInfo.parent) {
+      Radzen.setPopupAriaExpanded(popupInfo.parent, id, false);
+    }
     if (popup.style.display == 'none') {
         var popups = Radzen.findPopup(id);
         if (popups.length > 1) {
@@ -1633,10 +1679,12 @@ window.Radzen = {
                             'RadzenDialog.OnResize',
                             e[0].target.offsetWidth,
                             e[0].target.offsetHeight
-                        );
+                        ).catch(function () { });
                     }
                 };
-                Radzen.dialogResizer = new ResizeObserver(dialogResize).observe(lastDialog.parentElement);
+                var resizeObserver = new ResizeObserver(dialogResize);
+                resizeObserver.observe(lastDialog.parentElement);
+                Radzen.dialogResizer = resizeObserver;
             }
 
             if (options.draggable) {
@@ -1654,7 +1702,7 @@ window.Radzen = {
                             lastDialog.parentElement.style.left = left + 'px';
                             lastDialog.parentElement.style.top = top + 'px';
 
-                            dialog.invokeMethodAsync('RadzenDialog.OnDrag', top, left);
+                            try { dialog.invokeMethodAsync('RadzenDialog.OnDrag', top, left); } catch { }
                         };
 
                         var stop = function () {
@@ -1682,6 +1730,9 @@ window.Radzen = {
     }
   },
   closeDialog: function () {
+    if (Radzen.dialogResizer && typeof Radzen.dialogResizer.disconnect === 'function') {
+      Radzen.dialogResizer.disconnect();
+    }
     Radzen.dialogResizer = null;
     document.body.classList.remove('no-scroll');
     var dialogs = document.querySelectorAll('.rz-dialog-content');
@@ -1761,7 +1812,7 @@ window.Radzen = {
           var lastDialog = dialogs[dialogs.length - 1];
 
           if (lastDialog && lastDialog.options && lastDialog.options.closeDialogOnEsc) {
-              Radzen.dialogService.invokeMethodAsync('DialogService.Close', null);
+              try { Radzen.dialogService.invokeMethodAsync('DialogService.Close', null); } catch { }
 
               if (dialogs.length <= 1) {
                   document.removeEventListener('keydown', Radzen.closePopupOrDialog);
@@ -1875,6 +1926,7 @@ window.Radzen = {
       var children = item.querySelector('.rz-navigation-menu');
 
       if (children) {
+        item.setAttribute('aria-expanded', active);
         if (active) {
           children.onanimationend = null;
           children.style.display = '';
@@ -1947,7 +1999,7 @@ window.Radzen = {
     ref.resizeHandler = function () {
       var rect = ref.getBoundingClientRect();
 
-      instance.invokeMethodAsync('Resize', rect.width, rect.height);
+      try { instance.invokeMethodAsync('Resize', rect.width, rect.height); } catch { }
     };
 
     if (window.ResizeObserver) {
@@ -1968,7 +2020,7 @@ window.Radzen = {
         var rect = ref.getBoundingClientRect();
         var x = e.clientX - rect.left;
         var y = e.clientY - rect.top;
-        instance.invokeMethodAsync('MouseMove', x, y);
+        try { instance.invokeMethodAsync('MouseMove', x, y); } catch { }
      }
     }, 100);
     ref.mouseEnterHandler = function () {
@@ -1979,14 +2031,14 @@ window.Radzen = {
             return;
         }
         inside = false;
-        instance.invokeMethodAsync('MouseMove', -1, -1);
+        try { instance.invokeMethodAsync('MouseMove', -1, -1); } catch { }
     };
     ref.clickHandler = function (e) {
       var rect = ref.getBoundingClientRect();
       var x = e.clientX - rect.left;
       var y = e.clientY - rect.top;
       if (!e.target.closest('.rz-marker')) {
-        instance.invokeMethodAsync('Click', x, y);
+        try { instance.invokeMethodAsync('Click', x, y); } catch { }
       }
     };
 
@@ -2010,7 +2062,7 @@ window.Radzen = {
     ref.resizeHandler = function () {
       var rect = ref.getBoundingClientRect();
 
-      instance.invokeMethodAsync('Resize', rect.width, rect.height);
+      try { instance.invokeMethodAsync('Resize', rect.width, rect.height); } catch { }
     };
 
     window.addEventListener('resize', ref.resizeHandler);
@@ -2059,7 +2111,7 @@ window.Radzen = {
   mediaQuery: function(query, instance) {
     if (instance) {
       function callback(event) {
-          instance.invokeMethodAsync('OnChange', event.matches)
+          try { instance.invokeMethodAsync('OnChange', event.matches); } catch { }
       };
       var query = matchMedia(query);
       this.mediaQueries[instance._id] = function() {
@@ -2077,7 +2129,7 @@ window.Radzen = {
   },
   createEditor: function (ref, uploadUrl, paste, instance, shortcuts) {
     ref.inputListener = function () {
-      instance.invokeMethodAsync('OnChange', ref.innerHTML);
+      try { instance.invokeMethodAsync('OnChange', ref.innerHTML); } catch { }
     };
     ref.keydownListener = function (e) {
       var key = '';
@@ -2094,7 +2146,7 @@ window.Radzen = {
 
       if (shortcuts.includes(key)) {
         e.preventDefault();
-        instance.invokeMethodAsync('ExecuteShortcutAsync', key);
+        try { instance.invokeMethodAsync('ExecuteShortcutAsync', key); } catch { }
       }
     };
 
@@ -2120,18 +2172,21 @@ window.Radzen = {
 
     ref.selectionChangeListener = function () {
       if (document.activeElement == ref) {
-        instance.invokeMethodAsync('OnSelectionChange');
+        try { instance.invokeMethodAsync('OnSelectionChange'); } catch { }
       }
     };
     ref.handleInsert = function (e, transfer, hasDelegate) {
+      var hasFiles = transfer.files.length > 0;
+      var hasHtml = transfer.types.indexOf('text/html') > -1;
+      var hasText = transfer.types.indexOf('text/plain') > -1;
 
-      if (transfer.files.length > 0) {
+      if (hasFiles && !hasHtml && !hasText) {
         for (const file of transfer.files) {
           ref.handleFileInsert(e, file, hasDelegate);
-          }
+        }
       }
       else if (hasDelegate) {
-        ref.handleTextInsert(e, transfer)
+        ref.handleTextInsert(e, transfer);
       }
     };
     ref.handleFileInsert = function (event, file, hasDelegate) {
@@ -2148,36 +2203,36 @@ window.Radzen = {
               var result = JSON.parse(xhr.responseText);
               var html = '<img src="' + result.url + '">';
               if (hasDelegate) {
-                instance.invokeMethodAsync('OnPaste', html)
+                try { instance.invokeMethodAsync('OnPaste', html)
                   .then(function (html) {
                     document.execCommand("insertHTML", false, html);
-                  });
+                  }); } catch { }
               } else {
                 document.execCommand("insertHTML", false, '<img src="' + result.url + '">');
               }
-              instance.invokeMethodAsync('OnUploadComplete', xhr.responseText);
+              try { instance.invokeMethodAsync('OnUploadComplete', xhr.responseText); } catch { }
             } else {
-              instance.invokeMethodAsync('OnError', xhr.responseText);
+              try { instance.invokeMethodAsync('OnError', xhr.responseText); } catch { }
             }
           }
         }
-        instance.invokeMethodAsync('GetHeaders').then(function (headers) {
+        try { instance.invokeMethodAsync('GetHeaders').then(function (headers) {
           xhr.open('POST', uploadUrl, true);
           for (var name in headers) {
             xhr.setRequestHeader(name, headers[name]);
           }
           xhr.send(data);
-        });
+        }); } catch { }
       } else {
         var reader = new FileReader();
         reader.onload = function (e) {
           var html = '<img src="' + e.target.result + '">';
 
           if (hasDelegate) {
-            instance.invokeMethodAsync('OnPaste', html)
+            try { instance.invokeMethodAsync('OnPaste', html)
               .then(function (html) {
                 document.execCommand("insertHTML", false, html);
-              });
+              }); } catch { }
             } else {
               document.execCommand("insertHTML", false, html);
             }
@@ -2202,11 +2257,11 @@ window.Radzen = {
         data = data.substring(startIndex + startMarker.length, endIndex).trim();
       }
 
-      instance.invokeMethodAsync('OnPaste', data)
+      try { instance.invokeMethodAsync('OnPaste', data)
         .then(ref.focus())
         .then(function (html) {
           document.execCommand("insertHTML", false, html);
-        });
+        }); } catch { }
     }
     ref.pasteListener = function (e) {
       ref.handleInsert(e, e.clipboardData, paste);
@@ -2303,11 +2358,11 @@ window.Radzen = {
         return { left: 0, top: 0, width: 0, height: 0 };
     }
     ref.mouseMoveHandler = function (e) {
-      instance.invokeMethodAsync(handler, { clientX: e.clientX, clientY: e.clientY });
+      try { instance.invokeMethodAsync(handler, { clientX: e.clientX, clientY: e.clientY }); } catch { }
     };
     ref.touchMoveHandler = function (e) {
       if (e.targetTouches[0] && ref.contains(e.targetTouches[0].target)) {
-        instance.invokeMethodAsync(handler, { clientX: e.targetTouches[0].clientX, clientY: e.targetTouches[0].clientY });
+        try { instance.invokeMethodAsync(handler, { clientX: e.targetTouches[0].clientX, clientY: e.targetTouches[0].clientY }); } catch { }
       }
     };
     ref.mouseUpHandler = function (e) {
@@ -2413,11 +2468,11 @@ window.Radzen = {
     var cell = el.parentNode.parentNode;
     if (!cell) return;
     if (Radzen[el]) {
-        grid.invokeMethodAsync(
+        try { grid.invokeMethodAsync(
             'RadzenGrid.OnColumnResized',
             columnIndex,
             cell.getBoundingClientRect().width
-        );
+        ); } catch { }
         el.style.width = null;
         document.removeEventListener('mousemove', Radzen[el].mouseMoveHandler);
         document.removeEventListener('mouseup', Radzen[el].mouseUpHandler);
@@ -2437,11 +2492,11 @@ window.Radzen = {
           width: cell.getBoundingClientRect().width,
           mouseUpHandler: function (e) {
               if (Radzen[el]) {
-                  grid.invokeMethodAsync(
+                  try { grid.invokeMethodAsync(
                       'RadzenGrid.OnColumnResized',
                       columnIndex,
                       cell.getBoundingClientRect().width
-                  );
+                  ); } catch { }
                   el.style.width = null;
                   document.removeEventListener('mousemove', Radzen[el].mouseMoveHandler);
                   document.removeEventListener('mouseup', Radzen[el].mouseUpHandler);
@@ -2563,13 +2618,13 @@ window.Radzen = {
             paneNextLength: isFinite(paneNextLength) ? paneNextLength : 0,
             mouseUpHandler: function(e) {
                 if (Radzen[el]) {
-                    splitter.invokeMethodAsync(
+                    try { splitter.invokeMethodAsync(
                         'RadzenSplitter.OnPaneResized',
                         parseInt(pane.getAttribute('data-index')),
                         parseFloat(pane.style.flexBasis),
                         paneNext ? parseInt(paneNext.getAttribute('data-index')) : null,
                         paneNext ? parseFloat(paneNext.style.flexBasis) : null
-                    );
+                    ); } catch { }
 
                     document.removeEventListener('pointerup', Radzen[el].mouseUpHandler);
                     document.removeEventListener('pointermove', Radzen[el].mouseMoveHandler);
@@ -2580,9 +2635,9 @@ window.Radzen = {
             mouseMoveHandler: function(e) {
                 if (Radzen[el]) {
 
-                    splitter.invokeMethodAsync(
+                    try { splitter.invokeMethodAsync(
                         'RadzenSplitter.OnPaneResizing'
-                    );
+                    ); } catch { }
 
                     var spacePerc = Radzen[el].panePerc + Radzen[el].paneNextPerc;
                     var spaceLength = Radzen[el].paneLength + Radzen[el].paneNextLength;
@@ -2697,10 +2752,10 @@ window.Radzen = {
                 let current = event.results[event.results.length - 1][0]
                 let result = current.transcript;
 
-                componentRef.invokeMethodAsync("OnResult", result);
+                try { componentRef.invokeMethodAsync("OnResult", result); } catch { }
             };
             radzenRecognition.onend = function (event) {
-                componentRef.invokeMethodAsync("StopRecording");
+                try { componentRef.invokeMethodAsync("StopRecording"); } catch { }
                 radzenRecognition = null;
             };
             radzenRecognition.start();
@@ -2810,7 +2865,7 @@ window.Radzen = {
                 currentSelector = match;
                 if (!this.selectedNavigationSelector || (match === this.selectedNavigationSelector)) {
                     this.navigateTo(currentSelector, false);
-                    ref.invokeMethodAsync('ScrollIntoView', currentSelector);
+                    try { ref.invokeMethodAsync('ScrollIntoView', currentSelector); } catch { }
                 }
             }
             // clear selected navigation selector after scroll completes
@@ -2852,7 +2907,7 @@ window.Radzen = {
     createDraggable: function(element, ref, onDragStart) {
       function handleDragStart(e) {
         e.dataTransfer.setData('', e.target.id);
-        ref.invokeMethodAsync(onDragStart);
+        try { ref.invokeMethodAsync(onDragStart); } catch { }
       }
       element.draggable = true;
       element.addEventListener('dragstart', handleDragStart);
@@ -2872,7 +2927,7 @@ Radzen.registerFabMenu = function(element, dotnet){
   }
   const handler = function(e){
     if(!element.contains(e.target)){
-      dotnet.invokeMethodAsync('CloseAsync');
+      try { dotnet.invokeMethodAsync('CloseAsync'); } catch { }
     }
   };
   element.__rzOutsideClickHandler = handler;

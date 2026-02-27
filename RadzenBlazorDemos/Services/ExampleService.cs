@@ -1821,11 +1821,12 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Toc = [ new () { Text = "Basic Usage", Anchor = "#basic-usage" }, new () { Text = "Custom EditContext", Anchor = "#custom-edit-context" }, new () { Text = "Form Action", Anchor = "#form-action" } ],
                     Name = "TemplateForm",
                     Path = "templateform",
                     Description = "Demonstration and configuration of the Radzen Blazor template form component with validation support.",
                     Icon = "\uebed",
-                    Tags = new [] { "form", "edit" }
+                    Tags = new [] { "form", "edit", "validation", "submit", "editcontext" }
                 },
                 new Example
                 {
@@ -2037,6 +2038,7 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Toc = [ new () { Text = "Basic Usage", Anchor = "#basic-usage" }, new () { Text = "Grid Shape", Anchor = "#grid-shape" }, new () { Text = "Color Scheme", Anchor = "#color-scheme" }, new () { Text = "Legend", Anchor = "#legend" }, new () { Text = "Value Format", Anchor = "#value-format" }, new () { Text = "Markers", Anchor = "#markers" } ],
                     Name = "Spider Chart",
                     Path = "spider-chart",
                     Title = "Blazor Spider Chart Component | Free UI Components by Radzen",
@@ -2116,6 +2118,7 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Toc = [ new () { Text = "Basic Usage", Anchor = "#basic-usage" }, new () { Text = "Color Scheme", Anchor = "#color-scheme" }, new () { Text = "Node Properties", Anchor = "#node-properties" }, new () { Text = "Custom Colors", Anchor = "#custom-colors" }, new () { Text = "Custom Tooltips", Anchor = "#custom-tooltips" }, new () { Text = "Animation", Anchor = "#animation" } ],
                     Name = "Sankey Diagram",
                     Path = "sankey-diagram",
                     Description = "Radzen Blazor Sankey Diagram for visualizing flow and relationships between nodes.",

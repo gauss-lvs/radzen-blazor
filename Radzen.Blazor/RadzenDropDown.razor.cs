@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.JSInterop;
 using System.Threading.Tasks;
@@ -158,6 +158,7 @@ namespace Radzen.Blazor
                 OpenOnFocus = false;
             }
             isOpen = false;
+            isPopupOpen = false;
             if (JSRuntime != null)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID, Reference, nameof(OnClose));
@@ -193,6 +194,7 @@ namespace Radzen.Blazor
             }
 
             isOpen = true;
+            isPopupOpen = true;
             if (JSRuntime != null)
             {
                 if (OpenOnFocus)
@@ -448,6 +450,7 @@ namespace Radzen.Blazor
         public async Task OnClose()
         {
             isOpen = false;
+            isPopupOpen = false;
             await Close.InvokeAsync();
         }
 
