@@ -2597,9 +2597,9 @@ namespace Radzen.Blazor
 
             if (visibleChanged && !firstRender)
             {
-                if (Visible == false)
+                if (Visible && LoadData.HasDelegate)
                 {
-                    Dispose();
+                    await InvokeAsync(Reload);
                 }
             }
 
@@ -3580,6 +3580,20 @@ namespace Radzen.Blazor
             get
             {
                 return $"popup{UniqueID}";
+            }
+        }
+
+        /// <inheritdoc />
+        protected override void OnBecameInvisible()
+        {
+            base.OnBecameInvisible();
+
+            if (IsJSRuntimeAvailable && JSRuntime != null)
+            {
+                foreach (var column in allColumns.ToList().Where(c => c.GetVisible()))
+                {
+                    JSRuntime.InvokeVoid("Radzen.destroyPopup", $"{PopupID}{column.GetFilterProperty()}");
+                }
             }
         }
 
