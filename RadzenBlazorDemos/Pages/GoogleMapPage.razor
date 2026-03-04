@@ -1,16 +1,12 @@
 @page "/googlemap"
 
 <RadzenText TextStyle="TextStyle.H2" TagName="TagName.H1" class="rz-pt-8">
-    GoogleMap
+    Blazor GoogleMap
 </RadzenText>
 <RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.P" class="rz-pb-4">
-    Demonstration and configuration of the Radzen Blazor <strong>GoogleMap</strong> component. The component will work properly only if ApiKey and MapId are set, the key used in this demo is limited to radzen.com. Check these articles to know more on how to obtain ApiKey and MapId:
+    Blazor Google Map component for embedding interactive maps.
     <RadzenLink Path="https://developers.google.com/maps/documentation/javascript/get-api-key" />
     <RadzenLink Path="https://developers.google.com/maps/documentation/get-map-id" />
-</RadzenText>
-
-<RadzenText TextStyle="TextStyle.Subtitle2" TagName="TagName.P" class="rz-pb-4">
-    In this demo the map centers on Sofia, Bulgaria with zoom level 3, displays markers for <strong>London</strong>, <strong>Paris</strong>, and <strong>Madrid</strong> (with toggle and custom SVG label), handles <code>MapClick</code> to log coordinates and <code>MarkerClick</code> to display custom info windows using JavaScript interop.
 </RadzenText>
 
 <RadzenExample ComponentName="GoogleMap" Example="GoogleMapConfig">
