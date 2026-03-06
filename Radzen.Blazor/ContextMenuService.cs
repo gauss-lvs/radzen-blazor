@@ -251,7 +251,7 @@ namespace Radzen
             get
             {
                 if (_CssClass != null)
-                    return ClassList.Create(CssClass)
+                    return ClassList.Create(_CssClass)
                                     .Add(GIcon?.IconSetCssClass())
                                     .ToString();
                 else if (GIcon != null)
