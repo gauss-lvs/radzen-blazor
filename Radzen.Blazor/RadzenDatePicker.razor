@@ -1,4 +1,4 @@
-﻿@using Radzen
+@using Radzen
 @using Radzen.Blazor.Rendering
 
 @typeparam TValue
@@ -12,7 +12,7 @@
             @if (ShowInput || !ShowButton)
             {
                 <input @ref="@input" @attributes="InputAttributes" disabled="@Disabled" readonly="@IsReadonly" value="@FormattedValue" tabindex="@(Disabled ? "-1" : $"{TabIndex}")"
-                        @onchange="@ParseDate" autocomplete="off" type="text" name="@Name" @onkeydown="@(args => OnKeyPress(args))" @onkeydown:preventDefault=preventKeyPress @onkeydown:stopPropagation
+                        @onchange="@ParseDate" autocomplete="off" type="text" name="@Name" @onkeydown="@(args => OnKeyPress(args))" @onkeydown:preventDefault=preventKeyPress @onkeydown:stopPropagation="stopKeydownPropagation"
                        class="rz-inputtext @InputClass @(ReadOnly ? "rz-readonly" : "") @(!ShowButton ? "rz-input-trigger" : "")" id="@Name" placeholder="@CurrentPlaceholder" />
             }
             @if (ShowButton)
@@ -29,6 +29,7 @@
         }
 
         <Popup id="@PopupID" Lazy=@(PopupRenderMode == PopupRenderMode.OnDemand) @ref=@popup style=@PopupStyle
+               Close="@OnPopupCloseFromEvent"
                role="dialog" aria-label="@PopupAriaLabel"
                class="@($"{(Inline ? "rz-datepicker-inline-container " : "rz-datepicker-popup-container ")}")">
                 <div class="rz-calendar" @onkeydown="@OnPopupKeyDown">
@@ -52,7 +53,7 @@
                         </div>
                         @if(ShowDays)
                         {
-                        <div class="rz-calendar-view-container" tabindex="@(Disabled ? "-1" : $"{TabIndex}")" @onkeydown="@(args => OnCalendarKeyPress(args))" @onkeydown:preventDefault=preventKeyPress @onkeydown:stopPropagation>
+                        <div class="rz-calendar-view-container" tabindex="@(Disabled ? "-1" : $"{TabIndex}")" @onkeydown="@(args => OnCalendarKeyPress(args))" @onkeydown:preventDefault=preventKeyPress @onkeydown:stopPropagation="stopKeydownPropagation">
                             <table class="rz-calendar-view rz-calendar-month-view" style="@(Inline ? "" : "width:100%")">
                                 <thead>
                                     <tr>
@@ -151,7 +152,7 @@
                         }
                         @if (ShowTimeOkButton)
                         {
-                            <button aria-label="@OkAriaLabel" type="button" class="rz-button rz-button-md rz-secondary" tabindex="0" @onclick="@(args => OkClick())">
+                            <button aria-label="@OkAriaLabel" type="button" class="rz-button rz-button-md rz-secondary" tabindex="0" @onclick="@(args => OnOkClick(fromOkButton: true))">
                                 <span class="rz-button-text">@OkAriaLabel</span>
                             </button>
                         }

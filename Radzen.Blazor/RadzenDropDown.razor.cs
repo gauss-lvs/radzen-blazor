@@ -34,6 +34,13 @@ namespace Radzen.Blazor
     public partial class RadzenDropDown<TValue> : DropDownBase<TValue>
     {
         bool isOpen;
+
+        bool stopKeydownPropagation = true;
+        void OnGuardKeyDown(KeyboardEventArgs args)
+        {
+            var key = args.Code ?? args.Key;
+            stopKeydownPropagation = key != "Escape";
+        }
         /// <summary>
         /// Gets or sets additional HTML attributes to be applied to the underlying input element.
         /// This allows passing custom attributes like data-* attributes, aria-* attributes, or other HTML attributes directly to the input.
@@ -161,7 +168,7 @@ namespace Radzen.Blazor
             isPopupOpen = false;
             if (JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID, Reference, nameof(OnClose));
+                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID, Reference, nameof(OnClose), null, key == "Tab");
             }
 
             if (key == "Enter" && JSRuntime != null)
@@ -368,12 +375,20 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         protected override async Task HandleKeyPress(KeyboardEventArgs args, bool isFilter, bool? shouldSelectOnChange = null)
         {
+            ArgumentNullException.ThrowIfNull(args);
+
             if (!ReadOnly)
             {
-                await base.HandleKeyPress(args, isFilter, shouldSelectOnChange);
-            }
+                var wasOpen = isOpen;
 
-            await Task.CompletedTask;
+                await base.HandleKeyPress(args, isFilter, shouldSelectOnChange);
+
+                var key = args.Code ?? args.Key;
+                if (key == "Tab" && wasOpen && JSRuntime != null)
+                {
+                    await JSRuntime.InvokeVoidAsync("Radzen.focusNext", Element, args.ShiftKey);
+                }
+            }
         }
 
         /// <summary>

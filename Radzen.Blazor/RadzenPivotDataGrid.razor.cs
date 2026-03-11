@@ -710,11 +710,16 @@ namespace Radzen.Blazor
         /// <param name="column">The pivot column to add.</param>
         public void AddPivotColumn(RadzenPivotColumn<TItem> column)
         {
+            ArgumentNullException.ThrowIfNull(column);
+
             if (!allPivotColumns.Contains(column))
             {
                 allPivotColumns.Add(column);
 
-                pivotColumns.Add(column);
+                if (column.Selected)
+                {
+                    pivotColumns.Add(column);
+                }
 
                 _columnHeaderRows = null;
                 _cachedPivotRows = null;
@@ -732,11 +737,16 @@ namespace Radzen.Blazor
         /// <param name="row">The pivot row to add.</param>
         public void AddPivotRow(RadzenPivotRow<TItem> row)
         {
+            ArgumentNullException.ThrowIfNull(row);
+
             if (!allPivotRows.Contains(row))
             {
                 allPivotRows.Add(row);
 
-                pivotRows.Add(row);
+                if (row.Selected)
+                {
+                    pivotRows.Add(row);
+                }
 
                 _columnHeaderRows = null;
                 _cachedPivotRows = null;
@@ -754,11 +764,16 @@ namespace Radzen.Blazor
         /// <param name="aggregate">The pivot aggregate to add.</param>
         public void AddPivotAggregate(RadzenPivotAggregate<TItem> aggregate)
         {
+            ArgumentNullException.ThrowIfNull(aggregate);
+
             if (!allPivotAggregates.Contains(aggregate))
             {
                 allPivotAggregates.Add(aggregate);
 
-                pivotAggregates.Add(aggregate);
+                if (aggregate.Selected)
+                {
+                    pivotAggregates.Add(aggregate);
+                }
 
                 _columnHeaderRows = null;
                 _cachedPivotRows = null;
@@ -1282,9 +1297,33 @@ namespace Radzen.Blazor
 
             var groups = items.GroupByMany(new string[]{ row.Property! });
 
-            var sortedGroups = (row.GetSortOrder() == SortOrder.Ascending) ? groups.OrderBy(g => g.Key)
-                : (row.GetSortOrder() == SortOrder.Descending) ? groups.OrderByDescending(g => g.Key)
-                : groups;
+            var sortedAggregate = pivotAggregates.FirstOrDefault(a => a.GetSortOrder() != null);
+
+            IEnumerable<GroupResult> sortedGroups;
+            if (sortedAggregate != null)
+            {
+                static double? ToSortKey(object? value)
+                {
+                    if (value == null) return null;
+                    try { return Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture); } catch { return null; }
+                }
+
+                var groupsWithValues = groups.AsEnumerable().Select(g => new
+                {
+                    Group = g,
+                    AggValue = ToSortKey(GetAggregateValue(g.Items == null ? Enumerable.Empty<TItem>().AsQueryable() : g.Items.Cast<TItem>().AsQueryable(), sortedAggregate))
+                }).ToList();
+
+                sortedGroups = (sortedAggregate.GetSortOrder() == SortOrder.Ascending)
+                    ? groupsWithValues.OrderBy(x => x.AggValue).Select(x => x.Group)
+                    : groupsWithValues.OrderByDescending(x => x.AggValue).Select(x => x.Group);
+            }
+            else
+            {
+                sortedGroups = (row.GetSortOrder() == SortOrder.Ascending) ? groups.OrderBy(g => g.Key)
+                    : (row.GetSortOrder() == SortOrder.Descending) ? groups.OrderByDescending(g => g.Key)
+                    : groups;
+            }
 
             foreach (var group in sortedGroups)
             {
@@ -2203,16 +2242,26 @@ namespace Radzen.Blazor
 
         async Task UpdateAggregate(string property, object? value)
         {
-            var aggregate = selectedAggregates.FirstOrDefault(a => a.Property == property);
-            if (aggregate != null)
+            var newFunction = (AggregateFunction?)value ?? default(AggregateFunction);
+
+            // Replace the entry with a new plain object so Blazor re-rendering the component
+            // instances in allPivotAggregates cannot reset this value via SetParametersAsync.
+            var index = selectedAggregates.FindIndex(a => a.Property == property);
+            if (index >= 0)
             {
-                aggregate.Aggregate = (AggregateFunction?)value ?? default(AggregateFunction);
+                var existing = selectedAggregates[index];
+                selectedAggregates[index] = new RadzenPivotAggregate<TItem>
+                {
+                    Property = existing.Property,
+                    Title = existing.Title,
+                    Aggregate = newFunction
+                };
             }
 
-            aggregate = pivotAggregates.FirstOrDefault(a => a.Property == property);
+            var aggregate = pivotAggregates.FirstOrDefault(a => a.Property == property);
             if (aggregate != null)
             {
-                aggregate.Aggregate = (AggregateFunction?)value ?? default(AggregateFunction);
+                aggregate.Aggregate = newFunction;
             }
 
             await Reload();
@@ -2220,9 +2269,14 @@ namespace Radzen.Blazor
 
         void UpdateSelected()
         {
-            selectedRows = allPivotRows.Select(r => r.Property).Where(p => p != null).Cast<string>().ToList();
-            selectedColumns = allPivotColumns.Select(c => c.Property).Where(p => p != null).Cast<string>().ToList();
-            selectedAggregates = allPivotAggregates.ToList();
+            selectedRows = pivotRows.Select(r => r.Property).Where(p => p != null).Cast<string>().ToList();
+            selectedColumns = pivotColumns.Select(c => c.Property).Where(p => p != null).Cast<string>().ToList();
+            selectedAggregates = pivotAggregates.Select(a =>
+            {
+                // For aggregates from allPivotAggregates, preserve the original instance
+                var existing = allPivotAggregates.FirstOrDefault(x => x.Property == a.Property);
+                return existing ?? a;
+            }).ToList();
         }
 
         async Task UpdateFieldsFromSelected()

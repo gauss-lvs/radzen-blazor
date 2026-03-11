@@ -20,13 +20,13 @@
 
         @if (ValueTemplate != null && selectedItem != null)
         {
-            <span class="rz-dropdown-label rz-inputtext" style="width:100%;" @onkeydown:stopPropagation>
+            <span class="rz-dropdown-label rz-inputtext" style="width:100%;" @onkeydown:stopPropagation="stopKeydownPropagation" @onkeydown="OnGuardKeyDown">
                 @ValueTemplate(selectedItem)
             </span>
         }
         else if (Template != null && selectedItem != null)
         {
-            <span class="rz-dropdown-label rz-inputtext" style="width:100%;" @onkeydown:stopPropagation>
+            <span class="rz-dropdown-label rz-inputtext" style="width:100%;" @onkeydown:stopPropagation="stopKeydownPropagation" @onkeydown="OnGuardKeyDown">
                 @Template(selectedItem)
             </span>
         }
@@ -45,7 +45,7 @@
                     @foreach (var item in itemsToUse)
                     {
                         <div class="rz-chip">
-                            <span class="rz-chip-text" @onkeydown:stopPropagation>
+                            <span class="rz-chip-text" @onkeydown:stopPropagation="stopKeydownPropagation" @onkeydown="OnGuardKeyDown">
                                 @if (ValueTemplate != null)
                                 {
                                     @ValueTemplate(item)
@@ -72,7 +72,7 @@
             }
             else
             {
-                <label class="rz-dropdown-label rz-inputtext" style="width:100%;" @onkeydown:stopPropagation>
+                <label class="rz-dropdown-label rz-inputtext" style="width:100%;" @onkeydown:stopPropagation="stopKeydownPropagation" @onkeydown="OnGuardKeyDown">
                     @if (itemsToUse.Count < MaxSelectedLabels)
                     {
                         @if (Template == null)
@@ -203,7 +203,7 @@
 
         @if (AllowClear && (!Multiple && HasValue || Multiple && (selectedItems.Count > 0 || SelectedValue is IEnumerable)))
         {
-            <button type="button" class="notranslate rz-dropdown-clear-icon rzi rzi-times" aria-label="@ClearAriaLabel"
+            <button type="button" tabindex="-1" class="notranslate rz-dropdown-clear-icon rzi rzi-times" aria-label="@ClearAriaLabel"
                     @onclick="@Clear" @onclick:stopPropagation="true"></button>
         }
     </div>

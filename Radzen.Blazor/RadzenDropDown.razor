@@ -20,13 +20,13 @@
 
         @if (ValueTemplate != null && selectedItem != null)
         {
-            <span class="rz-dropdown-label rz-inputtext" style="width:100%;" @onkeydown:stopPropagation>
+            <span class="rz-dropdown-label rz-inputtext" style="width:100%;" @onkeydown:stopPropagation="stopKeydownPropagation" @onkeydown="OnGuardKeyDown">
                 @ValueTemplate(selectedItem)
             </span>
         }
         else if (Template != null && selectedItem != null)
         {
-            <span class="rz-dropdown-label rz-inputtext" @onkeydown:stopPropagation>
+            <span class="rz-dropdown-label rz-inputtext" @onkeydown:stopPropagation="stopKeydownPropagation" @onkeydown="OnGuardKeyDown">
                 @Template(selectedItem)
             </span>
         }
@@ -42,7 +42,7 @@
                 @foreach (var item in selectedItems)
                 {
                     <div class="rz-chip">
-                        <span class="rz-chip-text" @onkeydown:stopPropagation>
+                        <span class="rz-chip-text" @onkeydown:stopPropagation="stopKeydownPropagation" @onkeydown="OnGuardKeyDown">
                             @if(ValueTemplate != null)
                             {
                                 @ValueTemplate(item)
@@ -69,7 +69,7 @@
         }
         else if (selectedItems.Count > 0)
         {
-            <span class="rz-dropdown-label rz-inputtext" @onkeydown:stopPropagation>
+            <span class="rz-dropdown-label rz-inputtext" @onkeydown:stopPropagation="stopKeydownPropagation" @onkeydown="OnGuardKeyDown">
                 @if (selectedItems.Count < MaxSelectedLabels)
                 {
                     @if (Template == null && ValueTemplate == null)
@@ -173,7 +173,7 @@
                             <span class="notranslate rz-multiselect-filter-icon rzi rzi-search"></span>
                         </div>
                     }
-                    <button type="button" id="@(GetId() + "clear")" class="rz-multiselect-close" aria-label="@ClearAriaLabel"
+                    <button type="button" tabindex="-1" id="@(GetId() + "clear")" class="rz-multiselect-close" aria-label="@ClearAriaLabel"
                             @onclick="@ClearAll" @onclick:stopPropagation="true">
                         <span class="notranslate rzi rzi-times"></span>
                     </button>
@@ -203,7 +203,7 @@
         </div>
         @if (AllowClear && (!Multiple && HasValue || Multiple && selectedItems.Count > 0))
         {
-            <button type="button" class="notranslate rz-dropdown-clear-icon rzi rzi-times" aria-label="@ClearAriaLabel"
+            <button type="button" tabindex="-1" class="notranslate rz-dropdown-clear-icon rzi rzi-times" aria-label="@ClearAriaLabel"
                     @onclick="@ClearAll" @onclick:stopPropagation="true"></button>
         }
     </div>

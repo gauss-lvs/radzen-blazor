@@ -607,6 +607,28 @@ window.Radzen = {
       el.focus();
     }
   },
+  focusNext: function (container, reverse) {
+    if (!container) return;
+    var selector = 'a[href]:not([disabled]):not([tabindex="-1"]), button:not([disabled]):not([tabindex="-1"]), input:not([disabled]):not([type="hidden"]):not([tabindex="-1"]), select:not([disabled]):not([tabindex="-1"]), textarea:not([disabled]):not([tabindex="-1"]), [tabindex]:not([tabindex="-1"]):not([disabled])';
+    var candidates = Array.from(document.querySelectorAll(selector)).filter(function (el) {
+      return (el.offsetWidth > 0 || el.offsetHeight > 0) && el !== container && !container.contains(el);
+    });
+    if (reverse) {
+      for (var i = candidates.length - 1; i >= 0; i--) {
+        if (container.compareDocumentPosition(candidates[i]) & Node.DOCUMENT_POSITION_PRECEDING) {
+          candidates[i].focus();
+          return;
+        }
+      }
+    } else {
+      for (var i = 0; i < candidates.length; i++) {
+        if (container.compareDocumentPosition(candidates[i]) & Node.DOCUMENT_POSITION_FOLLOWING) {
+          candidates[i].focus();
+          return;
+        }
+      }
+    }
+  },
   scrollCarouselItem: function (el) {
     el.parentElement.scroll(el.offsetLeft, 0);
   },
@@ -1129,11 +1151,11 @@ window.Radzen = {
           input.onclick = null;
       }
   },
-  createDatePicker(el, popupId) {
+  createDatePicker(el, popupId, instance, callback) {
       if(!el) return;
       var handler = function (e, condition) {
           if (condition) {
-              Radzen.togglePopup(e.currentTarget.parentNode, popupId, false, null, null, true, false);
+              Radzen.togglePopup(e.currentTarget.parentNode, popupId, false, instance, callback, true, false);
           }
       };
 
@@ -1409,6 +1431,16 @@ window.Radzen = {
             }
         }, 200);
     }
+
+    if (popup.__escapeHandler) {
+        popup.removeEventListener('keydown', popup.__escapeHandler, true);
+    }
+    popup.__escapeHandler = function (e) {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            Radzen.closePopup(id, instance, callback, e);
+        }
+    };
+    popup.addEventListener('keydown', popup.__escapeHandler, true);
   },
   closeAllPopups: function (e, id) {
     if (!Radzen.popups) return;
@@ -1426,7 +1458,7 @@ window.Radzen = {
     }
     Radzen.popups = [];
   },
-  closePopup: function (id, instance, callback, e) {
+  closePopup: function (id, instance, callback, e, preventFocusRestore) {
     var popup = document.getElementById(id);
     if (!popup) return;
     var popupInfo = (Radzen.popups || []).find(function (p) { return p.id === id; });
@@ -1465,6 +1497,10 @@ window.Radzen = {
       popup.classList.add("rz-close");
       popup.classList.remove("rz-open");
     }
+    if (popup && popup.__escapeHandler) {
+        popup.removeEventListener('keydown', popup.__escapeHandler, true);
+        delete popup.__escapeHandler;
+    }
     document.removeEventListener('mousedown', Radzen[id]);
     window.removeEventListener('resize', Radzen[id]);
     Radzen[id] = null;
@@ -1480,13 +1516,14 @@ window.Radzen = {
         return obj.id !== id;
     });
 
-    if (Radzen.activeElement && Radzen.activeElement == document.activeElement ||
+    if (!preventFocusRestore &&
+        (Radzen.activeElement && Radzen.activeElement == document.activeElement ||
         Radzen.activeElement && document.activeElement == document.body ||
         Radzen.activeElement && document.activeElement &&
             (document.activeElement.classList.contains('rz-dropdown-filter') ||
              document.activeElement.classList.contains('rz-lookup-search-input') ||
              document.activeElement.classList.contains('rz-multiselect-filter-container') ||
-             document.activeElement.closest('.rz-multiselect-filter-container') !== null)) {
+             document.activeElement.closest('.rz-multiselect-filter-container') !== null))) {
         setTimeout(function () {
             if (e && e.target && e.target.tabIndex != -1) {
                 Radzen.activeElement = e.target;
@@ -1520,6 +1557,10 @@ window.Radzen = {
   destroyPopup: function (id) {
     var popup = document.getElementById(id);
     if (popup) {
+      if (popup.__escapeHandler) {
+          popup.removeEventListener('keydown', popup.__escapeHandler, true);
+          delete popup.__escapeHandler;
+      }
       popup.parentNode.removeChild(popup);
     }
     document.removeEventListener('mousedown', Radzen[id]);

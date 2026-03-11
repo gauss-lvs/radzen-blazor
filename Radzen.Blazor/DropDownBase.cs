@@ -391,6 +391,7 @@ namespace Radzen
                 return;
 
             searchText = null;
+            _view = null;
             await SearchTextChanged.InvokeAsync(searchText);
             if (JSRuntime != null)
             {
@@ -879,7 +880,7 @@ namespace Radzen
         {
             if (JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID, null, null, null, key == "Tab");
             }
 
             isPopupOpen = false;

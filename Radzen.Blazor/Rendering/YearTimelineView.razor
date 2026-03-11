@@ -23,7 +23,7 @@
     const double CALENDAR_WIDTH = 3800.0;
 }
 
-<div @ref=view class="rz-view rz-timeline-view" tabindex="0" @onkeydown="@(args => OnKeyPress(args))" @onkeydown:preventDefault="@preventKeyPress" @onkeydown:stopPropagation
+<div @ref=view class="rz-view rz-timeline-view" tabindex="0" @onkeydown="@(args => OnKeyPress(args))" @onkeydown:preventDefault="@preventKeyPress" @onkeydown:stopPropagation="stopKeydownPropagation"
      @onfocus=@this.AsNonRenderingEventHandler(OnFocus)>
     <div class="rz-view-header">
         <div class="rz-slot-header">
@@ -94,7 +94,7 @@
                             var left = ((slotIndex + 1) * slotWidth) + (100.0 / 85.0);
                             var top = ((MaxAppointmentsInSlot + 1) * 1.5) + 1.7;
                             var listDate = start;
-                            <button type="button" class="rz-event-list-btn" style="top: @(top.ToInvariantString())em; left: @(left.ToInvariantString())%" @onclick=@(args => { if (appointments != null && MoreText != null) _ = OnListClick(listDate, appointments); })>@(MoreText != null ? String.Format(MoreText, excessCount) : "")</button>
+                            <button type="button" class="rz-event-list-btn" style="top: @(top.ToInvariantString())em; inset-inline-start: @(left.ToInvariantString())%" @onclick=@(args => { if (appointments != null && MoreText != null) _ = OnListClick(listDate, appointments); })>@(MoreText != null ? String.Format(MoreText, excessCount) : "")</button>
                         }
                     }
                 }
@@ -272,6 +272,7 @@
     DateTime CurrentDate;
     int CurrentMonth = -1;
     bool preventKeyPress = true;
+    bool stopKeydownPropagation;
 
     async Task OnKeyPress(KeyboardEventArgs args)
     {
@@ -305,6 +306,7 @@
             await ScrollIntoView("rz-slot rz-state-focused");
 
             preventKeyPress = true;
+            stopKeydownPropagation = true;
         }
         else if (key == "ArrowUp" || key == "ArrowDown")
         {
@@ -315,6 +317,7 @@
             await ScrollIntoView("rz-month rz-state-focused");
 
             preventKeyPress = true;
+            stopKeydownPropagation = true;
         }
         else if (key == "Enter")
         {
@@ -322,6 +325,7 @@
             await view.FocusAsync();
 
             preventKeyPress = true;
+            stopKeydownPropagation = true;
         }
         else if (key == "Space")
         {
@@ -336,10 +340,12 @@
             }
 
             preventKeyPress = true;
+            stopKeydownPropagation = true;
         }
         else
         {
             preventKeyPress = false;
+            stopKeydownPropagation = false;
         }
     }
 

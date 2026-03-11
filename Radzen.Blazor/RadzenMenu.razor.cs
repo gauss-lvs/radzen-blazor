@@ -91,6 +91,7 @@ namespace Radzen.Blazor
         bool subMenuOpen;
         internal int focusedIndex = -1;
         bool preventKeyPress = true;
+        bool stopKeydownPropagation;
         async Task OnKeyPress(KeyboardEventArgs args)
         {
             var key = args.Code != null ? args.Code : args.Key;
@@ -103,6 +104,7 @@ namespace Radzen.Blazor
             if (key == "ArrowUp" || key == "ArrowDown")
             {
                 preventKeyPress = true;
+                stopKeydownPropagation = true;
 
                 if (subMenuOpen)
                 {
@@ -110,8 +112,10 @@ namespace Radzen.Blazor
                 }
                 else
                 {
-                    if (key == "ArrowDown")
+                    if (key == "ArrowDown" && currentItems.Count > 0)
                     {
+                        focusedIndex = Math.Clamp(focusedIndex, 0, currentItems.Count - 1);
+
                         var item = currentItems[focusedIndex];
 
                         if (item.items.Count > 0)
@@ -127,6 +131,7 @@ namespace Radzen.Blazor
             else if (key == "ArrowLeft" || key == "ArrowRight")
             {
                 preventKeyPress = true;
+                stopKeydownPropagation = true;
 
                 bool shouldOpenNextMenu = false;
                 if (subMenuOpen)
@@ -163,6 +168,7 @@ namespace Radzen.Blazor
             else if (key == "Space" || key == "Enter")
             {
                 preventKeyPress = true;
+                stopKeydownPropagation = true;
 
                 if (focusedIndex >= 0 && focusedIndex < currentItems.Count)
                 {
@@ -191,6 +197,7 @@ namespace Radzen.Blazor
             else if (key == "Escape")
             {
                 preventKeyPress = true;
+                stopKeydownPropagation = true;
 
                 if (currentItems.Any(i => i.ParentItem != null))
                 {
@@ -208,6 +215,7 @@ namespace Radzen.Blazor
             else
             {
                 preventKeyPress = false;
+                stopKeydownPropagation = false;
             }
         }
 
