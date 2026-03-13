@@ -224,9 +224,9 @@ namespace Radzen.Blazor
                 lastLoadDataArgs = loadDataArgs;
             }
 
-            var totalItemsCount = LoadData.HasDelegate ? Count : view.Count();
+            var totalItemsCount = (LoadData.HasDelegate ? Count : view.Count()) + itemsToInsert.Count;
 
-            virtualDataItems = (LoadData.HasDelegate ? Data : itemsToInsert.Count > 0 ? itemsToInsert.ToList().Concat(view.Skip(request.StartIndex).Take(top)) : view.Skip(request.StartIndex).Take(top))?.ToList() ?? new List<TItem>();
+            virtualDataItems = (LoadData.HasDelegate ? (itemsToInsert.Count > 0 ? itemsToInsert.ToList().Concat(Data ?? Enumerable.Empty<TItem>()) : Data) : itemsToInsert.Count > 0 ? itemsToInsert.ToList().Concat(view.Skip(request.StartIndex).Take(top)) : view.Skip(request.StartIndex).Take(top))?.ToList() ?? new List<TItem>();
 
             return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TItem>(virtualDataItems, totalItemsCount);
         }
@@ -654,7 +654,7 @@ namespace Radzen.Blazor
                 preventKeyDown = true;
                 stopKeydownPropagation = true;
 
-                if (focusedIndex == 0 && AllowFiltering && FilterMode == FilterMode.Advanced && key == "ArrowDown" && args.AltKey)
+                if (focusedIndex == 0 && AllowFiltering && (FilterMode == FilterMode.Advanced || FilterMode == FilterMode.CheckBoxList) && key == "ArrowDown" && args.AltKey)
                 {
                     var column = ColumnsCollection.Where(c => c.GetVisible()).ElementAtOrDefault(focusedCellIndex);
                     if (column != null && column.headerCell != null && column.Filterable)
@@ -663,7 +663,7 @@ namespace Radzen.Blazor
                     }
                     return;
                 }
-                else if (Template != null && (key == "ArrowLeft" || key == "ArrowRight"))
+                else if ((Template != null || LoadChildData.HasDelegate) && (key == "ArrowLeft" || key == "ArrowRight"))
                 {
                     var pagedViewIndex = focusedIndex - 1;
                     if (FilterRowActive)
@@ -1788,13 +1788,23 @@ namespace Radzen.Blazor
 
         internal async Task StartColumnResize(MouseEventArgs args, int columnIndex)
         {
+            await StartColumnResize(args.ClientX, columnIndex);
+        }
+
+        internal async Task StartColumnResize(double clientX, int columnIndex)
+        {
             if (JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.startColumnResize", getColumnUniqueId(columnIndex), Reference, columnIndex, args.ClientX);
+                await JSRuntime.InvokeVoidAsync("Radzen.startColumnResize", getColumnUniqueId(columnIndex), Reference, columnIndex, clientX);
             }
         }
 
         internal async Task StopColumnResize(MouseEventArgs args, int columnIndex)
+        {
+            await StopColumnResize(columnIndex);
+        }
+
+        internal async Task StopColumnResize(int columnIndex)
         {
             if (JSRuntime != null)
             {

@@ -41,7 +41,7 @@
             <div class="rz-dropdown-chips-wrapper">
                 @foreach (var item in selectedItems)
                 {
-                    <div class="rz-chip">
+                    <div class="rz-chip rz-chip-base rz-variant-filled rz-shade-default">
                         <span class="rz-chip-text" @onkeydown:stopPropagation="stopKeydownPropagation" @onkeydown="OnGuardKeyDown">
                             @if(ValueTemplate != null)
                             {
@@ -59,7 +59,7 @@
                         <button tabindex="0"
                                 title="@(RemoveChipTitle + " " + GetItemOrValueFromProperty(item, TextProperty ?? ""))"
                                 aria-label="@(RemoveChipTitle + " " + GetItemOrValueFromProperty(item, TextProperty ?? ""))"
-                                type=button class="rz-button rz-button-sm rz-button-icon-only rz-base rz-shade-default @(Disabled ?"rz-state-disabled":"")"
+                                type=button class="rz-button rz-button-xs rz-variant-text rz-base rz-shade-default rz-button-icon-only @(Disabled ?"rz-state-disabled":"")"
                                 @onclick:preventDefault @onclick:stopPropagation @onclick="() => OnChipRemove(item)">
                             <RadzenIcon Icon="close" />
                         </button>
@@ -129,7 +129,7 @@
                 {
                     <div class="rz-dropdown-filter-container">
                         <input aria-label="@SearchAriaLabel" id="@SearchID" @ref="@search" tabindex="@(Disabled ? "-1" : $"{TabIndex}")" placeholder="@(FilterPlaceholder ?? string.Empty)" class="rz-dropdown-filter rz-inputtext" autocomplete="@FilterAutoCompleteType" aria-autocomplete="none" type="text"
-                               @onchange="@OnFilter" @onkeydown="@OnFilterKeyPress" value="@(searchText ?? string.Empty)"
+                               @onchange="@OnFilter" @onkeydown="@OnFilterKeyPress" @onkeydown:preventDefault="@preventFilterKeydown" value="@(searchText ?? string.Empty)"
                                @oninput="@OnFilterInput" />
                         <span class="notranslate rz-dropdown-filter-icon rzi rzi-search"></span>
                     </div>
@@ -169,7 +169,7 @@
                             <input id="@SearchID" tabindex="@(Disabled ? "-1" : $"{TabIndex}")" class="rz-inputtext" role="textbox" type="text"
                                    onclick="Radzen.preventDefaultAndStopPropagation(event)" aria-label="@SearchAriaLabel"
                                    @ref="@search" @oninput="@OnFilterInput"
-                                   @onchange="@OnFilter" @onkeydown="@OnFilterKeyPress" value="@(searchText ?? string.Empty)" autocomplete="@FilterAutoCompleteType" />
+                                   @onchange="@OnFilter" @onkeydown="@OnFilterKeyPress" @onkeydown:preventDefault="@preventFilterKeydown" value="@(searchText ?? string.Empty)" autocomplete="@FilterAutoCompleteType" />
                             <span class="notranslate rz-multiselect-filter-icon rzi rzi-search"></span>
                         </div>
                     }

@@ -35,6 +35,7 @@ namespace Radzen
         }
 
         List<object>? virtualItems;
+        int virtualStartIndex;
 
         private async ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<object>> LoadItems(Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
         {
@@ -53,6 +54,7 @@ namespace Radzen
                 await LoadData.InvokeAsync(new Radzen.LoadDataArgs() { Skip = request.StartIndex, Top = top, Filter = searchText });
             }
 
+            virtualStartIndex = request.StartIndex;
             virtualItems = (LoadData.HasDelegate ? (Data ?? Enumerable.Empty<object>()) : view.Skip(request.StartIndex).Take(top)).Cast<object>().ToList();
 
             return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<object>(virtualItems, LoadData.HasDelegate ? Count : totalItemsCount);
@@ -339,11 +341,11 @@ namespace Radzen
                 internalValue = selectedItems.AsQueryable().Cast(type);
             }
 
+            if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
             if (internalValue != null)
             {
                 await collectionAssignment.MakeAssignment((IEnumerable)internalValue, ValueChanged);
             }
-            if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
             await Change.InvokeAsync(internalValue);
 
             StateHasChanged();
@@ -405,8 +407,8 @@ namespace Radzen
 
             selectedIndex = -1;
 
-            await ValueChanged.InvokeAsync(internalValue != null ? (T)internalValue : default(T)!);
             if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
+            await ValueChanged.InvokeAsync(internalValue != null ? (T)internalValue : default(T)!);
             await Change.InvokeAsync(internalValue);
 
             await OnFilter(new ChangeEventArgs());
@@ -442,8 +444,6 @@ namespace Radzen
                         selectedItem = null;
                         selectedItems.Clear();
                     }
-
-                    InvokeAsync(OnDataChanged);
                 }
             }
         }
@@ -678,11 +678,20 @@ namespace Radzen
 
             if (list != null && JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.selectListItem", search, list, selectedIndex);
+                if (IsVirtualizationAllowed() && !LoadData.HasDelegate)
+                {
+                    var totalCount = View != null ? View.Cast<object>().Count() : 0;
+                    await JSRuntime.InvokeVoidAsync("Radzen.focusVirtualListItem", list, selectedIndex, totalCount);
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("Radzen.selectListItem", search, list, selectedIndex);
+                }
             }
         }
 
         internal bool preventKeydown;
+        internal bool preventFilterKeydown;
 
         /// <summary>
         /// Handles the key press.
@@ -701,6 +710,9 @@ namespace Radzen
 
             List<object> items = Enumerable.Empty<object>().ToList();
 
+            var useVirtualization = IsVirtualizationAllowed() && !LoadData.HasDelegate;
+            int virtualTotalCount = 0;
+
             if (LoadData.HasDelegate)
             {
                 if (Data != null)
@@ -710,9 +722,9 @@ namespace Radzen
             }
             else
             {
-                if (IsVirtualizationAllowed())
+                if (useVirtualization)
                 {
-                    items = virtualItems ?? Enumerable.Empty<object>().ToList();
+                    virtualTotalCount = View != null ? View.Cast<object>().AsQueryable().Count() : 0;
                 }
                 else
                 {
@@ -728,13 +740,33 @@ namespace Radzen
                 {
                     if (JSRuntime != null)
                     {
-                        selectedIndex = await JSRuntime.InvokeAsync<int>("Radzen.focusListItem", search, list, key == "ArrowDown" || key == "ArrowRight", selectedIndex);
+                        if (useVirtualization)
+                        {
+                            bool isDown = key == "ArrowDown" || key == "ArrowRight";
+
+                            if (isDown)
+                            {
+                                if (selectedIndex < virtualTotalCount - 1) selectedIndex++;
+                            }
+                            else
+                            {
+                                if (selectedIndex > 0) selectedIndex--;
+                            }
+
+                            await JSRuntime.InvokeVoidAsync("Radzen.focusVirtualListItem", list, selectedIndex, virtualTotalCount);
+                        }
+                        else
+                        {
+                            selectedIndex = await JSRuntime.InvokeAsync<int>("Radzen.focusListItem", search, list, key == "ArrowDown" || key == "ArrowRight", selectedIndex);
+                        }
 
                         var popupOpened = await JSRuntime.InvokeAsync<bool>("Radzen.popupOpened", PopupID);
 
                         if (!Multiple && !popupOpened && shouldSelectOnChange != false)
                         {
-                            var itemToSelect = items.ElementAtOrDefault(selectedIndex);
+                            var itemToSelect = useVirtualization
+                                ? View?.Cast<object>().AsQueryable().Skip(selectedIndex).FirstOrDefault()
+                                : items.ElementAtOrDefault(selectedIndex);
                             if (itemToSelect != null)
                             {
                                 await OnSelectItem(itemToSelect, true);
@@ -751,22 +783,38 @@ namespace Radzen
             {
                 preventKeydown = true;
 
-                if (selectedIndex == -1 && items.Count == 1)
+                var effectiveCount = useVirtualization ? virtualTotalCount : items.Count;
+
+                if (selectedIndex == -1 && effectiveCount == 1)
                 {
                     selectedIndex = 0;
                 }
 
                 if (JSRuntime != null)
                 {
-                    if (selectedIndex >= 0 && selectedIndex <= items.Count - 1)
+                    if (selectedIndex >= 0 && selectedIndex <= effectiveCount - 1)
                     {
-                        var itemToSelect = items.ElementAtOrDefault(selectedIndex);
+                        var itemToSelect = useVirtualization
+                            ? View?.Cast<object>().AsQueryable().Skip(selectedIndex).FirstOrDefault()
+                            : items.ElementAtOrDefault(selectedIndex);
 
                         await JSRuntime.InvokeAsync<string>("Radzen.setInputValue", search, $"{searchText}".Trim());
 
                         if (itemToSelect != null)
                         {
                             await OnSelectItem(itemToSelect, true);
+                        }
+
+                        if (Multiple && list != null)
+                        {
+                            if (useVirtualization)
+                            {
+                                await JSRuntime.InvokeVoidAsync("Radzen.focusVirtualListItem", list, selectedIndex, effectiveCount);
+                            }
+                            else
+                            {
+                                await JSRuntime.InvokeVoidAsync("Radzen.selectListItem", search, list, selectedIndex);
+                            }
                         }
                     }
 
@@ -815,7 +863,7 @@ namespace Radzen
                     Debounce(DebounceFilter, FilterDelay);
                 }
             }
-            else if (AllowFiltering && isFilter && FilterAsYouType)
+            else if (AllowFiltering && isFilter && FilterAsYouType && !(Multiple && key == "Space" && selectedIndex >= 0))
             {
                 preventKeydown = true;
 
@@ -824,7 +872,7 @@ namespace Radzen
                     selectedIndex = -1;
                 }
             }
-            else if (args.Key.Length == 1 && !args.CtrlKey && !args.AltKey && !args.ShiftKey)
+            else if (args.Key.Length == 1 && !args.CtrlKey && !args.AltKey && !args.ShiftKey && !(Multiple && isFilter && key == "Space" && selectedIndex >= 0))
             {
                 // searching for element
                 if (Query == null)
@@ -858,7 +906,8 @@ namespace Radzen
                         await SelectItem(itemToSelect);
                     }
 
-                    var result = items.Select((x, i) => new { Item = x, Index = i }).FirstOrDefault(itemWithIndex => object.Equals(itemWithIndex.Item, itemToSelect));
+                    var searchItems = useVirtualization ? Items : items;
+                    var result = searchItems.Select((x, i) => new { Item = x, Index = i }).FirstOrDefault(itemWithIndex => object.Equals(itemWithIndex.Item, itemToSelect));
                     if (result != null)
                     {
                         if (!Multiple)
@@ -867,7 +916,14 @@ namespace Radzen
                         }
                         if (JSRuntime != null)
                         {
-                            await JSRuntime.InvokeVoidAsync("Radzen.selectListItem", list, list, result.Index);
+                            if (useVirtualization)
+                            {
+                                await JSRuntime.InvokeVoidAsync("Radzen.focusVirtualListItem", list, result.Index, virtualTotalCount);
+                            }
+                            else
+                            {
+                                await JSRuntime.InvokeVoidAsync("Radzen.selectListItem", list, list, result.Index);
+                            }
                         }
                     }
                 }
@@ -900,6 +956,11 @@ namespace Radzen
         /// <param name="args">The <see cref="Microsoft.AspNetCore.Components.Web.KeyboardEventArgs"/> instance containing the event data.</param>
         protected virtual async System.Threading.Tasks.Task OnFilterKeyPress(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args)
         {
+            ArgumentNullException.ThrowIfNull(args);
+
+            var key = args.Code != null ? args.Code : args.Key;
+            preventFilterKeydown = Multiple && key == "Space" && selectedIndex >= 0;
+
             await HandleKeyPress(args, true);
         }
 
@@ -1332,6 +1393,8 @@ namespace Radzen
             }
             if (raiseChange)
             {
+                if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
+
                 if (ValueChanged.HasDelegate)
                 {
                     if (Multiple)
@@ -1346,8 +1409,6 @@ namespace Radzen
                         await ValueChanged.InvokeAsync(internalValue != null ? (T)internalValue : default(T)!);
                     }
                 }
-
-                if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
 
                 await Change.InvokeAsync(internalValue);
             }

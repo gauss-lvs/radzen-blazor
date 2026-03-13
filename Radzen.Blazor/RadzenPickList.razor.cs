@@ -6,16 +6,38 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Radzen.Blazor
 {
     /// <summary>
-    /// RadzenCard component.
+    /// RadzenPickList component.
     /// </summary>
     public partial class RadzenPickList<TItem> : RadzenComponent
     {
+        /// <summary>
+        /// Gets or sets the edit context.
+        /// </summary>
+        [CascadingParameter]
+        public EditContext? EditContext { get; set; }
+
+        /// <summary>
+        /// Gets or sets the source expression used to create the FieldIdentifier for source validation.
+        /// </summary>
+        [Parameter]
+        public Expression<Func<IEnumerable<TItem>?>>? SourceExpression { get; set; }
+
+        /// <summary>
+        /// Gets or sets the target expression used to create the FieldIdentifier for target validation.
+        /// </summary>
+        [Parameter]
+        public Expression<Func<IEnumerable<TItem>?>>? TargetExpression { get; set; }
+
+        FieldIdentifier? sourceFieldIdentifier;
+        FieldIdentifier? targetFieldIdentifier;
+
         /// <summary>
         /// Gets or sets a value indicating whether it is allowed to move all items.
         /// </summary>
@@ -58,6 +80,12 @@ namespace Radzen.Blazor
         [Parameter]
         public bool AllowSelectAll { get; set; } = true;
 
+        /// <summary>
+        /// Gets or sets a value indicating whether virtualization is enabled for the source and target listboxes.
+        /// </summary>
+        /// <value><c>true</c> if virtualization is enabled; otherwise, <c>false</c>.</value>
+        [Parameter]
+        public bool AllowVirtualization { get; set; }
         /// <summary>
         /// Gets or sets a value indicating whether component is disabled.
         /// </summary>
@@ -134,6 +162,48 @@ namespace Radzen.Blazor
         /// <value>The select all text.</value>
         [Parameter]
         public string? SelectAllText { get; set; }
+
+        /// <summary>
+        /// Gets or sets the empty text shown when a list has no items.
+        /// </summary>
+        /// <value>The empty text.</value>
+        [Parameter]
+        public string EmptyText { get; set; } = "No records to display.";
+
+        /// <summary>
+        /// Gets or sets the empty text shown when the source list has no items. Overrides <see cref="EmptyText"/>.
+        /// </summary>
+        /// <value>The source empty text.</value>
+        [Parameter]
+        public string? SourceEmptyText { get; set; }
+
+        /// <summary>
+        /// Gets or sets the empty text shown when the target list has no items. Overrides <see cref="EmptyText"/>.
+        /// </summary>
+        /// <value>The target empty text.</value>
+        [Parameter]
+        public string? TargetEmptyText { get; set; }
+
+        /// <summary>
+        /// Gets or sets the empty template shown when a list has no items.
+        /// </summary>
+        /// <value>The empty template.</value>
+        [Parameter]
+        public RenderFragment? EmptyTemplate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the empty template shown when the source list has no items. Overrides <see cref="EmptyTemplate"/>.
+        /// </summary>
+        /// <value>The source empty template.</value>
+        [Parameter]
+        public RenderFragment? SourceEmptyTemplate { get; set; }
+
+        /// <summary>
+        /// Gets or sets the empty template shown when the target list has no items. Overrides <see cref="EmptyTemplate"/>.
+        /// </summary>
+        /// <value>The target empty template.</value>
+        [Parameter]
+        public RenderFragment? TargetEmptyTemplate { get; set; }
 
         /// <summary>
         /// Gets or sets the row render callback. Use it to set row attributes.
@@ -340,8 +410,34 @@ namespace Radzen.Blazor
         [Parameter]
         public EventCallback<IEnumerable<TItem>> TargetChanged { get; set; }
 
+        /// <summary>
+        /// Gets or sets the callback that is invoked when the selected source items change.
+        /// </summary>
+        /// <value>The selected source items changed callback.</value>
+        [Parameter]
+        public EventCallback<IEnumerable<TItem>> SelectedSourceChanged { get; set; }
+
+        /// <summary>
+        /// Gets or sets the callback that is invoked when the selected target items change.
+        /// </summary>
+        /// <value>The selected target items changed callback.</value>
+        [Parameter]
+        public EventCallback<IEnumerable<TItem>> SelectedTargetChanged { get; set; }
+
         object? selectedSourceItems;
         object? selectedTargetItems;
+
+        async Task OnSelectedSourceItemsChanged(object value)
+        {
+            selectedSourceItems = value;
+            await SelectedSourceChanged.InvokeAsync(GetSelectedSources());
+        }
+
+        async Task OnSelectedTargetItemsChanged(object value)
+        {
+            selectedTargetItems = value;
+            await SelectedTargetChanged.InvokeAsync(GetSelectedTargets());
+        }
 
         string? sourceSearchText;
         string? targetSearchText;
@@ -372,6 +468,19 @@ namespace Radzen.Blazor
             }
 
             await base.SetParametersAsync(parameters);
+
+            if (EditContext != null)
+            {
+                if (SourceExpression != null && sourceFieldIdentifier == null)
+                {
+                    sourceFieldIdentifier = FieldIdentifier.Create(SourceExpression);
+                }
+
+                if (TargetExpression != null && targetFieldIdentifier == null)
+                {
+                    targetFieldIdentifier = FieldIdentifier.Create(TargetExpression);
+                }
+            }
         }
 
         /// <summary>
@@ -447,6 +556,19 @@ namespace Radzen.Blazor
 
             await SourceChanged.InvokeAsync(source);
             await TargetChanged.InvokeAsync(target);
+
+            if (EditContext != null)
+            {
+                if (sourceFieldIdentifier.HasValue)
+                {
+                    EditContext.NotifyFieldChanged(sourceFieldIdentifier.Value);
+                }
+
+                if (targetFieldIdentifier.HasValue)
+                {
+                    EditContext.NotifyFieldChanged(targetFieldIdentifier.Value);
+                }
+            }
 
             selectedSourceItems = null;
             selectedTargetItems = null;
