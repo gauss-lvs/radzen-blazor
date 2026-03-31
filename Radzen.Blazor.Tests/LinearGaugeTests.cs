@@ -27,7 +27,8 @@ namespace Radzen.Blazor.Tests
             var component = ctx.RenderComponent<RadzenLinearGauge>(parameters =>
                 parameters.Add(p => p.Style, "width:300px;height:150px"));
 
-            Assert.Contains("<svg", component.Markup);
+            Assert.Contains("rz-linear-gauge", component.Markup);
+            Assert.Contains("width:300px;height:150px", component.Markup);
         }
 
         [Fact]
@@ -309,7 +310,7 @@ namespace Radzen.Blazor.Tests
                                 .Add(p => p.ShowValue, true)
                                 .Add(p => p.FormatString, "{0:N1}"))));
 
-            Assert.Contains("75.5", component.Markup);
+            Assert.Contains(string.Format(System.Globalization.CultureInfo.CurrentCulture, "{0:N1}", 75.5), component.Markup);
         }
 
         [Fact]

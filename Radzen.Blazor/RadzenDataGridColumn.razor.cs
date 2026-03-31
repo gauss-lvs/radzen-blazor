@@ -1375,9 +1375,9 @@ namespace Radzen.Blazor
         {
             var fo = GetFilterOperator() == FilterOperator.Custom
                 ? FilterOperator.Custom
-                : typeof(System.Collections.IEnumerable).IsAssignableFrom(FilterPropertyType)
+                : QueryableExtension.IsEnumerable(FilterPropertyType)
                     ? !string.IsNullOrEmpty(FilterProperty) && FilterProperty != Property ? FilterOperator.In : FilterOperator.Contains
-                    : default(FilterOperator);
+                    : FilterPropertyType == typeof(string) ? FilterOperator.Contains : default(FilterOperator);
 
             if (FilterOperators?.Contains(fo) == true || FilterOperators == null)
             {
@@ -1552,6 +1552,8 @@ namespace Radzen.Blazor
 
             return Enum.GetValues<FilterOperator>().Where(o =>
             {
+                if (o == FilterOperator.Custom) return false;
+
                 var isStringOperator = o == FilterOperator.Contains || o == FilterOperator.DoesNotContain
                     || o == FilterOperator.StartsWith || o == FilterOperator.EndsWith || o == FilterOperator.IsEmpty || o == FilterOperator.IsNotEmpty;
 

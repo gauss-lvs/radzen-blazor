@@ -1101,6 +1101,24 @@ window.Radzen = {
     }
     requestAnimationFrame(step);
   },
+  createCarousel: function (container, ref) {
+    var scrollTimeout = null;
+    function handler() {
+        if (scrollTimeout) clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(function () {
+            var children = container.children;
+            if (!children.length) return;
+            var itemWidth = children[0].offsetWidth;
+            if (itemWidth === 0) return;
+            var index = Math.round(container.scrollLeft / itemWidth);
+            if (index < 0) index = 0;
+            if (index >= children.length) index = children.length - 1;
+            try { ref.invokeMethodAsync('RadzenCarousel.OnScroll', index); } catch { }
+        }, 100);
+    }
+    container.addEventListener('scroll', handler, { passive: true });
+    return { dispose: function () { container.removeEventListener('scroll', handler); } };
+  },
   scrollIntoViewIfNeeded: function (ref, selector) {
     var el = selector ? ref.getElementsByClassName(selector)[0] : ref;
     if (el && el.scrollIntoViewIfNeeded) {
@@ -1830,7 +1848,7 @@ window.Radzen = {
 
     var isRTL = Radzen.isRTL(popup);
 
-    if (isRTL && (!position || position == 'bottom' || position == 'top')) {
+    if (isRTL && parent && (!position || position == 'bottom' || position == 'top')) {
       left = parentRect.right - rect.width;
     }
 
@@ -2453,16 +2471,18 @@ window.Radzen = {
           var lastDialog = dialogs[dialogs.length - 1];
 
           if (lastDialog && lastDialog.options && lastDialog.options.closeDialogOnEsc) {
-              try { Radzen.dialogService.invokeMethodAsync('DialogService.Close', null); } catch { }
-
-              if (dialogs.length <= 1) {
-                  document.removeEventListener('keydown', Radzen.closePopupOrDialog);
-                  delete Radzen.dialogService;
-                  var layout = document.querySelector('.rz-layout');
-                  if (layout) {
-                      layout.removeEventListener('keydown', Radzen.disableKeydown);
-                  }
-              }
+              try {
+                  Radzen.dialogService.invokeMethodAsync('DialogService.TryClose', null).then(function(closed) {
+                      if (closed && dialogs.length <= 1) {
+                          document.removeEventListener('keydown', Radzen.closePopupOrDialog);
+                          delete Radzen.dialogService;
+                          var layout = document.querySelector('.rz-layout');
+                          if (layout) {
+                              layout.removeEventListener('keydown', Radzen.disableKeydown);
+                          }
+                      }
+                  });
+              } catch (e) { }
           }
       }
   },
@@ -2573,6 +2593,34 @@ window.Radzen = {
           children.style.display = '';
           children.classList.add('rz-open');
           children.classList.remove('rz-close');
+
+          if (children.hasAttribute('data-flyout')) {
+            children.removeAttribute('data-flyout-flip');
+            var childWidth = children.offsetWidth || 0;
+            var itemRect = item.getBoundingClientRect();
+            var isRtl = getComputedStyle(item).direction === 'rtl';
+            var el = item.parentElement;
+            var scrollParent = null;
+            while (el && el !== document.body) {
+              var s = getComputedStyle(el);
+              if (s.overflowX === 'auto' || s.overflowX === 'scroll' || s.overflowX === 'hidden') {
+                scrollParent = el;
+                break;
+              }
+              el = el.parentElement;
+            }
+            if (isRtl) {
+              var leftBoundary = scrollParent ? scrollParent.getBoundingClientRect().left : 0;
+              if (itemRect.left - childWidth < leftBoundary) {
+                children.setAttribute('data-flyout-flip', '');
+              }
+            } else {
+              var rightBoundary = scrollParent ? scrollParent.getBoundingClientRect().right : document.documentElement.clientWidth;
+              if (itemRect.right + childWidth > rightBoundary) {
+                children.setAttribute('data-flyout-flip', '');
+              }
+            }
+          }
         } else {
           children.onanimationend = function () {
             children.style.display = 'none';
@@ -2911,14 +2959,17 @@ window.Radzen = {
     document.execCommand('styleWithCSS', false, true);
   },
   saveSelection: function (ref) {
-    if (document.activeElement == ref) {
-      var selection = getSelection();
-      if (selection.rangeCount > 0) {
-        ref.range = selection.getRangeAt(0);
+    if (!ref) return;
+    var selection = getSelection();
+    if (selection.rangeCount > 0) {
+      var range = selection.getRangeAt(0);
+      if (ref.contains(range.commonAncestorContainer)) {
+        ref.range = range;
       }
     }
   },
   restoreSelection: function (ref) {
+    if (!ref) return;
     var range = ref.range;
     if (range) {
       delete ref.range;
