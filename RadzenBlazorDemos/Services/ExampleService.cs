@@ -1122,7 +1122,7 @@ namespace RadzenBlazorDemos
                 new Example
                 {
 
-                    Toc = [ new () { Text = "Pager Density", Anchor = "#pager-density" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Toc = [ new () { Text = "Allow Reload", Anchor = "#allow-reload" }, new () { Text = "Pager Density", Anchor = "#pager-density" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "Pager",
                     Path = "pager",
                     Description = "Demonstration and configuration of the Radzen Blazor Pager component.",
@@ -1478,7 +1478,7 @@ namespace RadzenBlazorDemos
             Children = new[] {
                 new Example
                 {
-                    Toc = [ new () { Text = "Accordion with single expand", Anchor = "#single-expand" }, new () { Text = "Accordion with multiple expand", Anchor = "#multiple-expand" }, new () { Text = "Dynamically create Accordion items", Anchor = "#dynamic-items" }, new () { Text = "Expand/Collapse events", Anchor = "#expand-collapse-events" }, new () { Text = "Disable expand/collapse", Anchor = "#disable-expand-collapse" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Toc = [ new () { Text = "Accordion with single expand", Anchor = "#single-expand" }, new () { Text = "Accordion with multiple expand", Anchor = "#multiple-expand" }, new () { Text = "Dynamically create Accordion items", Anchor = "#dynamic-items" }, new () { Text = "Expand/Collapse events", Anchor = "#expand-collapse-events" }, new () { Text = "Client-side rendering", Anchor = "#client-render-mode" }, new () { Text = "Disable expand/collapse", Anchor = "#disable-expand-collapse" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "Accordion",
                     Path = "accordion",
                     Description = "Demonstration and configuration of the Blazor RadzenAccordion component.",
@@ -1558,12 +1558,12 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    Toc = [ new () { Text = "CanChange event", Anchor = "#canchange-event" } ],
+                    Toc = [ new () { Text = "Transition", Anchor = "#transition" }, new () { Text = "CanChange event", Anchor = "#canchange-event" } ],
                     Name = "Steps",
                     Description = "Blazor Steps component to guide users through a process with numbered steps representing each stage.",
                     Path = "steps",
                     Icon = "\ue8be",
-                    Tags = new [] { "step", "steps", "wizard" }
+                    Tags = new [] { "step", "steps", "wizard", "transition", "animation" }
                 },
                 new Example
                 {
