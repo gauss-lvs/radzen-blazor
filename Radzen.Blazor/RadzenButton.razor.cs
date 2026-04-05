@@ -105,6 +105,12 @@ namespace Radzen.Blazor
         private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
 
         /// <summary>
+        /// Get or sets GAUSS specific icon for the busy animation of the button.
+        /// </summary>
+        [Parameter]
+        public GRadzenBase.Icons.IRadzenFontIcon? GBusyIcon { get; set; }
+
+        /// <summary>
         /// Gets or sets the semantic color style of the button.
         /// Determines the button's color scheme based on its purpose (e.g., Primary for main actions, Danger for destructive actions).
         /// </summary>
