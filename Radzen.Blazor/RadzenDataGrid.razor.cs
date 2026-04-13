@@ -1836,6 +1836,16 @@ namespace Radzen.Blazor
             }
         }
 
+        internal async Task StartColumnReorder(TouchEventArgs args, int columnIndex, string uniqueID)
+        {
+            indexOfColumnToReoder = columnIndex;
+            uniqueIDOfColumnToReoder = uniqueID;
+            if (JSRuntime != null)
+            {
+                await JSRuntime.InvokeVoidAsync("Radzen.startColumnReorder", getColumnUniqueId(columnIndex), GetId());
+            }
+        }
+
         internal async Task EndColumnReorder(MouseEventArgs args, int columnIndex)
         {
             if (indexOfColumnToReoder != null && AllowColumnReorder)
@@ -1884,6 +1894,11 @@ namespace Radzen.Blazor
 
                 indexOfColumnToReoder = null;
             }
+        }
+
+        internal async Task EndColumnReorder(TouchEventArgs args, int columnIndex)
+        {
+            await EndColumnReorder((MouseEventArgs)null!, columnIndex);
         }
 
         /// <summary>
