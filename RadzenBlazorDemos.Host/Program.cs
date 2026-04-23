@@ -119,6 +119,23 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 */
 app.UseStatusCodePagesWithReExecute("/not-found");
 app.UseHttpsRedirection();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.Equals("/.well-known/api-catalog", StringComparison.OrdinalIgnoreCase))
+    {
+        var filePath = Path.Combine(app.Environment.WebRootPath, ".well-known", "api-catalog");
+        if (File.Exists(filePath))
+        {
+            context.Response.ContentType = "application/linkset+json";
+            context.Response.Headers.AccessControlAllowOrigin = "*";
+            await context.Response.SendFileAsync(filePath);
+            return;
+        }
+    }
+    await next();
+});
+
 app.MapStaticAssets();
 if (!app.Environment.IsDevelopment())
 {
@@ -138,8 +155,11 @@ if (!app.Environment.IsDevelopment())
 var contentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
 {
     [".txt"] = "text/plain; charset=utf-8",
-    [".md"] = "text/plain; charset=utf-8"
+    [".md"] = "text/markdown; charset=utf-8"
 });
+
+app.UseLinkHeaders(app.Environment);
+app.UseMarkdownNegotiation(app.Environment);
 
 app.UseStaticFiles(new StaticFileOptions
 {

@@ -730,6 +730,38 @@ namespace Radzen.Blazor.Tests
         }
 
         [Fact]
+        public void DatePicker_WeekdayHeaders_HaveFullDayNameAriaLabel()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var culture = new CultureInfo("en-US");
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameter =>
+            {
+                parameter.Add(p => p.Culture, culture);
+            });
+
+            var headers = component.FindAll(".rz-calendar-view thead th[scope='col']");
+            Assert.Equal(7, headers.Count);
+
+            var firstDay = (int)culture.DateTimeFormat.FirstDayOfWeek;
+            for (int i = 0; i < 7; i++)
+            {
+                var dayIndex = (firstDay + i) % 7;
+                var expectedFull = culture.DateTimeFormat.DayNames[dayIndex];
+                var expectedAbbr = culture.DateTimeFormat.AbbreviatedDayNames[dayIndex];
+
+                Assert.Equal(expectedFull, headers[i].GetAttribute("aria-label"));
+                Assert.Equal(expectedFull, headers[i].GetAttribute("abbr"));
+
+                var visibleSpan = headers[i].QuerySelector("span[aria-hidden='true']");
+                Assert.NotNull(visibleSpan);
+                Assert.Equal(expectedAbbr, visibleSpan.TextContent);
+            }
+        }
+
+        [Fact]
         public void DatePicker_ShowCalendarWeekWithCustomTitle_TitleCorrectlyRendered()
         {
             using var ctx = new TestContext();
@@ -1458,6 +1490,83 @@ namespace Radzen.Blazor.Tests
             var todayCell = component.FindAll("td span.rz-calendar-today");
             Assert.NotEmpty(todayCell);
             Assert.Contains("rz-state-disabled", todayCell.First().ClassName);
+        }
+
+        [Fact]
+        public void DatePicker_Calendar_HasGridRoles_AndAriaLabel()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.Value, new DateTime(2024, 6, 12));
+            });
+
+            var grid = component.Find("table.rz-calendar-view");
+            Assert.Equal("grid", grid.GetAttribute("role"));
+            Assert.False(string.IsNullOrEmpty(grid.GetAttribute("aria-label")));
+
+            Assert.NotEmpty(component.FindAll("table.rz-calendar-view tr[role='row']"));
+            Assert.NotEmpty(component.FindAll("table.rz-calendar-view td[role='gridcell']"));
+            Assert.Empty(component.FindAll("table.rz-calendar-view td[role='button']"));
+        }
+
+        [Fact]
+        public void DatePicker_DayCell_HasAriaLabel_WithFullDate_AndSelectedState()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var selected = new DateTime(2024, 6, 12);
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.Value, selected);
+            });
+
+            var selectedCells = component.FindAll("td[role='gridcell'][aria-selected='true']");
+            Assert.Single(selectedCells);
+
+            var cell = selectedCells.First();
+            var ariaLabel = cell.GetAttribute("aria-label");
+            Assert.False(string.IsNullOrEmpty(ariaLabel));
+            // long date pattern — weekday name should appear
+            Assert.Contains(selected.ToString("dddd", CultureInfo.CurrentCulture), ariaLabel);
+            Assert.Contains("selected", ariaLabel);
+        }
+
+        [Fact]
+        public void DatePicker_FocusedDay_HasRovingTabindexZero()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.Value, new DateTime(2024, 6, 12));
+            });
+
+            var tabbableCells = component.FindAll("td[role='gridcell'][tabindex='0']");
+            Assert.Single(tabbableCells);
+
+            var notTabbable = component.FindAll("td[role='gridcell'][tabindex='-1']");
+            Assert.NotEmpty(notTabbable);
+        }
+
+        [Fact]
+        public void DatePicker_CalendarViewContainer_IsNot_FocusTarget()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>();
+
+            var wrapper = component.Find("div.rz-calendar-view-container");
+            Assert.Null(wrapper.GetAttribute("tabindex"));
         }
     }
 }

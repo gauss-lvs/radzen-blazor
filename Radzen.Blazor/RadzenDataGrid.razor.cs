@@ -597,6 +597,11 @@ namespace Radzen.Blazor
         int focusedIndex = -1;
         int focusedCellIndex;
 
+        internal string? GetActiveDescendantId()
+        {
+            return $"{GetId()}-active-item";
+        }
+
         internal string? GridId()
         {
             return GetId();
@@ -1832,7 +1837,7 @@ namespace Radzen.Blazor
             uniqueIDOfColumnToReoder = uniqueID;
             if (JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.startColumnReorder", getColumnUniqueId(columnIndex), GetId());
+                await JSRuntime.InvokeVoidAsync("Radzen.startColumnReorder", getColumnUniqueId(columnIndex), GetId(), Reference);
             }
         }
 
@@ -1842,7 +1847,7 @@ namespace Radzen.Blazor
             uniqueIDOfColumnToReoder = uniqueID;
             if (JSRuntime != null)
             {
-                await JSRuntime.InvokeVoidAsync("Radzen.startColumnReorder", getColumnUniqueId(columnIndex), GetId());
+                await JSRuntime.InvokeVoidAsync("Radzen.startColumnReorder", getColumnUniqueId(columnIndex), GetId(), Reference);
             }
         }
 
@@ -1899,6 +1904,25 @@ namespace Radzen.Blazor
         internal async Task EndColumnReorder(TouchEventArgs args, int columnIndex)
         {
             await EndColumnReorder((MouseEventArgs)null!, columnIndex);
+        }
+
+        /// <summary>
+        /// Called from JS when a touch-initiated column reorder drop lands on a target column.
+        /// </summary>
+        /// <param name="columnIndex">Index of the destination column.</param>
+        [JSInvokable("RadzenGrid.OnColumnReorderEnded")]
+        public async Task OnColumnReorderEnded(int columnIndex)
+        {
+            await EndColumnReorder((MouseEventArgs)null!, columnIndex);
+        }
+
+        /// <summary>
+        /// Called from JS when a touch-initiated column reorder drop lands on the group panel.
+        /// </summary>
+        [JSInvokable("RadzenGrid.OnColumnDropToGroup")]
+        public async Task OnColumnDropToGroup()
+        {
+            await EndColumnDropToGroup();
         }
 
         /// <summary>
