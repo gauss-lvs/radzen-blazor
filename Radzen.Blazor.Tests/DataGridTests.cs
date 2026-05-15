@@ -3288,6 +3288,70 @@ namespace Radzen.Blazor.Tests
         }
 
         [Fact]
+        public void DataGrid_Sorts_KeepsInternalSortsInSync_OnClearAndRemove()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[]
+            {
+                new { City = "Sofia", FirstName = "Ivan", Country = "BG" },
+                new { City = "Berlin", FirstName = "Anna", Country = "DE" },
+            };
+
+            var component = ctx.RenderComponent<RadzenDataGrid<object>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<object>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowSorting, true);
+                parameterBuilder.Add<bool>(p => p.AllowMultiColumnSorting, true);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<object>));
+                    builder.AddAttribute(1, "Property", "City");
+                    builder.CloseComponent();
+
+                    builder.OpenComponent(2, typeof(RadzenDataGridColumn<object>));
+                    builder.AddAttribute(3, "Property", "FirstName");
+                    builder.CloseComponent();
+
+                    builder.OpenComponent(4, typeof(RadzenDataGridColumn<object>));
+                    builder.AddAttribute(5, "Property", "Country");
+                    builder.CloseComponent();
+                });
+            });
+
+            var grid = component.Instance;
+
+            component.InvokeAsync(() =>
+            {
+                grid.Sorts.Add(new SortDescriptor { Property = "City", SortOrder = SortOrder.Ascending });
+                grid.Sorts.Add(new SortDescriptor { Property = "FirstName", SortOrder = SortOrder.Ascending });
+            });
+
+            Assert.Equal(new[] { "City", "FirstName" }, grid.sorts.Select(s => s.Property).ToArray());
+
+            component.InvokeAsync(() => grid.Sorts.Clear());
+
+            Assert.Empty(grid.sorts);
+            Assert.All(grid.ColumnsCollection, c => Assert.Null(c.GetSortOrder()));
+
+            component.InvokeAsync(() =>
+            {
+                grid.Sorts.Add(new SortDescriptor { Property = "Country", SortOrder = SortOrder.Ascending });
+                grid.Sorts.Add(new SortDescriptor { Property = "FirstName", SortOrder = SortOrder.Ascending });
+            });
+
+            Assert.Equal(new[] { "Country", "FirstName" }, grid.sorts.Select(s => s.Property).ToArray());
+            Assert.Equal(new[] { "Country", "FirstName" }, grid.Sorts.Select(s => s.Property).ToArray());
+
+            var firstNameDescriptor = grid.Sorts.First(s => s.Property == "FirstName");
+            component.InvokeAsync(() => grid.Sorts.Remove(firstNameDescriptor));
+
+            Assert.Equal(new[] { "Country" }, grid.sorts.Select(s => s.Property).ToArray());
+        }
+
+        [Fact]
         public void DataGrid_Wrapper_Has_RoleGrid_AsFocusTarget()
         {
             using var ctx = new TestContext();
@@ -3346,6 +3410,112 @@ namespace Radzen.Blazor.Tests
                 {
                     Assert.Equal("gridcell", cell.GetAttribute("role"));
                 }
+            }
+        }
+
+        [Fact]
+        public void DataGrid_Virtualization_DoesNotFullyEnumerateData_OnReRender()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            // 1000 items wrapped so the wrapper is NOT ICollection — Enumerable.Count()
+            // would have to walk every element, while Enumerable.Any() stops after 1.
+            // This simulates an IQueryable (e.g. EF Core DbSet) where the difference
+            // is SELECT COUNT(*) / SELECT * vs SELECT EXISTS / SELECT TOP 1.
+            var items = Enumerable.Range(1, 1000).Select(i => new { Id = i }).ToArray();
+            var tracking = new TrackingEnumerable<object>(items);
+
+            var component = ctx.RenderComponent<RadzenDataGrid<object>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<object>>(p => p.Data, tracking);
+                parameterBuilder.Add(p => p.AllowVirtualization, true);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<object>));
+                    builder.AddAttribute(1, "Property", "Id");
+                    builder.CloseComponent();
+                });
+            });
+
+            // Snapshot after the initial render. LoadItems (called by Virtualize) does
+            // its own view.Count() per invocation, so each render already iterates the
+            // source ~once. The fix prevents a SECOND full iteration from the razor
+            // empty-message guard.
+            var baseline = tracking.MoveNextCalls;
+
+            const int extraRenders = 5;
+            for (int i = 0; i < extraRenders; i++)
+            {
+                component.Render();
+            }
+
+            var growth = tracking.MoveNextCalls - baseline;
+            var iterationsPerRender = (double)growth / extraRenders / items.Length;
+
+            // With Data.Any() the empty-message guard adds 1 MoveNext per render on top
+            // of LoadItems' single full iteration — so iterationsPerRender ≈ 1.0.
+            // With Data.Count() the guard adds a SECOND full iteration — so it's ≈ 2.0.
+            // 1.5 cleanly separates the two regimes.
+            Assert.True(iterationsPerRender < 1.5,
+                $"Data was iterated {iterationsPerRender:F2}× per render ({growth} MoveNext calls across {extraRenders} renders for {items.Length} items). " +
+                "Expected ≤1× (LoadItems only). The virtualization empty-message guard must use Data.Any() rather than Data.Count() to avoid an extra full enumeration of the IQueryable on every render.");
+        }
+
+        [Fact]
+        public void DataGrid_Virtualization_ShowsEmptyMessage_WhenDataIsEmpty()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDataGrid<object>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<object>>(p => p.Data, Enumerable.Empty<object>());
+                parameterBuilder.Add(p => p.AllowVirtualization, true);
+                parameterBuilder.Add(p => p.EmptyText, "Nothing to display");
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<object>));
+                    builder.AddAttribute(1, "Property", "Id");
+                    builder.CloseComponent();
+                });
+            });
+
+            // Guards the original fix from fb0d588cb: empty data with virtualization
+            // must still render the empty-message row.
+            Assert.Contains("rz-datatable-emptymessage", component.Markup);
+            Assert.Contains("Nothing to display", component.Markup);
+        }
+
+        private sealed class TrackingEnumerable<T> : IEnumerable<T>
+        {
+            private readonly IEnumerable<T> _source;
+            public int MoveNextCalls { get; private set; }
+
+            public TrackingEnumerable(IEnumerable<T> source) => _source = source;
+
+            public IEnumerator<T> GetEnumerator() => new TrackingEnumerator(this, _source.GetEnumerator());
+
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+
+            private sealed class TrackingEnumerator : IEnumerator<T>
+            {
+                private readonly TrackingEnumerable<T> _owner;
+                private readonly IEnumerator<T> _inner;
+
+                public TrackingEnumerator(TrackingEnumerable<T> owner, IEnumerator<T> inner)
+                {
+                    _owner = owner;
+                    _inner = inner;
+                }
+
+                public T Current => _inner.Current;
+                object System.Collections.IEnumerator.Current => Current!;
+                public void Dispose() => _inner.Dispose();
+                public bool MoveNext() { _owner.MoveNextCalls++; return _inner.MoveNext(); }
+                public void Reset() => _inner.Reset();
             }
         }
     }

@@ -2121,6 +2121,19 @@ namespace Radzen.Blazor
             return AllowVirtualization;
         }
 
+        // Existence probe used by the empty-state guard. Calling Data.Any() directly
+        // would bind to Enumerable.Any() because Data is typed IEnumerable<TItem>, and
+        // for an EF Core IQueryable that opens a DbDataReader on the full, untranslated
+        // SELECT (no EXISTS / LIMIT) just to check MoveNext() once. Detect IQueryable
+        // so Queryable.Any() is used instead, which the provider can translate to a
+        // cheap EXISTS query.
+        internal bool HasAnyData()
+        {
+            if (Data == null) return false;
+            if (Data is IQueryable<TItem> queryable) return queryable.Any();
+            return Data.Any();
+        }
+
         IList<TItem>? _value;
 
         /// <summary>
@@ -3561,6 +3574,12 @@ namespace Radzen.Blazor
                 {
                     column.ResetSortOrder();
                 }
+
+                var existing = sorts.FirstOrDefault(d => d.Property == oldDescriptor.Property);
+                if (existing != null)
+                {
+                    sorts.Remove(existing);
+                }
             }
             else if (args.Action == NotifyCollectionChangedAction.Reset)
             {
@@ -3568,6 +3587,8 @@ namespace Radzen.Blazor
                 {
                     c.ResetSortOrder();
                 });
+
+                sorts.Clear();
             }
 
             SaveSettings();

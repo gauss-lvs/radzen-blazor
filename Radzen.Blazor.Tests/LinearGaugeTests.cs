@@ -439,6 +439,31 @@ namespace Radzen.Blazor.Tests
         }
 
         [Fact]
+        public void LinearGauge_Range_UpdatesOnResize()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenLinearGauge>(parameters =>
+                parameters.Add(p => p.Style, "width:300px;height:150px")
+                    .AddChildContent<RadzenLinearGaugeScale>(scale =>
+                        scale.AddChildContent<RadzenLinearGaugeScaleRange>(range =>
+                            range.Add(p => p.From, 0)
+                                .Add(p => p.To, 100)
+                                .Add(p => p.Fill, "blue"))));
+
+            component.InvokeAsync(() => component.Instance.Resize(300, 150));
+            var widthBefore = component.Find("rect.rz-linear-gauge-range").GetAttribute("width");
+
+            component.InvokeAsync(() => component.Instance.Resize(600, 150));
+            var widthAfter = component.Find("rect.rz-linear-gauge-range").GetAttribute("width");
+
+            // The range rect width must grow when the gauge is wider; this fails if the
+            // child range is not re-rendered on resize (the cascading Scale must not be IsFixed).
+            Assert.NotEqual(widthBefore, widthAfter);
+        }
+
+        [Fact]
         public void LinearGauge_Renders_RangeBorderRadius()
         {
             using var ctx = new TestContext();

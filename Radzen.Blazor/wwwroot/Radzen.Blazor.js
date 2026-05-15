@@ -2317,7 +2317,9 @@ window.Radzen = {
           popup.removeEventListener('keydown', popup.__escapeHandler, true);
           delete popup.__escapeHandler;
       }
-      popup.parentNode.removeChild(popup);
+      if (popup.parentNode === document.body) {
+          document.body.removeChild(popup);
+      }
     }
     document.removeEventListener('mousedown', Radzen[id]);
   },
@@ -2646,6 +2648,37 @@ window.Radzen = {
     if (input) {
       input.value = value;
     }
+  },
+  getSelectionRange: function (arg) {
+    var input =
+      arg instanceof Element || arg instanceof HTMLDocument
+        ? arg
+        : document.getElementById(arg);
+    if (!input) return null;
+    try {
+      if (input.selectionStart === null || input.selectionStart === undefined) return null;
+      return [input.selectionStart, input.selectionEnd];
+    } catch (e) {
+      return null;
+    }
+  },
+  setSelectionRange: function (arg, start, end) {
+    var input =
+      arg instanceof Element || arg instanceof HTMLDocument
+        ? arg
+        : document.getElementById(arg);
+    if (!input) return;
+    var max = input.value ? input.value.length : 0;
+    var s = Math.max(0, Math.min(start, max));
+    var e = Math.max(0, Math.min(end, max));
+    try {
+      if (typeof input.setSelectionRange === 'function') {
+        input.setSelectionRange(s, e);
+      } else {
+        input.selectionStart = s;
+        input.selectionEnd = e;
+      }
+    } catch (ex) { }
   },
   blur: function (el, e) {
     if (el) {
