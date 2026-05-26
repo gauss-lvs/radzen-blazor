@@ -3,9 +3,11 @@ using Bunit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Rendering;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Radzen.Blazor.Tests
@@ -3489,6 +3491,218 @@ namespace Radzen.Blazor.Tests
             Assert.Contains("Nothing to display", component.Markup);
         }
 
+        private sealed class AutoApplyItem
+        {
+            public string Name { get; set; } = string.Empty;
+            public int Code { get; set; }
+        }
+
+        [Fact]
+        public void DataGrid_AutoApplyCheckBoxListFilter_FiltersOnSelectionWithoutApply()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[]
+            {
+                new AutoApplyItem { Name = "A", Code = 1 },
+                new AutoApplyItem { Name = "B", Code = 2 },
+                new AutoApplyItem { Name = "C", Code = 1 },
+            };
+
+            var component = ctx.RenderComponent<RadzenDataGrid<AutoApplyItem>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<AutoApplyItem>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowFiltering, true);
+                parameterBuilder.Add<FilterMode>(p => p.FilterMode, FilterMode.CheckBoxList);
+                parameterBuilder.Add<bool>(p => p.AutoApplyCheckBoxListFilter, true);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<AutoApplyItem>));
+                    builder.AddAttribute(1, "Property", nameof(AutoApplyItem.Code));
+                    builder.CloseComponent();
+                });
+            });
+
+            // Open the Code filter popup (the filter icon toggles via @onmousedown=ToggleFilter)
+            component.Find("button.rz-grid-filter-icon").MouseDown();
+
+            // Wait for the listbox to load its filter values asynchronously.
+            component.WaitForAssertion(() => Assert.NotEmpty(component.FindAll(".rz-multiselect-item")), TimeSpan.FromSeconds(3));
+
+            // Apply button must NOT be present in auto-apply mode
+            Assert.Empty(component.FindAll("button.rz-apply-filter"));
+
+            // Select the option for Code == 1 in the listbox and confirm the grid filters immediately.
+            // Find the listbox item whose text is "1" and click it.
+            var item = component.FindAll(".rz-multiselect-item")
+                .FirstOrDefault(i => i.TextContent.Trim() == "1");
+            Assert.NotNull(item);
+            item!.Click();
+
+            var grid = component.Instance;
+            component.WaitForAssertion(() =>
+            {
+                var codes = ((System.Collections.IEnumerable)grid.View).Cast<AutoApplyItem>().Select(x => x.Code).Distinct().ToArray();
+                Assert.Equal(new[] { 1 }, codes);
+            }, TimeSpan.FromSeconds(3));
+
+            // The popup must stay open after auto-apply so additional options can be selected.
+            // Applying the filter with closePopup:false means no popup-closing JS interop runs;
+            // closePopup:true would invoke Radzen.closePopup / Radzen.closeAllPopups.
+            Assert.DoesNotContain(ctx.JSInterop.Invocations,
+                i => i.Identifier.Contains("close", StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
+        public void DataGrid_CheckBoxListFilter_RendersApplyButton_WhenAutoApplyOff()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[] { new AutoApplyItem { Name = "A", Code = 1 } };
+
+            var component = ctx.RenderComponent<RadzenDataGrid<AutoApplyItem>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<AutoApplyItem>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowFiltering, true);
+                parameterBuilder.Add<FilterMode>(p => p.FilterMode, FilterMode.CheckBoxList);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<AutoApplyItem>));
+                    builder.AddAttribute(1, "Property", nameof(AutoApplyItem.Code));
+                    builder.CloseComponent();
+                });
+            });
+
+            component.Find("button.rz-grid-filter-icon").MouseDown();
+
+            Assert.NotEmpty(component.FindAll("button.rz-apply-filter"));
+        }
+
+        private sealed class FilterLookupItem
+        {
+            public string Reference { get; set; } = string.Empty;
+            public int Code { get; set; }
+        }
+
+        [Fact]
+        public async Task DataGrid_FilterLookupData_FiltersByValueProperty()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[]
+            {
+                new FilterLookupItem { Reference = "A", Code = 1 },
+                new FilterLookupItem { Reference = "B", Code = 2 },
+                new FilterLookupItem { Reference = "C", Code = 3 },
+            };
+
+            var options = new[]
+            {
+                new { Id = 1, Name = "Urgent" },
+                new { Id = 2, Name = "Normal" },
+                new { Id = 3, Name = "Critical" },
+            };
+
+            var component = ctx.RenderComponent<RadzenDataGrid<FilterLookupItem>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<FilterLookupItem>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowFiltering, true);
+                parameterBuilder.Add<FilterMode>(p => p.FilterMode, FilterMode.CheckBoxList);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<FilterLookupItem>));
+                    builder.AddAttribute(1, "Property", nameof(FilterLookupItem.Code));
+                    builder.AddAttribute(2, "FilterLookupData", options);
+                    builder.AddAttribute(3, "FilterLookupTextProperty", "Name");
+                    builder.AddAttribute(4, "FilterLookupValueProperty", "Id");
+                    builder.CloseComponent();
+                });
+            });
+
+            var grid = component.Instance;
+            var column = grid.ColumnsCollection.Single();
+
+            await component.InvokeAsync(() => column.SetFilterValue(new List<int> { 2, 3 }));
+            await component.InvokeAsync(() => grid.Reload());
+
+            var refs = grid.View.ToList().Select(x => x.Reference).OrderBy(x => x).ToArray();
+
+            Assert.Equal(new[] { "B", "C" }, refs);
+        }
+
+        [Fact]
+        public void DataGrid_CheckBoxList_WithoutFilterLookupData_RendersNativeFilter()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[]
+            {
+                new FilterLookupItem { Reference = "A", Code = 1 },
+                new FilterLookupItem { Reference = "B", Code = 2 },
+            };
+
+            var component = ctx.RenderComponent<RadzenDataGrid<FilterLookupItem>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<FilterLookupItem>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowFiltering, true);
+                parameterBuilder.Add<FilterMode>(p => p.FilterMode, FilterMode.CheckBoxList);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<FilterLookupItem>));
+                    builder.AddAttribute(1, "Property", nameof(FilterLookupItem.Code));
+                    builder.CloseComponent();
+                });
+            });
+
+            Assert.Contains("rz-grid-filter-icon", component.Markup);
+        }
+
+        [Fact]
+        public void DataGrid_FilterLookupData_RendersOptionLabelsFromTextProperty()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[] { new FilterLookupItem { Reference = "A", Code = 1 } };
+            var options = new[]
+            {
+                new { Id = 1, Name = "Urgent" },
+                new { Id = 2, Name = "Normal" },
+                new { Id = 3, Name = "Critical" },
+            };
+
+            var component = ctx.RenderComponent<RadzenDataGrid<FilterLookupItem>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<FilterLookupItem>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowFiltering, true);
+                parameterBuilder.Add<FilterMode>(p => p.FilterMode, FilterMode.CheckBoxList);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<FilterLookupItem>));
+                    builder.AddAttribute(1, "Property", nameof(FilterLookupItem.Code));
+                    builder.AddAttribute(2, "FilterLookupData", options);
+                    builder.AddAttribute(3, "FilterLookupTextProperty", "Name");
+                    builder.AddAttribute(4, "FilterLookupValueProperty", "Id");
+                    builder.CloseComponent();
+                });
+            });
+
+            component.Find("button.rz-grid-filter-icon").MouseDown();
+
+            var markup = component.Markup;
+            Assert.Contains("Urgent", markup);
+            Assert.Contains("Critical", markup);
+        }
+
         private sealed class TrackingEnumerable<T> : IEnumerable<T>
         {
             private readonly IEnumerable<T> _source;
@@ -3518,5 +3732,187 @@ namespace Radzen.Blazor.Tests
                 public void Reset() => _inner.Reset();
             }
         }
+
+        static IComparer PriorityNameComparer()
+        {
+            var names = new Dictionary<int, string> { [1] = "Urgent", [2] = "Normal", [3] = "Critical" };
+            return Comparer<object>.Create((a, b) =>
+                string.Compare(
+                    names.TryGetValue(Convert.ToInt32(a), out var an) ? an : string.Empty,
+                    names.TryGetValue(Convert.ToInt32(b), out var bn) ? bn : string.Empty,
+                    StringComparison.Ordinal));
+        }
+
+        static IRenderedComponent<RadzenDataGrid<SortComparerItem>> RenderSortComparerGrid(
+            TestContext ctx, SortComparerItem[] data, SortOrder order)
+        {
+            return ctx.RenderComponent<RadzenDataGrid<SortComparerItem>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<SortComparerItem>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowSorting, true);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<SortComparerItem>));
+                    builder.AddAttribute(1, "Property", nameof(SortComparerItem.Reference));
+                    builder.CloseComponent();
+
+                    builder.OpenComponent(2, typeof(RadzenDataGridColumn<SortComparerItem>));
+                    builder.AddAttribute(3, "Property", nameof(SortComparerItem.Code));
+                    builder.AddAttribute(4, "SortComparer", PriorityNameComparer());
+                    builder.AddAttribute(5, "SortOrder", order);
+                    builder.CloseComponent();
+                });
+            });
+        }
+
+        [Fact]
+        public void DataGrid_SortComparer_OrdersByMappedName_Ascending()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[]
+            {
+                new SortComparerItem { Reference = "A", Code = 1 },
+                new SortComparerItem { Reference = "B", Code = 2 },
+                new SortComparerItem { Reference = "C", Code = 3 },
+            };
+
+            var component = RenderSortComparerGrid(ctx, data, SortOrder.Ascending);
+
+            var order = component.Instance.View.ToList().Select(x => x.Reference).ToArray();
+
+            Assert.Equal(new[] { "C", "B", "A" }, order);
+        }
+
+        [Fact]
+        public void DataGrid_SortComparer_OrdersByMappedName_Descending()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[]
+            {
+                new SortComparerItem { Reference = "A", Code = 1 },
+                new SortComparerItem { Reference = "B", Code = 2 },
+                new SortComparerItem { Reference = "C", Code = 3 },
+            };
+
+            var component = RenderSortComparerGrid(ctx, data, SortOrder.Descending);
+
+            var order = component.Instance.View.ToList().Select(x => x.Reference).ToArray();
+
+            Assert.Equal(new[] { "A", "B", "C" }, order);
+        }
+
+        [Fact]
+        public void DataGrid_SortComparer_ComposesWithSecondaryColumn()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            // Two rows share Code=2 (Normal); secondary sort by Reference breaks the tie.
+            var data = new[]
+            {
+                new SortComparerItem { Reference = "B2", Code = 2 },
+                new SortComparerItem { Reference = "A", Code = 1 },
+                new SortComparerItem { Reference = "B1", Code = 2 },
+            };
+
+            var component = ctx.RenderComponent<RadzenDataGrid<SortComparerItem>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<SortComparerItem>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowSorting, true);
+                parameterBuilder.Add<bool>(p => p.AllowMultiColumnSorting, true);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<SortComparerItem>));
+                    builder.AddAttribute(1, "Property", nameof(SortComparerItem.Code));
+                    builder.AddAttribute(2, "SortComparer", PriorityNameComparer());
+                    builder.AddAttribute(3, "SortOrder", SortOrder.Ascending);
+                    builder.CloseComponent();
+
+                    builder.OpenComponent(4, typeof(RadzenDataGridColumn<SortComparerItem>));
+                    builder.AddAttribute(5, "Property", nameof(SortComparerItem.Reference));
+                    builder.AddAttribute(6, "SortOrder", SortOrder.Ascending);
+                    builder.CloseComponent();
+                });
+            });
+
+            var order = component.Instance.View.ToList().Select(x => x.Reference).ToArray();
+
+            // Primary by mapped name asc: Normal (Code 2) before Urgent (Code 1).
+            // Secondary by Reference asc breaks the Normal tie: B1 before B2.
+            Assert.Equal(new[] { "B1", "B2", "A" }, order);
+        }
+
+        [Fact]
+        public void DataGrid_WithoutSortComparer_OrdersByRawValue()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[]
+            {
+                new SortComparerItem { Reference = "A", Code = 3 },
+                new SortComparerItem { Reference = "B", Code = 1 },
+                new SortComparerItem { Reference = "C", Code = 2 },
+            };
+
+            var component = ctx.RenderComponent<RadzenDataGrid<SortComparerItem>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<SortComparerItem>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowSorting, true);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<SortComparerItem>));
+                    builder.AddAttribute(1, "Property", nameof(SortComparerItem.Reference));
+                    builder.CloseComponent();
+
+                    builder.OpenComponent(2, typeof(RadzenDataGridColumn<SortComparerItem>));
+                    builder.AddAttribute(3, "Property", nameof(SortComparerItem.Code));
+                    builder.AddAttribute(4, "SortOrder", SortOrder.Ascending);
+                    builder.CloseComponent();
+                });
+            });
+
+            var order = component.Instance.View.ToList().Select(x => x.Reference).ToArray();
+
+            // No comparer: default ordering by raw Code value 1,2,3 -> B, C, A
+            Assert.Equal(new[] { "B", "C", "A" }, order);
+        }
+
+        [Fact]
+        public void DataGrid_SortComparer_HandlesValuesMissingFromMap()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            // Code 99 is not in the comparer's map; the comparer treats it as empty string (sorts first asc).
+            var data = new[]
+            {
+                new SortComparerItem { Reference = "A", Code = 1 },
+                new SortComparerItem { Reference = "X", Code = 99 },
+                new SortComparerItem { Reference = "C", Code = 3 },
+            };
+
+            var component = RenderSortComparerGrid(ctx, data, SortOrder.Ascending);
+
+            var order = component.Instance.View.ToList().Select(x => x.Reference).ToArray();
+
+            // "" (X) first, then Critical (C), then Urgent (A)
+            Assert.Equal(new[] { "X", "C", "A" }, order);
+        }
+    }
+
+    public class SortComparerItem
+    {
+        public string Reference { get; set; } = string.Empty;
+        public int Code { get; set; }
     }
 }

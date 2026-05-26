@@ -612,6 +612,22 @@ namespace RadzenBlazorDemos
                         },
                         new Example
                         {
+                            Name = "CheckBoxList with Lookup",
+                            Path = "datagrid-checkboxlist-lookup-filter",
+                            Title = "Blazor DataGrid - CheckBoxList Filter with Lookup Data | Free UI Components by Radzen",
+                            Description = "Drive the CheckBoxList filter from a lookup data source: filter by id while showing and searching by name.",
+                            Tags = new [] { "checkboxlist", "lookup", "filter", "filtering", "datagrid", "table", "dataview" }
+                        },
+                        new Example
+                        {
+                            Name = "CheckBoxList Auto-Apply",
+                            Path = "datagrid-checkboxlist-auto-apply-filter",
+                            Title = "Blazor DataGrid - CheckBoxList Filter Auto-Apply | Free UI Components by Radzen",
+                            Description = "Apply CheckBoxList column filters immediately as options are selected, without the Apply button.",
+                            Tags = new [] { "checkboxlist", "auto", "apply", "filter", "filtering", "datagrid", "table", "dataview" }
+                        },
+                        new Example
+                        {
                             Name = "CheckBoxList with OData",
                             Path = "datagrid-checkboxlist-filter-odata",
                             Title = "Blazor DataGrid - Excel Filter with OData | Free UI Components by Radzen",
@@ -772,6 +788,14 @@ namespace RadzenBlazorDemos
                             Title = "Blazor DataGrid - Sort API | Free UI Components by Radzen",
                             Description = "Set the initial sort order of your RadzenDataGrid via the SortOrder column property.",
                             Tags = new [] { "api", "sort", "datagrid", "table", "dataview" }
+                        },
+                        new Example
+                        {
+                            Name = "Custom Sort Comparer",
+                            Path = "datagrid-sort-comparer",
+                            Title = "Blazor DataGrid - Custom Sort Comparer | Free UI Components by Radzen",
+                            Description = "Sort a column with a custom IComparer, for example ordering id values by their mapped display name.",
+                            Tags = new [] { "comparer", "custom", "sort", "datagrid", "table", "dataview" }
                         }
                     }
                 },
