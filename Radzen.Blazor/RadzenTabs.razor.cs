@@ -210,16 +210,30 @@ namespace Radzen.Blazor
 
             SetFocusedIndex();
 
-            if (raiseChange)
+            try
             {
-                await Change.InvokeAsync(selectedIndex);
+                if (raiseChange)
+                {
+                    await Change.InvokeAsync(selectedIndex);
 
-                await SelectedIndexChanged.InvokeAsync(selectedIndex);
+                    await SelectedIndexChanged.InvokeAsync(selectedIndex);
 
-                await Element.FocusAsync(preventScroll: true);
+                    try
+                    {
+                        await Element.FocusAsync(preventScroll: true);
+                    }
+                    catch (JSDisconnectedException)
+                    {
+                    }
+                    catch (JSException)
+                    {
+                    }
+                }
             }
-
-            StateHasChanged();
+            finally
+            {
+                StateHasChanged();
+            }
         }
 
         /// <inheritdoc />
@@ -290,7 +304,13 @@ namespace Radzen.Blazor
             if (JSRuntime != null && RenderMode == TabRenderMode.Client && previousSelectedIndex != selectedIndex)
             {
                 previousSelectedIndex = selectedIndex;
-                await JSRuntime.InvokeVoidAsync("Radzen.selectTab", $"{GetId()}-tabpanel-{selectedIndex}", selectedIndex);
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("Radzen.selectTab", $"{GetId()}-tabpanel-{selectedIndex}", selectedIndex);
+                }
+                catch (JSDisconnectedException)
+                {
+                }
             }
 
             await base.OnAfterRenderAsync(firstRender);
@@ -321,14 +341,35 @@ namespace Radzen.Blazor
                 previousSelectedIndex = selectedIndex;
                 SetFocusedIndex();
 
-                await JSRuntime.InvokeVoidAsync("Radzen.selectTab", $"{GetId()}-tabpanel-{selectedIndex}", selectedIndex);
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("Radzen.selectTab", $"{GetId()}-tabpanel-{selectedIndex}", selectedIndex);
+                }
+                catch (JSDisconnectedException)
+                {
+                }
 
                 shouldRender = false;
-                await Change.InvokeAsync(selectedIndex);
-                await SelectedIndexChanged.InvokeAsync(selectedIndex);
-                shouldRender = true;
+                try
+                {
+                    await Change.InvokeAsync(selectedIndex);
+                    await SelectedIndexChanged.InvokeAsync(selectedIndex);
+                }
+                finally
+                {
+                    shouldRender = true;
+                }
 
-                await Element.FocusAsync(preventScroll: true);
+                try
+                {
+                    await Element.FocusAsync(preventScroll: true);
+                }
+                catch (JSDisconnectedException)
+                {
+                }
+                catch (JSException)
+                {
+                }
             }
         }
 
@@ -345,7 +386,14 @@ namespace Radzen.Blazor
         void OnGuardKeyDown(KeyboardEventArgs args)
         {
             var key = args.Code ?? args.Key;
-            stopGuardKeydownPropagation = key != "Escape";
+            var stop = key != "Escape";
+
+            if (stop == stopGuardKeydownPropagation)
+            {
+                suppressNextRender = true;
+            }
+
+            stopGuardKeydownPropagation = stop;
         }
 
         async Task OnKeyPress(KeyboardEventArgs args)

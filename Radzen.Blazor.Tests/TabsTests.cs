@@ -1,6 +1,7 @@
 using Bunit;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 using Xunit;
 
 namespace Radzen.Blazor.Tests
@@ -179,6 +180,120 @@ namespace Radzen.Blazor.Tests
                 builder.CloseComponent();
             }
         };
+
+        [Fact]
+        public void Tabs_KeyDownInPanelContent_DoesNotReRenderContent()
+        {
+            using var ctx = new TestContext();
+
+            var contentRenderCount = 0;
+            RenderFragment content = b => { contentRenderCount++; b.AddContent(0, "Panel-Content"); };
+
+            RenderFragment tabs = builder =>
+            {
+                builder.OpenComponent(0, typeof(RadzenTabsItem));
+                builder.AddAttribute(1, "Text", "First");
+                builder.AddAttribute(2, "ChildContent", content);
+                builder.CloseComponent();
+            };
+
+            var component = ctx.RenderComponent<RadzenTabs>(parameters => parameters
+                .Add(p => p.SelectedIndex, 0)
+                .Add(p => p.Tabs, tabs)
+            );
+
+            Assert.Contains("Panel-Content", component.Markup);
+
+            var renderCountBefore = contentRenderCount;
+
+            var panel = component.Find("div.rz-tabview-panel");
+            panel.KeyDown(new KeyboardEventArgs { Key = "a", Code = "KeyA" });
+            panel.KeyDown(new KeyboardEventArgs { Key = "b", Code = "KeyB" });
+
+            Assert.Equal(renderCountBefore, contentRenderCount);
+        }
+
+        [Fact]
+        public void Tabs_EscapeKeyDownInPanelContent_UpdatesPropagation()
+        {
+            using var ctx = new TestContext();
+
+            var component = ctx.RenderComponent<RadzenTabs>(parameters => parameters
+                .Add(p => p.SelectedIndex, 0)
+                .Add(p => p.Tabs, TabsFragmentWithContent(("First", "First-Content")))
+            );
+
+            var renderCountBefore = component.RenderCount;
+
+            var panel = component.Find("div.rz-tabview-panel");
+            panel.KeyDown(new KeyboardEventArgs { Key = "Escape", Code = "Escape" });
+
+            Assert.True(component.RenderCount > renderCountBefore);
+        }
+
+        [Fact]
+        public void Tabs_ChangeHandlerThrows_StillRendersSelectedTab()
+        {
+            using var ctx = new TestContext();
+
+            var component = ctx.RenderComponent<RadzenTabs>(parameters => parameters
+                .Add(p => p.SelectedIndex, 0)
+                .Add(p => p.Change, (int _) => throw new System.InvalidOperationException("boom"))
+                .Add(p => p.Tabs, TabsFragmentWithContent(("First", "First-Content"), ("Second", "Second-Content")))
+            );
+
+            Assert.Contains("First-Content", component.Markup);
+
+            var secondTab = component.FindAll("button[role='tab']")[1];
+            var ex = Record.Exception(() => secondTab.Click());
+
+            Assert.NotNull(ex);
+            Assert.Contains("Second-Content", component.Markup);
+            Assert.DoesNotContain("First-Content", component.Markup);
+        }
+
+        [Fact]
+        public void Tabs_FocusAsyncThrowsJSException_DoesNotPropagate()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop
+                .SetupVoid("Blazor._internal.domWrapper.focus", _ => true)
+                .SetException(new JSException("Unable to focus an invalid element."));
+
+            var component = ctx.RenderComponent<RadzenTabs>(parameters => parameters
+                .Add(p => p.SelectedIndex, 0)
+                .Add(p => p.Tabs, TabsFragmentWithContent(("First", "First-Content"), ("Second", "Second-Content")))
+            );
+
+            var secondTab = component.FindAll("button[role='tab']")[1];
+            var ex = Record.Exception(() => secondTab.Click());
+
+            Assert.Null(ex);
+            Assert.Contains("Second-Content", component.Markup);
+            Assert.DoesNotContain("First-Content", component.Markup);
+        }
+
+        [Fact]
+        public void Tabs_ClientRender_FocusAsyncThrowsJSException_DoesNotPropagate()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop
+                .SetupVoid("Blazor._internal.domWrapper.focus", _ => true)
+                .SetException(new JSException("Unable to focus an invalid element."));
+
+            var component = ctx.RenderComponent<RadzenTabs>(parameters => parameters
+                .Add(p => p.RenderMode, TabRenderMode.Client)
+                .Add(p => p.SelectedIndex, 0)
+                .Add(p => p.Tabs, TabsFragmentWithContent(("First", "First-Content"), ("Second", "Second-Content")))
+            );
+
+            var secondTab = component.FindAll("button[role='tab']")[1];
+            var ex = Record.Exception(() => secondTab.Click());
+
+            Assert.Null(ex);
+        }
 
         [Fact]
         public void Tabs_NonNavigationKeyDown_DoesNotBlockSubsequentRenders()
