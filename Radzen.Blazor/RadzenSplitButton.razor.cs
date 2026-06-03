@@ -113,6 +113,12 @@ namespace Radzen.Blazor
         public GRadzenBase.Icons.IRadzenFontIcon? GBusyIcon { get; set; }
 
         /// <summary>
+        /// Get or sets a GAUSS specific callback which is called when the Focus-Index is changed with the keyboard.
+        /// </summary>
+        [Parameter]
+        public Action<RadzenSplitButtonItem?>? GFocusItemChanged { get; set; }
+
+        /// <summary>
         /// Gets or sets the button style.
         /// </summary>
         /// <value>The button style.</value>
@@ -325,6 +331,14 @@ namespace Radzen.Blazor
                 stopKeydownPropagation = true;
 
                 focusedIndex = Math.Clamp(focusedIndex + (key == "ArrowUp" ? -1 : 1), 0, items.Count - 1);
+
+                if (GFocusItemChanged != null)
+                {
+                    if (focusedIndex >= 0 && focusedIndex < items.Count)
+                        GFocusItemChanged.Invoke(items[focusedIndex]);
+                    else
+                        GFocusItemChanged.Invoke(null);
+                }
             }
             else if (key == "Space" || key == "Enter")
             {
