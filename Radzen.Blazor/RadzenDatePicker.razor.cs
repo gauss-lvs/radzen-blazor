@@ -1523,7 +1523,7 @@ namespace Radzen.Blazor
         /// Gets or sets the delegate for a custom date format.
         /// </summary>
         [Parameter]
-        public Func<object?, string>? CustomDateFormat { get; set; }
+        public Func<object?, string?>? CustomDateFormat { get; set; }
 
         /// <summary>
         /// Gets or sets the year range.
