@@ -1098,10 +1098,10 @@ namespace Radzen.Blazor
                 if (Multiple)
                 {
                     var format = string.IsNullOrEmpty(DateFormat) ? "d" : DateFormat;
-                    return string.Join(", ", selectedDates.Select(d => d.ToString(format, Culture)));
+                    return string.Join(", ", selectedDates.Select(d => CustomDateFormat?.Invoke(d) ?? d.ToString(format, Culture)));
                 }
 
-                return HasValue ? string.Format(Culture, "{0:" + DateFormat + "}", Value) : "";
+                return HasValue ? CustomDateFormat?.Invoke(Value) ?? string.Format(Culture, "{0:" + DateFormat + "}", Value) : "";
             }
         }
 
@@ -1518,6 +1518,12 @@ namespace Radzen.Blazor
         /// <value>The date format.</value>
         [Parameter]
         public string DateFormat { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Gets or sets the delegate for a custom date format.
+        /// </summary>
+        [Parameter]
+        public Func<object?, string>? CustomDateFormat { get; set; }
 
         /// <summary>
         /// Gets or sets the year range.
