@@ -251,13 +251,19 @@ namespace Radzen
             get
             {
                 if (_CssClass != null)
+                {
                     return ClassList.Create(_CssClass)
                                     .Add(GIcon?.IconSetCssClass())
                                     .ToString();
+                }
                 else if (GIcon != null)
+                {
                     return GIcon.IconSetCssClass();
+                }
                 else
+                {
                     return null;
+                }
             }
             set => _CssClass = value;
         }

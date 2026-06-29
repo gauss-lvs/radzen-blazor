@@ -216,10 +216,14 @@ namespace Radzen.Blazor
                     var oldSize = pane.SizeRuntine;
                     pane.SizeRuntine = "0";
                     if (ChangeStateOnResized)
+                    {
                         await InvokeAsync(StateHasChanged);
+                    }
                     pane.SizeRuntine = oldSize;
                     if (ChangeStateOnResized)
+                    {
                         await InvokeAsync(StateHasChanged);
+                    }
                     return;
                 }
             }
@@ -244,7 +248,9 @@ namespace Radzen.Blazor
             }
 
             if (ChangeStateOnResized)
+            {
                 StateHasChanged();
+            }
         }
 
         internal async Task OnCollapse(int paneIndex)

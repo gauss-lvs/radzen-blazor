@@ -226,8 +226,9 @@ namespace Radzen.Blazor
                 int prevSelectedIndex = selectedIndex;
                 selectedIndex = -1;
                 if (prevSelectedIndex != selectedIndex)
+                {
                     await SelectedIndexChanged.InvokeAsync(selectedIndex);
-
+                }
                 Debounce(DebounceFilter, FilterDelay);
             }
         }
@@ -388,7 +389,7 @@ namespace Radzen.Blazor
 
         private async Task OpenPopup()
         {
-            if (popupState) return;
+            if (popupState) { return; }
 
             if (IsJSRuntimeAvailable && JSRuntime != null)
             {
