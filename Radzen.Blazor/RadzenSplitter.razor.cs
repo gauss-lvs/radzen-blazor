@@ -74,7 +74,9 @@ namespace Radzen.Blazor
         {
             ArgumentNullException.ThrowIfNull(pane);
             if (Panes.IndexOf(pane) != -1 || !pane.Visible)
+            {
                 return;
+            }
 
             if (string.IsNullOrWhiteSpace(pane.Size))
             {
@@ -89,7 +91,9 @@ namespace Radzen.Blazor
             foreach (var iPane in Panes)
             {
                 if (!iPane.SizeAuto)
+                {
                     continue;
+                }
 
                 iPane.SizeRuntine = (100 / sizeAutoPanes) + "%";
             }
@@ -132,12 +136,18 @@ namespace Radzen.Blazor
         {
             var pane = Panes[paneIndex];
             if (!pane.Resizable)
+            {
                 return Task.CompletedTask;
+            }
 
             var paneNextResizable = Panes.Skip(paneIndex + 1).FirstOrDefault(o => o.Resizable && !o.GetCollapsed());
 
 
-            if (JSRuntime == null) return Task.CompletedTask;
+            if (JSRuntime == null)
+            {
+                return Task.CompletedTask;
+            }
+
             return JSRuntime.InvokeVoidAsync("Radzen.startSplitterResize",
                 UniqueID,
                 Reference,
@@ -228,7 +238,9 @@ namespace Radzen.Blazor
                 }
 
                 if (sizeNextNew.HasValue)
+                {
                     paneNext.SizeRuntine = sizeNextNew.Value.ToString("0.##", CultureInfo.InvariantCulture) + "%";
+                }
             }
 
             if (ChangeStateOnResized)
@@ -247,7 +259,9 @@ namespace Radzen.Blazor
                     var arg = new RadzenSplitterEventArgs { PaneIndex = paneNext.Index, Pane = paneNext };
                     await Expand.InvokeAsync(arg);
                     if (arg.Cancel)
+                    {
                         return;
+                    }
                 }
 
                 paneNext.SetCollapsed(false);
@@ -259,7 +273,9 @@ namespace Radzen.Blazor
                     var arg = new RadzenSplitterEventArgs { PaneIndex = pane.Index, Pane = pane };
                     await Collapse.InvokeAsync(arg);
                     if (arg.Cancel)
+                    {
                         return;
+                    }
                 }
 
                 pane.SetCollapsed(true);
@@ -280,7 +296,9 @@ namespace Radzen.Blazor
                     var arg = new RadzenSplitterEventArgs { PaneIndex = paneNext.Index, Pane = paneNext };
                     await Collapse.InvokeAsync(arg);
                     if (arg.Cancel)
+                    {
                         return;
+                    }
                 }
 
                 paneNext.SetCollapsed(true);
@@ -292,7 +310,9 @@ namespace Radzen.Blazor
                     var arg = new RadzenSplitterEventArgs { PaneIndex = pane.Index, Pane = pane };
                     await Expand.InvokeAsync(arg);
                     if (arg.Cancel)
+                    {
                         return;
+                    }
                 }
 
                 pane.SetCollapsed(false);

@@ -228,7 +228,10 @@ namespace Radzen.Blazor
         
         internal async System.Threading.Tasks.Task SelectItem(RadzenAccordionItem item, bool? value = null)
         {
-            if(item.Disabled) return;
+            if(item.Disabled)
+            {
+                return;
+            }
 
             if (RenderMode == AccordionRenderMode.Client && accordionJs != null && value == null)
             {
@@ -357,11 +360,17 @@ namespace Radzen.Blazor
 
         internal async Task SelectItemOnClient(RadzenAccordionItem item)
         {
-            if (item.Disabled || accordionJs == null) return;
+            if (item.Disabled || accordionJs == null)
+            {
+                return;
+            }
 
             var visibleItems = items.Where(i => i.Visible).ToList();
             var visibleIndex = visibleItems.IndexOf(item);
-            if (visibleIndex < 0) return;
+            if (visibleIndex < 0)
+            {
+                return;
+            }
 
             var expanded = !item.GetSelected();
 
@@ -402,43 +411,42 @@ namespace Radzen.Blazor
             shouldRender = true;
         }
 
-        internal int focusedIndex = -1;
-        bool preventKeyPress = true;
-
-        bool stopKeydownPropagation = true;
-        void OnGuardKeyDown(KeyboardEventArgs args)
+        async Task OnHeaderKeyDown(KeyboardEventArgs args, RadzenAccordionItem item)
         {
             var key = args.Code ?? args.Key;
-            stopKeydownPropagation = key != "Escape";
-        }
-        async Task OnKeyPress(KeyboardEventArgs args)
-        {
-            var key = args.Code != null ? args.Code : args.Key;
 
-            if (key == "ArrowUp" || key == "ArrowDown")
+            if (key != "ArrowDown" && key != "ArrowUp" && key != "Home" && key != "End")
             {
-                preventKeyPress = true;
-
-                focusedIndex = Math.Clamp(focusedIndex + (key == "ArrowUp" ? -1 : 1), 0, items.Count - 1);
+                return;
             }
-            else if (key == "Space" || key == "Enter")
-            {
-                preventKeyPress = true;
 
-                if (focusedIndex >= 0 && focusedIndex < items.Count)
+            var navigable = items.Where(i => i.Visible && !i.Disabled).ToList();
+            var current = navigable.IndexOf(item);
+
+            if (current < 0)
+            {
+                return;
+            }
+
+            var target = key switch
+            {
+                "ArrowUp" => Math.Max(current - 1, 0),
+                "ArrowDown" => Math.Min(current + 1, navigable.Count - 1),
+                "Home" => 0,
+                "End" => navigable.Count - 1,
+                _ => current
+            };
+
+            if (target != current)
+            {
+                try
                 {
-                    await SelectItem(items.Where(i => i.Visible).ElementAt(focusedIndex));
+                    await navigable[target].HeaderElement.FocusAsync(preventScroll: true);
+                }
+                catch (JSDisconnectedException)
+                {
                 }
             }
-            else
-            {
-                preventKeyPress = false;
-            }
-        }
-
-        internal bool IsFocused(RadzenAccordionItem item)
-        {
-            return items.Where(i => i.Visible).ToList().IndexOf(item) == focusedIndex && focusedIndex != -1;
         }
 
         /// <inheritdoc />
@@ -478,21 +486,15 @@ namespace Radzen.Blazor
         }
 
         /// <inheritdoc />
-        protected override void OnInitialized()
-        {
-            focusedIndex = focusedIndex == -1 ? 0 : focusedIndex;
-
-            base.OnInitialized();
-        }
-
-        /// <inheritdoc />
         public override void Dispose()
         {
             base.Dispose();
 
             if (accordionJs != null)
             {
-                try { accordionJs.InvokeVoidAsync("dispose"); } catch { }
+                accordionJs.InvokeVoid("dispose");
+                accordionJs.DisposeFireAndForget();
+                accordionJs = null;
             }
         }
     }
