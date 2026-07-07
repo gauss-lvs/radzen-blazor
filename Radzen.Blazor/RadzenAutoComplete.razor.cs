@@ -65,13 +65,6 @@ namespace Radzen.Blazor
         public EventCallback<object> SelectedItemChanged { get; set; }
 
         /// <summary>
-        /// Gets or sets the selected index changed.
-        /// </summary>
-        /// <value>The selected index changed.</value>
-        [Parameter]
-        public EventCallback<int> SelectedIndexChanged { get; set; }
-
-        /// <summary>
         /// Specifies additional custom attributes that will be rendered by the input.
         /// </summary>
         /// <value>The attributes.</value>
@@ -156,14 +149,6 @@ namespace Radzen.Blazor
         public long? MaxLength { get; set; }
 
         /// <summary>
-        /// Handles change event of the built-in <c>input</c> element.
-        /// Gets or sets a value indicating whether the component should update the value
-        /// immediately when the user types. Set to <c>false</c> by default.
-        /// </summary>
-        [Parameter]
-        public bool Immediate { get; set; }
-
-        /// <summary>
         /// Gets search input reference.
         /// </summary>
         protected ElementReference search;
@@ -196,7 +181,6 @@ namespace Radzen.Blazor
                     if (JSRuntime != null)
                     {
                         selectedIndex = await JSRuntime.InvokeAsync<int>("Radzen.focusListItem", search, list, key == "ArrowDown", selectedIndex);
-                        await SelectedIndexChanged.InvokeAsync(selectedIndex);
                     }
                 }
                 catch (Exception)
@@ -210,7 +194,6 @@ namespace Radzen.Blazor
                 {
                     await OnSelectItem(items.ElementAt(selectedIndex));
                     selectedIndex = -1;
-                    await SelectedIndexChanged.InvokeAsync(selectedIndex);
                 }
 
                 if (key == "Tab")
@@ -226,12 +209,8 @@ namespace Radzen.Blazor
             }
             else
             {
-                int prevSelectedIndex = selectedIndex;
                 selectedIndex = -1;
-                if (prevSelectedIndex != selectedIndex)
-                {
-                    await SelectedIndexChanged.InvokeAsync(selectedIndex);
-                }
+
                 Debounce(DebounceFilter, FilterDelay);
             }
         }
@@ -355,24 +334,11 @@ namespace Radzen.Blazor
             }
         }
 
-
         /// <summary>
         /// Handles the @bind:set binding of the underlying input element.
         /// </summary>
         /// <param name="value">The new value reported by the change event.</param>
         protected async System.Threading.Tasks.Task SetValue(string? value)
-        {
-            if (!Immediate)
-            {
-                await SetValueInternal(args);
-            }
-        }
-
-        /// <summary>
-        /// Handles the @bind:set binding of the underlying input element.
-        /// </summary>
-        /// <param name="value">The new value reported by the change event.</param>
-        private async System.Threading.Tasks.Task SetValueInternal(string? value)
         {
             // When ValueChanged is wired, leave _value alone — parameter re-flow handles
             // both accepted updates (Value setter overwrites _value) and parent rejection
@@ -418,17 +384,6 @@ namespace Radzen.Blazor
                                       .AddDisabled(Disabled)
                                       .ToString();
 
-        private async Task OpenScript(ChangeEventArgs args)
-        {
-            ArgumentNullException.ThrowIfNull(args);
-            if (Immediate)
-            {
-                await OnChangeInternal(args);
-            }
-
-            await OpenPopup();
-        }
-
         private string OpenScript()
         {
             if (Disabled)
@@ -444,31 +399,6 @@ namespace Radzen.Blazor
         /// </summary>
         [Parameter]
         public InputSize InputSize { get; set; } = InputSize.Medium;
-
-        private bool popupState;
-
-        private async Task OpenPopup()
-        {
-            if (popupState) { return; }
-
-            if (IsJSRuntimeAvailable && JSRuntime != null)
-            {
-                popupState = true;
-                await JSRuntime.InvokeVoidAsync("Radzen.openPopup", Element, PopupID, true);
-            }
-        }
-
-        /// <summary>
-        /// Allows parent components to close the auto complete popup.
-        /// </summary>
-        public async Task ClosePopup()
-        {
-            if (IsJSRuntimeAvailable && JSRuntime != null)
-            {
-                popupState = false;
-                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
-            }
-        }
 
         /// <inheritdoc />
         protected override string GetComponentCssClass() => GetClassList("rz-autocomplete").AddInputSize(InputSize).ToString();
