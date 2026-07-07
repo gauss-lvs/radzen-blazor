@@ -320,7 +320,7 @@ video {
     --rz-menu-item-hover-background-color: var(--rz-base-dark);
     --rz-menu-item-selected-color: var(--rz-on-base-darker);
     --rz-menu-item-selected-background-color: var(--rz-base-dark);
-    --rz-text-overline-color: var(--rz-on-base-darker);
+    --rz-text-caption-color: var(--rz-on-base-darker);
     --rz-card-border: 1px solid var(--rz-base-800);
 }
 
@@ -402,8 +402,8 @@ svg.illustration {
 
 .demos-sidebar .rz-panel-menu .rz-badge {
     margin-inline-start: 0.5rem;
-    font-size: 9px;
-    line-height: 12px;
+    font-size: 11px;
+    line-height: 13px;
 }
 
 /* API Reference Sidebar */
@@ -544,7 +544,7 @@ svg.illustration {
 
 .rz-learn-title {
     display: block;
-    --rz-text-overline-line-height: 1.4;
+    --rz-text-caption-line-height: 1.4;
     padding-inline: var(--rz-menu-item-padding-inline);
     color: var(--rz-text-tertiary-color) !important;
 }

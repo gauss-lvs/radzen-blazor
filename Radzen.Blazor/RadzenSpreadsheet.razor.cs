@@ -176,10 +176,33 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     public bool ShowFormulaBar { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets the accessible label (<c>aria-label</c>) announced for the spreadsheet's
+    /// <c>role="application"</c> region. Defaults to a localized "Spreadsheet".
+    /// </summary>
+    [Parameter]
+    public string? AriaLabel { get; set; }
+
+    /// <summary>
     /// When <c>true</c> (the default) the sheet tab strip is rendered below the grid.
     /// </summary>
     [Parameter]
     public bool ShowSheetTabs { get; set; } = true;
+
+    /// <summary>
+    /// The zero-based index of the active sheet. Supports two-way binding via
+    /// <c>@bind-SelectedSheetIndex</c>. Values outside the sheet range are clamped.
+    /// Setting it selects the matching sheet even when <see cref="ShowSheetTabs"/> is
+    /// <c>false</c>; loading a different <see cref="Workbook"/> resets it to the bound value
+    /// (or <c>0</c> when unbound).
+    /// </summary>
+    [Parameter]
+    public int SelectedSheetIndex { get; set; }
+
+    /// <summary>
+    /// Fired when the active sheet changes. Used by <c>@bind-SelectedSheetIndex</c>.
+    /// </summary>
+    [Parameter]
+    public EventCallback<int> SelectedSheetIndexChanged { get; set; }
 
     /// <summary>Allows direct cell editing (type-to-edit, double-click, paste-into-cell, delete-key, autoaccept).</summary>
     [Parameter] public bool AllowEditing { get; set; } = true;
@@ -301,6 +324,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     protected override string GetComponentCssClass() => "rz-spreadsheet";
 
     private VirtualGrid? grid;
+    private Spreadsheet.SpreadsheetAccessibility? accessibility;
     private RadzenPopup? cellMenuPopup;
     private RadzenPopup? validationListPopup;
     private RangePickerBar? rangePickerBar;
@@ -316,12 +340,17 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     public override async Task SetParametersAsync(ParameterView parameters)
     {
         var didWorkbookChange = parameters.DidParameterChange(nameof(Workbook), Workbook);
+        var didSheetIndexChange = parameters.DidParameterChange(nameof(SelectedSheetIndex), SelectedSheetIndex);
 
         await base.SetParametersAsync(parameters);
 
         if (didWorkbookChange)
         {
-            SetActiveWorkbook(Workbook);
+            SetActiveWorkbook(Workbook, SelectedSheetIndex);
+        }
+        else if (didSheetIndexChange)
+        {
+            SetActiveSheet(SelectedSheetIndex);
         }
     }
 
@@ -365,7 +394,14 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             }
         }
 
-        return ActiveView?.Commands.Execute(command) ?? false;
+        var executed = ActiveView?.Commands.Execute(command) ?? false;
+
+        if (executed && DescribeCommand(command) is string message)
+        {
+            accessibility?.AnnounceAction(message);
+        }
+
+        return executed;
     }
 
     /// <inheritdoc/>
@@ -399,7 +435,8 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     /// <inheritdoc/>
     public async Task LoadWorkbookAsync(Workbook workbook)
     {
-        SetActiveWorkbook(workbook);
+        var previous = sheetIndex;
+        SetActiveWorkbook(workbook, 0);
 
         await CloseMenusAsync();
         cellMenuRow = cellMenuColumn = -1;
@@ -408,13 +445,40 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         StateHasChanged();
 
         await WorkbookChanged.InvokeAsync(workbook);
+        await NotifySelectedSheetIndexChangedAsync(previous);
     }
 
-    private void SetActiveWorkbook(Workbook? value)
+    private void SetActiveWorkbook(Workbook? value, int index)
     {
         workbook = value;
         workbookView = null;
-        sheetIndex = 0;
+        SetActiveSheet(index);
+    }
+
+    private void SetActiveSheet(int index)
+    {
+        var count = workbook?.Sheets.Count ?? 0;
+        sheetIndex = count == 0 ? 0 : Math.Clamp(index, 0, count - 1);
+
+        if (Worksheet?.Selection.Cell == CellRef.Invalid)
+        {
+            Worksheet.Selection.Select(new CellRef(0, 0));
+        }
+    }
+
+    private async Task SelectSheetAsync(int index)
+    {
+        var previous = sheetIndex;
+        SetActiveSheet(index);
+        await NotifySelectedSheetIndexChangedAsync(previous);
+    }
+
+    private async Task NotifySelectedSheetIndexChangedAsync(int previous)
+    {
+        if (sheetIndex != previous)
+        {
+            await SelectedSheetIndexChanged.InvokeAsync(sheetIndex);
+        }
     }
 
     private async Task CloseMenusAsync()
@@ -436,7 +500,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
         await CloseMenusAsync();
 
-        sheetIndex = index;
+        await SelectSheetAsync(index);
     }
 
     private async Task OnAddSheetAsync()
@@ -450,7 +514,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
         var name = GenerateSheetName();
         workbook.AddSheet(name, 100, 26);
-        sheetIndex = workbook.Sheets.Count - 1;
+        await SelectSheetAsync(workbook.Sheets.Count - 1);
     }
 
     private async Task OnSheetAction(RadzenSplitButtonItem? item, Worksheet sheet)
@@ -469,10 +533,10 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
                 await OnRemoveSheetAsync(sheet);
                 break;
             case "move-left":
-                OnMoveSheetLeft(sheet);
+                await OnMoveSheetLeftAsync(sheet);
                 break;
             case "move-right":
-                OnMoveSheetRight(sheet);
+                await OnMoveSheetRightAsync(sheet);
                 break;
         }
     }
@@ -490,14 +554,12 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         workbook.RemoveSheet(sheet);
         workbookView?.Remove(sheet);
 
-        if (sheetIndex >= workbook.Sheets.Count)
-        {
-            sheetIndex = workbook.Sheets.Count - 1;
-        }
-        else if (removedIndex < sheetIndex)
-        {
-            sheetIndex--;
-        }
+        // Re-activate even when the index stays the same: deleting the active, non-last sheet shifts a
+        // different sheet into that index, which still needs its active cell ensured.
+        await SelectSheetAsync(
+            sheetIndex >= workbook.Sheets.Count ? workbook.Sheets.Count - 1 :
+            removedIndex < sheetIndex ? sheetIndex - 1 :
+            sheetIndex);
     }
 
     private async Task OnRenameSheetAsync(Worksheet sheet)
@@ -512,7 +574,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             .Select(s => s.Name)
             .ToList();
 
-        var name = await DialogService.OpenAsync<Spreadsheet.RenameSheetDialog>(Localize(nameof(RadzenStrings.Spreadsheet_RenameSheetTitle)),
+        var name = await OpenDialogAsync<Spreadsheet.RenameSheetDialog>(Localize(nameof(RadzenStrings.Spreadsheet_RenameSheetTitle)),
             new Dictionary<string, object?> { { "Name", sheet.Name }, { "ExistingNames", existingNames } },
             new DialogOptions { Width = "300px" });
 
@@ -522,7 +584,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         }
     }
 
-    private void OnMoveSheetLeft(Worksheet sheet)
+    private async Task OnMoveSheetLeftAsync(Worksheet sheet)
     {
         if (ReadOnly || workbook is null || workbook.Protection.LockStructure)
         {
@@ -533,6 +595,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
         if (index > 0)
         {
+            var previous = sheetIndex;
             workbook.MoveSheet(index, index - 1);
 
             if (sheetIndex == index)
@@ -543,10 +606,12 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             {
                 sheetIndex++;
             }
+
+            await NotifySelectedSheetIndexChangedAsync(previous);
         }
     }
 
-    private void OnMoveSheetRight(Worksheet sheet)
+    private async Task OnMoveSheetRightAsync(Worksheet sheet)
     {
         if (ReadOnly || workbook is null || workbook.Protection.LockStructure)
         {
@@ -557,6 +622,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
         if (index < workbook.Sheets.Count - 1)
         {
+            var previous = sheetIndex;
             workbook.MoveSheet(index, index + 1);
 
             if (sheetIndex == index)
@@ -567,6 +633,8 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             {
                 sheetIndex--;
             }
+
+            await NotifySelectedSheetIndexChangedAsync(previous);
         }
     }
 
@@ -680,8 +748,6 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         }
     }
 
-    // Builds a sort command scoped to the data the clicked cell belongs to, never including a
-    // table/auto-filter header (or table totals) row in the sorted range.
     private SortCommand BuildSortCommand(int row, int column, SortOrder order)
     {
         foreach (var table in Worksheet!.Tables)
@@ -753,7 +819,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
                 parameters.Add(nameof(FilterDialog.Filter), existingFilter);
             }
 
-            var result = await DialogService.OpenAsync<FilterDialog>(Localize(nameof(RadzenStrings.Spreadsheet_CustomFilterTitle)), parameters, new DialogOptions
+            var result = await OpenDialogAsync<FilterDialog>(Localize(nameof(RadzenStrings.Spreadsheet_CustomFilterTitle)), parameters, new DialogOptions
             {
                 Width = "600px",
             });
@@ -784,7 +850,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             return;
         }
 
-        var result = await DialogService.OpenAsync<Spreadsheet.Top10FilterDialog>(
+        var result = await OpenDialogAsync<Spreadsheet.Top10FilterDialog>(
             Localize(nameof(RadzenStrings.Spreadsheet_Top10Filter)),
             null,
             new DialogOptions { Width = "380px", ShowClose = true });
@@ -863,7 +929,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
                 { nameof(FormatCellsDialog.ValueType), cell.ValueType }
             };
 
-            var result = await DialogService.OpenAsync<FormatCellsDialog>(
+            var result = await OpenDialogAsync<FormatCellsDialog>(
                 Localize(nameof(RadzenStrings.Spreadsheet_FormatCellsTitle)), parameters, new DialogOptions { Width = "600px" });
 
             if (result is string formatCode)
@@ -948,6 +1014,9 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
                             result = false;
                             break;
                     }
+
+                    // Return focus to the grid after the validation dialog closes (WCAG 2.4.3).
+                    await Element.FocusAsync();
                 }
                 else
                 {
@@ -967,6 +1036,11 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
     private async Task CycleSelectionAsync(int rowOffset, int columnOffset)
     {
+        // The formula bar is a persistent editor, so after Tab/Enter commits there focus stays in it
+        // unless we move it back to the grid (Excel/Sheets parity). The in-cell editor closes on
+        // commit, so it doesn't need this. AcceptAsync resets the mode, so capture it first.
+        var fromFormulaBar = Editor?.Mode == EditMode.Formula;
+
         if (await AcceptAsync())
         {
             if (Worksheet is not null)
@@ -974,6 +1048,11 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
                 var address = Worksheet.Selection.Cycle(rowOffset, columnOffset);
 
                 await ScrollToAsync(address);
+
+                if (fromFormulaBar)
+                {
+                    await Element.FocusAsync();
+                }
             }
         }
     }
@@ -988,6 +1067,432 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         }
     }
 
+    // Absolute-move keys (Home/End/Ctrl+Home/Ctrl+End): the mapper turns the current active cell
+    // into the destination, which is then clamped to the sheet and selected.
+    private async Task MoveToAsync(Func<CellRef, CellRef> targetOf)
+    {
+        if (Worksheet is null || !await AcceptAsync())
+        {
+            return;
+        }
+
+        var target = Worksheet.Clamp(targetOf(Worksheet.Selection.Cell));
+        Worksheet.Selection.Select(target);
+        await ScrollToAsync(target);
+    }
+
+    // Shift variants: extend the selection from the active cell to the mapped destination.
+    private Task ExtendToAsync(Func<CellRef, CellRef> targetOf)
+    {
+        if (Worksheet is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var current = Worksheet.Selection.Cell;
+        var target = Worksheet.Clamp(targetOf(current));
+        return ExtendSelectionAsync(target.Row - current.Row, target.Column - current.Column);
+    }
+
+    private async Task SelectUsedRangeAsync()
+    {
+        if (Worksheet is null || !await AcceptAsync())
+        {
+            return;
+        }
+
+        Worksheet.Selection.Select(new RangeRef(new CellRef(0, 0), GetUsedEnd()));
+        await ScrollToAsync(new CellRef(0, 0));
+    }
+
+    // The bottom-right corner of the populated range, used by Ctrl+End/Ctrl+A/End. Empty sheet -> A1.
+    private CellRef GetUsedEnd()
+    {
+        var maxRow = 0;
+        var maxColumn = 0;
+
+        if (Worksheet is not null)
+        {
+            foreach (var cell in Worksheet.Cells.GetPopulatedCells())
+            {
+                if (cell.Address.Row > maxRow)
+                {
+                    maxRow = cell.Address.Row;
+                }
+
+                if (cell.Address.Column > maxColumn)
+                {
+                    maxColumn = cell.Address.Column;
+                }
+            }
+        }
+
+        return new CellRef(maxRow, maxColumn);
+    }
+
+    // Excel-style Ctrl+Arrow edge jump from 'from' in direction (dRow, dColumn), each +/-1 or 0:
+    //   - on a data block: jump to the last contiguous populated cell;
+    //   - otherwise: skip blanks to the next populated cell, or to the sheet edge if none.
+    private CellRef FindEdge(CellRef from, int dRow, int dColumn)
+    {
+        if (Worksheet is null)
+        {
+            return from;
+        }
+
+        var rows = Worksheet.RowCount;
+        var columns = Worksheet.ColumnCount;
+        var r = from.Row;
+        var c = from.Column;
+
+        bool InBounds(int row, int column) => row >= 0 && row < rows && column >= 0 && column < columns;
+        bool Has(int row, int column) => Worksheet.Cells.HasCell(row, column);
+
+        if (!InBounds(r + dRow, c + dColumn))
+        {
+            return from;
+        }
+
+        if (Has(r, c) && Has(r + dRow, c + dColumn))
+        {
+            while (InBounds(r + dRow, c + dColumn) && Has(r + dRow, c + dColumn))
+            {
+                r += dRow;
+                c += dColumn;
+            }
+        }
+        else
+        {
+            // Skip blanks to the next populated cell; if there is none, this walks to the sheet edge.
+            while (InBounds(r + dRow, c + dColumn))
+            {
+                r += dRow;
+                c += dColumn;
+
+                if (Has(r, c))
+                {
+                    break;
+                }
+            }
+        }
+
+        return new CellRef(r, c);
+    }
+
+    // Ctrl+D fills the multi-cell selection down from its top row; Ctrl+R fills right from its first column.
+    private async Task FillAsync(bool down)
+    {
+        if (Worksheet is null)
+        {
+            return;
+        }
+
+        var range = Worksheet.Selection.Range;
+        if (range.Collapsed)
+        {
+            return;
+        }
+
+        RangeRef source;
+        AutofillDirection direction;
+
+        if (down)
+        {
+            source = new RangeRef(range.Start, new CellRef(range.Start.Row, range.End.Column));
+            direction = AutofillDirection.Down;
+        }
+        else
+        {
+            source = new RangeRef(range.Start, new CellRef(range.End.Row, range.Start.Column));
+            direction = AutofillDirection.Right;
+        }
+
+        await ExecuteAsync(new AutofillCommand(Worksheet, source, range, direction));
+    }
+
+    private async Task SelectColumnAsync()
+    {
+        if (Worksheet is null || !await AcceptAsync())
+        {
+            return;
+        }
+
+        Worksheet.Selection.Select(new ColumnRef(Worksheet.Selection.Cell.Column));
+        await ScrollToAsync(Worksheet.Selection.Cell);
+    }
+
+    private async Task SelectRowAsync()
+    {
+        if (Worksheet is null || !await AcceptAsync())
+        {
+            return;
+        }
+
+        Worksheet.Selection.Select(new RowRef(Worksheet.Selection.Cell.Row));
+        await ScrollToAsync(Worksheet.Selection.Cell);
+    }
+
+    // Shift+F10 / the ContextMenu key open the cell context menu at the active cell. JS locates the
+    // cell element and re-dispatches OnCellContextMenuAsync with a synthetic pointer at its position.
+    private async Task OpenContextMenuAtActiveCellAsync()
+    {
+        if (Worksheet is null || jsRef is null || Worksheet.Selection.Cell == CellRef.Invalid)
+        {
+            return;
+        }
+
+        var cell = Worksheet.Selection.Cell;
+        await jsRef.InvokeVoidAsync("openCellContextMenu", cell.Row, cell.Column);
+    }
+
+    // ── Image/chart keyboard layer (Excel object model) ─────────────────
+
+    // Ctrl+Alt+5 selects the first drawing, or cycles when already in the layer.
+    private Task EnterDrawingLayerAsync()
+    {
+        if (Worksheet is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        if (Worksheet.SelectedImage is null && Worksheet.SelectedChart is null)
+        {
+            if (Worksheet.Images.Count > 0)
+            {
+                Worksheet.SelectedImage = Worksheet.Images[0];
+            }
+            else if (Worksheet.Charts.Count > 0)
+            {
+                Worksheet.SelectedChart = Worksheet.Charts[0];
+            }
+
+            AnnounceDrawing();
+        }
+        else
+        {
+            CycleDrawing(1);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private async Task<bool> TryHandleDrawingKeyAsync(KeyboardEventArgs args)
+    {
+        const double step = 8;
+        const double fine = 1;
+
+        switch (TranslateShortcut(args))
+        {
+            case "Escape": DeselectDrawing(); return true;
+            case "Tab": CycleDrawing(1); return true;
+            case "Shift+Tab": CycleDrawing(-1); return true;
+            case "Enter": return true; // consume so it does not move the underlying cell
+            case "Shift+F10":
+            case "ContextMenu": await OpenDrawingSizeDialogAsync(); return true;
+            case "ArrowUp": await MoveDrawingAsync(0, -step); return true;
+            case "ArrowDown": await MoveDrawingAsync(0, step); return true;
+            case "ArrowLeft": await MoveDrawingAsync(-step, 0); return true;
+            case "ArrowRight": await MoveDrawingAsync(step, 0); return true;
+            case "Ctrl+ArrowUp": await MoveDrawingAsync(0, -fine); return true;
+            case "Ctrl+ArrowDown": await MoveDrawingAsync(0, fine); return true;
+            case "Ctrl+ArrowLeft": await MoveDrawingAsync(-fine, 0); return true;
+            case "Ctrl+ArrowRight": await MoveDrawingAsync(fine, 0); return true;
+            default: return false;
+        }
+    }
+
+    private void DeselectDrawing()
+    {
+        if (Worksheet is null)
+        {
+            return;
+        }
+
+        Worksheet.SelectedImage = null;
+        Worksheet.SelectedChart = null;
+    }
+
+    private void CycleDrawing(int direction)
+    {
+        if (Worksheet is null)
+        {
+            return;
+        }
+
+        var images = Worksheet.Images;
+        var charts = Worksheet.Charts;
+        var total = images.Count + charts.Count;
+
+        if (total == 0)
+        {
+            return;
+        }
+
+        int current;
+        if (Worksheet.SelectedImage is SheetImage selectedImage)
+        {
+            current = IndexOf(images, selectedImage);
+        }
+        else if (Worksheet.SelectedChart is SheetChart selectedChart)
+        {
+            current = images.Count + IndexOf(charts, selectedChart);
+        }
+        else
+        {
+            current = -1;
+        }
+
+        var next = (current + direction + total) % total;
+
+        if (next < images.Count)
+        {
+            Worksheet.SelectedImage = images[next];
+            Worksheet.SelectedChart = null;
+        }
+        else
+        {
+            Worksheet.SelectedChart = charts[next - images.Count];
+            Worksheet.SelectedImage = null;
+        }
+
+        AnnounceDrawing();
+    }
+
+    private async Task MoveDrawingAsync(double dx, double dy)
+    {
+        if (Worksheet is null)
+        {
+            return;
+        }
+
+        if (Worksheet.SelectedImage is SheetImage image)
+        {
+            var (from, to) = OffsetAnchors(image.From, image.To, dx, dy);
+            await ExecuteAsync(new MoveAnchoredCommand<SheetImage>(image, from, to, SpreadsheetFeature.Images));
+        }
+        else if (Worksheet.SelectedChart is SheetChart chart)
+        {
+            var (from, to) = OffsetAnchors(chart.From, chart.To, dx, dy);
+            await ExecuteAsync(new MoveAnchoredCommand<SheetChart>(chart, from, to, SpreadsheetFeature.Charts));
+        }
+    }
+
+    private (CellAnchor From, CellAnchor? To) OffsetAnchors(CellAnchor from, CellAnchor? to, double dx, double dy)
+    {
+        var newFrom = from.Clone();
+        newFrom.ColumnOffset += dx;
+        newFrom.RowOffset += dy;
+        NormalizeAnchor(newFrom);
+
+        CellAnchor? newTo = null;
+        if (to is not null)
+        {
+            newTo = to.Clone();
+            newTo.ColumnOffset += dx;
+            newTo.RowOffset += dy;
+            NormalizeAnchor(newTo);
+        }
+
+        return (newFrom, newTo);
+    }
+
+    private void AnnounceDrawing()
+    {
+        if (Worksheet is null || accessibility is null)
+        {
+            return;
+        }
+
+        if (Worksheet.SelectedImage is SheetImage image)
+        {
+            accessibility.AnnounceAction(
+                $"{Localize(nameof(RadzenStrings.Spreadsheet_A11yImageSelected))}, {new CellRef(image.From.Row, image.From.Column)}");
+        }
+        else if (Worksheet.SelectedChart is SheetChart chart)
+        {
+            accessibility.AnnounceAction(
+                $"{Localize(nameof(RadzenStrings.Spreadsheet_A11yChartSelected))}, {new CellRef(chart.From.Row, chart.From.Column)}");
+        }
+    }
+
+    // Keyboard resize: a Size dialog (Shift+F10 in the drawing layer) - the non-drag 2.5.7 alternative.
+    private async Task OpenDrawingSizeDialogAsync()
+    {
+        if (Worksheet is null)
+        {
+            return;
+        }
+
+        double width;
+        double height;
+
+        if (Worksheet.SelectedImage is SheetImage selectedImage)
+        {
+            width = selectedImage.Width;
+            height = selectedImage.Height;
+        }
+        else if (Worksheet.SelectedChart is SheetChart selectedChart)
+        {
+            width = selectedChart.Width;
+            height = selectedChart.Height;
+        }
+        else
+        {
+            return;
+        }
+
+        var parameters = new Dictionary<string, object?>
+        {
+            { nameof(Spreadsheet.DrawingSizeDialog.Width), width },
+            { nameof(Spreadsheet.DrawingSizeDialog.Height), height },
+            { nameof(Spreadsheet.DrawingSizeDialog.WidthLabel), Localize(nameof(RadzenStrings.Spreadsheet_SizeWidth)) },
+            { nameof(Spreadsheet.DrawingSizeDialog.HeightLabel), Localize(nameof(RadzenStrings.Spreadsheet_SizeHeight)) },
+            { nameof(Spreadsheet.DrawingSizeDialog.OkText), Localize(nameof(RadzenStrings.Spreadsheet_OK)) },
+            { nameof(Spreadsheet.DrawingSizeDialog.CancelText), Localize(nameof(RadzenStrings.Spreadsheet_Cancel)) },
+        };
+
+        var result = await OpenDialogAsync<Spreadsheet.DrawingSizeDialog>(
+            Localize(nameof(RadzenStrings.Spreadsheet_SizeTitle)), parameters, new DialogOptions { Width = "340px" });
+
+        if (result is Spreadsheet.DrawingSizeDialog.Size size)
+        {
+            if (Worksheet.SelectedImage is SheetImage image)
+            {
+                await ExecuteAsync(new ResizeAnchoredCommand<SheetImage>(image, size.Width, size.Height, SpreadsheetFeature.Images));
+            }
+            else if (Worksheet.SelectedChart is SheetChart chart)
+            {
+                await ExecuteAsync(new ResizeAnchoredCommand<SheetChart>(chart, size.Width, size.Height, SpreadsheetFeature.Charts));
+            }
+        }
+    }
+
+    // Announces discrete structural/data actions; the per-cell nav announcer covers cell edits.
+    private string? DescribeCommand(ICommand command) => command switch
+    {
+        SortCommand or MultiKeySortCommand => Localize(nameof(RadzenStrings.Spreadsheet_A11ySorted)),
+        FilterCommand or TableFilterCommand or SheetAutoFilterCommand or RemoveFilterCommand
+            => Localize(nameof(RadzenStrings.Spreadsheet_A11yFilterApplied)),
+        InsertRowCommand => Localize(nameof(RadzenStrings.Spreadsheet_A11yRowInserted)),
+        InsertColumnCommand => Localize(nameof(RadzenStrings.Spreadsheet_A11yColumnInserted)),
+        DeleteRowsCommand => Localize(nameof(RadzenStrings.Spreadsheet_A11yRowDeleted)),
+        DeleteColumnsCommand => Localize(nameof(RadzenStrings.Spreadsheet_A11yColumnDeleted)),
+        _ => null
+    };
+
+    private static int IndexOf<T>(IReadOnlyList<T> list, T item) where T : class
+    {
+        for (var i = 0; i < list.Count; i++)
+        {
+            if (ReferenceEquals(list[i], item))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     private Task CancelEditAsync()
     {
         if (Editor?.Mode != EditMode.None)
@@ -998,32 +1503,175 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         return Task.CompletedTask;
     }
 
-    private readonly Dictionary<string, Func<KeyboardEventArgs, Task>> shortcuts = [];
+    // A keyboard shortcut: the action to run, and whether it acts regardless of focus context. Global
+    // shortcuts (F6 region escape, undo/redo, help) fire from anywhere; the rest are grid-only.
+    private sealed record Shortcut(Func<KeyboardEventArgs, Task> Action, bool Global = false);
+
+    private readonly Dictionary<string, Shortcut> shortcuts = [];
+
+    private void Bind(string key, Func<KeyboardEventArgs, Task> action, bool global = false)
+        => shortcuts.Add(key, new Shortcut(action, global));
+
+    // Approximate page size (rows) for PageUp/PageDown - a screenful without coupling to the viewport.
+    private const int PageRows = 20;
+
     private readonly SpreadsheetClipboard clipboard = new();
 
     /// <inheritdoc/>
     protected override void OnInitialized()
     {
+        // Assigns UniqueID so GetId() is non-empty - the a11y instructions span id and its
+        // aria-describedby reference derive from it and must be unique per spreadsheet on the page.
+        base.OnInitialized();
         workbook = Workbook;
-        shortcuts.Add("Enter", _ => CycleSelectionAsync(1, 0));
-        shortcuts.Add("Escape", _ => CancelEditAsync());
-        shortcuts.Add("Tab", _ => CycleSelectionAsync(0, 1));
-        shortcuts.Add("ArrowUp", _ => MoveSelectionAsync(-1, 0));
-        shortcuts.Add("ArrowDown", _ => MoveSelectionAsync(1, 0));
-        shortcuts.Add("ArrowLeft", _ => MoveSelectionAsync(0, -1));
-        shortcuts.Add("ArrowRight", _ => MoveSelectionAsync(0, 1));
-        shortcuts.Add("Shift+Tab", _ => CycleSelectionAsync(0, -1));
-        shortcuts.Add("Shift+Enter", _ => CycleSelectionAsync(-1, 0));
-        shortcuts.Add("Shift+ArrowUp", _ => ExtendSelectionAsync(-1, 0));
-        shortcuts.Add("Shift+ArrowDown", _ => ExtendSelectionAsync(1, 0));
-        shortcuts.Add("Shift+ArrowLeft", _ => ExtendSelectionAsync(0, -1));
-        shortcuts.Add("Shift+ArrowRight", _ => ExtendSelectionAsync(0, 1));
-        shortcuts.Add("Ctrl+C", _ => CopySelectionAsync());
-        shortcuts.Add("Ctrl+Z", _ => UndoAsync());
-        shortcuts.Add("Ctrl+X", _ => CutSelectionAsync());
-        shortcuts.Add("Ctrl+Shift+Z", _ => RedoAsync());
-        shortcuts.Add("Delete", _ => DeleteSelectedAsync());
-        shortcuts.Add("Backspace", _ => DeleteSelectedAsync());
+        Bind("Enter", _ => CycleSelectionAsync(1, 0));
+        Bind("Escape", _ => CancelEditAsync());
+        Bind("Tab", _ => CycleSelectionAsync(0, 1));
+        Bind("ArrowUp", _ => MoveSelectionAsync(-1, 0));
+        Bind("ArrowDown", _ => MoveSelectionAsync(1, 0));
+        Bind("ArrowLeft", _ => MoveSelectionAsync(0, -1));
+        Bind("ArrowRight", _ => MoveSelectionAsync(0, 1));
+        Bind("Shift+Tab", _ => CycleSelectionAsync(0, -1));
+        Bind("Shift+Enter", _ => CycleSelectionAsync(-1, 0));
+        Bind("Shift+ArrowUp", _ => ExtendSelectionAsync(-1, 0));
+        Bind("Shift+ArrowDown", _ => ExtendSelectionAsync(1, 0));
+        Bind("Shift+ArrowLeft", _ => ExtendSelectionAsync(0, -1));
+        Bind("Shift+ArrowRight", _ => ExtendSelectionAsync(0, 1));
+        Bind("Home", _ => MoveToAsync(c => new CellRef(c.Row, 0)));
+        Bind("End", _ => MoveToAsync(c => new CellRef(c.Row, GetUsedEnd().Column)));
+        Bind("Ctrl+Home", _ => MoveToAsync(_ => new CellRef(0, 0)));
+        Bind("Ctrl+End", _ => MoveToAsync(_ => GetUsedEnd()));
+        Bind("Ctrl+A", _ => SelectUsedRangeAsync());
+        Bind("Shift+Home", _ => ExtendToAsync(c => new CellRef(c.Row, 0)));
+        Bind("Shift+End", _ => ExtendToAsync(c => new CellRef(c.Row, GetUsedEnd().Column)));
+        Bind("Ctrl+Shift+Home", _ => ExtendToAsync(_ => new CellRef(0, 0)));
+        Bind("Ctrl+Shift+End", _ => ExtendToAsync(_ => GetUsedEnd()));
+        Bind("Ctrl+ArrowUp", _ => MoveToAsync(c => FindEdge(c, -1, 0)));
+        Bind("Ctrl+ArrowDown", _ => MoveToAsync(c => FindEdge(c, 1, 0)));
+        Bind("Ctrl+ArrowLeft", _ => MoveToAsync(c => FindEdge(c, 0, -1)));
+        Bind("Ctrl+ArrowRight", _ => MoveToAsync(c => FindEdge(c, 0, 1)));
+        Bind("Ctrl+Shift+ArrowUp", _ => ExtendToAsync(c => FindEdge(c, -1, 0)));
+        Bind("Ctrl+Shift+ArrowDown", _ => ExtendToAsync(c => FindEdge(c, 1, 0)));
+        Bind("Ctrl+Shift+ArrowLeft", _ => ExtendToAsync(c => FindEdge(c, 0, -1)));
+        Bind("Ctrl+Shift+ArrowRight", _ => ExtendToAsync(c => FindEdge(c, 0, 1)));
+        Bind("Ctrl+Space", _ => SelectColumnAsync());
+        Bind("Shift+Space", _ => SelectRowAsync());
+        Bind("Shift+F10", _ => OpenContextMenuAtActiveCellAsync());
+        Bind("ContextMenu", _ => OpenContextMenuAtActiveCellAsync());
+        Bind("Ctrl+Alt+5", _ => EnterDrawingLayerAsync());
+        Bind("PageDown", _ => MoveSelectionAsync(PageRows, 0));
+        Bind("PageUp", _ => MoveSelectionAsync(-PageRows, 0));
+        Bind("Shift+PageDown", _ => ExtendSelectionAsync(PageRows, 0));
+        Bind("Shift+PageUp", _ => ExtendSelectionAsync(-PageRows, 0));
+        Bind("Ctrl+D", _ => FillAsync(down: true));
+        Bind("Ctrl+R", _ => FillAsync(down: false));
+        Bind("Ctrl+C", _ => CopySelectionAsync());
+        Bind("Ctrl+X", _ => CutSelectionAsync());
+        Bind("Delete", _ => DeleteSelectedAsync());
+        Bind("Backspace", _ => DeleteSelectedAsync());
+        Bind("F2", _ => StartEditActiveCellAsync());
+
+        // Global: act from any focused element so F6 can always cycle/return, and undo/redo and the
+        // shortcut help still work from the toolbar or formula bar.
+        Bind("F6", _ => FocusRegionAsync(true), global: true);
+        Bind("Shift+F6", _ => FocusRegionAsync(false), global: true);
+        Bind("Alt+Slash", _ => OpenShortcutsHelpAsync(), global: true);
+        Bind("Ctrl+Z", _ => UndoAsync(), global: true);
+        Bind("Ctrl+Shift+Z", _ => RedoAsync(), global: true);
+        Bind("Ctrl+Y", _ => RedoAsync(), global: true);
+    }
+
+    // One documented shortcut row: the key chords to display (split on " / " into badges by the
+    // dialog), the resx description key, and the registered binding keys it covers. The Bindings let
+    // a unit test assert every registered shortcut is documented, so the help cannot silently drift.
+    private readonly record struct HelpEntry(string Keys, string DescriptionKey, string[] Bindings);
+
+    // Ordered by priority - the most common navigation and editing keys first, with F6 region
+    // movement near the top as the primary keyboard/accessibility escape.
+    private static readonly HelpEntry[] ShortcutHelp =
+    [
+        new("Arrow keys", nameof(RadzenStrings.Spreadsheet_HelpMove), ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]),
+        new("Tab / Shift+Tab", nameof(RadzenStrings.Spreadsheet_HelpNextCell), ["Tab", "Shift+Tab"]),
+        new("Enter / Shift+Enter", nameof(RadzenStrings.Spreadsheet_HelpConfirmMove), ["Enter", "Shift+Enter"]),
+        new("F6 / Shift+F6", nameof(RadzenStrings.Spreadsheet_HelpRegions), ["F6", "Shift+F6"]),
+        new("F2", nameof(RadzenStrings.Spreadsheet_HelpEdit), ["F2"]),
+        new("Escape", nameof(RadzenStrings.Spreadsheet_HelpCancel), ["Escape"]),
+        new("Shift+Arrow keys", nameof(RadzenStrings.Spreadsheet_HelpExtend), ["Shift+ArrowUp", "Shift+ArrowDown", "Shift+ArrowLeft", "Shift+ArrowRight"]),
+        new("Ctrl+Arrow keys", nameof(RadzenStrings.Spreadsheet_HelpEdge), ["Ctrl+ArrowUp", "Ctrl+ArrowDown", "Ctrl+ArrowLeft", "Ctrl+ArrowRight"]),
+        new("Ctrl+Shift+Arrow keys", nameof(RadzenStrings.Spreadsheet_HelpExtendEdge), ["Ctrl+Shift+ArrowUp", "Ctrl+Shift+ArrowDown", "Ctrl+Shift+ArrowLeft", "Ctrl+Shift+ArrowRight"]),
+        new("Home / Ctrl+Home", nameof(RadzenStrings.Spreadsheet_HelpRowStart), ["Home", "Ctrl+Home"]),
+        new("End / Ctrl+End", nameof(RadzenStrings.Spreadsheet_HelpLastCell), ["End", "Ctrl+End"]),
+        new("Shift+Home / Shift+End", nameof(RadzenStrings.Spreadsheet_HelpExtendRow), ["Shift+Home", "Shift+End"]),
+        new("Ctrl+Shift+Home / Ctrl+Shift+End", nameof(RadzenStrings.Spreadsheet_HelpExtendSheet), ["Ctrl+Shift+Home", "Ctrl+Shift+End"]),
+        new("Page Up / Page Down", nameof(RadzenStrings.Spreadsheet_HelpPage), ["PageUp", "PageDown"]),
+        new("Shift+Page Up / Shift+Page Down", nameof(RadzenStrings.Spreadsheet_HelpExtendPage), ["Shift+PageUp", "Shift+PageDown"]),
+        new("Ctrl+A", nameof(RadzenStrings.Spreadsheet_HelpSelectAll), ["Ctrl+A"]),
+        new("Ctrl+Space", nameof(RadzenStrings.Spreadsheet_HelpSelectColumn), ["Ctrl+Space"]),
+        new("Shift+Space", nameof(RadzenStrings.Spreadsheet_HelpSelectRow), ["Shift+Space"]),
+        new("Ctrl+C / Ctrl+X / Ctrl+V", nameof(RadzenStrings.Spreadsheet_HelpClipboard), ["Ctrl+C", "Ctrl+X"]),
+        new("Ctrl+Z / Ctrl+Y", nameof(RadzenStrings.Spreadsheet_HelpUndoRedo), ["Ctrl+Z", "Ctrl+Shift+Z", "Ctrl+Y"]),
+        new("Ctrl+D / Ctrl+R", nameof(RadzenStrings.Spreadsheet_HelpFill), ["Ctrl+D", "Ctrl+R"]),
+        new("Delete", nameof(RadzenStrings.Spreadsheet_HelpClear), ["Delete", "Backspace"]),
+        new("Shift+F10", nameof(RadzenStrings.Spreadsheet_HelpContextMenu), ["Shift+F10", "ContextMenu"]),
+        new("Ctrl+Alt+5", nameof(RadzenStrings.Spreadsheet_HelpDrawings), ["Ctrl+Alt+5"]),
+        new("Alt+/", nameof(RadzenStrings.Spreadsheet_HelpShowShortcuts), ["Alt+Slash"]),
+    ];
+
+    // The keys actually bound, and the keys the help documents - compared by a drift-guard test.
+    internal IEnumerable<string> RegisteredShortcutKeys => shortcuts.Keys;
+    internal static IEnumerable<string> DocumentedShortcutKeys => ShortcutHelp.SelectMany(e => e.Bindings);
+
+    private async Task OpenShortcutsHelpAsync()
+    {
+        var rows = ShortcutHelp
+            .Select(e => new Spreadsheet.SpreadsheetShortcutsDialog.Shortcut(e.Keys, Localize(e.DescriptionKey)))
+            .ToList();
+
+        var parameters = new Dictionary<string, object?>
+        {
+            { nameof(Spreadsheet.SpreadsheetShortcutsDialog.Shortcuts), rows },
+            { nameof(Spreadsheet.SpreadsheetShortcutsDialog.ShortcutColumn), Localize(nameof(RadzenStrings.Spreadsheet_HelpShortcutColumn)) },
+            { nameof(Spreadsheet.SpreadsheetShortcutsDialog.ActionColumn), Localize(nameof(RadzenStrings.Spreadsheet_HelpActionColumn)) },
+            { nameof(Spreadsheet.SpreadsheetShortcutsDialog.FilterPlaceholder), Localize(nameof(RadzenStrings.Spreadsheet_HelpFilterPlaceholder)) },
+            { nameof(Spreadsheet.SpreadsheetShortcutsDialog.NoResultsText), Localize(nameof(RadzenStrings.Spreadsheet_HelpNoResults)) },
+        };
+
+        await OpenDialogAsync<Spreadsheet.SpreadsheetShortcutsDialog>(
+            Localize(nameof(RadzenStrings.Spreadsheet_HelpTitle)), parameters, new DialogOptions { Width = "600px" });
+    }
+
+    // Opens a dialog and returns focus to the grid after it closes (WCAG 2.4.3 focus order).
+    private async Task<dynamic?> OpenDialogAsync<[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.All)] T>(
+        string title, Dictionary<string, object?>? parameters = null, DialogOptions? options = null) where T : ComponentBase
+    {
+        var result = await DialogService.OpenAsync<T>(title, parameters, options);
+        await Element.FocusAsync();
+        return result;
+    }
+
+    private async Task FocusRegionAsync(bool forward)
+    {
+        if (jsRef is not null)
+        {
+            await jsRef.InvokeVoidAsync("focusAdjacent", forward);
+        }
+    }
+
+    private async Task StartEditActiveCellAsync()
+    {
+        if (Worksheet is null || Editor is null || !IsFeatureAllowed(SpreadsheetFeature.Editing))
+        {
+            return;
+        }
+
+        var address = Worksheet.MergedCells.GetMergedRangeStartOrSelf(Worksheet.Selection.Cell);
+        var cell = Worksheet.Cells[address];
+
+        if (cell != null)
+        {
+            await ScrollToAsync(address);
+            Editor.StartEdit(address, cell.GetValue());
+        }
     }
 
     private async Task DeleteSelectedAsync()
@@ -1114,7 +1762,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
         if (Worksheet is not null && Worksheet.IsCellEditable(Worksheet.Selection.Cell))
         {
-            await ExecuteAsync(new PasteCommand(clipboard, Worksheet, Worksheet.Selection.Cell, text));
+            await ExecuteAsync(new PasteCommand(clipboard, Worksheet, Worksheet.Selection.Range, text));
         }
     }
 
@@ -1446,14 +2094,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             text = await jsRef.InvokeAsync<string?>("readClipboardText");
         }
 
-        if (!string.IsNullOrEmpty(text))
-        {
-            await ExecuteAsync(new PasteCommand(clipboard, Worksheet, Worksheet.Selection.Cell, text));
-        }
-        else
-        {
-            await ExecuteAsync(new PasteCommand(clipboard, Worksheet, Worksheet.Selection.Cell, null));
-        }
+        await ExecuteAsync(new PasteCommand(clipboard, Worksheet, Worksheet.Selection.Range, text));
     }
 
     private IJSObjectReference? jsRef;
@@ -1465,7 +2106,9 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         if (firstRender && JSRuntime != null)
         {
             dotNetRef = DotNetObjectReference.Create(this);
-            jsRef = await JSRuntime.InvokeAsync<IJSObjectReference>("Radzen.createSpreadsheet", Element, dotNetRef, shortcuts.Keys);
+            // Serialize one map of key -> isGlobal; the JS gate needs nothing more than that.
+            jsRef = await JSRuntime.InvokeAsync<IJSObjectReference>("Radzen.createSpreadsheet", Element, dotNetRef,
+                shortcuts.ToDictionary(s => s.Key, s => s.Value.Global));
         }
     }
 
@@ -1904,13 +2547,35 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     /// Invoked by JS interop when a key is pressed down.
     /// </summary>
     [JSInvokable]
-    public async Task OnKeyDownAsync(KeyboardEventArgs args)
+    public async Task OnKeyDownAsync(KeyboardEventArgs args, bool isGridContext)
     {
         ArgumentNullException.ThrowIfNull(args);
-        if (shortcuts.TryGetValue(TranslateShortcut(args), out var action))
-        {
-            await action(args);
 
+        // When an image/chart is selected, the grid enters the drawing layer: arrows move it, Tab
+        // cycles, Esc returns to the grid. Keys the layer doesn't claim fall through to the cell keys.
+        if (isGridContext && Worksheet is not null &&
+            (Worksheet.SelectedImage is not null || Worksheet.SelectedChart is not null) &&
+            await TryHandleDrawingKeyAsync(args))
+        {
+            return;
+        }
+
+        var shortcut = TranslateShortcut(args);
+        if (shortcuts.TryGetValue(shortcut, out var entry))
+        {
+            // Grid-only shortcuts run only when focus is in the grid or its editor; global ones
+            // (F6 region escape, undo/redo) run from anywhere so the chrome stays operable.
+            if (isGridContext || entry.Global)
+            {
+                await entry.Action(args);
+            }
+
+            return;
+        }
+
+        // Type-to-edit only applies inside the grid - never when a toolbar/chrome control has focus.
+        if (!isGridContext)
+        {
             return;
         }
 
@@ -1924,7 +2589,14 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             return;
         }
 
-        var ch = args.Key == "Space" ? ' ' : args.Key[0];
+        // Only single-character keys are printable. This guards IME composition keys (e.g. "Process")
+        // and named keys like "Home"/"Enter" - the latter previously typed their first letter ("H").
+        if (args.Key.Length != 1)
+        {
+            return;
+        }
+
+        var ch = args.Key[0];
 
         if (char.IsLetterOrDigit(ch) || char.IsPunctuation(ch) || char.IsSymbol(ch) || char.IsSeparator(ch))
         {
@@ -2030,12 +2702,15 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         return Task.CompletedTask;
     }
 
+    internal const double MinColumnWidth = 24;
+    internal const double MinRowHeight = 16;
+
     private Task OnColumnResizePointerMoveAsync(ColumnResizeCapture capture, PointerEventArgs pointer)
     {
         if (Worksheet != null && capture.Column >= 0 && capture.Column < Worksheet.Columns.Count)
         {
             var delta = pointer.ClientX - capture.StartX;
-            var newWidth = Math.Max(24, capture.StartWidth + delta);
+            var newWidth = Math.Max(MinColumnWidth, capture.StartWidth + delta);
             Worksheet.Columns[capture.Column] = newWidth;
         }
 
@@ -2047,7 +2722,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         if (Worksheet != null && capture.Row >= 0 && capture.Row < Worksheet.Rows.Count)
         {
             var delta = pointer.ClientY - capture.StartY;
-            var newHeight = Math.Max(16, capture.StartHeight + delta);
+            var newHeight = Math.Max(MinRowHeight, capture.StartHeight + delta);
             Worksheet.Rows[capture.Row] = newHeight;
         }
 
@@ -2058,20 +2733,42 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     /// Invoked by JS interop when the pointer is released after resizing a column.
     /// </summary>
     [JSInvokable]
-    public Task OnColumnResizePointerUpAsync(PointerEventArgs args)
+    public async Task OnColumnResizePointerUpAsync(PointerEventArgs args)
     {
+        // The drag set the width live (non-undoable). On release, revert and re-apply via a command
+        // so the resize joins the undo stack as a single step.
+        if (activeCapture is ColumnResizeCapture capture && Worksheet != null &&
+            capture.Column >= 0 && capture.Column < Worksheet.Columns.Count)
+        {
+            var finalWidth = Worksheet.Columns[capture.Column];
+            if (finalWidth != capture.StartWidth)
+            {
+                Worksheet.Columns[capture.Column] = capture.StartWidth;
+                await ExecuteAsync(new ResizeColumnCommand(Worksheet, capture.Column, capture.StartWidth, finalWidth));
+            }
+        }
+
         activeCapture = null;
-        return Task.CompletedTask;
     }
 
     /// <summary>
     /// Invoked by JS interop when the pointer is released after resizing a row.
     /// </summary>
     [JSInvokable]
-    public Task OnRowResizePointerUpAsync(PointerEventArgs args)
+    public async Task OnRowResizePointerUpAsync(PointerEventArgs args)
     {
+        if (activeCapture is RowResizeCapture capture && Worksheet != null &&
+            capture.Row >= 0 && capture.Row < Worksheet.Rows.Count)
+        {
+            var finalHeight = Worksheet.Rows[capture.Row];
+            if (finalHeight != capture.StartHeight)
+            {
+                Worksheet.Rows[capture.Row] = capture.StartHeight;
+                await ExecuteAsync(new ResizeRowCommand(Worksheet, capture.Row, capture.StartHeight, finalHeight));
+            }
+        }
+
         activeCapture = null;
-        return Task.CompletedTask;
     }
 
     class ColumnResizeCapture
@@ -2453,6 +3150,177 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         }
 
         activeCapture = null;
+    }
+    /// <summary>
+    /// Invoked by JS interop when a column resize handle is double-clicked. Auto fits the column width to its displayed content.
+    /// </summary>
+    /// <param name="args">The column event arguments containing the target column index.</param>
+    [JSInvokable]
+    public async Task OnColumnResizeDoubleClickAsync(CellEventArgs args)
+    {
+        ArgumentNullException.ThrowIfNull(args);
+
+        if (!IsFeatureAllowed(SpreadsheetFeature.Resizing) || Worksheet == null || jsRef == null ||
+            args.Column < 0 || args.Column >= Worksheet.Columns.Count || Worksheet.Columns.IsHidden(args.Column))
+        {
+            return;
+        }
+
+        if (!await AcceptAsync())
+        {
+            return;
+        }
+
+        var items = GetAutoFitMeasureItems(Worksheet, args.Column);
+
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        double[]? widths;
+
+        try
+        {
+            widths = await jsRef.InvokeAsync<double[]>("measureTexts", items);
+        }
+        catch (Exception ex) when (ex is JSException or JSDisconnectedException or ObjectDisposedException or TaskCanceledException)
+        {
+            return;
+        }
+
+        if (widths is not { Length: > 0 })
+        {
+            return;
+        }
+
+        var maxWidth = widths.Max();
+
+        if (maxWidth <= 0)
+        {
+            return;
+        }
+
+        var targetWidth = Math.Clamp(maxWidth, MinColumnWidth, ColumnWidthConversion.MaxWidthInPixels);
+        var startWidth = Worksheet.Columns[args.Column];
+
+        if (startWidth != targetWidth || !Worksheet.Columns.IsAutoFit(args.Column))
+        {
+            await ExecuteAsync(new ResizeColumnCommand(Worksheet, args.Column, startWidth, targetWidth, isAutoFit: true));
+        }
+    }
+
+    private const int AutoFitMaxTextLength = 1000;
+    private const int AutoFitCandidatesPerFontGroup = 20;
+    private const int AutoFitMaxMeasureItems = 200;
+
+    private static List<TextMeasureItem> GetAutoFitMeasureItems(Worksheet sheet, int column)
+    {
+        // Snapshot: computing effective formats can populate cells in the store.
+        var cells = sheet.Cells.GetPopulatedCells().Where(cell => cell.Address.Column == column).ToList();
+
+        var conditionalRanges = sheet.ConditionalFormats.Ranges
+            .Where(range => range.Start.Column <= column && column <= range.End.Column)
+            .ToList();
+
+        var seen = new HashSet<(string, bool, bool, double?, string?)>();
+        var candidates = new List<(Cell Cell, string Text, (bool Bold, bool Italic, double? FontSize, string? FontFamily) Font)>();
+
+        foreach (var cell in cells)
+        {
+            if (sheet.MergedCells.Contains(cell.Address))
+            {
+                continue;
+            }
+
+            string? text;
+
+            try
+            {
+                text = cell.GetDisplayText();
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                continue;
+            }
+
+            if (string.IsNullOrEmpty(text))
+            {
+                continue;
+            }
+
+            var format = cell.FormatOrNull;
+
+            text = ExcelTextMetrics.DisplayLine(text, format?.WrapText == true);
+
+            if (text.Length > AutoFitMaxTextLength)
+            {
+                text = text[..AutoFitMaxTextLength];
+            }
+
+            var font = (format?.Bold == true, format?.Italic == true, format?.FontSize, format?.FontFamily);
+
+            // Conditionally formatted cells are exempt from dedupe - an unstyled twin must not replace them.
+            var conditional = conditionalRanges.Any(range => range.Contains(cell.Address));
+
+            if (!conditional && !seen.Add((text, font.Item1, font.Item2, font.Item3, font.Item4)))
+            {
+                continue;
+            }
+
+            candidates.Add((cell, text, font));
+        }
+
+        var survivors = candidates
+            .GroupBy(candidate => candidate.Font)
+            .SelectMany(group => group.OrderByDescending(candidate => candidate.Text.Length).Take(AutoFitCandidatesPerFontGroup));
+
+        var items = new List<TextMeasureItem>();
+
+        foreach (var (cell, text, font) in survivors)
+        {
+            var (bold, italic, fontSize, fontFamily) = font;
+
+            if (conditionalRanges.Count > 0)
+            {
+                Format? effective;
+
+                try
+                {
+                    effective = cell.GetEffectiveFormat();
+                }
+                catch (ArgumentOutOfRangeException)
+                {
+                    continue;
+                }
+
+                bold = effective?.Bold == true;
+                italic = effective?.Italic == true;
+                fontSize = effective?.FontSize;
+                fontFamily = effective?.FontFamily;
+            }
+
+            if (fontSize is { } size && !double.IsFinite(size))
+            {
+                fontSize = null;
+            }
+
+            items.Add(new TextMeasureItem
+            {
+                Text = text,
+                Bold = bold,
+                Italic = italic,
+                FontSize = fontSize,
+                FontFamily = fontFamily
+            });
+        }
+
+        if (items.Count > AutoFitMaxMeasureItems)
+        {
+            items = items.OrderByDescending(item => item.Text.Length).Take(AutoFitMaxMeasureItems).ToList();
+        }
+
+        return items;
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()

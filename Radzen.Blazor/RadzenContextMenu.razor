@@ -14,7 +14,7 @@
         else if (menu?.Options?.Items != null && menu.Options.Items.Any())
         {
             <div class="rz-context-menu">
-                <RadzenMenu Click="@(args => { if (menu?.Options?.Click != null) { menu.Options.Click(args); } })" Responsive="false">
+                <RadzenMenu Click="@(args => { if (menu?.Options?.Click != null) { menu.Options.Click(args); } })" Close="@(() => Service!.Close())" Responsive="false" IsContextMenu="true">
                     @foreach (var item in menu.Options.Items)
                     {
                         @if(item is ContextMenuSeparator) {

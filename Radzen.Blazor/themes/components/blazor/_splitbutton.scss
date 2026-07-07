@@ -7,6 +7,7 @@ $splitbutton-sizes: xs, sm, md, lg;
 .rz-splitbutton {
   box-sizing: border-box;
   display: inline-flex;
+  border-radius: var(--rz-button-border-radius);
 
   .rz-button-icon-only {
     .rz-button-text {
@@ -40,6 +41,10 @@ $splitbutton-sizes: xs, sm, md, lg;
   list-style: none;
   padding: 0;
   margin: 0;
+
+  &:focus {
+    outline: none;
+  }
 }
 
 .rz-menuitem {

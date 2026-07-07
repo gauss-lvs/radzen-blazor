@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Components.Web;
 using System.Collections.Generic;
 using System;
+using System.Linq;
 using Radzen.Blazor.Rendering;
 
 namespace Radzen.Blazor
@@ -235,6 +236,30 @@ namespace Radzen.Blazor
             }
         }
 
+        /// <summary>
+        /// Opens the dropdown popup programmatically.
+        /// </summary>
+        public Task OpenPopup()
+        {
+            return OpenPopup("ArrowDown", false, false);
+        }
+
+        /// <summary>
+        /// Closes the dropdown popup programmatically.
+        /// </summary>
+        public Task ClosePopup()
+        {
+            return ClosePopup(string.Empty);
+        }
+
+        /// <summary>
+        /// Toggles the dropdown popup, opening it if it is closed and closing it if it is open.
+        /// </summary>
+        public Task TogglePopup()
+        {
+            return isOpen ? ClosePopup() : OpenPopup();
+        }
+
         internal override void RenderItem(RenderTreeBuilder builder, object item)
         {
             builder.OpenComponent(0, typeof(RadzenDropDownItem<TValue>));
@@ -297,6 +322,29 @@ namespace Radzen.Blazor
         /// <value>The select all text.</value>
         [Parameter]
         public string SelectAllText { get; set; } = string.Empty;
+
+        internal string? SelectedAriaLabel
+        {
+            get
+            {
+                if (!Multiple)
+                {
+                    return selectedItem != null ? $"{GetItemOrValueFromProperty(selectedItem, TextProperty ?? string.Empty)}" : EmptyAriaLabel;
+                }
+
+                if (selectedItems.Count == 0)
+                {
+                    return EmptyAriaLabel;
+                }
+
+                if (selectedItems.Count < MaxSelectedLabels)
+                {
+                    return string.Join(Separator, selectedItems.Select(i => $"{GetItemOrValueFromProperty(i, TextProperty ?? string.Empty)}"));
+                }
+
+                return $"{selectedItems.Count} {SelectedItemsText}";
+            }
+        }
 
         /// <summary>
         /// Callback for when a dropdown is opened.
@@ -402,12 +450,11 @@ namespace Radzen.Blazor
             if (!ReadOnly)
             {
                 var wasOpen = isOpen;
-                var wasPreventKeydown = preventKeydown;
 
                 await base.HandleKeyPress(args, isFilter, shouldSelectOnChange);
 
                 var key = args.Code ?? args.Key;
-                if (key == "Tab" && (wasOpen || wasPreventKeydown) && JSRuntime != null)
+                if (key == "Tab" && isFilter && wasOpen && JSRuntime != null)
                 {
                     await JSRuntime.InvokeVoidAsync("Radzen.focusNext", Element, args.ShiftKey);
                 }

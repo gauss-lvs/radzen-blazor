@@ -183,6 +183,8 @@ namespace Radzen.Blazor
 
         List<TItem> virtualDataItems = new List<TItem>();
 
+        int virtualItemsStartIndex;
+
         /// <summary>
         /// Clears the internal data cache and refreshes the DataGrid, reloading data from the source.
         /// When virtualization is enabled, this method refreshes the Virtualize component. Otherwise, it triggers a standard reload.
@@ -239,6 +241,8 @@ namespace Radzen.Blazor
             var totalItemsCount = (LoadData.HasDelegate ? Count : view.Count()) + itemsToInsert.Count;
 
             virtualDataItems = (LoadData.HasDelegate ? (itemsToInsert.Count > 0 ? itemsToInsert.ToList().Concat(Data ?? Enumerable.Empty<TItem>()) : Data) : itemsToInsert.Count > 0 ? itemsToInsert.ToList().Concat(view.Skip(request.StartIndex).Take(top)) : view.Skip(request.StartIndex).Take(top))?.ToList() ?? new List<TItem>();
+
+            virtualItemsStartIndex = request.StartIndex;
 
             return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TItem>(virtualDataItems, totalItemsCount);
         }
@@ -403,26 +407,32 @@ namespace Radzen.Blazor
         [Parameter]
         public EventCallback<Radzen.DataGridLoadChildDataEventArgs<TItem>> LoadChildData { get; set; }
 
+        private string? expandChildItemAriaLabel;
+
         /// <summary>
         /// Gets or sets the expand child item aria label text.
         /// </summary>
         /// <value>The expand child item aria label text.</value>
         [Parameter]
-        public string? ExpandChildItemAriaLabel { get; set; } = "Expand child item";
+        public string? ExpandChildItemAriaLabel { get => expandChildItemAriaLabel ?? Localize(nameof(RadzenStrings.DataGrid_ExpandChildItemAriaLabel)); set => expandChildItemAriaLabel = value; }
+
+        private string? expandGroupAriaLabel;
 
         /// <summary>
         /// Gets or sets the expand group aria label text.
         /// </summary>
         /// <value>The expand group aria label text.</value>
         [Parameter]
-        public string? ExpandGroupAriaLabel { get; set; } = "Expand group";
+        public string? ExpandGroupAriaLabel { get => expandGroupAriaLabel ?? Localize(nameof(RadzenStrings.DataGrid_ExpandGroupAriaLabel)); set => expandGroupAriaLabel = value; }
+
+        private string? filterToggleAriaLabel;
 
         /// <summary>
         /// Gets or sets the date simple filter toggle aria label text.
         /// </summary>
         /// <value>The date simple filter toggle aria label text.</value>
         [Parameter]
-        public string? FilterToggleAriaLabel { get; set; } = "Toggle";
+        public string? FilterToggleAriaLabel { get => filterToggleAriaLabel ?? Localize(nameof(RadzenStrings.DataGrid_FilterToggleAriaLabel)); set => filterToggleAriaLabel = value; }
 
         /// <summary>
         /// Gets or sets a value indicating whether DataGrid data cells will follow the header cells structure in composite columns.
@@ -609,15 +619,32 @@ namespace Radzen.Blazor
         int focusedIndex = -1;
         int focusedCellIndex;
 
+        internal Func<bool>? HasActiveDescendant { get; set; }
+
+        bool hasActiveRow;
+
         internal string? GetActiveDescendantId()
         {
-            return $"{GetId()}-active-item";
+            if (HasActiveDescendant != null)
+            {
+                return HasActiveDescendant() ? $"{GetId()}-active-item" : null;
+            }
+
+            return hasActiveRow ? $"{GetId()}-active-item" : null;
         }
 
         internal string? GridId()
         {
             return GetId();
         }
+
+        /// <summary>
+        /// Gets or sets the tabindex applied to the grid element. Set to <c>0</c> by default so the grid is a tab stop.
+        /// Embedding components can set it to <c>-1</c> to remove the grid from the tab order.
+        /// </summary>
+        /// <value>The tabindex of the grid element.</value>
+        [Parameter]
+        public int TabIndex { get; set; }
 
         async Task FocusRow(string key)
         {
@@ -628,6 +655,7 @@ namespace Radzen.Blazor
                     var result = await JSRuntime.InvokeAsync<int[]>("Radzen.focusTableRow", UniqueID, key, focusedIndex, focusedCellIndex, IsVirtualizationAllowed());
                     focusedIndex = result[0];
                     focusedCellIndex = result[1];
+                    hasActiveRow = true;
                 }
             }
             catch (Exception)
@@ -705,7 +733,7 @@ namespace Radzen.Blazor
 
                 await FocusRow(key);
             }
-            else if (IsVirtualizationAllowed() && (key == "PageUp" || key == "PageDown" || key == "Home" || key == "End"))
+            else if (key == "PageUp" || key == "PageDown" || key == "Home" || key == "End")
             {
                 preventKeyDown = true;
                 stopKeydownPropagation = true;
@@ -813,6 +841,21 @@ namespace Radzen.Blazor
         public RenderFragment? FooterTemplate { get; set; }
 
         internal object? selectedColumns;
+
+        RadzenDropDownDataGrid<object>? columnPickerGrid;
+
+        IEnumerable<object> SelectedPickableColumns => selectedColumns as IEnumerable<object> ?? Enumerable.Empty<object>();
+
+        bool? AllColumnsPickerState => !SelectedPickableColumns.Any()
+            ? false
+            : SelectedPickableColumns.Count() >= allPickableColumns.Count ? true : (bool?)null;
+
+        async Task ToggleAllColumnsPicker()
+        {
+            var allSelected = SelectedPickableColumns.Count() >= allPickableColumns.Count;
+            selectedColumns = allSelected ? new List<object>() : allPickableColumns.Cast<object>().ToList();
+            await ToggleColumns();
+        }
 
         /// <summary>
         /// Gets or sets the columns.
@@ -1712,6 +1755,13 @@ namespace Radzen.Blazor
         /// <value><c>true</c> if column picking is allowed; otherwise, <c>false</c>.</value>
         [Parameter]
         public bool AllowColumnPicking { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether sorting in column picker is allowed.
+        /// </summary>
+        /// <value><c>true</c> if sorting in column picker is allowed; otherwise, <c>false</c>.</value>
+        [Parameter]
+        public bool AllowSortingColumnPicker { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether cell data should be shown as tooltip.
@@ -2743,6 +2793,46 @@ namespace Radzen.Blazor
             var isInEditMode = IsRowInEditMode(item) ? "rz-datatable-edit" : "";
 
             return (RowSelect.HasDelegate || ValueChanged.HasDelegate || SelectionMode == DataGridSelectionMode.Multiple) && selectedItems.Keys.Any(i => ItemEquals(i, item)) ? $"rz-state-highlight rz-data-row {isInEditMode} " : $"rz-data-row {isInEditMode} ";
+        }
+
+        internal string? RowAriaSelected(TItem item, int index)
+        {
+            if (!(RowSelect.HasDelegate || ValueChanged.HasDelegate || SelectionMode == DataGridSelectionMode.Multiple))
+            {
+                return null;
+            }
+
+            return selectedItems.Keys.Any(i => ItemEquals(i, item)) ? "true" : "false";
+        }
+
+        int HeaderRowCount()
+        {
+            return (ShowHeader ? deepestChildColumnLevel + 1 : 0) + (FilterRowActive ? 1 : 0);
+        }
+
+        internal string? GridAriaRowCount()
+        {
+            return IsVirtualizationAllowed() && Groups.Count == 0 ? (Count + HeaderRowCount()).ToString(CultureInfo.InvariantCulture) : null;
+        }
+
+        internal string? RowAriaRowIndex(int index)
+        {
+            return IsVirtualizationAllowed() && Groups.Count == 0 ? (virtualItemsStartIndex + index + HeaderRowCount() + 1).ToString(CultureInfo.InvariantCulture) : null;
+        }
+
+        internal string? RowAriaLevel(TItem item)
+        {
+            if (!LoadChildData.HasDelegate)
+            {
+                return null;
+            }
+
+            var child = childData.Count > 0 ? childData.Where(c => c.Value?.Data?.Contains(item) == true).FirstOrDefault() :
+                default(KeyValuePair<TItem, DataGridChildData<TItem>>);
+
+            var level = !object.Equals(child, default(KeyValuePair<TItem, DataGridChildData<TItem>>)) ? child.Value.Level : 0;
+
+            return (level + 1).ToString(CultureInfo.InvariantCulture);
         }
 
         internal Tuple<Radzen.RowRenderEventArgs<TItem>, IReadOnlyDictionary<string, object>> RowAttributes(TItem item, int index)

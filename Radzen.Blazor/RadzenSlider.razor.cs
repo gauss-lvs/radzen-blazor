@@ -242,6 +242,32 @@ namespace Radzen.Blazor
         [Parameter]
         public Orientation Orientation { get; set; } = Orientation.Horizontal;
 
+        private string? handleLabel;
+
+        /// <summary>
+        /// Gets or sets the accessible name (aria-label) for the handle of a single-value slider.
+        /// </summary>
+        [Parameter]
+        public string HandleLabel { get => handleLabel ?? Localize(nameof(RadzenStrings.Slider_HandleLabel)); set => handleLabel = value; }
+
+        private string? minHandleLabel;
+
+        /// <summary>
+        /// Gets or sets the accessible name (aria-label) for the minimum handle of a range slider.
+        /// </summary>
+        [Parameter]
+        public string MinHandleLabel { get => minHandleLabel ?? Localize(nameof(RadzenStrings.Slider_MinHandleLabel)); set => minHandleLabel = value; }
+
+        private string? maxHandleLabel;
+
+        /// <summary>
+        /// Gets or sets the accessible name (aria-label) for the maximum handle of a range slider.
+        /// </summary>
+        [Parameter]
+        public string MaxHandleLabel { get => maxHandleLabel ?? Localize(nameof(RadzenStrings.Slider_MaxHandleLabel)); set => maxHandleLabel = value; }
+
+        string OrientationAttribute => Orientation == Orientation.Vertical ? "vertical" : "horizontal";
+
         /// <summary>
         /// Gets or sets the value.
         /// </summary>
@@ -373,28 +399,41 @@ namespace Radzen.Blazor
         {
             var key = args?.Code ?? args?.Key;
 
-            if (Orientation == Orientation.Horizontal ? key == "ArrowLeft" || key == "ArrowRight" : key == "ArrowUp" || key == "ArrowDown")
+            var isDecrement = key == "ArrowLeft" || key == "ArrowDown";
+            var isIncrement = key == "ArrowRight" || key == "ArrowUp";
+            var isHome = key == "Home";
+            var isEnd = key == "End";
+
+            if (isDecrement || isIncrement || isHome || isEnd)
             {
                 stopKeydownPropagation = true;
                 preventKeyPress = true;
 
                 var step = string.IsNullOrEmpty(Step) || Step == "any" ? 1 : decimal.Parse(Step.Replace(",", ".", StringComparison.Ordinal), System.Globalization.CultureInfo.InvariantCulture);
 
-                if (Range)
+                if (isHome)
+                {
+                    await OnValueChange(Min, isMin);
+                }
+                else if (isEnd)
+                {
+                    await OnValueChange(Max, isMin);
+                }
+                else if (Range)
                 {
                     var oldMinValue = Value != null ? ((IEnumerable)Value).OfType<object>().FirstOrDefault() : null;
                     var oldMaxValue = Value != null ? ((IEnumerable)Value).OfType<object>().LastOrDefault() : null;
                     var oldMinValueAsDecimal = oldMinValue != null ? (decimal)(ConvertType.ChangeType(oldMinValue, typeof(decimal)) ?? 0) : 0;
                     var oldMaxValueAsDecimal = oldMaxValue != null ? (decimal)(ConvertType.ChangeType(oldMaxValue, typeof(decimal)) ?? 0) : 0;
 
-                    await OnValueChange((isMin ? oldMinValueAsDecimal : oldMaxValueAsDecimal) + (key == "ArrowLeft" || key == "ArrowDown" ? -step : step), isMin);
+                    await OnValueChange((isMin ? oldMinValueAsDecimal : oldMaxValueAsDecimal) + (isDecrement ? -step : step), isMin);
                 }
                 else
                 {
                     var valueChanged = Value != null ? ConvertType.ChangeType(Value, typeof(decimal)) : null;
                     var valueAsDecimal = valueChanged != null ? (decimal)valueChanged : 0;
 
-                    await OnValueChange(valueAsDecimal + (key == "ArrowLeft" || key == "ArrowDown" ? -step : step), isMin);
+                    await OnValueChange(valueAsDecimal + (isDecrement ? -step : step), isMin);
                 }
             }
             else

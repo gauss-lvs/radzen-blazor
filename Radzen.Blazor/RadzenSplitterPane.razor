@@ -26,7 +26,10 @@
             @if (IsCollapsible)
             {
                 <span tabindex="0" class="rz-collapse" id="@(GetId() + "-collapse")"
-                    @onkeypress="@(args => OnKeyPress(args, false))" @onkeypress:preventDefault=preventKeyPress @onkeypress:stopPropagation=stopKeypressPropagation
+                    role="button"
+                    aria-label="@CollapseAriaLabel"
+                    aria-expanded="@AriaExpanded"
+                    @onkeydown="@(args => OnKeyPress(args, false))" @onkeydown:preventDefault=preventKeyPress @onkeydown:stopPropagation=stopKeypressPropagation
                     @onmousedown:preventDefault="true" @onmousedown:stopPropagation="true" @onmousedown=@(args => Splitter!.OnCollapse(Index))>
                 </span>
             }
@@ -34,6 +37,14 @@
             @if (IsResizable)
             {
                 <span tabindex="0" class="rz-resize" id="@(GetId() + "-resize")"
+                    role="separator"
+                    aria-orientation="@AriaOrientation"
+                    aria-controls="@AriaControls"
+                    aria-labelledby="@AriaLabelledBy"
+                    aria-label="@AriaLabel"
+                    aria-valuenow="@AriaValueNow.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                    aria-valuemin="@AriaValueMin.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                    aria-valuemax="@AriaValueMax.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                     @onkeydown="@(args => OnKeyPress(args))" @onkeydown:preventDefault=preventKeyPress @onkeydown:stopPropagation=stopKeydownPropagation>
                 </span>
             }
@@ -41,7 +52,10 @@
             @if (IsExpandable)
             {
                 <span tabindex="0" class="rz-expand" id="@(GetId() + "-expand")"
-                    @onkeypress="@(args => OnKeyPress(args, true))" @onkeypress:preventDefault=preventKeyPress @onkeypress:stopPropagation=stopKeypressPropagation
+                    role="button"
+                    aria-label="@ExpandAriaLabel"
+                    aria-expanded="@AriaExpanded"
+                    @onkeydown="@(args => OnKeyPress(args, true))" @onkeydown:preventDefault=preventKeyPress @onkeydown:stopPropagation=stopKeypressPropagation
                     @onmousedown:preventDefault="true" @onmousedown:stopPropagation="true" @onmousedown=@(args => Splitter!.OnExpand(Index))>
                 </span>
             }

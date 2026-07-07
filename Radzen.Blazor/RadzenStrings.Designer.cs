@@ -299,8 +299,12 @@ namespace Radzen.Blazor {
         public static string AIChat_EmptyMessage { get { return ResourceManager.GetString("AIChat_EmptyMessage", resourceCulture); } }
         public static string AIChat_UserAvatarText { get { return ResourceManager.GetString("AIChat_UserAvatarText", resourceCulture); } }
         public static string AIChat_AssistantAvatarText { get { return ResourceManager.GetString("AIChat_AssistantAvatarText", resourceCulture); } }
+        public static string Alert_CloseAriaLabel { get { return ResourceManager.GetString("Alert_CloseAriaLabel", resourceCulture); } }
         public static string Button_ImageAlternateText { get { return ResourceManager.GetString("Button_ImageAlternateText", resourceCulture); } }
         public static string Carousel_PagerButtonAriaLabelFormat { get { return ResourceManager.GetString("Carousel_PagerButtonAriaLabelFormat", resourceCulture); } }
+        public static string Carousel_PrevAriaLabel { get { return ResourceManager.GetString("Carousel_PrevAriaLabel", resourceCulture); } }
+        public static string Carousel_NextAriaLabel { get { return ResourceManager.GetString("Carousel_NextAriaLabel", resourceCulture); } }
+        public static string Carousel_SlideAriaLabelFormat { get { return ResourceManager.GetString("Carousel_SlideAriaLabelFormat", resourceCulture); } }
         public static string Chat_Placeholder { get { return ResourceManager.GetString("Chat_Placeholder", resourceCulture); } }
         public static string Chat_EmptyMessage { get { return ResourceManager.GetString("Chat_EmptyMessage", resourceCulture); } }
         public static string Chat_NewMessagesText { get { return ResourceManager.GetString("Chat_NewMessagesText", resourceCulture); } }
@@ -314,6 +318,10 @@ namespace Radzen.Blazor {
         public static string ColorPicker_BlueText { get { return ResourceManager.GetString("ColorPicker_BlueText", resourceCulture); } }
         public static string ColorPicker_AlphaText { get { return ResourceManager.GetString("ColorPicker_AlphaText", resourceCulture); } }
         public static string ColorPicker_ButtonText { get { return ResourceManager.GetString("ColorPicker_ButtonText", resourceCulture); } }
+        public static string ColorPicker_HueAriaLabel { get { return ResourceManager.GetString("ColorPicker_HueAriaLabel", resourceCulture); } }
+        public static string ColorPicker_AlphaAriaLabel { get { return ResourceManager.GetString("ColorPicker_AlphaAriaLabel", resourceCulture); } }
+        public static string ColorPicker_SaturationAriaLabel { get { return ResourceManager.GetString("ColorPicker_SaturationAriaLabel", resourceCulture); } }
+        public static string ColorPicker_SaturationValueTextFormat { get { return ResourceManager.GetString("ColorPicker_SaturationValueTextFormat", resourceCulture); } }
         public static string DataAnnotationValidator_MessageSeparator { get { return ResourceManager.GetString("DataAnnotationValidator_MessageSeparator", resourceCulture); } }
         public static string DataFilter_FilterText { get { return ResourceManager.GetString("DataFilter_FilterText", resourceCulture); } }
         public static string DataFilter_EnumFilterSelectText { get { return ResourceManager.GetString("DataFilter_EnumFilterSelectText", resourceCulture); } }
@@ -341,6 +349,9 @@ namespace Radzen.Blazor {
         public static string DataFilter_IsEmptyText { get { return ResourceManager.GetString("DataFilter_IsEmptyText", resourceCulture); } }
         public static string DataFilter_IsNotEmptyText { get { return ResourceManager.GetString("DataFilter_IsNotEmptyText", resourceCulture); } }
         public static string DataFilter_CustomText { get { return ResourceManager.GetString("DataFilter_CustomText", resourceCulture); } }
+        public static string DataFilter_PropertyAriaLabel { get { return ResourceManager.GetString("DataFilter_PropertyAriaLabel", resourceCulture); } }
+        public static string DataFilter_FilterOperatorAriaLabel { get { return ResourceManager.GetString("DataFilter_FilterOperatorAriaLabel", resourceCulture); } }
+        public static string DataFilter_FilterValueAriaLabel { get { return ResourceManager.GetString("DataFilter_FilterValueAriaLabel", resourceCulture); } }
         public static string DataGrid_FilterText { get { return ResourceManager.GetString("DataGrid_FilterText", resourceCulture); } }
         public static string DataGrid_EnumFilterSelectText { get { return ResourceManager.GetString("DataGrid_EnumFilterSelectText", resourceCulture); } }
         public static string DataGrid_EnumNullFilterText { get { return ResourceManager.GetString("DataGrid_EnumNullFilterText", resourceCulture); } }
@@ -519,6 +530,8 @@ namespace Radzen.Blazor {
         public static string PickList_SelectedSourceToTargetTitle { get { return ResourceManager.GetString("PickList_SelectedSourceToTargetTitle", resourceCulture); } }
         public static string PickList_TargetToSourceTitle { get { return ResourceManager.GetString("PickList_TargetToSourceTitle", resourceCulture); } }
         public static string PickList_SelectedTargetToSourceTitle { get { return ResourceManager.GetString("PickList_SelectedTargetToSourceTitle", resourceCulture); } }
+        public static string PickList_SourceAriaLabel { get { return ResourceManager.GetString("PickList_SourceAriaLabel", resourceCulture); } }
+        public static string PickList_TargetAriaLabel { get { return ResourceManager.GetString("PickList_TargetAriaLabel", resourceCulture); } }
         public static string PivotDataGrid_EmptyText { get { return ResourceManager.GetString("PivotDataGrid_EmptyText", resourceCulture); } }
         public static string PivotDataGrid_FieldsPickerHeaderText { get { return ResourceManager.GetString("PivotDataGrid_FieldsPickerHeaderText", resourceCulture); } }
         public static string PivotDataGrid_RowsText { get { return ResourceManager.GetString("PivotDataGrid_RowsText", resourceCulture); } }
@@ -555,6 +568,7 @@ namespace Radzen.Blazor {
         public static string PivotDataGrid_CustomText { get { return ResourceManager.GetString("PivotDataGrid_CustomText", resourceCulture); } }
         public static string ProfileMenu_ToggleAriaLabel { get { return ResourceManager.GetString("ProfileMenu_ToggleAriaLabel", resourceCulture); } }
         public static string ProfileMenuItem_ImageAlternateText { get { return ResourceManager.GetString("ProfileMenuItem_ImageAlternateText", resourceCulture); } }
+        public static string Rating_AriaLabel { get { return ResourceManager.GetString("Rating_AriaLabel", resourceCulture); } }
         public static string Rating_ClearAriaLabel { get { return ResourceManager.GetString("Rating_ClearAriaLabel", resourceCulture); } }
         public static string Rating_RateAriaLabel { get { return ResourceManager.GetString("Rating_RateAriaLabel", resourceCulture); } }
         public static string SankeyDiagram_ValueText { get { return ResourceManager.GetString("SankeyDiagram_ValueText", resourceCulture); } }
@@ -564,6 +578,8 @@ namespace Radzen.Blazor {
         public static string Scheduler_TodayText { get { return ResourceManager.GetString("Scheduler_TodayText", resourceCulture); } }
         public static string Scheduler_NextText { get { return ResourceManager.GetString("Scheduler_NextText", resourceCulture); } }
         public static string Scheduler_PrevText { get { return ResourceManager.GetString("Scheduler_PrevText", resourceCulture); } }
+        public static string SecurityCode_AriaLabel { get { return ResourceManager.GetString("SecurityCode_AriaLabel", resourceCulture); } }
+        public static string SecurityCode_InputAriaLabelFormat { get { return ResourceManager.GetString("SecurityCode_InputAriaLabelFormat", resourceCulture); } }
         public static string SidebarToggle_ToggleAriaLabel { get { return ResourceManager.GetString("SidebarToggle_ToggleAriaLabel", resourceCulture); } }
         public static string SignaturePad_ClearAriaLabel { get { return ResourceManager.GetString("SignaturePad_ClearAriaLabel", resourceCulture); } }
         public static string SpeechToTextButton_Title { get { return ResourceManager.GetString("SpeechToTextButton_Title", resourceCulture); } }
@@ -571,6 +587,9 @@ namespace Radzen.Blazor {
         public static string SplitButton_ImageAlternateText { get { return ResourceManager.GetString("SplitButton_ImageAlternateText", resourceCulture); } }
         public static string SplitButton_OpenAriaLabel { get { return ResourceManager.GetString("SplitButton_OpenAriaLabel", resourceCulture); } }
         public static string SplitButton_ButtonAriaLabel { get { return ResourceManager.GetString("SplitButton_ButtonAriaLabel", resourceCulture); } }
+        public static string Splitter_ResizeAriaLabel { get { return ResourceManager.GetString("Splitter_ResizeAriaLabel", resourceCulture); } }
+        public static string Splitter_CollapseAriaLabel { get { return ResourceManager.GetString("Splitter_CollapseAriaLabel", resourceCulture); } }
+        public static string Splitter_ExpandAriaLabel { get { return ResourceManager.GetString("Splitter_ExpandAriaLabel", resourceCulture); } }
         public static string TimeSpanPicker_TogglePopupAriaLabel { get { return ResourceManager.GetString("TimeSpanPicker_TogglePopupAriaLabel", resourceCulture); } }
         public static string TimeSpanPicker_PopupAriaLabel { get { return ResourceManager.GetString("TimeSpanPicker_PopupAriaLabel", resourceCulture); } }
         public static string TimeSpanPicker_ClearAriaLabel { get { return ResourceManager.GetString("TimeSpanPicker_ClearAriaLabel", resourceCulture); } }
@@ -584,6 +603,7 @@ namespace Radzen.Blazor {
         public static string TimeSpanPicker_SecondsUnitText { get { return ResourceManager.GetString("TimeSpanPicker_SecondsUnitText", resourceCulture); } }
         public static string TimeSpanPicker_MillisecondsUnitText { get { return ResourceManager.GetString("TimeSpanPicker_MillisecondsUnitText", resourceCulture); } }
         public static string TimeSpanPicker_MicrosecondsUnitText { get { return ResourceManager.GetString("TimeSpanPicker_MicrosecondsUnitText", resourceCulture); } }
+        public static string Text_AnchorAriaLabel { get { return ResourceManager.GetString("Text_AnchorAriaLabel", resourceCulture); } }
         public static string Upload_ImageAlternateText { get { return ResourceManager.GetString("Upload_ImageAlternateText", resourceCulture); } }
         public static string Upload_ChooseText { get { return ResourceManager.GetString("Upload_ChooseText", resourceCulture); } }
         public static string Upload_DeleteText { get { return ResourceManager.GetString("Upload_DeleteText", resourceCulture); } }
@@ -592,5 +612,152 @@ namespace Radzen.Blazor {
         public static string YearView_MoreText { get { return ResourceManager.GetString("YearView_MoreText", resourceCulture); } }
         public static string YearView_NoDayEventsText { get { return ResourceManager.GetString("YearView_NoDayEventsText", resourceCulture); } }
         public static string DataList_EmptyText { get { return ResourceManager.GetString("DataList_EmptyText", resourceCulture); } }
+        public static string Spreadsheet_Bold { get { return ResourceManager.GetString("Spreadsheet_Bold", resourceCulture); } }
+        public static string Spreadsheet_Italic { get { return ResourceManager.GetString("Spreadsheet_Italic", resourceCulture); } }
+        public static string Spreadsheet_Underline { get { return ResourceManager.GetString("Spreadsheet_Underline", resourceCulture); } }
+        public static string Spreadsheet_Strikethrough { get { return ResourceManager.GetString("Spreadsheet_Strikethrough", resourceCulture); } }
+        public static string Spreadsheet_Undo { get { return ResourceManager.GetString("Spreadsheet_Undo", resourceCulture); } }
+        public static string Spreadsheet_Redo { get { return ResourceManager.GetString("Spreadsheet_Redo", resourceCulture); } }
+        public static string Spreadsheet_Open { get { return ResourceManager.GetString("Spreadsheet_Open", resourceCulture); } }
+        public static string Spreadsheet_Save { get { return ResourceManager.GetString("Spreadsheet_Save", resourceCulture); } }
+        public static string Spreadsheet_TextWrap { get { return ResourceManager.GetString("Spreadsheet_TextWrap", resourceCulture); } }
+        public static string Spreadsheet_AutoFilter { get { return ResourceManager.GetString("Spreadsheet_AutoFilter", resourceCulture); } }
+        public static string Spreadsheet_InsertRowAfter { get { return ResourceManager.GetString("Spreadsheet_InsertRowAfter", resourceCulture); } }
+        public static string Spreadsheet_InsertRowBefore { get { return ResourceManager.GetString("Spreadsheet_InsertRowBefore", resourceCulture); } }
+        public static string Spreadsheet_AlignLeft { get { return ResourceManager.GetString("Spreadsheet_AlignLeft", resourceCulture); } }
+        public static string Spreadsheet_AlignCenter { get { return ResourceManager.GetString("Spreadsheet_AlignCenter", resourceCulture); } }
+        public static string Spreadsheet_AlignRight { get { return ResourceManager.GetString("Spreadsheet_AlignRight", resourceCulture); } }
+        public static string Spreadsheet_AlignTop { get { return ResourceManager.GetString("Spreadsheet_AlignTop", resourceCulture); } }
+        public static string Spreadsheet_AlignMiddle { get { return ResourceManager.GetString("Spreadsheet_AlignMiddle", resourceCulture); } }
+        public static string Spreadsheet_AlignBottom { get { return ResourceManager.GetString("Spreadsheet_AlignBottom", resourceCulture); } }
+        public static string Spreadsheet_FontFamily { get { return ResourceManager.GetString("Spreadsheet_FontFamily", resourceCulture); } }
+        public static string Spreadsheet_FontSize { get { return ResourceManager.GetString("Spreadsheet_FontSize", resourceCulture); } }
+        public static string Spreadsheet_DataFormat { get { return ResourceManager.GetString("Spreadsheet_DataFormat", resourceCulture); } }
+        public static string Spreadsheet_CellBorders { get { return ResourceManager.GetString("Spreadsheet_CellBorders", resourceCulture); } }
+        public static string Spreadsheet_ConditionalFormatTool { get { return ResourceManager.GetString("Spreadsheet_ConditionalFormatTool", resourceCulture); } }
+        public static string Spreadsheet_DataValidationTool { get { return ResourceManager.GetString("Spreadsheet_DataValidationTool", resourceCulture); } }
+        public static string Spreadsheet_A11yGridLabel { get { return ResourceManager.GetString("Spreadsheet_A11yGridLabel", resourceCulture); } }
+        public static string Spreadsheet_A11yInstructions { get { return ResourceManager.GetString("Spreadsheet_A11yInstructions", resourceCulture); } }
+        public static string Spreadsheet_A11yBlank { get { return ResourceManager.GetString("Spreadsheet_A11yBlank", resourceCulture); } }
+        public static string Spreadsheet_A11yMerged { get { return ResourceManager.GetString("Spreadsheet_A11yMerged", resourceCulture); } }
+        public static string Spreadsheet_A11ySelection { get { return ResourceManager.GetString("Spreadsheet_A11ySelection", resourceCulture); } }
+        public static string Spreadsheet_A11yFormula { get { return ResourceManager.GetString("Spreadsheet_A11yFormula", resourceCulture); } }
+        public static string Spreadsheet_A11yError { get { return ResourceManager.GetString("Spreadsheet_A11yError", resourceCulture); } }
+        public static string Spreadsheet_A11yReadOnly { get { return ResourceManager.GetString("Spreadsheet_A11yReadOnly", resourceCulture); } }
+        public static string Spreadsheet_A11yHyperlink { get { return ResourceManager.GetString("Spreadsheet_A11yHyperlink", resourceCulture); } }
+        public static string Spreadsheet_A11yFiltered { get { return ResourceManager.GetString("Spreadsheet_A11yFiltered", resourceCulture); } }
+        public static string Spreadsheet_CellEditorLabel { get { return ResourceManager.GetString("Spreadsheet_CellEditorLabel", resourceCulture); } }
+        public static string Spreadsheet_FormulaBarLabel { get { return ResourceManager.GetString("Spreadsheet_FormulaBarLabel", resourceCulture); } }
+        public static string Spreadsheet_HelpTitle { get { return ResourceManager.GetString("Spreadsheet_HelpTitle", resourceCulture); } }
+        public static string Spreadsheet_HelpShortcutColumn { get { return ResourceManager.GetString("Spreadsheet_HelpShortcutColumn", resourceCulture); } }
+        public static string Spreadsheet_HelpActionColumn { get { return ResourceManager.GetString("Spreadsheet_HelpActionColumn", resourceCulture); } }
+        public static string Spreadsheet_HelpMove { get { return ResourceManager.GetString("Spreadsheet_HelpMove", resourceCulture); } }
+        public static string Spreadsheet_HelpNextCell { get { return ResourceManager.GetString("Spreadsheet_HelpNextCell", resourceCulture); } }
+        public static string Spreadsheet_HelpEdit { get { return ResourceManager.GetString("Spreadsheet_HelpEdit", resourceCulture); } }
+        public static string Spreadsheet_HelpRegions { get { return ResourceManager.GetString("Spreadsheet_HelpRegions", resourceCulture); } }
+        public static string Spreadsheet_HelpRowStart { get { return ResourceManager.GetString("Spreadsheet_HelpRowStart", resourceCulture); } }
+        public static string Spreadsheet_HelpLastCell { get { return ResourceManager.GetString("Spreadsheet_HelpLastCell", resourceCulture); } }
+        public static string Spreadsheet_HelpSelectAll { get { return ResourceManager.GetString("Spreadsheet_HelpSelectAll", resourceCulture); } }
+        public static string Spreadsheet_HelpClipboard { get { return ResourceManager.GetString("Spreadsheet_HelpClipboard", resourceCulture); } }
+        public static string Spreadsheet_HelpUndoRedo { get { return ResourceManager.GetString("Spreadsheet_HelpUndoRedo", resourceCulture); } }
+        public static string Spreadsheet_HelpClear { get { return ResourceManager.GetString("Spreadsheet_HelpClear", resourceCulture); } }
+        public static string Spreadsheet_HelpContextMenu { get { return ResourceManager.GetString("Spreadsheet_HelpContextMenu", resourceCulture); } }
+        public static string Spreadsheet_HelpConfirmMove { get { return ResourceManager.GetString("Spreadsheet_HelpConfirmMove", resourceCulture); } }
+        public static string Spreadsheet_HelpCancel { get { return ResourceManager.GetString("Spreadsheet_HelpCancel", resourceCulture); } }
+        public static string Spreadsheet_HelpExtend { get { return ResourceManager.GetString("Spreadsheet_HelpExtend", resourceCulture); } }
+        public static string Spreadsheet_HelpEdge { get { return ResourceManager.GetString("Spreadsheet_HelpEdge", resourceCulture); } }
+        public static string Spreadsheet_HelpExtendEdge { get { return ResourceManager.GetString("Spreadsheet_HelpExtendEdge", resourceCulture); } }
+        public static string Spreadsheet_HelpExtendRow { get { return ResourceManager.GetString("Spreadsheet_HelpExtendRow", resourceCulture); } }
+        public static string Spreadsheet_HelpExtendSheet { get { return ResourceManager.GetString("Spreadsheet_HelpExtendSheet", resourceCulture); } }
+        public static string Spreadsheet_HelpPage { get { return ResourceManager.GetString("Spreadsheet_HelpPage", resourceCulture); } }
+        public static string Spreadsheet_HelpExtendPage { get { return ResourceManager.GetString("Spreadsheet_HelpExtendPage", resourceCulture); } }
+        public static string Spreadsheet_HelpSelectColumn { get { return ResourceManager.GetString("Spreadsheet_HelpSelectColumn", resourceCulture); } }
+        public static string Spreadsheet_HelpSelectRow { get { return ResourceManager.GetString("Spreadsheet_HelpSelectRow", resourceCulture); } }
+        public static string Spreadsheet_HelpFill { get { return ResourceManager.GetString("Spreadsheet_HelpFill", resourceCulture); } }
+        public static string Spreadsheet_HelpDrawings { get { return ResourceManager.GetString("Spreadsheet_HelpDrawings", resourceCulture); } }
+        public static string Spreadsheet_HelpShowShortcuts { get { return ResourceManager.GetString("Spreadsheet_HelpShowShortcuts", resourceCulture); } }
+        public static string Spreadsheet_HelpFilterPlaceholder { get { return ResourceManager.GetString("Spreadsheet_HelpFilterPlaceholder", resourceCulture); } }
+        public static string Spreadsheet_HelpNoResults { get { return ResourceManager.GetString("Spreadsheet_HelpNoResults", resourceCulture); } }
+        public static string Spreadsheet_A11yImageSelected { get { return ResourceManager.GetString("Spreadsheet_A11yImageSelected", resourceCulture); } }
+        public static string Spreadsheet_A11yChartSelected { get { return ResourceManager.GetString("Spreadsheet_A11yChartSelected", resourceCulture); } }
+        public static string Spreadsheet_SizeTitle { get { return ResourceManager.GetString("Spreadsheet_SizeTitle", resourceCulture); } }
+        public static string Spreadsheet_SizeWidth { get { return ResourceManager.GetString("Spreadsheet_SizeWidth", resourceCulture); } }
+        public static string Spreadsheet_SizeHeight { get { return ResourceManager.GetString("Spreadsheet_SizeHeight", resourceCulture); } }
+        public static string Spreadsheet_A11ySorted { get { return ResourceManager.GetString("Spreadsheet_A11ySorted", resourceCulture); } }
+        public static string Spreadsheet_A11yFilterApplied { get { return ResourceManager.GetString("Spreadsheet_A11yFilterApplied", resourceCulture); } }
+        public static string Spreadsheet_A11yRowInserted { get { return ResourceManager.GetString("Spreadsheet_A11yRowInserted", resourceCulture); } }
+        public static string Spreadsheet_A11yColumnInserted { get { return ResourceManager.GetString("Spreadsheet_A11yColumnInserted", resourceCulture); } }
+        public static string Spreadsheet_A11yRowDeleted { get { return ResourceManager.GetString("Spreadsheet_A11yRowDeleted", resourceCulture); } }
+        public static string Spreadsheet_A11yColumnDeleted { get { return ResourceManager.GetString("Spreadsheet_A11yColumnDeleted", resourceCulture); } }
+        public static string Pager_ReloadTitle { get { return ResourceManager.GetString("Pager_ReloadTitle", resourceCulture); } }
+        public static string Pager_ReloadAriaLabel { get { return ResourceManager.GetString("Pager_ReloadAriaLabel", resourceCulture); } }
+        public static string DataGrid_ExpandChildItemAriaLabel { get { return ResourceManager.GetString("DataGrid_ExpandChildItemAriaLabel", resourceCulture); } }
+        public static string DataGrid_ExpandGroupAriaLabel { get { return ResourceManager.GetString("DataGrid_ExpandGroupAriaLabel", resourceCulture); } }
+        public static string DataGrid_FilterToggleAriaLabel { get { return ResourceManager.GetString("DataGrid_FilterToggleAriaLabel", resourceCulture); } }
+        public static string DatePicker_TodayAriaLabel { get { return ResourceManager.GetString("DatePicker_TodayAriaLabel", resourceCulture); } }
+        public static string DatePicker_SelectedAriaLabel { get { return ResourceManager.GetString("DatePicker_SelectedAriaLabel", resourceCulture); } }
+        public static string DatePicker_DisabledAriaLabel { get { return ResourceManager.GetString("DatePicker_DisabledAriaLabel", resourceCulture); } }
+        public static string HtmlEditorFormatBlock_Placeholder { get { return ResourceManager.GetString("HtmlEditorFormatBlock_Placeholder", resourceCulture); } }
+        public static string HtmlEditorFormatBlock_Title { get { return ResourceManager.GetString("HtmlEditorFormatBlock_Title", resourceCulture); } }
+        public static string HtmlEditorFormatBlock_NormalText { get { return ResourceManager.GetString("HtmlEditorFormatBlock_NormalText", resourceCulture); } }
+        public static string HtmlEditorFormatBlock_Heading1Text { get { return ResourceManager.GetString("HtmlEditorFormatBlock_Heading1Text", resourceCulture); } }
+        public static string HtmlEditorFormatBlock_Heading2Text { get { return ResourceManager.GetString("HtmlEditorFormatBlock_Heading2Text", resourceCulture); } }
+        public static string HtmlEditorFormatBlock_Heading3Text { get { return ResourceManager.GetString("HtmlEditorFormatBlock_Heading3Text", resourceCulture); } }
+        public static string HtmlEditorFormatBlock_Heading4Text { get { return ResourceManager.GetString("HtmlEditorFormatBlock_Heading4Text", resourceCulture); } }
+        public static string HtmlEditorFormatBlock_Heading5Text { get { return ResourceManager.GetString("HtmlEditorFormatBlock_Heading5Text", resourceCulture); } }
+        public static string HtmlEditorFormatBlock_Heading6Text { get { return ResourceManager.GetString("HtmlEditorFormatBlock_Heading6Text", resourceCulture); } }
+        public static string Notification_CloseAriaLabel { get { return ResourceManager.GetString("Notification_CloseAriaLabel", resourceCulture); } }
+        public static string Dialog_CloseAriaLabel { get { return ResourceManager.GetString("Dialog_CloseAriaLabel", resourceCulture); } }
+        public static string BreadCrumb_AriaLabel { get { return ResourceManager.GetString("BreadCrumb_AriaLabel", resourceCulture); } }
+        public static string Steps_TabListAriaLabel { get { return ResourceManager.GetString("Steps_TabListAriaLabel", resourceCulture); } }
+        public static string Tree_SelectItemAriaLabel { get { return ResourceManager.GetString("Tree_SelectItemAriaLabel", resourceCulture); } }
+        public static string Slider_HandleLabel { get { return ResourceManager.GetString("Slider_HandleLabel", resourceCulture); } }
+        public static string Slider_MinHandleLabel { get { return ResourceManager.GetString("Slider_MinHandleLabel", resourceCulture); } }
+        public static string Slider_MaxHandleLabel { get { return ResourceManager.GetString("Slider_MaxHandleLabel", resourceCulture); } }
+        public static string AgendaView_MultiDayText { get { return ResourceManager.GetString("AgendaView_MultiDayText", resourceCulture); } }
+        public static string SelectBarItem_ImageAlternateText { get { return ResourceManager.GetString("SelectBarItem_ImageAlternateText", resourceCulture); } }
+        public static string HtmlEditorTable_DialogTitle { get { return ResourceManager.GetString("HtmlEditorTable_DialogTitle", resourceCulture); } }
+        public static string HtmlEditorTable_DefaultColumnHeader { get { return ResourceManager.GetString("HtmlEditorTable_DefaultColumnHeader", resourceCulture); } }
+        public static string HtmlEditorTable_Rows { get { return ResourceManager.GetString("HtmlEditorTable_Rows", resourceCulture); } }
+        public static string HtmlEditorTable_Columns { get { return ResourceManager.GetString("HtmlEditorTable_Columns", resourceCulture); } }
+        public static string HtmlEditorTable_Width { get { return ResourceManager.GetString("HtmlEditorTable_Width", resourceCulture); } }
+        public static string HtmlEditorTable_Border { get { return ResourceManager.GetString("HtmlEditorTable_Border", resourceCulture); } }
+        public static string HtmlEditorTable_HeaderRow { get { return ResourceManager.GetString("HtmlEditorTable_HeaderRow", resourceCulture); } }
+        public static string HtmlEditorTable_Edit { get { return ResourceManager.GetString("HtmlEditorTable_Edit", resourceCulture); } }
+        public static string HtmlEditorTable_OK { get { return ResourceManager.GetString("HtmlEditorTable_OK", resourceCulture); } }
+        public static string HtmlEditorTable_Update { get { return ResourceManager.GetString("HtmlEditorTable_Update", resourceCulture); } }
+        public static string HtmlEditorTable_Cancel { get { return ResourceManager.GetString("HtmlEditorTable_Cancel", resourceCulture); } }
+        public static string HtmlEditorTable_CopyCells { get { return ResourceManager.GetString("HtmlEditorTable_CopyCells", resourceCulture); } }
+        public static string HtmlEditorTable_PasteCells { get { return ResourceManager.GetString("HtmlEditorTable_PasteCells", resourceCulture); } }
+        public static string HtmlEditorTable_InsertRowAbove { get { return ResourceManager.GetString("HtmlEditorTable_InsertRowAbove", resourceCulture); } }
+        public static string HtmlEditorTable_InsertRowBelow { get { return ResourceManager.GetString("HtmlEditorTable_InsertRowBelow", resourceCulture); } }
+        public static string HtmlEditorTable_InsertColumnLeft { get { return ResourceManager.GetString("HtmlEditorTable_InsertColumnLeft", resourceCulture); } }
+        public static string HtmlEditorTable_InsertColumnRight { get { return ResourceManager.GetString("HtmlEditorTable_InsertColumnRight", resourceCulture); } }
+        public static string HtmlEditorTable_DeleteRow { get { return ResourceManager.GetString("HtmlEditorTable_DeleteRow", resourceCulture); } }
+        public static string HtmlEditorTable_DeleteColumn { get { return ResourceManager.GetString("HtmlEditorTable_DeleteColumn", resourceCulture); } }
+        public static string HtmlEditorTable_MergeRight { get { return ResourceManager.GetString("HtmlEditorTable_MergeRight", resourceCulture); } }
+        public static string HtmlEditorTable_MergeDown { get { return ResourceManager.GetString("HtmlEditorTable_MergeDown", resourceCulture); } }
+        public static string HtmlEditorTable_SplitCell { get { return ResourceManager.GetString("HtmlEditorTable_SplitCell", resourceCulture); } }
+        public static string HtmlEditorTable_DeleteTable { get { return ResourceManager.GetString("HtmlEditorTable_DeleteTable", resourceCulture); } }
+        public static string HtmlEditorTable_ColumnWidth { get { return ResourceManager.GetString("HtmlEditorTable_ColumnWidth", resourceCulture); } }
+        public static string HtmlEditorTable_CellBackground { get { return ResourceManager.GetString("HtmlEditorTable_CellBackground", resourceCulture); } }
+        public static string HtmlEditorTable_CellPadding { get { return ResourceManager.GetString("HtmlEditorTable_CellPadding", resourceCulture); } }
+        public static string HtmlEditorTable_CellTextAlign { get { return ResourceManager.GetString("HtmlEditorTable_CellTextAlign", resourceCulture); } }
+        public static string HtmlEditorTable_CellVerticalAlign { get { return ResourceManager.GetString("HtmlEditorTable_CellVerticalAlign", resourceCulture); } }
+        public static string HtmlEditorTable_CellBorder { get { return ResourceManager.GetString("HtmlEditorTable_CellBorder", resourceCulture); } }
+        public static string HtmlEditorTable_ColumnWidthPx { get { return ResourceManager.GetString("HtmlEditorTable_ColumnWidthPx", resourceCulture); } }
+        public static string HtmlEditorTable_CellPaddingPx { get { return ResourceManager.GetString("HtmlEditorTable_CellPaddingPx", resourceCulture); } }
+        public static string HtmlEditorTable_BorderStyle { get { return ResourceManager.GetString("HtmlEditorTable_BorderStyle", resourceCulture); } }
+        public static string HtmlEditorTable_BorderWidthPx { get { return ResourceManager.GetString("HtmlEditorTable_BorderWidthPx", resourceCulture); } }
+        public static string HtmlEditorTable_BorderColor { get { return ResourceManager.GetString("HtmlEditorTable_BorderColor", resourceCulture); } }
+        public static string HtmlEditorTable_BorderTop { get { return ResourceManager.GetString("HtmlEditorTable_BorderTop", resourceCulture); } }
+        public static string HtmlEditorTable_BorderRight { get { return ResourceManager.GetString("HtmlEditorTable_BorderRight", resourceCulture); } }
+        public static string HtmlEditorTable_BorderBottom { get { return ResourceManager.GetString("HtmlEditorTable_BorderBottom", resourceCulture); } }
+        public static string HtmlEditorTable_BorderLeft { get { return ResourceManager.GetString("HtmlEditorTable_BorderLeft", resourceCulture); } }
+        public static string HtmlEditorTable_ActionBlocked { get { return ResourceManager.GetString("HtmlEditorTable_ActionBlocked", resourceCulture); } }
+        public static string HtmlEditorTable_ActionRequiresTable { get { return ResourceManager.GetString("HtmlEditorTable_ActionRequiresTable", resourceCulture); } }
+        public static string HtmlEditorTable_CopyInvalidSelection { get { return ResourceManager.GetString("HtmlEditorTable_CopyInvalidSelection", resourceCulture); } }
+        public static string HtmlEditorTable_PasteBlocked { get { return ResourceManager.GetString("HtmlEditorTable_PasteBlocked", resourceCulture); } }
+        public static string HtmlEditorTable_MergeInvalidSelection { get { return ResourceManager.GetString("HtmlEditorTable_MergeInvalidSelection", resourceCulture); } }
     }
 }

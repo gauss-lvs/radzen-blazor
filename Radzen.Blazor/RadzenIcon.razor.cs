@@ -82,5 +82,10 @@ namespace Radzen.Blazor
         {
             return $"{(!string.IsNullOrEmpty(IconColor) ? $"color:{IconColor};" : null)}{(!string.IsNullOrEmpty(Style) ? Style : null)}";
         }
+
+        string? getAriaHidden()
+        {
+            return Attributes != null && (Attributes.ContainsKey("aria-label") || Attributes.ContainsKey("role")) ? null : "true";
+        }
     }
 }

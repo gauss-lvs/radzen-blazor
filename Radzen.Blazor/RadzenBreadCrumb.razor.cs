@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Components;
+using System.Collections.Generic;
 
 namespace Radzen.Blazor
 {
@@ -39,10 +40,53 @@ namespace Radzen.Blazor
         [Parameter]
         public RenderFragment<RadzenBreadCrumbItem>? Template { get; set; }
 
+        /// <summary>
+        /// Gets or sets the accessible label for the breadcrumb navigation landmark.
+        /// Rendered as the <c>aria-label</c> attribute on the root <c>&lt;nav&gt;</c> element so assistive technology can distinguish this landmark from other navigation regions.
+        /// </summary>
+        /// <value>The navigation landmark label. Defaults to <c>"breadcrumb"</c>.</value>
+        [Parameter]
+        public string AriaLabel { get => ariaLabel ?? Localize(nameof(RadzenStrings.BreadCrumb_AriaLabel)); set => ariaLabel = value; }
+
+        private string? ariaLabel;
+
         /// <inheritdoc/>
         protected override string GetComponentCssClass()
         {
             return "rz-breadcrumb";
+        }
+
+        readonly List<RadzenBreadCrumbItem> items = new List<RadzenBreadCrumbItem>();
+
+        internal void AddItem(RadzenBreadCrumbItem item)
+        {
+            if (!items.Contains(item))
+            {
+                var previousLast = items.Count > 0 ? items[items.Count - 1] : null;
+
+                items.Add(item);
+
+                previousLast?.Refresh();
+            }
+        }
+
+        internal void RemoveItem(RadzenBreadCrumbItem item)
+        {
+            if (items.Remove(item) && !disposed && items.Count > 0)
+            {
+                try
+                {
+                    items[items.Count - 1].Refresh();
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        internal bool IsLastItem(RadzenBreadCrumbItem item)
+        {
+            return items.Count > 0 && items[items.Count - 1] == item;
         }
     }
 

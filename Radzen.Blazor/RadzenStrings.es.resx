@@ -795,6 +795,10 @@
   <data name="AIChat_AssistantAvatarText" xml:space="preserve">
     <value>IA</value>
   </data>
+  <!-- Alert -->
+  <data name="Alert_CloseAriaLabel" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
   <!-- Button -->
   <data name="Button_ImageAlternateText" xml:space="preserve">
     <value>botón</value>
@@ -802,6 +806,15 @@
   <!-- Carousel -->
   <data name="Carousel_PagerButtonAriaLabelFormat" xml:space="preserve">
     <value>Ir a la diapositiva {0}</value>
+  </data>
+  <data name="Carousel_PrevAriaLabel" xml:space="preserve">
+    <value>Anterior</value>
+  </data>
+  <data name="Carousel_NextAriaLabel" xml:space="preserve">
+    <value>Siguiente</value>
+  </data>
+  <data name="Carousel_SlideAriaLabelFormat" xml:space="preserve">
+    <value>{0} de {1}</value>
   </data>
   <!-- Chat -->
   <data name="Chat_Placeholder" xml:space="preserve">
@@ -845,6 +858,18 @@
   </data>
   <data name="ColorPicker_ButtonText" xml:space="preserve">
     <value>Aceptar</value>
+  </data>
+  <data name="ColorPicker_HueAriaLabel" xml:space="preserve">
+    <value>Tono</value>
+  </data>
+  <data name="ColorPicker_AlphaAriaLabel" xml:space="preserve">
+    <value>Alfa</value>
+  </data>
+  <data name="ColorPicker_SaturationAriaLabel" xml:space="preserve">
+    <value>Saturación y brillo</value>
+  </data>
+  <data name="ColorPicker_SaturationValueTextFormat" xml:space="preserve">
+    <value>Saturación {0}% Brillo {1}%</value>
   </data>
   <!-- DataAnnotationValidator -->
   <data name="DataAnnotationValidator_MessageSeparator" xml:space="preserve">
@@ -928,6 +953,15 @@
   </data>
   <data name="DataFilter_CustomText" xml:space="preserve">
     <value>Personalizado</value>
+  </data>
+  <data name="DataFilter_PropertyAriaLabel" xml:space="preserve">
+    <value>Propiedad del filtro</value>
+  </data>
+  <data name="DataFilter_FilterOperatorAriaLabel" xml:space="preserve">
+    <value>Operador de filtro</value>
+  </data>
+  <data name="DataFilter_FilterValueAriaLabel" xml:space="preserve">
+    <value>Valor de filtro</value>
   </data>
   <!-- DataGrid -->
   <data name="DataGrid_FilterText" xml:space="preserve">
@@ -1508,6 +1542,12 @@
   <data name="PickList_SelectedTargetToSourceTitle" xml:space="preserve">
     <value>Mover los elementos de destino seleccionados a la colección de origen</value>
   </data>
+  <data name="PickList_SourceAriaLabel" xml:space="preserve">
+    <value>Elementos de origen</value>
+  </data>
+  <data name="PickList_TargetAriaLabel" xml:space="preserve">
+    <value>Elementos de destino</value>
+  </data>
   <!-- PivotDataGrid -->
   <data name="PivotDataGrid_EmptyText" xml:space="preserve">
     <value>No hay registros para mostrar.</value>
@@ -1620,6 +1660,9 @@
     <value>imagen</value>
   </data>
   <!-- Rating -->
+  <data name="Rating_AriaLabel" xml:space="preserve">
+    <value>Calificación</value>
+  </data>
   <data name="Rating_ClearAriaLabel" xml:space="preserve">
     <value>Borrar</value>
   </data>
@@ -1648,6 +1691,13 @@
   </data>
   <data name="Scheduler_PrevText" xml:space="preserve">
     <value>Anterior</value>
+  </data>
+  <!-- SecurityCode -->
+  <data name="SecurityCode_AriaLabel" xml:space="preserve">
+    <value>Código de seguridad</value>
+  </data>
+  <data name="SecurityCode_InputAriaLabelFormat" xml:space="preserve">
+    <value>Carácter {0} de {1}</value>
   </data>
   <!-- SidebarToggle -->
   <data name="SidebarToggle_ToggleAriaLabel" xml:space="preserve">
@@ -1742,5 +1792,449 @@
   <!-- DataList -->
   <data name="DataList_EmptyText" xml:space="preserve">
     <value>No hay registros para mostrar.</value>
+  </data>
+  <data name="Spreadsheet_A11yBlank" xml:space="preserve">
+    <value>vacía</value>
+  </data>
+  <data name="Spreadsheet_A11yChartSelected" xml:space="preserve">
+    <value>Gráfico seleccionado</value>
+  </data>
+  <data name="Spreadsheet_A11yColumnDeleted" xml:space="preserve">
+    <value>Columna eliminada</value>
+  </data>
+  <data name="Spreadsheet_A11yColumnInserted" xml:space="preserve">
+    <value>Columna insertada</value>
+  </data>
+  <data name="Spreadsheet_A11yError" xml:space="preserve">
+    <value>error</value>
+  </data>
+  <data name="Spreadsheet_A11yFilterApplied" xml:space="preserve">
+    <value>Filtro aplicado</value>
+  </data>
+  <data name="Spreadsheet_A11yFiltered" xml:space="preserve">
+    <value>filtrada</value>
+  </data>
+  <data name="Spreadsheet_A11yFormula" xml:space="preserve">
+    <value>tiene fórmula</value>
+  </data>
+  <data name="Spreadsheet_A11yGridLabel" xml:space="preserve">
+    <value>Hoja de cálculo</value>
+  </data>
+  <data name="Spreadsheet_A11yHyperlink" xml:space="preserve">
+    <value>hipervínculo</value>
+  </data>
+  <data name="Spreadsheet_A11yImageSelected" xml:space="preserve">
+    <value>Imagen seleccionada</value>
+  </data>
+  <data name="Spreadsheet_A11yInstructions" xml:space="preserve">
+    <value>Use las teclas de flecha para desplazarse entre celdas. Tab pasa a la celda siguiente. F6 va a la barra de herramientas y sale. F2 o escriba para editar. Pulse Alt+Barra diagonal para ver todos los atajos de teclado.</value>
+  </data>
+  <data name="Spreadsheet_A11yMerged" xml:space="preserve">
+    <value>combinada</value>
+  </data>
+  <data name="Spreadsheet_A11yReadOnly" xml:space="preserve">
+    <value>bloqueada</value>
+  </data>
+  <data name="Spreadsheet_A11yRowDeleted" xml:space="preserve">
+    <value>Fila eliminada</value>
+  </data>
+  <data name="Spreadsheet_A11yRowInserted" xml:space="preserve">
+    <value>Fila insertada</value>
+  </data>
+  <data name="Spreadsheet_A11ySelection" xml:space="preserve">
+    <value>{0}, {1} por {2}</value>
+  </data>
+  <data name="Spreadsheet_A11ySorted" xml:space="preserve">
+    <value>Ordenado</value>
+  </data>
+  <data name="Spreadsheet_AlignBottom" xml:space="preserve">
+    <value>Alinear abajo</value>
+  </data>
+  <data name="Spreadsheet_AlignCenter" xml:space="preserve">
+    <value>Alinear al centro</value>
+  </data>
+  <data name="Spreadsheet_AlignLeft" xml:space="preserve">
+    <value>Alinear a la izquierda</value>
+  </data>
+  <data name="Spreadsheet_AlignMiddle" xml:space="preserve">
+    <value>Alinear en el medio</value>
+  </data>
+  <data name="Spreadsheet_AlignRight" xml:space="preserve">
+    <value>Alinear a la derecha</value>
+  </data>
+  <data name="Spreadsheet_AlignTop" xml:space="preserve">
+    <value>Alinear arriba</value>
+  </data>
+  <data name="Spreadsheet_AutoFilter" xml:space="preserve">
+    <value>Filtro</value>
+  </data>
+  <data name="Spreadsheet_Bold" xml:space="preserve">
+    <value>Negrita</value>
+  </data>
+  <data name="Spreadsheet_CellBorders" xml:space="preserve">
+    <value>Bordes</value>
+  </data>
+  <data name="Spreadsheet_CellEditorLabel" xml:space="preserve">
+    <value>Editor de celda</value>
+  </data>
+  <data name="Spreadsheet_ConditionalFormatTool" xml:space="preserve">
+    <value>Formato condicional</value>
+  </data>
+  <data name="Spreadsheet_DataFormat" xml:space="preserve">
+    <value>Formato de número</value>
+  </data>
+  <data name="Spreadsheet_DataValidationTool" xml:space="preserve">
+    <value>Validación de datos</value>
+  </data>
+  <data name="Spreadsheet_FontFamily" xml:space="preserve">
+    <value>Fuente</value>
+  </data>
+  <data name="Spreadsheet_FontSize" xml:space="preserve">
+    <value>Tamaño de fuente</value>
+  </data>
+  <data name="Spreadsheet_FormulaBarLabel" xml:space="preserve">
+    <value>Barra de fórmulas</value>
+  </data>
+  <data name="Spreadsheet_InsertRowAfter" xml:space="preserve">
+    <value>Insertar fila debajo</value>
+  </data>
+  <data name="Spreadsheet_InsertRowBefore" xml:space="preserve">
+    <value>Insertar fila encima</value>
+  </data>
+  <data name="Spreadsheet_Italic" xml:space="preserve">
+    <value>Cursiva</value>
+  </data>
+  <data name="Spreadsheet_Open" xml:space="preserve">
+    <value>Abrir</value>
+  </data>
+  <data name="Spreadsheet_Redo" xml:space="preserve">
+    <value>Rehacer</value>
+  </data>
+  <data name="Spreadsheet_Save" xml:space="preserve">
+    <value>Guardar</value>
+  </data>
+  <data name="Spreadsheet_Strikethrough" xml:space="preserve">
+    <value>Tachado</value>
+  </data>
+  <data name="Spreadsheet_TextWrap" xml:space="preserve">
+    <value>Ajustar texto</value>
+  </data>
+  <data name="Spreadsheet_Underline" xml:space="preserve">
+    <value>Subrayado</value>
+  </data>
+  <data name="Spreadsheet_Undo" xml:space="preserve">
+    <value>Deshacer</value>
+  </data>
+  <data name="Spreadsheet_HelpActionColumn" xml:space="preserve">
+    <value>Acción</value>
+  </data>
+  <data name="Spreadsheet_HelpCancel" xml:space="preserve">
+    <value>Cancelar la edición actual</value>
+  </data>
+  <data name="Spreadsheet_HelpClear" xml:space="preserve">
+    <value>Borrar las celdas seleccionadas</value>
+  </data>
+  <data name="Spreadsheet_HelpClipboard" xml:space="preserve">
+    <value>Copiar, cortar y pegar</value>
+  </data>
+  <data name="Spreadsheet_HelpConfirmMove" xml:space="preserve">
+    <value>Confirmar la edición y moverse hacia abajo o arriba</value>
+  </data>
+  <data name="Spreadsheet_HelpContextMenu" xml:space="preserve">
+    <value>Abrir el menú contextual</value>
+  </data>
+  <data name="Spreadsheet_HelpDrawings" xml:space="preserve">
+    <value>Seleccionar imágenes y gráficos</value>
+  </data>
+  <data name="Spreadsheet_HelpEdge" xml:space="preserve">
+    <value>Saltar al borde de los datos</value>
+  </data>
+  <data name="Spreadsheet_HelpEdit" xml:space="preserve">
+    <value>Editar la celda activa</value>
+  </data>
+  <data name="Spreadsheet_HelpExtend" xml:space="preserve">
+    <value>Ampliar la selección</value>
+  </data>
+  <data name="Spreadsheet_HelpExtendEdge" xml:space="preserve">
+    <value>Ampliar la selección hasta el borde de los datos</value>
+  </data>
+  <data name="Spreadsheet_HelpExtendPage" xml:space="preserve">
+    <value>Ampliar la selección una pantalla</value>
+  </data>
+  <data name="Spreadsheet_HelpExtendRow" xml:space="preserve">
+    <value>Ampliar la selección hasta el inicio o el final de la fila</value>
+  </data>
+  <data name="Spreadsheet_HelpExtendSheet" xml:space="preserve">
+    <value>Ampliar la selección hasta la celda A1 o la última celda utilizada</value>
+  </data>
+  <data name="Spreadsheet_HelpFill" xml:space="preserve">
+    <value>Rellenar hacia abajo o a la derecha</value>
+  </data>
+  <data name="Spreadsheet_HelpFilterPlaceholder" xml:space="preserve">
+    <value>Filtrar atajos</value>
+  </data>
+  <data name="Spreadsheet_HelpLastCell" xml:space="preserve">
+    <value>Ir a la última celda utilizada</value>
+  </data>
+  <data name="Spreadsheet_HelpMove" xml:space="preserve">
+    <value>Desplazarse entre celdas</value>
+  </data>
+  <data name="Spreadsheet_HelpNextCell" xml:space="preserve">
+    <value>Ir a la celda siguiente o anterior</value>
+  </data>
+  <data name="Spreadsheet_HelpNoResults" xml:space="preserve">
+    <value>No hay atajos coincidentes</value>
+  </data>
+  <data name="Spreadsheet_HelpPage" xml:space="preserve">
+    <value>Subir o bajar una pantalla</value>
+  </data>
+  <data name="Spreadsheet_HelpRegions" xml:space="preserve">
+    <value>Desplazarse entre la barra de herramientas, la barra de fórmulas, la cuadrícula y las pestañas de hojas</value>
+  </data>
+  <data name="Spreadsheet_HelpRowStart" xml:space="preserve">
+    <value>Ir al inicio de la fila o a la celda A1</value>
+  </data>
+  <data name="Spreadsheet_HelpSelectAll" xml:space="preserve">
+    <value>Seleccionar el rango utilizado</value>
+  </data>
+  <data name="Spreadsheet_HelpSelectColumn" xml:space="preserve">
+    <value>Seleccionar toda la columna</value>
+  </data>
+  <data name="Spreadsheet_HelpSelectRow" xml:space="preserve">
+    <value>Seleccionar toda la fila</value>
+  </data>
+  <data name="Spreadsheet_HelpShortcutColumn" xml:space="preserve">
+    <value>Atajo</value>
+  </data>
+  <data name="Spreadsheet_HelpShowShortcuts" xml:space="preserve">
+    <value>Mostrar atajos de teclado</value>
+  </data>
+  <data name="Spreadsheet_HelpTitle" xml:space="preserve">
+    <value>Atajos de teclado</value>
+  </data>
+  <data name="Spreadsheet_HelpUndoRedo" xml:space="preserve">
+    <value>Deshacer y rehacer</value>
+  </data>
+  <data name="Spreadsheet_SizeHeight" xml:space="preserve">
+    <value>Alto (px)</value>
+  </data>
+  <data name="Spreadsheet_SizeTitle" xml:space="preserve">
+    <value>Tamaño y posición</value>
+  </data>
+  <data name="Spreadsheet_SizeWidth" xml:space="preserve">
+    <value>Ancho (px)</value>
+  </data>
+  <data name="Pager_ReloadTitle" xml:space="preserve">
+    <value>Recargar</value>
+  </data>
+  <data name="Pager_ReloadAriaLabel" xml:space="preserve">
+    <value>Recargar la página actual.</value>
+  </data>
+  <data name="DataGrid_ExpandChildItemAriaLabel" xml:space="preserve">
+    <value>Expandir elemento secundario</value>
+  </data>
+  <data name="DataGrid_ExpandGroupAriaLabel" xml:space="preserve">
+    <value>Expandir grupo</value>
+  </data>
+  <data name="DataGrid_FilterToggleAriaLabel" xml:space="preserve">
+    <value>Alternar</value>
+  </data>
+  <data name="DatePicker_TodayAriaLabel" xml:space="preserve">
+    <value>hoy</value>
+  </data>
+  <data name="DatePicker_SelectedAriaLabel" xml:space="preserve">
+    <value>seleccionado</value>
+  </data>
+  <data name="DatePicker_DisabledAriaLabel" xml:space="preserve">
+    <value>deshabilitado</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Placeholder" xml:space="preserve">
+    <value>Bloque de formato</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Title" xml:space="preserve">
+    <value>Estilo de texto</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_NormalText" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading1Text" xml:space="preserve">
+    <value>Título 1</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading2Text" xml:space="preserve">
+    <value>Título 2</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading3Text" xml:space="preserve">
+    <value>Título 3</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading4Text" xml:space="preserve">
+    <value>Título 4</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading5Text" xml:space="preserve">
+    <value>Título 5</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading6Text" xml:space="preserve">
+    <value>Título 6</value>
+  </data>
+  <data name="Notification_CloseAriaLabel" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="Dialog_CloseAriaLabel" xml:space="preserve">
+    <value>Cerrar diálogo</value>
+  </data>
+  <data name="BreadCrumb_AriaLabel" xml:space="preserve">
+    <value>ruta de navegación</value>
+  </data>
+  <data name="Steps_TabListAriaLabel" xml:space="preserve">
+    <value>Pasos</value>
+  </data>
+  <data name="Tree_SelectItemAriaLabel" xml:space="preserve">
+    <value>Seleccionar elemento</value>
+  </data>
+  <data name="Slider_HandleLabel" xml:space="preserve">
+    <value>Valor</value>
+  </data>
+  <data name="Slider_MinHandleLabel" xml:space="preserve">
+    <value>Mínimo</value>
+  </data>
+  <data name="Slider_MaxHandleLabel" xml:space="preserve">
+    <value>Máximo</value>
+  </data>
+  <data name="AgendaView_MultiDayText" xml:space="preserve">
+    <value>Varios días</value>
+  </data>
+  <data name="SelectBarItem_ImageAlternateText" xml:space="preserve">
+    <value>imagen</value>
+  </data>
+  <data name="HtmlEditorTable_DialogTitle" xml:space="preserve">
+    <value>Insertar tabla</value>
+  </data>
+  <data name="HtmlEditorTable_DefaultColumnHeader" xml:space="preserve">
+    <value>Columna {0}</value>
+  </data>
+  <data name="HtmlEditorTable_Rows" xml:space="preserve">
+    <value>Filas</value>
+  </data>
+  <data name="HtmlEditorTable_Columns" xml:space="preserve">
+    <value>Columnas</value>
+  </data>
+  <data name="HtmlEditorTable_Width" xml:space="preserve">
+    <value>Ancho</value>
+  </data>
+  <data name="HtmlEditorTable_Border" xml:space="preserve">
+    <value>Borde</value>
+  </data>
+  <data name="HtmlEditorTable_HeaderRow" xml:space="preserve">
+    <value>Incluir fila de encabezado</value>
+  </data>
+  <data name="HtmlEditorTable_Edit" xml:space="preserve">
+    <value>Editar tabla</value>
+  </data>
+  <data name="HtmlEditorTable_OK" xml:space="preserve">
+    <value>Aceptar</value>
+  </data>
+  <data name="HtmlEditorTable_Update" xml:space="preserve">
+    <value>Actualizar</value>
+  </data>
+  <data name="HtmlEditorTable_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="HtmlEditorTable_CopyCells" xml:space="preserve">
+    <value>Copiar celdas</value>
+  </data>
+  <data name="HtmlEditorTable_PasteCells" xml:space="preserve">
+    <value>Pegar celdas</value>
+  </data>
+  <data name="HtmlEditorTable_InsertRowAbove" xml:space="preserve">
+    <value>Insertar fila arriba</value>
+  </data>
+  <data name="HtmlEditorTable_InsertRowBelow" xml:space="preserve">
+    <value>Insertar fila abajo</value>
+  </data>
+  <data name="HtmlEditorTable_InsertColumnLeft" xml:space="preserve">
+    <value>Insertar columna a la izquierda</value>
+  </data>
+  <data name="HtmlEditorTable_InsertColumnRight" xml:space="preserve">
+    <value>Insertar columna a la derecha</value>
+  </data>
+  <data name="HtmlEditorTable_DeleteRow" xml:space="preserve">
+    <value>Eliminar fila</value>
+  </data>
+  <data name="HtmlEditorTable_DeleteColumn" xml:space="preserve">
+    <value>Eliminar columna</value>
+  </data>
+  <data name="HtmlEditorTable_MergeRight" xml:space="preserve">
+    <value>Combinar a la derecha</value>
+  </data>
+  <data name="HtmlEditorTable_MergeDown" xml:space="preserve">
+    <value>Combinar hacia abajo</value>
+  </data>
+  <data name="HtmlEditorTable_SplitCell" xml:space="preserve">
+    <value>Dividir celda</value>
+  </data>
+  <data name="HtmlEditorTable_DeleteTable" xml:space="preserve">
+    <value>Eliminar tabla</value>
+  </data>
+  <data name="HtmlEditorTable_ColumnWidth" xml:space="preserve">
+    <value>Ancho de columna</value>
+  </data>
+  <data name="HtmlEditorTable_CellBackground" xml:space="preserve">
+    <value>Fondo de celda</value>
+  </data>
+  <data name="HtmlEditorTable_CellPadding" xml:space="preserve">
+    <value>Relleno de celda</value>
+  </data>
+  <data name="HtmlEditorTable_CellTextAlign" xml:space="preserve">
+    <value>Alineación horizontal</value>
+  </data>
+  <data name="HtmlEditorTable_CellVerticalAlign" xml:space="preserve">
+    <value>Alineación vertical</value>
+  </data>
+  <data name="HtmlEditorTable_CellBorder" xml:space="preserve">
+    <value>Borde de celda</value>
+  </data>
+  <data name="HtmlEditorTable_ColumnWidthPx" xml:space="preserve">
+    <value>Ancho de columna (px)</value>
+  </data>
+  <data name="HtmlEditorTable_CellPaddingPx" xml:space="preserve">
+    <value>Relleno de celda (px)</value>
+  </data>
+  <data name="HtmlEditorTable_BorderStyle" xml:space="preserve">
+    <value>Estilo de borde</value>
+  </data>
+  <data name="HtmlEditorTable_BorderWidthPx" xml:space="preserve">
+    <value>Ancho de borde (px)</value>
+  </data>
+  <data name="HtmlEditorTable_BorderColor" xml:space="preserve">
+    <value>Color de borde</value>
+  </data>
+  <data name="HtmlEditorTable_BorderTop" xml:space="preserve">
+    <value>Superior</value>
+  </data>
+  <data name="HtmlEditorTable_BorderRight" xml:space="preserve">
+    <value>Derecha</value>
+  </data>
+  <data name="HtmlEditorTable_BorderBottom" xml:space="preserve">
+    <value>Inferior</value>
+  </data>
+  <data name="HtmlEditorTable_BorderLeft" xml:space="preserve">
+    <value>Izquierda</value>
+  </data>
+  <data name="HtmlEditorTable_ActionBlocked" xml:space="preserve">
+    <value>Acción de tabla bloqueada</value>
+  </data>
+  <data name="HtmlEditorTable_ActionRequiresTable" xml:space="preserve">
+    <value>Coloque el cursor dentro de una tabla para usar las acciones de tabla.</value>
+  </data>
+  <data name="HtmlEditorTable_CopyInvalidSelection" xml:space="preserve">
+    <value>Seleccione un rango rectangular de celdas de la tabla antes de copiar.</value>
+  </data>
+  <data name="HtmlEditorTable_PasteBlocked" xml:space="preserve">
+    <value>Las celdas copiadas no se pueden pegar sobre celdas combinadas o una selección irregular.</value>
+  </data>
+  <data name="HtmlEditorTable_MergeInvalidSelection" xml:space="preserve">
+    <value>Las celdas seleccionadas deben formar un rango rectangular válido antes de poder combinarse.</value>
+  </data>
+  <data name="Text_AnchorAriaLabel" xml:space="preserve">
+    <value>Enlace a esta sección</value>
   </data>
 </root>

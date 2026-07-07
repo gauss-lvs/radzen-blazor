@@ -42,7 +42,9 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The text.</value>
         [Parameter]
-        public string? ImageAlternateText { get; set; } = "image";
+        public string? ImageAlternateText { get => imageAlternateText ?? Localize(nameof(RadzenStrings.SelectBarItem_ImageAlternateText)); set => imageAlternateText = value; }
+
+        private string? imageAlternateText;
 
         /// <summary>
         /// Gets or sets the image style.
@@ -64,6 +66,14 @@ namespace Radzen.Blazor
         /// <value>The value.</value>
         [Parameter]
         public object? Value { get; set; }
+
+        /// <summary>
+        /// Gets or sets the accessible label (<c>aria-label</c>) for the item. Falls back to <see cref="Text"/> when
+        /// not set. Use this to name icon-only items that have no visible <see cref="Text"/> (WCAG 4.1.2).
+        /// </summary>
+        /// <value>The accessible label.</value>
+        [Parameter]
+        public string? AriaLabel { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this <see cref="RadzenSelectBarItem"/> is disabled.

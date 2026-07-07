@@ -795,6 +795,10 @@
   <data name="AIChat_AssistantAvatarText" xml:space="preserve">
     <value>AI</value>
   </data>
+  <!-- Alert -->
+  <data name="Alert_CloseAriaLabel" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
   <!-- Button -->
   <data name="Button_ImageAlternateText" xml:space="preserve">
     <value>ボタン</value>
@@ -802,6 +806,15 @@
   <!-- Carousel -->
   <data name="Carousel_PagerButtonAriaLabelFormat" xml:space="preserve">
     <value>スライド {0} へ移動</value>
+  </data>
+  <data name="Carousel_PrevAriaLabel" xml:space="preserve">
+    <value>前へ</value>
+  </data>
+  <data name="Carousel_NextAriaLabel" xml:space="preserve">
+    <value>次へ</value>
+  </data>
+  <data name="Carousel_SlideAriaLabelFormat" xml:space="preserve">
+    <value>{0} / {1}</value>
   </data>
   <!-- Chat -->
   <data name="Chat_Placeholder" xml:space="preserve">
@@ -845,6 +858,18 @@
   </data>
   <data name="ColorPicker_ButtonText" xml:space="preserve">
     <value>OK</value>
+  </data>
+  <data name="ColorPicker_HueAriaLabel" xml:space="preserve">
+    <value>色相</value>
+  </data>
+  <data name="ColorPicker_AlphaAriaLabel" xml:space="preserve">
+    <value>アルファ</value>
+  </data>
+  <data name="ColorPicker_SaturationAriaLabel" xml:space="preserve">
+    <value>彩度と明度</value>
+  </data>
+  <data name="ColorPicker_SaturationValueTextFormat" xml:space="preserve">
+    <value>彩度 {0}% 明度 {1}%</value>
   </data>
   <!-- DataAnnotationValidator -->
   <data name="DataAnnotationValidator_MessageSeparator" xml:space="preserve">
@@ -928,6 +953,15 @@
   </data>
   <data name="DataFilter_CustomText" xml:space="preserve">
     <value>カスタム</value>
+  </data>
+  <data name="DataFilter_PropertyAriaLabel" xml:space="preserve">
+    <value>フィルタープロパティ</value>
+  </data>
+  <data name="DataFilter_FilterOperatorAriaLabel" xml:space="preserve">
+    <value>フィルター演算子</value>
+  </data>
+  <data name="DataFilter_FilterValueAriaLabel" xml:space="preserve">
+    <value>フィルター値</value>
   </data>
   <!-- DataGrid -->
   <data name="DataGrid_FilterText" xml:space="preserve">
@@ -1508,6 +1542,12 @@
   <data name="PickList_SelectedTargetToSourceTitle" xml:space="preserve">
     <value>選択した対象の項目を元のコレクションへ移動</value>
   </data>
+  <data name="PickList_SourceAriaLabel" xml:space="preserve">
+    <value>元の項目</value>
+  </data>
+  <data name="PickList_TargetAriaLabel" xml:space="preserve">
+    <value>対象の項目</value>
+  </data>
   <!-- PivotDataGrid -->
   <data name="PivotDataGrid_EmptyText" xml:space="preserve">
     <value>表示するレコードがありません。</value>
@@ -1620,6 +1660,9 @@
     <value>画像</value>
   </data>
   <!-- Rating -->
+  <data name="Rating_AriaLabel" xml:space="preserve">
+    <value>評価</value>
+  </data>
   <data name="Rating_ClearAriaLabel" xml:space="preserve">
     <value>クリア</value>
   </data>
@@ -1648,6 +1691,13 @@
   </data>
   <data name="Scheduler_PrevText" xml:space="preserve">
     <value>前へ</value>
+  </data>
+  <!-- SecurityCode -->
+  <data name="SecurityCode_AriaLabel" xml:space="preserve">
+    <value>セキュリティコード</value>
+  </data>
+  <data name="SecurityCode_InputAriaLabelFormat" xml:space="preserve">
+    <value>{1}文字中{0}文字目</value>
   </data>
   <!-- SidebarToggle -->
   <data name="SidebarToggle_ToggleAriaLabel" xml:space="preserve">
@@ -1742,5 +1792,449 @@
   <!-- DataList -->
   <data name="DataList_EmptyText" xml:space="preserve">
     <value>表示するレコードがありません。</value>
+  </data>
+  <data name="Spreadsheet_A11yBlank" xml:space="preserve">
+    <value>空白</value>
+  </data>
+  <data name="Spreadsheet_A11yChartSelected" xml:space="preserve">
+    <value>グラフを選択しました</value>
+  </data>
+  <data name="Spreadsheet_A11yColumnDeleted" xml:space="preserve">
+    <value>列を削除しました</value>
+  </data>
+  <data name="Spreadsheet_A11yColumnInserted" xml:space="preserve">
+    <value>列を挿入しました</value>
+  </data>
+  <data name="Spreadsheet_A11yError" xml:space="preserve">
+    <value>エラー</value>
+  </data>
+  <data name="Spreadsheet_A11yFilterApplied" xml:space="preserve">
+    <value>フィルターを適用しました</value>
+  </data>
+  <data name="Spreadsheet_A11yFiltered" xml:space="preserve">
+    <value>フィルター適用済み</value>
+  </data>
+  <data name="Spreadsheet_A11yFormula" xml:space="preserve">
+    <value>数式あり</value>
+  </data>
+  <data name="Spreadsheet_A11yGridLabel" xml:space="preserve">
+    <value>スプレッドシート</value>
+  </data>
+  <data name="Spreadsheet_A11yHyperlink" xml:space="preserve">
+    <value>ハイパーリンク</value>
+  </data>
+  <data name="Spreadsheet_A11yImageSelected" xml:space="preserve">
+    <value>画像を選択しました</value>
+  </data>
+  <data name="Spreadsheet_A11yInstructions" xml:space="preserve">
+    <value>矢印キーでセル間を移動します。Tab で次のセルに移動します。F6 でツールバーへ移動し、外に出ます。F2 または入力で編集します。すべてのキーボードショートカットは Alt+スラッシュを押してください。</value>
+  </data>
+  <data name="Spreadsheet_A11yMerged" xml:space="preserve">
+    <value>結合</value>
+  </data>
+  <data name="Spreadsheet_A11yReadOnly" xml:space="preserve">
+    <value>ロック</value>
+  </data>
+  <data name="Spreadsheet_A11yRowDeleted" xml:space="preserve">
+    <value>行を削除しました</value>
+  </data>
+  <data name="Spreadsheet_A11yRowInserted" xml:space="preserve">
+    <value>行を挿入しました</value>
+  </data>
+  <data name="Spreadsheet_A11ySelection" xml:space="preserve">
+    <value>{0}、{1} × {2}</value>
+  </data>
+  <data name="Spreadsheet_A11ySorted" xml:space="preserve">
+    <value>並べ替えました</value>
+  </data>
+  <data name="Spreadsheet_AlignBottom" xml:space="preserve">
+    <value>下揃え</value>
+  </data>
+  <data name="Spreadsheet_AlignCenter" xml:space="preserve">
+    <value>中央揃え</value>
+  </data>
+  <data name="Spreadsheet_AlignLeft" xml:space="preserve">
+    <value>左揃え</value>
+  </data>
+  <data name="Spreadsheet_AlignMiddle" xml:space="preserve">
+    <value>上下中央揃え</value>
+  </data>
+  <data name="Spreadsheet_AlignRight" xml:space="preserve">
+    <value>右揃え</value>
+  </data>
+  <data name="Spreadsheet_AlignTop" xml:space="preserve">
+    <value>上揃え</value>
+  </data>
+  <data name="Spreadsheet_AutoFilter" xml:space="preserve">
+    <value>フィルター</value>
+  </data>
+  <data name="Spreadsheet_Bold" xml:space="preserve">
+    <value>太字</value>
+  </data>
+  <data name="Spreadsheet_CellBorders" xml:space="preserve">
+    <value>罫線</value>
+  </data>
+  <data name="Spreadsheet_CellEditorLabel" xml:space="preserve">
+    <value>セルエディター</value>
+  </data>
+  <data name="Spreadsheet_ConditionalFormatTool" xml:space="preserve">
+    <value>条件付き書式</value>
+  </data>
+  <data name="Spreadsheet_DataFormat" xml:space="preserve">
+    <value>数値の書式</value>
+  </data>
+  <data name="Spreadsheet_DataValidationTool" xml:space="preserve">
+    <value>データの入力規則</value>
+  </data>
+  <data name="Spreadsheet_FontFamily" xml:space="preserve">
+    <value>フォント</value>
+  </data>
+  <data name="Spreadsheet_FontSize" xml:space="preserve">
+    <value>フォントサイズ</value>
+  </data>
+  <data name="Spreadsheet_FormulaBarLabel" xml:space="preserve">
+    <value>数式バー</value>
+  </data>
+  <data name="Spreadsheet_InsertRowAfter" xml:space="preserve">
+    <value>下に行を挿入</value>
+  </data>
+  <data name="Spreadsheet_InsertRowBefore" xml:space="preserve">
+    <value>上に行を挿入</value>
+  </data>
+  <data name="Spreadsheet_Italic" xml:space="preserve">
+    <value>斜体</value>
+  </data>
+  <data name="Spreadsheet_Open" xml:space="preserve">
+    <value>開く</value>
+  </data>
+  <data name="Spreadsheet_Redo" xml:space="preserve">
+    <value>やり直し</value>
+  </data>
+  <data name="Spreadsheet_Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="Spreadsheet_Strikethrough" xml:space="preserve">
+    <value>取り消し線</value>
+  </data>
+  <data name="Spreadsheet_TextWrap" xml:space="preserve">
+    <value>折り返して全体を表示する</value>
+  </data>
+  <data name="Spreadsheet_Underline" xml:space="preserve">
+    <value>下線</value>
+  </data>
+  <data name="Spreadsheet_Undo" xml:space="preserve">
+    <value>元に戻す</value>
+  </data>
+  <data name="Spreadsheet_HelpActionColumn" xml:space="preserve">
+    <value>操作</value>
+  </data>
+  <data name="Spreadsheet_HelpCancel" xml:space="preserve">
+    <value>現在の編集をキャンセルする</value>
+  </data>
+  <data name="Spreadsheet_HelpClear" xml:space="preserve">
+    <value>選択したセルをクリアする</value>
+  </data>
+  <data name="Spreadsheet_HelpClipboard" xml:space="preserve">
+    <value>コピー、切り取り、貼り付け</value>
+  </data>
+  <data name="Spreadsheet_HelpConfirmMove" xml:space="preserve">
+    <value>編集を確定して下または上に移動する</value>
+  </data>
+  <data name="Spreadsheet_HelpContextMenu" xml:space="preserve">
+    <value>コンテキストメニューを開く</value>
+  </data>
+  <data name="Spreadsheet_HelpDrawings" xml:space="preserve">
+    <value>画像とグラフを選択する</value>
+  </data>
+  <data name="Spreadsheet_HelpEdge" xml:space="preserve">
+    <value>データの端へ移動する</value>
+  </data>
+  <data name="Spreadsheet_HelpEdit" xml:space="preserve">
+    <value>アクティブセルを編集する</value>
+  </data>
+  <data name="Spreadsheet_HelpExtend" xml:space="preserve">
+    <value>選択範囲を拡張する</value>
+  </data>
+  <data name="Spreadsheet_HelpExtendEdge" xml:space="preserve">
+    <value>選択範囲をデータの端まで拡張する</value>
+  </data>
+  <data name="Spreadsheet_HelpExtendPage" xml:space="preserve">
+    <value>選択範囲を1画面分拡張する</value>
+  </data>
+  <data name="Spreadsheet_HelpExtendRow" xml:space="preserve">
+    <value>選択範囲を行の先頭または末尾まで拡張する</value>
+  </data>
+  <data name="Spreadsheet_HelpExtendSheet" xml:space="preserve">
+    <value>選択範囲をセル A1 または最後に使用したセルまで拡張する</value>
+  </data>
+  <data name="Spreadsheet_HelpFill" xml:space="preserve">
+    <value>下方向または右方向にコピーする</value>
+  </data>
+  <data name="Spreadsheet_HelpFilterPlaceholder" xml:space="preserve">
+    <value>ショートカットを絞り込む</value>
+  </data>
+  <data name="Spreadsheet_HelpLastCell" xml:space="preserve">
+    <value>最後に使用したセルへ移動する</value>
+  </data>
+  <data name="Spreadsheet_HelpMove" xml:space="preserve">
+    <value>セル間を移動する</value>
+  </data>
+  <data name="Spreadsheet_HelpNextCell" xml:space="preserve">
+    <value>次または前のセルへ移動する</value>
+  </data>
+  <data name="Spreadsheet_HelpNoResults" xml:space="preserve">
+    <value>一致するショートカットがありません</value>
+  </data>
+  <data name="Spreadsheet_HelpPage" xml:space="preserve">
+    <value>1画面上または下へ移動する</value>
+  </data>
+  <data name="Spreadsheet_HelpRegions" xml:space="preserve">
+    <value>ツールバー、数式バー、グリッド、シートタブ間を移動する</value>
+  </data>
+  <data name="Spreadsheet_HelpRowStart" xml:space="preserve">
+    <value>行の先頭またはセル A1 へ移動する</value>
+  </data>
+  <data name="Spreadsheet_HelpSelectAll" xml:space="preserve">
+    <value>使用範囲を選択する</value>
+  </data>
+  <data name="Spreadsheet_HelpSelectColumn" xml:space="preserve">
+    <value>列全体を選択する</value>
+  </data>
+  <data name="Spreadsheet_HelpSelectRow" xml:space="preserve">
+    <value>行全体を選択する</value>
+  </data>
+  <data name="Spreadsheet_HelpShortcutColumn" xml:space="preserve">
+    <value>ショートカット</value>
+  </data>
+  <data name="Spreadsheet_HelpShowShortcuts" xml:space="preserve">
+    <value>キーボードショートカットを表示する</value>
+  </data>
+  <data name="Spreadsheet_HelpTitle" xml:space="preserve">
+    <value>キーボードショートカット</value>
+  </data>
+  <data name="Spreadsheet_HelpUndoRedo" xml:space="preserve">
+    <value>元に戻す/やり直し</value>
+  </data>
+  <data name="Spreadsheet_SizeHeight" xml:space="preserve">
+    <value>高さ (px)</value>
+  </data>
+  <data name="Spreadsheet_SizeTitle" xml:space="preserve">
+    <value>サイズと位置</value>
+  </data>
+  <data name="Spreadsheet_SizeWidth" xml:space="preserve">
+    <value>幅 (px)</value>
+  </data>
+  <data name="Pager_ReloadTitle" xml:space="preserve">
+    <value>再読み込み</value>
+  </data>
+  <data name="Pager_ReloadAriaLabel" xml:space="preserve">
+    <value>現在のページを再読み込みします。</value>
+  </data>
+  <data name="DataGrid_ExpandChildItemAriaLabel" xml:space="preserve">
+    <value>子項目を展開</value>
+  </data>
+  <data name="DataGrid_ExpandGroupAriaLabel" xml:space="preserve">
+    <value>グループを展開</value>
+  </data>
+  <data name="DataGrid_FilterToggleAriaLabel" xml:space="preserve">
+    <value>切り替え</value>
+  </data>
+  <data name="DatePicker_TodayAriaLabel" xml:space="preserve">
+    <value>今日</value>
+  </data>
+  <data name="DatePicker_SelectedAriaLabel" xml:space="preserve">
+    <value>選択済み</value>
+  </data>
+  <data name="DatePicker_DisabledAriaLabel" xml:space="preserve">
+    <value>無効</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Placeholder" xml:space="preserve">
+    <value>書式ブロック</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Title" xml:space="preserve">
+    <value>テキストスタイル</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_NormalText" xml:space="preserve">
+    <value>標準</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading1Text" xml:space="preserve">
+    <value>見出し 1</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading2Text" xml:space="preserve">
+    <value>見出し 2</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading3Text" xml:space="preserve">
+    <value>見出し 3</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading4Text" xml:space="preserve">
+    <value>見出し 4</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading5Text" xml:space="preserve">
+    <value>見出し 5</value>
+  </data>
+  <data name="HtmlEditorFormatBlock_Heading6Text" xml:space="preserve">
+    <value>見出し 6</value>
+  </data>
+  <data name="Notification_CloseAriaLabel" xml:space="preserve">
+    <value>閉じる</value>
+  </data>
+  <data name="Dialog_CloseAriaLabel" xml:space="preserve">
+    <value>ダイアログを閉じる</value>
+  </data>
+  <data name="BreadCrumb_AriaLabel" xml:space="preserve">
+    <value>パンくずリスト</value>
+  </data>
+  <data name="Steps_TabListAriaLabel" xml:space="preserve">
+    <value>ステップ</value>
+  </data>
+  <data name="Tree_SelectItemAriaLabel" xml:space="preserve">
+    <value>項目を選択</value>
+  </data>
+  <data name="Slider_HandleLabel" xml:space="preserve">
+    <value>値</value>
+  </data>
+  <data name="Slider_MinHandleLabel" xml:space="preserve">
+    <value>最小値</value>
+  </data>
+  <data name="Slider_MaxHandleLabel" xml:space="preserve">
+    <value>最大値</value>
+  </data>
+  <data name="AgendaView_MultiDayText" xml:space="preserve">
+    <value>複数日</value>
+  </data>
+  <data name="SelectBarItem_ImageAlternateText" xml:space="preserve">
+    <value>画像</value>
+  </data>
+  <data name="HtmlEditorTable_DialogTitle" xml:space="preserve">
+    <value>表を挿入</value>
+  </data>
+  <data name="HtmlEditorTable_DefaultColumnHeader" xml:space="preserve">
+    <value>列 {0}</value>
+  </data>
+  <data name="HtmlEditorTable_Rows" xml:space="preserve">
+    <value>行</value>
+  </data>
+  <data name="HtmlEditorTable_Columns" xml:space="preserve">
+    <value>列</value>
+  </data>
+  <data name="HtmlEditorTable_Width" xml:space="preserve">
+    <value>幅</value>
+  </data>
+  <data name="HtmlEditorTable_Border" xml:space="preserve">
+    <value>罫線</value>
+  </data>
+  <data name="HtmlEditorTable_HeaderRow" xml:space="preserve">
+    <value>ヘッダー行を含める</value>
+  </data>
+  <data name="HtmlEditorTable_Edit" xml:space="preserve">
+    <value>表を編集</value>
+  </data>
+  <data name="HtmlEditorTable_OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="HtmlEditorTable_Update" xml:space="preserve">
+    <value>更新</value>
+  </data>
+  <data name="HtmlEditorTable_Cancel" xml:space="preserve">
+    <value>キャンセル</value>
+  </data>
+  <data name="HtmlEditorTable_CopyCells" xml:space="preserve">
+    <value>セルをコピー</value>
+  </data>
+  <data name="HtmlEditorTable_PasteCells" xml:space="preserve">
+    <value>セルを貼り付け</value>
+  </data>
+  <data name="HtmlEditorTable_InsertRowAbove" xml:space="preserve">
+    <value>上に行を挿入</value>
+  </data>
+  <data name="HtmlEditorTable_InsertRowBelow" xml:space="preserve">
+    <value>下に行を挿入</value>
+  </data>
+  <data name="HtmlEditorTable_InsertColumnLeft" xml:space="preserve">
+    <value>左に列を挿入</value>
+  </data>
+  <data name="HtmlEditorTable_InsertColumnRight" xml:space="preserve">
+    <value>右に列を挿入</value>
+  </data>
+  <data name="HtmlEditorTable_DeleteRow" xml:space="preserve">
+    <value>行を削除</value>
+  </data>
+  <data name="HtmlEditorTable_DeleteColumn" xml:space="preserve">
+    <value>列を削除</value>
+  </data>
+  <data name="HtmlEditorTable_MergeRight" xml:space="preserve">
+    <value>右に結合</value>
+  </data>
+  <data name="HtmlEditorTable_MergeDown" xml:space="preserve">
+    <value>下に結合</value>
+  </data>
+  <data name="HtmlEditorTable_SplitCell" xml:space="preserve">
+    <value>セルを分割</value>
+  </data>
+  <data name="HtmlEditorTable_DeleteTable" xml:space="preserve">
+    <value>表を削除</value>
+  </data>
+  <data name="HtmlEditorTable_ColumnWidth" xml:space="preserve">
+    <value>列の幅</value>
+  </data>
+  <data name="HtmlEditorTable_CellBackground" xml:space="preserve">
+    <value>セルの背景</value>
+  </data>
+  <data name="HtmlEditorTable_CellPadding" xml:space="preserve">
+    <value>セルの余白</value>
+  </data>
+  <data name="HtmlEditorTable_CellTextAlign" xml:space="preserve">
+    <value>水平方向の配置</value>
+  </data>
+  <data name="HtmlEditorTable_CellVerticalAlign" xml:space="preserve">
+    <value>垂直方向の配置</value>
+  </data>
+  <data name="HtmlEditorTable_CellBorder" xml:space="preserve">
+    <value>セルの罫線</value>
+  </data>
+  <data name="HtmlEditorTable_ColumnWidthPx" xml:space="preserve">
+    <value>列の幅 (px)</value>
+  </data>
+  <data name="HtmlEditorTable_CellPaddingPx" xml:space="preserve">
+    <value>セルの余白 (px)</value>
+  </data>
+  <data name="HtmlEditorTable_BorderStyle" xml:space="preserve">
+    <value>罫線のスタイル</value>
+  </data>
+  <data name="HtmlEditorTable_BorderWidthPx" xml:space="preserve">
+    <value>罫線の太さ (px)</value>
+  </data>
+  <data name="HtmlEditorTable_BorderColor" xml:space="preserve">
+    <value>罫線の色</value>
+  </data>
+  <data name="HtmlEditorTable_BorderTop" xml:space="preserve">
+    <value>上</value>
+  </data>
+  <data name="HtmlEditorTable_BorderRight" xml:space="preserve">
+    <value>右</value>
+  </data>
+  <data name="HtmlEditorTable_BorderBottom" xml:space="preserve">
+    <value>下</value>
+  </data>
+  <data name="HtmlEditorTable_BorderLeft" xml:space="preserve">
+    <value>左</value>
+  </data>
+  <data name="HtmlEditorTable_ActionBlocked" xml:space="preserve">
+    <value>表の操作がブロックされました</value>
+  </data>
+  <data name="HtmlEditorTable_ActionRequiresTable" xml:space="preserve">
+    <value>表の操作を使用するには、カーソルを表の中に置いてください。</value>
+  </data>
+  <data name="HtmlEditorTable_CopyInvalidSelection" xml:space="preserve">
+    <value>コピーする前に、表のセルを長方形の範囲で選択してください。</value>
+  </data>
+  <data name="HtmlEditorTable_PasteBlocked" xml:space="preserve">
+    <value>コピーしたセルは、結合されたセルや不規則な選択範囲には貼り付けられません。</value>
+  </data>
+  <data name="HtmlEditorTable_MergeInvalidSelection" xml:space="preserve">
+    <value>選択したセルを結合するには、有効な長方形の範囲になっている必要があります。</value>
+  </data>
+  <data name="Text_AnchorAriaLabel" xml:space="preserve">
+    <value>このセクションへのリンク</value>
   </data>
 </root>

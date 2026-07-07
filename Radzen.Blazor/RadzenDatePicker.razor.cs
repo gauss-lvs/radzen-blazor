@@ -165,23 +165,29 @@ namespace Radzen.Blazor
         [Parameter]
         public string ToggleAmPmAriaLabel { get => toggleAmPmAriaLabel ?? Localize(nameof(RadzenStrings.DatePicker_ToggleAmPmAriaLabel)); set => toggleAmPmAriaLabel = value; }
 
+        private string? todayAriaLabel;
+
         /// <summary>
         /// Gets or sets the suffix appended to a day cell's aria label when the date is today.
         /// </summary>
         [Parameter]
-        public string TodayAriaLabel { get; set; } = "today";
+        public string TodayAriaLabel { get => todayAriaLabel ?? Localize(nameof(RadzenStrings.DatePicker_TodayAriaLabel)); set => todayAriaLabel = value; }
+
+        private string? selectedAriaLabel;
 
         /// <summary>
         /// Gets or sets the suffix appended to a day cell's aria label when the date is selected.
         /// </summary>
         [Parameter]
-        public string SelectedAriaLabel { get; set; } = "selected";
+        public string SelectedAriaLabel { get => selectedAriaLabel ?? Localize(nameof(RadzenStrings.DatePicker_SelectedAriaLabel)); set => selectedAriaLabel = value; }
+
+        private string? disabledAriaLabel;
 
         /// <summary>
         /// Gets or sets the suffix appended to a day cell's aria label when the date is disabled.
         /// </summary>
         [Parameter]
-        public string DisabledAriaLabel { get; set; } = "disabled";
+        public string DisabledAriaLabel { get => disabledAriaLabel ?? Localize(nameof(RadzenStrings.DatePicker_DisabledAriaLabel)); set => disabledAriaLabel = value; }
 
         /// <summary>
         /// Specifies additional custom attributes that will be rendered by the input.
@@ -764,7 +770,9 @@ namespace Radzen.Blazor
 
                 try
                 {
-                    var newDate = Culture.Calendar.AddMonths(FocusedDate, key == "PageUp" ? -1 : 1);
+                    var newDate = args.ShiftKey
+                        ? Culture.Calendar.AddYears(FocusedDate, key == "PageUp" ? -1 : 1)
+                        : Culture.Calendar.AddMonths(FocusedDate, key == "PageUp" ? -1 : 1);
                     FocusedDate = newDate;
                     CurrentDate = newDate;
                     shouldFocusDay = true;

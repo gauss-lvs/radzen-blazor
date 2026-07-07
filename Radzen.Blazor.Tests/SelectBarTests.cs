@@ -133,6 +133,146 @@ namespace Radzen.Blazor.Tests
             Assert.Contains("First", component.Markup);
             Assert.Contains("Second", component.Markup);
         }
+
+        [Fact]
+        public void SelectBar_SingleSelect_Renders_RadiogroupRole()
+        {
+            using var ctx = new TestContext();
+            var component = ctx.RenderComponent<RadzenSelectBar<int>>(parameters =>
+            {
+                parameters.Add(p => p.Value, 1);
+                parameters.Add(p => p.Items, builder =>
+                {
+                    builder.OpenComponent<RadzenSelectBarItem>(0);
+                    builder.AddAttribute(1, "Text", "First");
+                    builder.AddAttribute(2, "Value", 1);
+                    builder.CloseComponent();
+
+                    builder.OpenComponent<RadzenSelectBarItem>(3);
+                    builder.AddAttribute(4, "Text", "Second");
+                    builder.AddAttribute(5, "Value", 2);
+                    builder.CloseComponent();
+                });
+            });
+
+            Assert.Contains("role=\"radiogroup\"", component.Markup);
+            Assert.Contains("role=\"radio\"", component.Markup);
+            Assert.Contains("aria-checked=\"true\"", component.Markup);
+            Assert.Contains("aria-checked=\"false\"", component.Markup);
+            Assert.DoesNotContain("aria-pressed", component.Markup);
+            Assert.DoesNotContain("role=\"toolbar\"", component.Markup);
+        }
+
+        [Fact]
+        public void SelectBar_Multiple_Renders_ToolbarRole_WithAriaPressed()
+        {
+            using var ctx = new TestContext();
+            var component = ctx.RenderComponent<RadzenSelectBar<System.Collections.Generic.IEnumerable<int>>>(parameters =>
+            {
+                parameters.Add(p => p.Multiple, true);
+                parameters.Add(p => p.Value, new System.Collections.Generic.List<int> { 1 });
+                parameters.Add(p => p.Items, builder =>
+                {
+                    builder.OpenComponent<RadzenSelectBarItem>(0);
+                    builder.AddAttribute(1, "Text", "First");
+                    builder.AddAttribute(2, "Value", 1);
+                    builder.CloseComponent();
+
+                    builder.OpenComponent<RadzenSelectBarItem>(3);
+                    builder.AddAttribute(4, "Text", "Second");
+                    builder.AddAttribute(5, "Value", 2);
+                    builder.CloseComponent();
+                });
+            });
+
+            Assert.Contains("role=\"toolbar\"", component.Markup);
+            Assert.Contains("aria-pressed=\"true\"", component.Markup);
+            Assert.Contains("aria-pressed=\"false\"", component.Markup);
+            Assert.DoesNotContain("aria-checked", component.Markup);
+            Assert.DoesNotContain("role=\"radio\"", component.Markup);
+            Assert.DoesNotContain("role=\"radiogroup\"", component.Markup);
+        }
+
+        [Fact]
+        public void SelectBar_SingleSelect_ArrowKeys_SelectFocusedItem_AndWrap()
+        {
+            using var ctx = new TestContext();
+            var component = ctx.RenderComponent<RadzenSelectBar<int>>(parameters =>
+            {
+                parameters.Add(p => p.Value, 1);
+                parameters.Add(p => p.Items, builder =>
+                {
+                    builder.OpenComponent<RadzenSelectBarItem>(0);
+                    builder.AddAttribute(1, "Text", "First");
+                    builder.AddAttribute(2, "Value", 1);
+                    builder.CloseComponent();
+
+                    builder.OpenComponent<RadzenSelectBarItem>(3);
+                    builder.AddAttribute(4, "Text", "Second");
+                    builder.AddAttribute(5, "Value", 2);
+                    builder.CloseComponent();
+                });
+            });
+
+            var radiogroup = component.Find("div[role=\"radiogroup\"]");
+
+            radiogroup.KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "ArrowRight" });
+
+            Assert.Equal(2, component.Instance.Value);
+
+            radiogroup = component.Find("div[role=\"radiogroup\"]");
+            radiogroup.KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "ArrowRight" });
+
+            Assert.Equal(1, component.Instance.Value);
+        }
+
+        [Fact]
+        public void SelectBar_Multiple_ArrowKeys_DoNotToggleSelection()
+        {
+            using var ctx = new TestContext();
+            var component = ctx.RenderComponent<RadzenSelectBar<System.Collections.Generic.IEnumerable<int>>>(parameters =>
+            {
+                parameters.Add(p => p.Multiple, true);
+                parameters.Add(p => p.Value, new System.Collections.Generic.List<int> { 1 });
+                parameters.Add(p => p.Items, builder =>
+                {
+                    builder.OpenComponent<RadzenSelectBarItem>(0);
+                    builder.AddAttribute(1, "Text", "First");
+                    builder.AddAttribute(2, "Value", 1);
+                    builder.CloseComponent();
+
+                    builder.OpenComponent<RadzenSelectBarItem>(3);
+                    builder.AddAttribute(4, "Text", "Second");
+                    builder.AddAttribute(5, "Value", 2);
+                    builder.CloseComponent();
+                });
+            });
+
+            var toolbar = component.Find("div[role=\"toolbar\"]");
+
+            toolbar.KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "ArrowRight" });
+
+            Assert.Equal(new[] { 1 }, System.Linq.Enumerable.ToArray(component.Instance.Value));
+        }
+
+        [Fact]
+        public void SelectBar_Renders_AriaLabelledBy()
+        {
+            using var ctx = new TestContext();
+            var component = ctx.RenderComponent<RadzenSelectBar<int>>(parameters =>
+            {
+                parameters.Add(p => p.AriaLabelledBy, "label-id");
+                parameters.Add(p => p.Items, builder =>
+                {
+                    builder.OpenComponent<RadzenSelectBarItem>(0);
+                    builder.AddAttribute(1, "Text", "Option 1");
+                    builder.AddAttribute(2, "Value", 1);
+                    builder.CloseComponent();
+                });
+            });
+
+            Assert.Contains("aria-labelledby=\"label-id\"", component.Markup);
+        }
     }
 }
 

@@ -41,6 +41,25 @@ namespace Radzen.Blazor
                 _jsRef = await JSRuntime.InvokeAsync<IJSObjectReference>(
                     "Radzen.createProfileMenu", Element);
             }
+
+            if (shouldFocusMenu)
+            {
+                shouldFocusMenu = false;
+
+                try
+                {
+                    await menuElement.FocusAsync(preventScroll: true);
+                }
+                catch (InvalidOperationException)
+                {
+                }
+                catch (JSDisconnectedException)
+                {
+                }
+                catch (JSException)
+                {
+                }
+            }
         }
 
         /// <inheritdoc />
@@ -107,13 +126,34 @@ namespace Radzen.Blazor
         public void Close()
         {
             contentStyle = "display:none;";
+            focusedIndex = -1;
             StateHasChanged();
+        }
+
+        ElementReference toggleElement;
+        ElementReference menuElement;
+
+        string? ActiveDescendantId => !Collapsed && focusedIndex >= 0 && focusedIndex < items.Count
+            ? items[focusedIndex].GetItemId()
+            : null;
+
+        async Task RestoreFocusToToggle()
+        {
+            try
+            {
+                await toggleElement.FocusAsync();
+            }
+            catch (InvalidOperationException)
+            {
+            }
         }
 
         [Inject]
         NavigationManager? NavigationManager { get; set; }
 
         internal int focusedIndex = -1;
+
+        bool shouldFocusMenu;
 
         bool preventKeyPress = true;
         bool stopKeydownPropagation;
@@ -126,7 +166,33 @@ namespace Radzen.Blazor
                 preventKeyPress = true;
                 stopKeydownPropagation = true;
 
-                focusedIndex = Math.Clamp(focusedIndex + (key == "ArrowUp" ? -1 : 1), 0, items.Count - 1);
+                if (Collapsed)
+                {
+                    await Toggle(new MouseEventArgs());
+
+                    focusedIndex = key == "ArrowUp" ? items.Count - 1 : 0;
+
+                    shouldFocusMenu = true;
+                }
+                else if (items.Count > 0)
+                {
+                    var start = Math.Clamp(focusedIndex, 0, items.Count - 1);
+                    focusedIndex = (start + (key == "ArrowUp" ? -1 : 1) + items.Count) % items.Count;
+                }
+            }
+            else if (key == "Home" || key == "End")
+            {
+                preventKeyPress = true;
+                stopKeydownPropagation = true;
+
+                if (Collapsed)
+                {
+                    await Toggle(new MouseEventArgs());
+
+                    shouldFocusMenu = true;
+                }
+
+                focusedIndex = key == "Home" ? 0 : items.Count - 1;
             }
             else if (key == "Space" || key == "Enter")
             {
@@ -153,6 +219,8 @@ namespace Radzen.Blazor
                     if (!Collapsed)
                     {
                         focusedIndex = focusedIndex != -1 ? focusedIndex : 0;
+
+                        shouldFocusMenu = true;
                     }
                 }
             }
@@ -162,6 +230,38 @@ namespace Radzen.Blazor
                 stopKeydownPropagation = true;
 
                 Close();
+
+                await RestoreFocusToToggle();
+            }
+            else if (key == "Tab")
+            {
+                preventKeyPress = false;
+                stopKeydownPropagation = false;
+
+                if (!Collapsed)
+                {
+                    Close();
+                }
+            }
+            else if (!Collapsed && args.Key != null && args.Key.Length == 1 && !char.IsControl(args.Key[0]) && items.Count > 0)
+            {
+                preventKeyPress = true;
+                stopKeydownPropagation = true;
+
+                var search = args.Key;
+                var start = focusedIndex < 0 ? 0 : focusedIndex;
+
+                for (var offset = 1; offset <= items.Count; offset++)
+                {
+                    var index = (start + offset) % items.Count;
+                    var text = items[index].Text;
+
+                    if (text != null && text.StartsWith(search, StringComparison.OrdinalIgnoreCase))
+                    {
+                        focusedIndex = index;
+                        break;
+                    }
+                }
             }
             else
             {
@@ -175,15 +275,6 @@ namespace Radzen.Blazor
         {
             var key = args.Code ?? args.Key;
             stopGuardKeydownPropagation = key != "Escape";
-        }
-
-        async Task OnToggleKeyDown(KeyboardEventArgs args)
-        {
-            var key = args.Code != null ? args.Code : args.Key;
-            if (key == "Space" || key == "Enter")
-            {
-                await Toggle(new MouseEventArgs());
-            }
         }
 
         internal bool IsFocused(RadzenProfileMenuItem item)

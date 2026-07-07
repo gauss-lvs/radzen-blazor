@@ -175,6 +175,7 @@ namespace Radzen.Blazor
 
         string? customSearchText;
         int selectedIndex = -1;
+        bool popupOpened;
 
         /// <summary>
         /// Handles the FilterKeyPress event.
@@ -212,13 +213,15 @@ namespace Radzen.Blazor
                     await SelectedIndexChanged.InvokeAsync(selectedIndex);
                 }
 
-                if (key == "Tab" && JSRuntime != null)
+                if (key == "Tab")
                 {
                     await ClosePopup();
                 }
             }
-            else if (key == "Escape" && JSRuntime != null)
+            else if (key == "Escape")
             {
+                selectedIndex = -1;
+
                 await ClosePopup();
             }
             else
@@ -247,6 +250,7 @@ namespace Radzen.Blazor
             if (value.Length < MinLength && !OpenOnFocus)
             {
                 await ClosePopup();
+                await InvokeAsync(() => { StateHasChanged(); });
                 return;
             }
 
@@ -272,11 +276,53 @@ namespace Radzen.Blazor
 
         private string ListId => $"{PopupID}-list";
 
-        private bool IsPopupOpen => OpenOnFocus || (!string.IsNullOrEmpty(searchText) || !string.IsNullOrEmpty(customSearchText));
+        private string ItemId(int index) => $"{ListId}-{index}";
+
+        private string? ActiveDescendantId => selectedIndex >= 0 ? ItemId(selectedIndex) : null;
+
+        private bool IsPopupOpen => popupOpened;
+
+        /// <summary>
+        /// Invoked from client-side code when the suggestion popup opens.
+        /// </summary>
+        [JSInvokable]
+        public async Task OnPopupOpen()
+        {
+            if (!popupOpened)
+            {
+                popupOpened = true;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+
+        /// <summary>
+        /// Invoked from client-side code when the suggestion popup closes.
+        /// </summary>
+        [JSInvokable]
+        public async Task OnPopupClose()
+        {
+            if (popupOpened || selectedIndex != -1)
+            {
+                popupOpened = false;
+                selectedIndex = -1;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+
+        private async Task ClosePopup()
+        {
+            popupOpened = false;
+
+            if (JSRuntime != null)
+            {
+                await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID);
+            }
+        }
 
         private async Task OnSelectItem(object item)
         {
             await ClosePopup();
+
             await SelectItem(item);
         }
 
@@ -309,27 +355,41 @@ namespace Radzen.Blazor
             }
         }
 
+
         /// <summary>
-        /// Handles the Change event.
+        /// Handles the @bind:set binding of the underlying input element.
         /// </summary>
-        /// <param name="args">The <see cref="ChangeEventArgs"/> instance containing the event data.</param>
-        protected async System.Threading.Tasks.Task OnChange(ChangeEventArgs args)
+        /// <param name="value">The new value reported by the change event.</param>
+        protected async System.Threading.Tasks.Task SetValue(string? value)
         {
             if (!Immediate)
             {
-                await OnChangeInternal(args);
+                await SetValueInternal(args);
             }
         }
 
-        private async Task OnChangeInternal(ChangeEventArgs args)
+        /// <summary>
+        /// Handles the @bind:set binding of the underlying input element.
+        /// </summary>
+        /// <param name="value">The new value reported by the change event.</param>
+        private async System.Threading.Tasks.Task SetValueInternal(string? value)
         {
-            ArgumentNullException.ThrowIfNull(args);
+            // When ValueChanged is wired, leave _value alone — parameter re-flow handles
+            // both accepted updates (Value setter overwrites _value) and parent rejection
+            // (parameter unchanged → Blazor skips SetParametersAsync → _value stays at the
+            // bound value → @bind:get force-syncs the DOM back to it). When ValueChanged
+            // is NOT wired, no re-flow occurs, so _value must be updated locally or
+            // @bind:get would re-evaluate to the stale initial value and the framework
+            // would wipe the DOM on every blur.
+            var newValue = value;
+            if (!IsBound)
+            {
+                Value = newValue;
+            }
 
-            Value = args.Value?.ToString();
-
-            await ValueChanged.InvokeAsync($"{Value}");
-            if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
-            await Change.InvokeAsync(Value);
+            await ValueChanged.InvokeAsync($"{newValue}");
+            NotifyFieldChanged(newValue);
+            await Change.InvokeAsync(newValue);
 
             await SelectedItemChanged.InvokeAsync(null);
         }
@@ -464,7 +524,7 @@ namespace Radzen.Blazor
                 }
 
                 _jsRef = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "Radzen.createAutoComplete", Element, PopupID, OpenOnFocus);
+                    "Radzen.createAutoComplete", Element, PopupID, OpenOnFocus, Reference, nameof(OnPopupOpen), nameof(OnPopupClose));
             }
         }
 
@@ -502,6 +562,8 @@ namespace Radzen.Blazor
 
             if (shouldClose && !firstRender && JSRuntime != null)
             {
+                popupOpened = false;
+                selectedIndex = -1;
                 await JSRuntime.InvokeVoidAsync("Radzen.destroyPopup", PopupID);
             }
         }

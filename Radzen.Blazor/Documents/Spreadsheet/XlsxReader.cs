@@ -340,7 +340,7 @@ static class XlsxReader
 
         ParseFrozenPanes(sheetDoc, sNs, sheet);
 
-        ParseColumnWidths(sheetDoc, sNs, sheet);
+        ParseColumnWidths(sheetDoc, sNs, sheet, styleInfo);
 
         ParseRowsAndCells(sheetDoc, sNs, sheet, styleInfo, sharedStrings, defaultRowHeight);
 
@@ -403,8 +403,25 @@ static class XlsxReader
         }
     }
 
-    private static void ParseColumnWidths(XDocument sheetDoc, XNamespace sNs, Worksheet sheet)
+    private static void ParseColumnWidths(XDocument sheetDoc, XNamespace sNs, Worksheet sheet, StyleInfo styleInfo)
     {
+        // Column widths are measured in characters of the maximum digit width of the Normal style's font.
+        var mdw = ColumnWidthConversion.DefaultMdw;
+
+        if (styleInfo.FontStyles.TryGetValue(0, out var normalFont))
+        {
+            mdw = ColumnWidthConversion.GetMdw(normalFont.FontFamily, normalFont.FontSize);
+        }
+
+        var sheetFormatPr = sheetDoc.Descendants(sNs + "sheetFormatPr").FirstOrDefault();
+        var defaultColWidth = sheetFormatPr?.Attribute("defaultColWidth")?.Value;
+
+        if (defaultColWidth is not null &&
+            double.TryParse(defaultColWidth, NumberStyles.Float, CultureInfo.InvariantCulture, out var defaultWidth))
+        {
+            sheet.Columns.Size = ColumnWidthConversion.CharsToPixels(defaultWidth, mdw);
+        }
+
         var cols = sheetDoc.Descendants(sNs + "cols").FirstOrDefault();
         if (cols is not null)
         {
@@ -412,20 +429,28 @@ static class XlsxReader
             {
                 var min = col.Attribute("min")?.Value;
                 var max = col.Attribute("max")?.Value;
-                var width = col.Attribute("width")?.Value;
 
-                if (min is not null && max is not null && width is not null &&
-                    int.TryParse(min, out var minCol) &&
-                    int.TryParse(max, out var maxCol) &&
-                    double.TryParse(width, NumberStyles.Float, CultureInfo.InvariantCulture, out var colWidth))
+                if (min is null || max is null ||
+                    !int.TryParse(min, out var minCol) ||
+                    !int.TryParse(max, out var maxCol))
                 {
-                    // Excel column width to pixels conversion:
-                    // pixels = Truncate(((256 * width + Truncate(128/7)) / 256) * 7)
-                    var pixelWidth = (256 * colWidth + Math.Truncate(128 / 7.0)) / 256 * 7;
+                    continue;
+                }
 
-                    for (var i = minCol - 1; i <= maxCol - 1 && i < sheet.Columns.Count; i++)
+                var bestFit = col.Attribute("bestFit")?.Value is "1" or "true";
+                var hasWidth = double.TryParse(col.Attribute("width")?.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var colWidth);
+                var pixelWidth = ColumnWidthConversion.CharsToPixels(colWidth, mdw);
+
+                for (var i = minCol - 1; i <= maxCol - 1 && i < sheet.Columns.Count; i++)
+                {
+                    if (hasWidth)
                     {
                         sheet.Columns[i] = pixelWidth;
+                    }
+
+                    if (bestFit)
+                    {
+                        sheet.Columns.SetAutoFit(i);
                     }
                 }
             }

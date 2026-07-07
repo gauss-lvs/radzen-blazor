@@ -1,6 +1,6 @@
 using Xunit;
-
 using Radzen.Documents.Spreadsheet;
+
 namespace Radzen.Blazor.Spreadsheet.Tests;
 
 /// <summary>
@@ -17,7 +17,7 @@ public class PasteCommandTests
         var clipboard = new SpreadsheetClipboard();
         var stack = new UndoRedoStack(sheet);
 
-        stack.Execute(new PasteCommand(clipboard, sheet, new CellRef(0, 0), "X\tY"));
+        stack.Execute(new PasteCommand(clipboard, sheet, new RangeRef(new CellRef(0, 0), new CellRef(0, 0)), "X\tY"));
 
         Assert.Equal("X", sheet.Cells[0, 0].Value);
         Assert.Equal("Y", sheet.Cells[0, 1].Value);
@@ -45,10 +45,10 @@ public class PasteCommandTests
         sheet.Cells[10, 3].Changed += _ => evals++;
 
         var stack = new UndoRedoStack(sheet);
-        stack.Execute(new PasteCommand(clipboard, sheet, new CellRef(0, 1), null)); // paste to B1
+        stack.Execute(new PasteCommand(clipboard, sheet, new RangeRef(new CellRef(0, 1), new CellRef(0, 1)), null)); // paste to B1
 
         Assert.Equal(60d, sheet.Cells[10, 3].Value);
-        Assert.True(evals <= 2, $"aggregate re-evaluated {evals} times; expected <= 2 (batched)");
+        Assert.True(evals <= 2);
 
         stack.Undo();
         Assert.Equal(0d, sheet.Cells[10, 3].Value); // destination cleared -> SUM 0
@@ -66,7 +66,7 @@ public class PasteCommandTests
         clipboard.Cut(sheet);
 
         var stack = new UndoRedoStack(sheet);
-        stack.Execute(new PasteCommand(clipboard, sheet, new CellRef(0, 2), null)); // -> C1
+        stack.Execute(new PasteCommand(clipboard, sheet, new RangeRef(new CellRef(0, 2), new CellRef(0, 2)), null)); // -> C1
 
         Assert.Equal("A", sheet.Cells[0, 2].Value);
         Assert.Equal("B", sheet.Cells[1, 2].Value);
@@ -92,15 +92,44 @@ public class PasteCommandTests
         clipboard.Cut(sheet);
 
         var stack = new UndoRedoStack(sheet);
-        stack.Execute(new PasteCommand(clipboard, sheet, new CellRef(0, 2), null)); // move A1 -> C1
+        stack.Execute(new PasteCommand(clipboard, sheet, new RangeRef(new CellRef(0, 2), new CellRef(0, 2)), null)); // move A1 -> C1
         stack.Undo();
 
         Assert.Equal("A", sheet.Cells[0, 0].Value);
         Assert.Null(sheet.Cells[0, 2].Value);
 
         stack.Redo(); // clipboard was cleared by the cut-paste; redo replays from captured result
+        stack.Redo();
 
         Assert.Equal("A", sheet.Cells[0, 2].Value);
         Assert.Null(sheet.Cells[0, 0].Value);
+    }
+    
+    [Fact]
+    public void TiledTextPaste_FillsSelectedRange()
+    {
+        var sheet = new Worksheet(20, 5);
+        sheet.Cells[0, 0].Value = "X";
+        
+        var clipboard = new SpreadsheetClipboard();
+        sheet.Selection.Select(new CellRef(0, 0));
+        clipboard.Copy(sheet);
+
+        var stack = new UndoRedoStack(sheet);
+        var destination = new RangeRef(new CellRef(0, 1), new CellRef(1, 2));
+        
+        stack.Execute(new PasteCommand(clipboard, sheet, destination, null));
+
+        Assert.Equal("X", sheet.Cells[0, 1].Value);
+        Assert.Equal("X", sheet.Cells[0, 2].Value);
+        Assert.Equal("X", sheet.Cells[1, 1].Value);
+        Assert.Equal("X", sheet.Cells[1, 2].Value);
+
+        stack.Undo();
+
+        Assert.Null(sheet.Cells[0, 1].Value);
+        Assert.Null(sheet.Cells[0, 2].Value);
+        Assert.Null(sheet.Cells[1, 1].Value);
+        Assert.Null(sheet.Cells[1, 2].Value);
     }
 }

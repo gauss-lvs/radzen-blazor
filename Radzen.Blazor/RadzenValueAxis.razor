@@ -21,7 +21,7 @@
         }
         else
         {
-            return AxisMeasurer.YAxis(chart.ValueScale, chart.ValueAxis, Title);
+            return AxisMeasurer.YAxis(chart.ValueScale, this, Title);
         }
     }
 
@@ -33,6 +33,16 @@
         }
 
         return AxisMeasurer.YAxis(scale, this, Title);
+    }
+
+    internal double MeasureHorizontal(ScaleBase scale)
+    {
+        if (Visible == false)
+        {
+            return 0;
+        }
+
+        return AxisMeasurer.XAxis(scale, this, Title);
     }
 
     internal override double Size

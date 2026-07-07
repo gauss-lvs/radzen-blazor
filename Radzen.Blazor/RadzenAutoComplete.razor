@@ -11,19 +11,21 @@
     <div @ref="@Element" style="@($"{Style};display:inline-block;")" @attributes="Attributes" class="@GetCssClass()" id="@GetId()">
         @if (Multiline)
         {
-            <textarea @ref="@search" @attributes="InputAttributes" @onkeydown="@OnFilterKeyPress" value="@Value" disabled="@Disabled"
-                @oninput="@OpenScript" tabindex="@(Disabled ? "-1" : $"{TabIndex}")"  @onchange="@OnChange"
-                aria-autocomplete="list" aria-haspopup="listbox" aria-controls="@ListId" aria-expanded="@(IsPopupOpen ? "true" : "false")" autocomplete="off" role="combobox"
+            <textarea @ref="@search" @attributes="InputAttributes" @onkeydown="@OnFilterKeyPress" @bind:get="@Value" @bind:set="@SetValue" @bind:event="onchange" disabled="@Disabled"
+                tabindex="@(Disabled ? "-1" : $"{TabIndex}")"
+                aria-autocomplete="list" aria-haspopup="listbox" aria-controls="@ListId" aria-expanded="@(IsPopupOpen ? "true" : "false")" aria-activedescendant="@ActiveDescendantId" autocomplete="off" role="combobox"
                 class=@InputClass
-                id="@Name" placeholder="@CurrentPlaceholder" maxlength="@MaxLength" />
+                id="@Name" placeholder="@CurrentPlaceholder" maxlength="@MaxLength"
+                @oninput="@OpenScript" />
         }
         else
         {
-            <input @ref="@search" @attributes="InputAttributes" @onkeydown="@OnFilterKeyPress" value="@Value" disabled="@Disabled"
-                @oninput="@OpenScript" tabindex="@(Disabled ? "-1" : $"{TabIndex}")" @onchange="@OnChange"
-                aria-autocomplete="list" aria-haspopup="listbox" aria-controls="@ListId" aria-expanded="@(IsPopupOpen ? "true" : "false")" autocomplete="off" role="combobox"
+            <input @ref="@search" @attributes="InputAttributes" @onkeydown="@OnFilterKeyPress" @bind:get="@Value" @bind:set="@SetValue" @bind:event="onchange" disabled="@Disabled"
+                tabindex="@(Disabled ? "-1" : $"{TabIndex}")"
+                aria-autocomplete="list" aria-haspopup="listbox" aria-controls="@ListId" aria-expanded="@(IsPopupOpen ? "true" : "false")" aria-activedescendant="@ActiveDescendantId" autocomplete="off" role="combobox"
                 class=@InputClass
-                type="@InputType" id="@Name" placeholder="@CurrentPlaceholder" maxlength="@MaxLength" />
+                type="@InputType" id="@Name" placeholder="@CurrentPlaceholder" maxlength="@MaxLength"
+                @oninput="@OpenScript" />
         }
         <div id="@PopupID" class="@PopupCssClass" style="@PopupStyle">
             <ul id="@ListId" @ref="@list" class="rz-autocomplete-items rz-autocomplete-list" role="listbox">
@@ -39,12 +41,14 @@
                     {
                         var items = (LoadData.HasDelegate ? Data : View) ?? Enumerable.Empty<object>();
                         var hasItems = false;
+                        var itemIndex = -1;
 
                         foreach (var item in items)
                         {
                             hasItems = true;
-                            <li role="option" class="rz-autocomplete-list-item" tabindex="-1"
-                                aria-selected="@(object.Equals(item, SelectedItem) ? "true" : "false")"
+                            itemIndex++;
+                            <li role="option" id="@ItemId(itemIndex)" class="rz-autocomplete-list-item" tabindex="-1"
+                                aria-selected="@(selectedIndex >= 0 ? (itemIndex == selectedIndex ? "true" : "false") : (object.Equals(item, SelectedItem) ? "true" : "false"))"
                                 @onclick="@(() => OnSelectItem(item))" onmousedown="Radzen.activeElement = null">
                                 <span>
                                     @if (Template != null)

@@ -14,7 +14,7 @@ public class Axis(double size, int count)
     /// <summary>
     /// The default size of an item of the axis.
     /// </summary>
-    public double Size => size;
+    public double Size { get; internal set; } = size;
 
     private int count = count;
 
@@ -45,6 +45,8 @@ public class Axis(double size, int count)
     private readonly Dictionary<int, double> data = [];
 
     private readonly HashSet<int> hidden = [];
+
+    private readonly HashSet<int> autoFit = [];
 
     private bool isUpdating;
 
@@ -121,6 +123,25 @@ public class Axis(double size, int count)
     }
 
     /// <summary>
+    /// Checks if the size at the specified index was set by auto fit (persisted as bestFit in XLSX).
+    /// </summary>
+    public bool IsAutoFit(int index)
+    {
+        return autoFit.Contains(index);
+    }
+
+    // No change event: the flag has no visual effect, it only feeds the XLSX writer.
+    internal void SetAutoFit(int index)
+    {
+        autoFit.Add(index);
+    }
+
+    internal void ClearAutoFit(int index)
+    {
+        autoFit.Remove(index);
+    }
+
+    /// <summary>
     /// Gets or sets the size of the axis at the specified index.
     /// </summary>
     public double this[int index]
@@ -132,7 +153,7 @@ public class Axis(double size, int count)
                 return value;
             }
 
-            return size;
+            return Size;
         }
         set
         {
@@ -167,6 +188,7 @@ public class Axis(double size, int count)
 
         DictionaryShift.Remap(data, Remap);
         DictionaryShift.Remap(hidden, Remap);
+        DictionaryShift.Remap(autoFit, Remap);
     }
 
     internal void ShiftDown(int fromIndex, int count)
@@ -175,6 +197,7 @@ public class Axis(double size, int count)
 
         DictionaryShift.Remap(data, Remap);
         DictionaryShift.Remap(hidden, Remap);
+        DictionaryShift.Remap(autoFit, Remap);
     }
 
     internal IEnumerable<int> GetCustomSizedIndices() => data.Keys;
@@ -203,7 +226,7 @@ public class Axis(double size, int count)
                 }
             }
 
-            return total + size * (Count - data.Count - hidden.Count + hiddenCustomCount);
+            return total + Size * (Count - data.Count - hidden.Count + hiddenCustomCount);
         }
     }
 }

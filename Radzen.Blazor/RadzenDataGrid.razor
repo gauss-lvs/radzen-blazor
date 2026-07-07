@@ -1,5 +1,3 @@
-@using Microsoft.JSInterop
-@using Microsoft.AspNetCore.Components.Forms
 @using Radzen
 @typeparam TItem
 @inherits PagedDataBoundComponent<TItem>
@@ -15,9 +13,11 @@
     var visibleColumns = columns.Where(c => c.GetVisible()).ToList();
 
     <div @ref=@Element style="@Style" @attributes="Attributes" class="rz-data-grid @GetCssClass()" id="@GetId()"
-        role="grid"
+        role="@(LoadChildData.HasDelegate ? "treegrid" : "grid")"
+        aria-multiselectable="@(SelectionMode == DataGridSelectionMode.Multiple ? "true" : null)"
+        aria-rowcount="@GridAriaRowCount()"
         aria-activedescendant="@GetActiveDescendantId()"
-        @onkeydown="@OnKeyDown" @onkeydown:preventDefault="preventKeyDown" @onkeydown:stopPropagation="stopKeydownPropagation" tabindex=0
+        @onkeydown="@OnKeyDown" @onkeydown:preventDefault="preventKeyDown" @onkeydown:stopPropagation="stopKeydownPropagation" tabindex="@TabIndex"
         @onblur=@OnBlur @oncontextmenu=OnContextMenu @oncontextmenu:preventDefault="@this.ContextMenu.HasDelegate" @oncontextmenu:stopPropagation="@this.ContextMenu.HasDelegate">
         @if (AllowGrouping || AllowColumnPicking)
         {
@@ -53,16 +53,51 @@
                 @if (AllowColumnPicking)
                 {
                     <div class="rz-column-picker">
-                        <RadzenDropDown SelectAllText="@AllColumnsText" AllowSelectAll="@AllowPickAllColumns"
-                            MaxSelectedLabels="@ColumnsPickerMaxSelectedLabels" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", SelectVisibleColumnsAriaLabel }})"
-                            SelectedItemsText="@ColumnsShowingText" Change=@ToggleColumns
-                            @bind-Value="@selectedColumns" FilterCaseSensitivity=FilterCaseSensitivity.CaseInsensitive
-                            Multiple="true" AllowFiltering="@ColumnsPickerAllowFiltering"
-                            Placeholder="@ColumnsText"
-                            Data="allPickableColumns"
-                            TextProperty="ColumnPickerTitle" />
-                    </div>
 
+                        @if (!AllowSortingColumnPicker)
+                        {
+                            <RadzenDropDown SelectAllText="@AllColumnsText" AllowSelectAll="@AllowPickAllColumns"
+                                            MaxSelectedLabels="@ColumnsPickerMaxSelectedLabels" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", SelectVisibleColumnsAriaLabel }})"
+                                            SelectedItemsText="@ColumnsShowingText" Change=@ToggleColumns
+                                            @bind-Value="@selectedColumns" FilterCaseSensitivity=FilterCaseSensitivity.CaseInsensitive
+                                            Multiple="true" AllowFiltering="@ColumnsPickerAllowFiltering"
+                                            Placeholder="@ColumnsText"
+                                            Data="allPickableColumns"
+                                            TextProperty="ColumnPickerTitle" />
+                        }
+                        else
+                        {
+                            <RadzenDropDownDataGrid @ref="columnPickerGrid" AllowSelectAll="@AllowPickAllColumns"
+                                            MaxSelectedLabels="@ColumnsPickerMaxSelectedLabels" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", SelectVisibleColumnsAriaLabel }})"
+                                            SelectedItemsText="@ColumnsShowingText" Change=@ToggleColumns
+                                            @bind-Value="@selectedColumns" FilterCaseSensitivity=FilterCaseSensitivity.CaseInsensitive
+                                            Multiple="true" AllowFiltering="@ColumnsPickerAllowFiltering" AllowSorting="true"
+                                            Placeholder="@ColumnsText"
+                                            Data="allPickableColumns"
+                                            TextProperty="ColumnPickerTitle">
+                                <Columns>
+                                    <RadzenDropDownDataGridColumn Width="60px" Sortable="false">
+                                        <HeaderTemplate>
+                                            @if (AllowPickAllColumns)
+                                            {
+                                                <RadzenCheckBox TriState="true" TValue="bool?" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", AllColumnsText }})"
+                                                                Value="@AllColumnsPickerState"
+                                                                Change="@(async args => await ToggleAllColumnsPicker())" />
+                                            }
+                                        </HeaderTemplate>
+                                        <Template Context="data">
+                                                <RadzenCheckBox TriState="false" TValue="bool" InputAttributes="@(new Dictionary<string, object>() { { "aria-label", ((RadzenDataGridColumn<TItem>)data).ColumnPickerTitle } })"
+                                                            Value="@(SelectedPickableColumns.Contains((object)data))"
+                                                            Change="@(args => columnPickerGrid!.SelectItem((object)data))" @onclick:stopPropagation />
+                                        </Template>
+                                    </RadzenDropDownDataGridColumn>
+                                    <RadzenDropDownDataGridColumn Property="ColumnPickerTitle" Title="@ColumnsText" />
+                                </Columns>
+                            </RadzenDropDownDataGrid>
+
+                        }
+
+                    </div>
                 }
             </div>
         }
@@ -341,7 +376,7 @@
                                                     aria-haspopup="dialog" aria-expanded="false"
                                                     class="rz-button rz-button-md rz-button-icon-only rz-variant-flat rz-base rz-shade-default @(column.HasActiveFilter() ? "rz-grid-filter-active" : "")"
                                                     >
-                                                <i class="notranslate rzi">date_range</i>
+                                                <i class="notranslate rzi" aria-hidden="true">date_range</i>
                                             </button>
                                             <span>
                                             @{ var filterValue = column.GetFilterValue();
@@ -639,6 +674,7 @@
                     {
                         <span class="rz-cell-toggle">
                             <button type="button" tabindex="-1" id="@(GetId() + "exp")" aria-label="@ExpandChildItemAriaLabel"
+                                    aria-expanded="@(this.IsRowExpanded(Item) ? "true" : "false")"
                                     class="rz-button rz-button-sm rz-button-icon-only rz-variant-text rz-base rz-shade-default"
                                     style="@(getExpandIconStyle(this, Item, rowArgs.Item1.Expandable))"
                                     @onclick="_ => this.ExpandItem(Item)" @onclick:stopPropagation="true">

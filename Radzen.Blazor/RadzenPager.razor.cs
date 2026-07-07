@@ -54,17 +54,21 @@ namespace Radzen.Blazor
         [Parameter]
         public bool AllowReload { get; set; }
 
+        private string? reloadTitle;
+
         /// <summary>
         /// Gets or sets the pager's reload button's title attribute.
         /// </summary>
         [Parameter]
-        public string ReloadTitle { get; set; } = "Reload";
+        public string ReloadTitle { get => reloadTitle ?? Localize(nameof(RadzenStrings.Pager_ReloadTitle)); set => reloadTitle = value; }
+
+        private string? reloadAriaLabel;
 
         /// <summary>
         /// Gets or sets the pager's reload button's aria-label attribute.
         /// </summary>
         [Parameter]
-        public string ReloadAriaLabel { get; set; } = "Reload current page.";
+        public string ReloadAriaLabel { get => reloadAriaLabel ?? Localize(nameof(RadzenStrings.Pager_ReloadAriaLabel)); set => reloadAriaLabel = value; }
 
         /// <summary>
         /// Gets or sets the reload callback.
@@ -420,6 +424,7 @@ namespace Radzen.Blazor
             if (skip == 0)
             {
                 focusedIndex = focusedIndex + 2;
+                shouldFocus = true;
             }
         }
 
@@ -432,6 +437,7 @@ namespace Radzen.Blazor
             if (skip == 0)
             {
                 focusedIndex++;
+                shouldFocus = true;
             }
         }
 
@@ -450,6 +456,7 @@ namespace Radzen.Blazor
             if (CurrentPage == numberOfPages - 1)
             {
                 focusedIndex--;
+                shouldFocus = true;
             }
         }
 
@@ -462,6 +469,7 @@ namespace Radzen.Blazor
             if (CurrentPage == numberOfPages - 1)
             {
                 focusedIndex = focusedIndex - 2;
+                shouldFocus = true;
             }
         }
 
@@ -551,61 +559,87 @@ namespace Radzen.Blazor
         int focusedIndex = -3;
 
         /// <summary>
+        /// Gets or sets the tabindex applied to the currently active pager button. All other pager buttons get tabindex <c>-1</c> following the roving tabindex pattern.
+        /// </summary>
+        /// <value>The tabindex of the active pager button. Default is <c>0</c>.</value>
+        [Parameter]
+        public int TabIndex { get; set; }
+
+        int RovingIndex
+        {
+            get
+            {
+                if (focusedIndex == -3)
+                {
+                    var numberOfDisplayedPages = Math.Min(endPage + 1, PageNumbersCount);
+
+                    return Math.Clamp(CurrentPage - startPage, 0, Math.Max(numberOfDisplayedPages - 1, 0));
+                }
+
+                return focusedIndex;
+            }
+        }
+
+        string GetButtonTabIndex(int index)
+        {
+            return index == RovingIndex ? TabIndex.ToString(System.Globalization.CultureInfo.InvariantCulture) : "-1";
+        }
+
+        string ActiveButtonId
+        {
+            get
+            {
+                var numberOfDisplayedPages = Math.Min(endPage + 1, PageNumbersCount);
+                var index = RovingIndex;
+
+                if (index == -2)
+                {
+                    return $"{GetId()}fp";
+                }
+                if (index == -1)
+                {
+                    return $"{GetId()}pp";
+                }
+                if (index == numberOfDisplayedPages)
+                {
+                    return $"{GetId()}np";
+                }
+                if (index == numberOfDisplayedPages + 1)
+                {
+                    return $"{GetId()}lp";
+                }
+
+                return $"{GetId()}{startPage + index}p";
+            }
+        }
+
+        /// <summary>
         /// Handles the key down event.
         /// </summary>
         /// <param name="args">The <see cref="KeyboardEventArgs"/> instance containing the event data.</param>
-        protected virtual async Task OnKeyDown(KeyboardEventArgs args)
+        protected virtual Task OnKeyDown(KeyboardEventArgs args)
         {
             ArgumentNullException.ThrowIfNull(args);
             var key = args.Code != null ? args.Code : args.Key;
 
             var numberOfDisplayedPages = Math.Min(endPage + 1, PageNumbersCount);
 
-            if (key == "ArrowLeft" || key == "ArrowRight")
+            if (key == "ArrowLeft" || key == "ArrowRight" || key == "Home" || key == "End")
             {
                 preventKeyDown = true;
                 stopKeydownPropagation = true;
 
-                focusedIndex = Math.Clamp(focusedIndex + (key == "ArrowLeft" ? -1 : 1), -2, numberOfDisplayedPages + 1);
-
-                if (CurrentPage == 0 && focusedIndex < 0)
+                if (key == "Home")
                 {
-                    focusedIndex = 0;
+                    focusedIndex = -2;
                 }
-                else if (CurrentPage == numberOfPages - 1 && focusedIndex > numberOfDisplayedPages - 1)
+                else if (key == "End")
                 {
-                    focusedIndex = numberOfDisplayedPages - 1;
+                    focusedIndex = numberOfDisplayedPages + 1;
                 }
-            }
-            else if (key == "Space" || key == "Enter")
-            {
-                preventKeyDown = true;
-                stopKeydownPropagation = true;
-
-                if (focusedIndex == -2)
+                else
                 {
-                    await FirstPage();
-                    shouldFocus = true;
-                }
-                else if (focusedIndex == -1)
-                {
-                    await PrevPage();
-                    shouldFocus = true;
-                }
-                else if (focusedIndex == numberOfDisplayedPages)
-                {
-                    await NextPage();
-                    shouldFocus = true;
-                }
-                else if (focusedIndex == numberOfDisplayedPages + 1)
-                {
-                    await LastPage();
-                    shouldFocus = true;
-                }
-                else 
-                {
-                    await GoToPage(focusedIndex + startPage);
-                    shouldFocus = true;
+                    focusedIndex = Math.Clamp(RovingIndex + (key == "ArrowLeft" ? -1 : 1), -2, numberOfDisplayedPages + 1);
                 }
 
                 if (CurrentPage == 0 && focusedIndex < 0)
@@ -616,30 +650,19 @@ namespace Radzen.Blazor
                 {
                     focusedIndex = numberOfDisplayedPages - 1;
                 }
+
+                shouldFocus = true;
             }
             else
             {
                 preventKeyDown = false;
                 stopKeydownPropagation = false;
-                shouldFocus = false;
             }
+
+            return Task.CompletedTask;
         }
 
         bool shouldFocus;
-
-        void OnFocus()
-        {
-            focusedIndex = focusedIndex == -3 ? 0 : focusedIndex;
-
-            if (CurrentPage == 0 && focusedIndex < 0)
-            {
-                focusedIndex = 0;
-            }
-            else if (CurrentPage == numberOfPages - 1 && focusedIndex > numberOfPages - 1)
-            {
-                focusedIndex = numberOfPages - 1;
-            }
-        }
 
         /// <inheritdoc />
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -649,8 +672,14 @@ namespace Radzen.Blazor
             if (shouldFocus && JSRuntime != null)
             {
                 shouldFocus = false;
-                await JSRuntime.InvokeVoidAsync("Radzen.focusElement", GetId());
-            }    
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("Radzen.focusElement", ActiveButtonId);
+                }
+                catch (Exception)
+                {
+                }
+            }
         }
     }
 }

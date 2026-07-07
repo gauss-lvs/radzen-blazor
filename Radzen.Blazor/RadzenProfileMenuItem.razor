@@ -2,14 +2,14 @@
 @inherits RadzenComponent
 @if (Visible)
 {
-    <li @attributes="Attributes" class="@GetItemCssClass()" style="@Style" @onclick="@OnClick" role="menuitem" tabindex="0" @onkeydown="OnKeyDown">
+    <li @attributes="Attributes" class="@GetItemCssClass()" style="@Style" @onclick="@OnClick" id="@GetItemId()" role="menuitem" tabindex="@GetItemTabIndex()">
         <div class="rz-navigation-item-wrapper">
             @if (Path != null)
             {
                 <NavLink tabindex="-1" target="@Target" class="rz-navigation-item-link" href="@Path" Match="@Match">
                     @if (!string.IsNullOrEmpty(Icon))
                     {
-                        <i class="notranslate rzi rz-navigation-item-icon" style="@(!string.IsNullOrEmpty(IconColor) ? $"color:{IconColor}" : null)">@Icon</i>
+                        <i class="notranslate rzi rz-navigation-item-icon" aria-hidden="true" style="@(!string.IsNullOrEmpty(IconColor) ? $"color:{IconColor}" : null)">@Icon</i>
                     }
                     @if (!string.IsNullOrEmpty(Image))
                     {
@@ -30,7 +30,7 @@
                 <div class="rz-navigation-item-link" >
                     @if (!string.IsNullOrEmpty(Icon))
                     {
-                        <i class="notranslate rzi rz-navigation-item-icon" style="@(!string.IsNullOrEmpty(IconColor) ? $"color:{IconColor}" : null)">@Icon</i>
+                        <i class="notranslate rzi rz-navigation-item-icon" aria-hidden="true" style="@(!string.IsNullOrEmpty(IconColor) ? $"color:{IconColor}" : null)">@Icon</i>
                     }
                     @if (!string.IsNullOrEmpty(Image))
                     {

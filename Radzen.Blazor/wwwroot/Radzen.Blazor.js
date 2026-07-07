@@ -710,10 +710,23 @@ window.Radzen = {
         items.expanders[index].setAttribute('aria-hidden', expanded ? 'false' : 'true');
     }
 
+    function onKeyDown(e) {
+        var key = e.code || e.key;
+        if (key !== 'ArrowUp' && key !== 'ArrowDown' && key !== 'Home' && key !== 'End') {
+            return;
+        }
+        var target = e.target;
+        if (target && target.closest && target.closest('.rz-accordion-header')) {
+            e.preventDefault();
+        }
+    }
+
+    el.addEventListener('keydown', onKeyDown);
+
     return {
         toggle: function (index, expanded) { toggleItem(index, expanded); },
         setMultiple: function (value) { multiple = value; },
-        dispose: function () { }
+        dispose: function () { el.removeEventListener('keydown', onKeyDown); }
     };
   },
   loadGoogleMaps: function (defaultView, apiKey, resolve, reject, language) {
@@ -1211,13 +1224,37 @@ window.Radzen = {
         el.scrollIntoView();
     }
   },
+  scrollIntoViewIfNeededById: function (id) {
+    var el = document.getElementById(id);
+    if (el) {
+        Radzen.scrollIntoViewIfNeeded(el);
+    }
+  },
+  focusPanelMenuItem: function (menu, activeId) {
+    if (!menu) return;
+    var focused = menu.querySelectorAll('.rz-navigation-item.rz-state-focused');
+    for (var i = 0; i < focused.length; i++) {
+        focused[i].classList.remove('rz-state-focused');
+    }
+    if (activeId) {
+        menu.setAttribute('aria-activedescendant', activeId);
+        var el = document.getElementById(activeId);
+        if (el) {
+            el.classList.add('rz-state-focused');
+            Radzen.scrollIntoViewIfNeeded(el);
+        }
+    } else {
+        menu.removeAttribute('aria-activedescendant');
+    }
+  },
   updateActiveDescendant: function (ul, li, index) {
     if (!ul) return;
     // The popup is appended to document.body when opened, so ul.closest('[role="combobox"]')
     // fails once the dropdown is open. Fall back to a reverse lookup via aria-controls.
     // There can be more than one combobox referencing the same listbox (the trigger and a
-    // filter input inside the popup), so update them all so screen readers announce the
-    // active option regardless of which element currently has focus.
+    // filter input inside the popup). aria-activedescendant must be set only on the element
+    // that currently has DOM focus (the filter input while filtering, otherwise the trigger),
+    // so a non-focused combobox never carries a stale active-descendant.
     var comboboxes = [];
     var ancestor = ul.closest('[role="combobox"]');
     if (ancestor) {
@@ -1234,20 +1271,34 @@ window.Radzen = {
         }
       }
     }
-    if (li) {
+
+    var focused = null;
+    for (var f = 0; f < comboboxes.length; f++) {
+      if (comboboxes[f] === document.activeElement) {
+        focused = comboboxes[f];
+        break;
+      }
+    }
+    if (!focused && comboboxes.length) {
+      focused = comboboxes[0];
+    }
+
+    for (var c = 0; c < comboboxes.length; c++) {
+      if (comboboxes[c] !== focused) {
+        comboboxes[c].removeAttribute('aria-activedescendant');
+      }
+    }
+
+    if (li && focused) {
       var itemId = ul.id + '-' + index;
       li.id = itemId;
-      for (var j = 0; j < comboboxes.length; j++) {
-        comboboxes[j].setAttribute('aria-activedescendant', itemId);
-      }
-    } else {
-      for (var k = 0; k < comboboxes.length; k++) {
-        comboboxes[k].removeAttribute('aria-activedescendant');
-      }
+      focused.setAttribute('aria-activedescendant', itemId);
+    } else if (focused) {
+      focused.removeAttribute('aria-activedescendant');
     }
   },
   selectListItem: function (input, ul, index) {
-    if (!input || !ul) return;
+    if (!ul) return;
 
     var childNodes = ul.getElementsByTagName('LI');
 
@@ -1272,7 +1323,7 @@ window.Radzen = {
     }
   },
   focusListItem: function (input, ul, isDown, startIndex) {
-    if (!input || !ul) return;
+    if (!ul) return;
     var childNodes = ul.getElementsByTagName('LI');
 
     if (!childNodes || childNodes.length == 0) return;
@@ -1455,6 +1506,25 @@ window.Radzen = {
         table.nextSelectedIndex = rows.length - 1;
     } else if (isVirtual && (key == 'PageUp' || key == 'Home')) {
         table.nextSelectedIndex = 1;
+    } else if (!isVirtual && (key == 'PageDown' || key == 'PageUp' || key == 'Home' || key == 'End')) {
+        var firstDataIndex = thead && thead.rows && thead.rows.length && cellIndex != null ? thead.rows.length : 1;
+        if (firstDataIndex > rows.length - 1) {
+            firstDataIndex = rows.length - 1;
+        }
+        if (key == 'Home') {
+            table.nextSelectedIndex = firstDataIndex;
+        } else if (key == 'End') {
+            table.nextSelectedIndex = rows.length - 1;
+        } else {
+            var pageFactor = 10;
+            table.nextSelectedIndex = table.nextSelectedIndex + (key == 'PageDown' ? pageFactor : -pageFactor);
+            if (table.nextSelectedIndex > rows.length - 1) {
+                table.nextSelectedIndex = rows.length - 1;
+            }
+            if (table.nextSelectedIndex < firstDataIndex) {
+                table.nextSelectedIndex = firstDataIndex;
+            }
+        }
     }
 
     if (isVirtual && (key == 'ArrowDown' || key == 'ArrowUp')) {
@@ -1473,9 +1543,13 @@ window.Radzen = {
     var activeId = gridId + '-active-item';
     var setActiveDescendant = function (el) {
         var prev = document.getElementById(activeId);
-        if (prev && prev !== el) { prev.removeAttribute('id'); }
+        if (prev && prev !== el) {
+            prev.removeAttribute('id');
+        }
         if (el && el.id !== activeId) { el.id = activeId; }
-        if (el) { grid.setAttribute('aria-activedescendant', activeId); }
+        if (el) {
+            grid.setAttribute('aria-activedescendant', activeId);
+        }
     };
 
     if (key == 'ArrowLeft' || key == 'ArrowRight' || (key == 'ArrowUp' && cellIndex != null && table.nextSelectedIndex == 0 && table.parentNode.scrollTop == 0)) {
@@ -1500,7 +1574,7 @@ window.Radzen = {
             }
             setActiveDescendant(cell);
         }
-    } else if (key == 'ArrowDown' || key == 'ArrowUp') {
+    } else if (key == 'ArrowDown' || key == 'ArrowUp' || (!isVirtual && (key == 'PageDown' || key == 'PageUp' || key == 'Home' || key == 'End'))) {
         var highlighted = table.querySelectorAll('.rz-state-focused');
         if (highlighted.length) {
             for (var i = 0; i < highlighted.length; i++) {
@@ -1802,9 +1876,14 @@ window.Radzen = {
   openContextMenu: function (x,y,id, instance, callback) {
     Radzen.closePopup(id);
 
+    var invoker = document.activeElement;
+    if (invoker && invoker !== document.body) {
+        Radzen[id + 'contextMenuInvoker'] = invoker;
+    }
+
     Radzen.openPopup(null, id, false, null, x, y, instance, callback);
 
-    setTimeout(function () {
+    requestAnimationFrame(function () {
         var popup = document.getElementById(id);
         if (popup) {
             var menu = popup.querySelector('.rz-menu');
@@ -1812,7 +1891,14 @@ window.Radzen = {
                 menu.focus();
             }
         }
-    }, 500);
+    });
+  },
+  restoreContextMenuFocus: function (id) {
+    var invoker = Radzen[id + 'contextMenuInvoker'];
+    Radzen[id + 'contextMenuInvoker'] = null;
+    if (invoker && document.body.contains(invoker) && typeof invoker.focus === 'function') {
+        invoker.focus();
+    }
   },
   openTooltip: function (target, id, delay, duration, position, closeTooltipOnDocumentClick, instance, callback, clientX, clientY) {
     Radzen.closeTooltip(id);
@@ -1975,7 +2061,7 @@ window.Radzen = {
     if (parent.getAttribute && parent.getAttribute('aria-controls') === id) {
       control = parent;
     } else if (parent.querySelector) {
-      control = parent.querySelector('[aria-controls="' + id + '"]');
+      control = parent.querySelector('[aria-controls="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
     }
     if (!control && parent.getAttribute && parent.getAttribute('role') === 'combobox') {
       control = parent;
@@ -2274,6 +2360,10 @@ window.Radzen = {
     }
     popup.__escapeHandler = function (e) {
         if (e.key === 'Escape' || e.key === 'Esc') {
+            var menu = popup.querySelector('.rz-menu[role="menu"]');
+            if (menu && menu.querySelector('.rz-navigation-item-active')) {
+                return;
+            }
             Radzen.closePopup(id, instance, callback, e);
         }
         if (e.key === 'Tab' && parent && (popup.classList.contains('rz-dropdown-panel') || popup.classList.contains('rz-multiselect-panel'))) {
@@ -2489,7 +2579,25 @@ window.Radzen = {
           first.focus();
       }
   },
-  openSideDialog: function (options) {
+  openSideDialog: function (options, dialogService) {
+      if (dialogService) {
+          Radzen.sideDialogService = dialogService;
+      }
+      if (!Radzen.sideDialogInvokerElement) {
+          var invoker = document.activeElement;
+          if (invoker && invoker !== document.body && !invoker.closest('.rz-dialog-side')) {
+              Radzen.sideDialogInvokerElement = invoker;
+          }
+      }
+      var sideDialog = document.querySelector('.rz-dialog-side');
+      if (sideDialog) {
+          sideDialog.removeEventListener('keydown', Radzen.focusTrap);
+          if (options.showMask) {
+              sideDialog.addEventListener('keydown', Radzen.focusTrap);
+          }
+          sideDialog.removeEventListener('keydown', Radzen.closeSideDialogOnEsc);
+          sideDialog.addEventListener('keydown', Radzen.closeSideDialogOnEsc);
+      }
       setTimeout(function () {
           if (options.autoFocusFirstElement) {
               var dialogs = document.querySelectorAll('.rz-dialog-side-content');
@@ -2498,6 +2606,29 @@ window.Radzen = {
               Radzen.focusFirstFocusableElement(lastDialog);
           }
       }, 500);
+  },
+  closeSideDialog: function () {
+      delete Radzen.sideDialogService;
+      var invoker = Radzen.sideDialogInvokerElement;
+      Radzen.sideDialogInvokerElement = null;
+      if (invoker && typeof invoker.focus === 'function' && document.body.contains(invoker)) {
+          invoker.focus();
+      }
+  },
+  closeSideDialogOnEsc: function (e) {
+      e = e || window.event;
+      var isEscape = "key" in e ? (e.key === "Escape" || e.key === "Esc") : (e.keyCode === 27);
+      if (isEscape && Radzen.sideDialogService) {
+          var popups = document.querySelectorAll('.rz-popup,.rz-overlaypanel');
+          for (var i = 0; i < popups.length; i++) {
+              if (popups[i].style.display != 'none') {
+                  return;
+              }
+          }
+          try {
+              Radzen.sideDialogService.invokeMethodAsync('DialogService.TryCloseSide', null);
+          } catch (ex) { }
+      }
   },
   createSideDialogResizer: function(handle, sideDialog, options) {
       const normalizeDir = (value) => {
@@ -2571,6 +2702,12 @@ window.Radzen = {
       };
   },
   openDialog: function (options, dialogService, dialog) {
+    if (!Radzen.dialogInvokerElement) {
+        var invoker = document.activeElement;
+        if (invoker && invoker !== document.body && !invoker.closest('.rz-dialog-content')) {
+            Radzen.dialogInvokerElement = invoker;
+        }
+    }
     if (Radzen.closeAllPopups) {
         Radzen.closeAllPopups();
     }
@@ -2582,6 +2719,15 @@ window.Radzen = {
       document.body.classList.add('no-scroll');
     }
 
+    var currentDialogs = document.querySelectorAll('.rz-dialog-content');
+    var currentDialog = currentDialogs.length ? currentDialogs[currentDialogs.length - 1] : null;
+    if (currentDialog) {
+        currentDialog.options = options;
+        var dialogRoot = currentDialog.closest('.rz-dialog') || currentDialog;
+        dialogRoot.removeEventListener('keydown', Radzen.focusTrap);
+        dialogRoot.addEventListener('keydown', Radzen.focusTrap);
+    }
+
     setTimeout(function () {
         var dialogs = document.querySelectorAll('.rz-dialog-content');
         if (dialogs.length == 0) return;
@@ -2589,8 +2735,6 @@ window.Radzen = {
 
         if (lastDialog) {
             lastDialog.options = options;
-            lastDialog.removeEventListener('keydown', Radzen.focusTrap);
-            lastDialog.addEventListener('keydown', Radzen.focusTrap);
 
             if (options.resizable) {
                 dialog.offsetWidth = lastDialog.parentElement.offsetWidth;
@@ -2677,6 +2821,14 @@ window.Radzen = {
     if (dialogs.length <= 1) {
         document.removeEventListener('keydown', Radzen.closePopupOrDialog);
         delete Radzen.dialogService;
+        Radzen.restoreDialogInvokerFocus();
+    }
+  },
+  restoreDialogInvokerFocus: function () {
+    var invoker = Radzen.dialogInvokerElement;
+    Radzen.dialogInvokerElement = null;
+    if (invoker && typeof invoker.focus === 'function' && document.body.contains(invoker)) {
+        invoker.focus();
     }
   },
   disableKeydown: function (e) {
@@ -2882,12 +3034,58 @@ window.Radzen = {
 
     return readAsDataURL(fileInput);
   },
+  closeMenuItem: function (item) {
+    if (!item || !item.classList || !item.classList.contains('rz-navigation-item-active')) {
+      return;
+    }
+
+    item.classList.remove('rz-navigation-item-active');
+
+    var wrapper = item.querySelector('.rz-navigation-item-wrapper');
+    if (wrapper) {
+      wrapper.classList.remove('rz-navigation-item-wrapper-active');
+    }
+
+    var children = item.querySelector('.rz-navigation-menu');
+    if (children) {
+      item.setAttribute('aria-expanded', false);
+      children.onanimationend = function () {
+        children.style.display = 'none';
+        children.style.insetInlineStart = '';
+        children.onanimationend = null;
+      };
+      children.classList.remove('rz-open');
+      children.classList.add('rz-close');
+
+      children.querySelectorAll('.rz-navigation-item-active').forEach(function (nested) {
+        Radzen.closeMenuItem(nested);
+      });
+    }
+
+    var icon = item.querySelector('.rz-navigation-item-icon-children');
+    if (icon) {
+      icon.classList.remove('rz-state-expanded');
+      icon.classList.add('rz-state-collapsed');
+    }
+  },
   toggleMenuItem: function (target, event, defaultActive, clickToOpen) {
+    if (!target) return;
+
     var item = target.closest('.rz-navigation-item');
+
+    if (!item) return;
 
     var active = defaultActive != undefined ? defaultActive : !item.classList.contains('rz-navigation-item-active');
 
     function toggle(active) {
+      if (active && item.parentElement) {
+        Array.prototype.forEach.call(item.parentElement.children, function (sibling) {
+          if (sibling !== item) {
+            Radzen.closeMenuItem(sibling);
+          }
+        });
+      }
+
       item.classList.toggle('rz-navigation-item-active', active);
 
       target.classList.toggle('rz-navigation-item-wrapper-active', active);
@@ -3351,8 +3549,8 @@ window.Radzen = {
 
     return new XMLSerializer().serializeToString(clone);
   },
-  downloadSvgAsPng: async function (svg, fileName) {
-    if (!svg) return;
+  svgToPng: async function (svg, width, height) {
+    if (!svg) return null;
 
     var svgUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     var img = new Image();
@@ -3362,12 +3560,17 @@ window.Radzen = {
       img.src = svgUrl;
     });
 
-    var width = img.naturalWidth || img.width;
-    var height = img.naturalHeight || img.height;
-    var scale = Math.max(2, window.devicePixelRatio || 1);
+    var naturalWidth = img.naturalWidth || img.width;
+    var naturalHeight = img.naturalHeight || img.height;
     var canvas = document.createElement('canvas');
-    canvas.width = Math.round(width * scale);
-    canvas.height = Math.round(height * scale);
+    if (width > 0 || height > 0) {
+      canvas.width = Math.round(width > 0 ? width : height * naturalWidth / naturalHeight);
+      canvas.height = Math.round(height > 0 ? height : width * naturalHeight / naturalWidth);
+    } else {
+      var scale = Math.max(2, window.devicePixelRatio || 1);
+      canvas.width = Math.round(naturalWidth * scale);
+      canvas.height = Math.round(naturalHeight * scale);
+    }
     var ctx = canvas.getContext('2d');
     var background = getComputedStyle(document.body).backgroundColor;
     if (background && background !== 'rgba(0, 0, 0, 0)') {
@@ -3376,13 +3579,15 @@ window.Radzen = {
     }
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    var self = this;
-    await new Promise(function (resolve) {
-      canvas.toBlob(function (blob) {
-        self.downloadFile(fileName, blob, 'image/png');
-        resolve();
-      }, 'image/png');
+    return await new Promise(function (resolve) {
+      canvas.toBlob(resolve, 'image/png');
     });
+  },
+  downloadSvgAsPng: async function (svg, fileName, width, height) {
+    var blob = await this.svgToPng(svg, width, height);
+    if (blob) {
+      this.downloadFile(fileName, blob, 'image/png');
+    }
   },
   createChart: function (ref, instance, mouseMoveInterval) {
     var inside = false;
@@ -3722,6 +3927,10 @@ window.Radzen = {
     return html;
   },
   buildTableContext: function (ref, element) {
+    if (!ref) {
+      return { ref: ref };
+    }
+
     if (!element || !ref.contains(element)) {
       return { ref: ref };
     }
@@ -5238,6 +5447,7 @@ window.Radzen = {
         var el = document.getElementById(id);
         var pane = document.getElementById(paneId);
         var paneNext = document.getElementById(paneNextId);
+        var separator = pane ? document.getElementById(pane.id + '-resize') : null;
         var paneLength;
         var paneNextLength;
         var panePerc;
@@ -5337,7 +5547,7 @@ window.Radzen = {
                     if (paneNext) {
                         var nextSpace=spaceLength-length;
                         if (minNextValue && nextSpace < minNextValue) length = spaceLength-minNextValue;
-                        if (maxNextValue && nextSpace > maxNextValue) length = spaceLength+maxNextValue;
+                        if (maxNextValue && nextSpace > maxNextValue) length = spaceLength-maxNextValue;
                     }
 
                     var perc = length / Radzen[el].paneLength;
@@ -5356,6 +5566,16 @@ window.Radzen = {
                     pane.style.flexBasis = newPerc + '%';
                     if (paneNext)
                         paneNext.style.flexBasis = (spacePerc - newPerc) + '%';
+
+                    if (separator) {
+                        var valueMin = parseFloat(separator.getAttribute('aria-valuemin')) || 0;
+                        var valueMax = parseFloat(separator.getAttribute('aria-valuemax'));
+                        if (!isFinite(valueMax)) valueMax = 100;
+                        var valueNow = Math.round(newPerc);
+                        if (valueNow < valueMin) valueNow = valueMin;
+                        if (valueNow > valueMax) valueNow = valueMax;
+                        separator.setAttribute('aria-valuenow', valueNow);
+                    }
                 }
             },
             touchMoveHandler: function(e) {
@@ -5378,7 +5598,9 @@ window.Radzen = {
         var el = document.getElementById(id);
         if (el && Radzen[el]) {
             Radzen[el].mouseMoveHandler(e);
-            Radzen[el].mouseUpHandler(e);
+            if (Radzen[el]) {
+                Radzen[el].mouseUpHandler(e);
+            }
         }
     },
     openWaiting: function() {
@@ -5413,6 +5635,8 @@ window.Radzen = {
         }
     },
     toggleDictation: function (componentRef, language) {
+        var restarts = 0;
+
         function start() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -5433,21 +5657,37 @@ window.Radzen = {
                     return;
                 }
 
+                restarts = 0;
+
                 let current = event.results[event.results.length - 1][0]
                 let result = current.transcript;
 
                 try { suppressDisposed(componentRef.invokeMethodAsync("OnResult", result)); } catch { }
             };
+            radzenRecognition.onerror = function (event) {
+                if (event.error == 'not-allowed' || event.error == 'service-not-allowed' || event.error == 'audio-capture' || event.error == 'language-not-supported') {
+                    this.stopRequested = true;
+                }
+            };
             radzenRecognition.onend = function (event) {
+                if (!this.stopRequested && restarts++ < 10) {
+                    start();
+                    return;
+                }
+
+                if (this == radzenRecognition) {
+                    radzenRecognition = null;
+                }
+
                 try { suppressDisposed(componentRef.invokeMethodAsync("StopRecording")); } catch { }
-                radzenRecognition = null;
             };
             radzenRecognition.start();
         }
 
         if (radzenRecognition) {
+            radzenRecognition.stopRequested = true;
             if (radzenRecognition.componentRef._id != componentRef._id) {
-                radzenRecognition.addEventListener('end', start);
+                radzenRecognition.addEventListener('end', function () { start(); });
             }
             radzenRecognition.stop();
         } else {
@@ -5651,13 +5891,21 @@ Radzen.chatScrollAfterRender = function(selector, delay) {
     if (container) container.scrollTop = container.scrollHeight;
   }, delay || 100);
 };
-Radzen.createAutoComplete = function(el, popupId, openOnFocus) {
+Radzen.createAutoComplete = function(el, popupId, openOnFocus, instance, openCallback, closeCallback) {
   if (!el) return null;
   var input = el.querySelector('input.rz-autocomplete-input, textarea.rz-autocomplete-input');
   var list = el.querySelector('.rz-autocomplete-list');
   if (!input) return null;
-  function onInput() { Radzen.openPopup(input.parentNode, popupId, true); }
-  function onFocus() { Radzen.openPopup(input.parentNode, popupId, true); }
+  function open() {
+    var popup = document.getElementById(popupId);
+    var wasOpen = popup && popup.style.display == 'block';
+    Radzen.openPopup(input.parentNode, popupId, true, null, null, null, instance, closeCallback);
+    if (!wasOpen && instance && openCallback) {
+      try { suppressDisposed(instance.invokeMethodAsync(openCallback)); } catch { }
+    }
+  }
+  function onInput() { open(); }
+  function onFocus() { open(); }
   function clearActive() { Radzen.activeElement = null; }
   input.addEventListener('input', onInput);
   input.addEventListener('blur', clearActive);
@@ -5676,7 +5924,7 @@ Radzen.createDataGrid = function(el) {
     var label = e.target.closest('.rz-cell-filter-label');
     if (label) { e.preventDefault(); }
     var btn = e.target.closest('button[aria-haspopup][aria-controls]');
-    if (btn && el.contains(btn) && label && label.contains(btn) && btn.getAttribute('aria-controls')) {
+    if (btn && !btn.closest('.rz-datepicker') && el.contains(btn) && label && label.contains(btn) && btn.getAttribute('aria-controls')) {
       Radzen.togglePopup(btn.parentNode, btn.getAttribute('aria-controls'));
     }
   }
@@ -5844,7 +6092,7 @@ class Spreadsheet {
   constructor(element, dotNetRef, shortcuts) {
     this.element = element;
     this.dotNetRef = dotNetRef;
-    this.shortcuts = shortcuts;
+    this.shortcuts = shortcuts || {}; // map of key -> isGlobal (true = global, false = grid-only)
     this.rtl = Radzen.isRTL(element);
     this.element.addEventListener('keydown', this.onKeyDown);
     this.element.addEventListener('pointerdown', this.onPointerDown);
@@ -5976,6 +6224,10 @@ class Spreadsheet {
       e.preventDefault();
       const column = +e.target.dataset.column;
       this.dotNetRef.invokeMethodAsync('OnColumnContextMenuAsync', { column, pointer: this.toEventArgs(e) });
+    } else if (e.target === this.element) {
+      // Keyboard-triggered (Shift+F10 / Menu key) lands on the grid root, not a cell. Suppress the
+      // browser's native menu; the C# Shift+F10 shortcut opens our menu at the active cell.
+      e.preventDefault();
     }
   }
 
@@ -5985,7 +6237,43 @@ class Spreadsheet {
       const row = +cell.dataset.row;
       const column = +cell.dataset.column;
       this.dotNetRef.invokeMethodAsync('OnCellDoubleClickAsync', { row, column, pointer: this.toEventArgs(e) });
+    } else if (e.target.matches('.rz-spreadsheet-column-resize-handle')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const column = +e.target.dataset.column;
+      this.dotNetRef.invokeMethodAsync('OnColumnResizeDoubleClickAsync', { row: 0, column, pointer: this.toEventArgs(e) });
     }
+  }
+
+  measureTexts = (items) => {
+    const probe = document.createElement('div');
+    probe.className = 'rz-spreadsheet-cell';
+    probe.style.visibility = 'hidden';
+    this.element.appendChild(probe);
+    const style = getComputedStyle(probe);
+    const baseFont = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const padding = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0)
+      + (parseFloat(style.borderLeftWidth) || 0) + (parseFloat(style.borderRightWidth) || 0);
+    const baseFontSize = style.fontSize;
+    const baseFontFamily = style.fontFamily;
+    this.element.removeChild(probe);
+
+    this.measureCanvas ??= document.createElement('canvas');
+    const context = this.measureCanvas.getContext('2d');
+    context.direction = this.rtl ? 'rtl' : 'ltr';
+
+    return items.map(item => {
+      // Invalid font shorthand assignments are silently ignored; reset so they fall back to the base font.
+      context.font = baseFont;
+      if (item.bold || item.italic || item.fontSize != null || item.fontFamily) {
+        const size = item.fontSize != null ? item.fontSize + 'pt' : baseFontSize;
+        const family = item.fontFamily ? `"${item.fontFamily.replaceAll('"', '\\"')}", ${baseFontFamily}` : baseFontFamily;
+        context.font = `${item.italic ? 'italic ' : ''}${item.bold ? 'bold ' : ''}${size} ${family}`;
+      }
+      const width = context.measureText(item.text).width;
+      // 3% over-fit absorbs metric differences between canvas and other renderers (e.g. Excel after export).
+      return Number.isFinite(width) ? Math.ceil(width * 1.03 + padding) : 0;
+    });
   }
 
   onColumnPointerUp = (e) => {
@@ -6035,7 +6323,18 @@ class Spreadsheet {
 
     key += e.code.replace('Key', '').replace('Digit', '').replace('Numpad', '');
 
-    if (this.shortcuts.includes(key)) {
+    // Grid context = focus on THIS spreadsheet's root or inside one of ITS cell/formula editors.
+    // Scope the editor check to this.element so a sibling spreadsheet on the same page can never
+    // match. Outside the grid (a toolbar button, sheet tab, ...) only global shortcuts act, so Tab
+    // etc. stay native and the chrome is keyboard-navigable.
+    let isGridContext = e.target === this.element;
+    if (!isGridContext && e.target.closest) {
+      const editorInput = e.target.closest('.rz-spreadsheet-editor-input');
+      isGridContext = editorInput != null && this.element.contains(editorInput);
+    }
+
+    const global = this.shortcuts[key]; // true = global, false = grid-only, undefined = not a shortcut
+    if (global === true || (global === false && isGridContext)) {
       e.preventDefault();
     }
 
@@ -6046,7 +6345,78 @@ class Spreadsheet {
       e.preventDefault();
     }
 
-    this.invokeAsync('OnKeyDownAsync', e);
+    this.dotNetRef.invokeMethodAsync('OnKeyDownAsync', this.toEventArgs(e), isGridContext);
+  }
+
+  // F6 / Shift+F6 cycle focus between the spreadsheet regions in their visible top-to-bottom order:
+  // ribbon tabs -> active toolbar -> formula bar -> grid -> sheet tabs. This is the advertised escape
+  // from the grid (WCAG 2.1.2).
+  focusAdjacent = (forward) => {
+    // this.element IS this spreadsheet's root (.rz-spreadsheet, role=application). querySelector
+    // only matches descendants of root, so regions from another spreadsheet on the page are never
+    // matched.
+    const root = this.element;
+    const regions = [
+      root.querySelector('[role="tablist"], .rz-tabs-nav'),
+      root.querySelector('.rz-toolbar'),
+      root.querySelector('.rz-spreadsheet-formula-editor .rz-spreadsheet-editor-input'),
+      root,
+      root.querySelector('.rz-spreadsheet-sheet-tabs')
+    ].filter(r => r);
+
+    if (regions.length === 0) {
+      return;
+    }
+
+    // Regions nest (the ribbon tabview contains the toolbar; the root contains everything), so pick
+    // the INNERMOST region that contains the focused element - otherwise an outer region captures
+    // focus that belongs to a nested one and F6 gets stuck cycling between two regions.
+    const active = document.activeElement;
+    let index = -1;
+    let best = null;
+    regions.forEach((r, i) => {
+      if ((r === active || r.contains(active)) && (best === null || best.contains(r))) {
+        best = r;
+        index = i;
+      }
+    });
+    if (index === -1) {
+      index = regions.indexOf(root);
+    }
+
+    const next = (index + (forward ? 1 : -1) + regions.length) % regions.length;
+    this.focusRegion(regions[next]);
+  }
+
+  focusRegion = (region) => {
+    // Focus the region itself when it is the tab stop: the grid root and the ribbon tablist both have
+    // tabindex=0 (the tablist owns arrow-key tab switching via aria-activedescendant, so focusing an
+    // individual tab would break the arrows), and the formula bar is a tabindex=-1 contenteditable.
+    // Otherwise focus the region's first focusable child (e.g. the first toolbar button).
+    if (region.tabIndex >= 0 || region.matches('.rz-spreadsheet-editor-input')) {
+      region.focus();
+      return;
+    }
+
+    // Skip hidden focusables: inline-rendered but closed popups (color pickers, numeric steppers)
+    // match the selector yet calling focus() on a hidden element silently fails, which would strand
+    // the user on the previous region. Pick the first one that is actually rendered.
+    const focusables = region.querySelectorAll('button:not([disabled]), a[href], input:not([disabled]), [tabindex]:not([tabindex="-1"]), [contenteditable="true"]');
+    const target = [...focusables].find(el => el.offsetParent !== null || el.getClientRects().length > 0);
+    (target || region).focus();
+  }
+
+  // Opens the cell context menu at the active cell (Shift+F10 / ContextMenu key). The cell element is
+  // scoped to this spreadsheet; a synthetic pointer carries its on-screen position.
+  openCellContextMenu = (row, column) => {
+    const cell = this.element.querySelector('.rz-spreadsheet-cell[data-row="' + row + '"][data-column="' + column + '"]');
+    const rect = (cell || this.element).getBoundingClientRect();
+    const pointer = {
+      clientX: Math.round(rect.left + 8),
+      clientY: Math.round(cell ? rect.bottom : rect.top + 8),
+      button: 0, buttons: 0, pointerType: 'mouse', isPrimary: true
+    };
+    this.dotNetRef.invokeMethodAsync('OnCellContextMenuAsync', { row, column, pointer });
   }
 
   invokeAsync(name, e) {
@@ -6056,7 +6426,9 @@ class Spreadsheet {
   toEventArgs(e) {
     return {
       key: e.key,
-      code: e.code,
+      code: this.rtl && (e.code === 'ArrowLeft' || e.code === 'ArrowRight')
+        ? (e.code === 'ArrowLeft' ? 'ArrowRight' : 'ArrowLeft')
+        : e.code,
       location: e.location,
       repeat: e.repeat,
       ctrlKey: e.ctrlKey,
@@ -6247,7 +6619,7 @@ class SheetEditor {
          e.stopPropagation();
          e.preventDefault();
          this.dotNetRef.invokeMethodAsync('OnKeyDownAsync', { key: e.key });
-       } else if (e.key != 'Enter' && e.key != 'Escape' && e.key != 'Tab') {
+       } else if (e.key != 'Enter' && e.key != 'Escape' && e.key != 'Tab' && e.key != 'F6') {
          e.stopPropagation();
        }
     }

@@ -133,6 +133,12 @@ namespace Radzen.Blazor
 
         internal string? SubmenuId => ChildContent != null ? $"{GetId()}-submenu" : null;
 
+        internal string? GetMenuItemId() => GetId();
+
+        internal bool Expanded { get; set; }
+
+        internal bool IsActive => Parent?.IsFocused(this) == true;
+
         internal string ArrowIcon => Parent?.Flyout == true
             ? "keyboard_arrow_right"
             : "keyboard_arrow_down";
@@ -266,6 +272,8 @@ namespace Radzen.Blazor
         /// </summary>
         public async Task Toggle()
         {
+            Expanded = !Expanded;
+
             if (JSRuntime != null)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.toggleMenuItem", Element);
@@ -277,6 +285,8 @@ namespace Radzen.Blazor
         /// </summary>
         public async Task Close()
         {
+            Expanded = false;
+
             if (JSRuntime != null)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.toggleMenuItem", Element, "event", false);
@@ -288,6 +298,8 @@ namespace Radzen.Blazor
         /// </summary>
         public async Task Open()
         {
+            Expanded = true;
+
             if (JSRuntime != null)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.toggleMenuItem", Element, "event", true);
