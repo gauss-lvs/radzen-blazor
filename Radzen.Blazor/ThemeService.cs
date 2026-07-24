@@ -518,7 +518,7 @@ namespace Radzen
         internal string WcagHref => $"{Path}/{Theme}-wcag.css?v={Version}";
 
         private string Path => Embedded
-            ? $"_content/Radzen.Blazor/css"
+            ? $"_content/Radzen.Blazor.GAUSS/css"
             : !string.IsNullOrEmpty(CssPath)
                 ? CssPath
                 : "css";
