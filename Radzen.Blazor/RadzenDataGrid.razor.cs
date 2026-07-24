@@ -609,13 +609,6 @@ namespace Radzen.Blazor
         bool preventKeyDown = true;
         bool stopKeydownPropagation;
 
-        bool stopGuardKeydownPropagation = true;
-        void OnGuardKeyDown(KeyboardEventArgs args)
-        {
-            var key = args.Code ?? args.Key;
-            stopGuardKeydownPropagation = key != "Escape";
-        }
-
         int focusedIndex = -1;
         int focusedCellIndex;
 
@@ -790,6 +783,13 @@ namespace Radzen.Blazor
             {
                 Debounce(() => DebounceFilter(column), FilterDelay);
             }
+        }
+
+        EventCallback<KeyboardEventArgs> getFilterKeyDownHandler(RadzenDataGridColumn<TItem> column)
+        {
+            return FilterAsYouType ?
+                EventCallback.Factory.Create(this, new Action<KeyboardEventArgs>(args => OnFilterKeyPress(args, column)).AsNonRenderingEventHandler()) :
+                default;
         }
 
         async Task DebounceFilter(RadzenDataGridColumn<TItem> column)
@@ -1660,7 +1660,7 @@ namespace Radzen.Blazor
         [Parameter]
         public string ColumnWidth { get; set; } = string.Empty;
 
-        private string emptyText = "No records to display.";
+        private string? emptyText;
         /// <summary>
         /// Gets or sets the empty text shown when Data is empty collection.
         /// </summary>
@@ -1668,14 +1668,8 @@ namespace Radzen.Blazor
         [Parameter]
         public string EmptyText
         {
-            get { return emptyText; }
-            set
-            {
-                if (value != emptyText)
-                {
-                    emptyText = value;
-                }
-            }
+            get { return emptyText ?? Localize(nameof(RadzenStrings.DataGrid_EmptyText)); }
+            set { emptyText = value; }
         }
 
         /// <summary>

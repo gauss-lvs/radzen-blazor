@@ -37,13 +37,15 @@
             builder.OpenRegion(0);
             if (series != null && Chart != null)
             {
+                var plotHeight = Chart.ValueScale.OutputSize;
+                var plotWidth = Chart.CategoryScale.OutputSize;
+
                 var labels = series.GetDataLabels(OffsetX, OffsetY, Position)
                     .Where(l => !(double.IsNaN(l.Position.X) || double.IsNaN(l.Position.Y)))
+                    .Where(l => !Chart.CategoryScale.IsZoomed || (l.Position.X >= 0 && l.Position.X <= plotWidth))
                     .ToList();
 
                 var seriesIndex = Chart.Series.IndexOf(series);
-                var plotHeight = Chart.ValueScale.OutputSize;
-                var plotWidth = Chart.CategoryScale.OutputSize;
 
                 const double fontSize = 12;
                 const double paddingX = 6;
@@ -111,7 +113,7 @@
                     var position = new Point { X = x, Y = chip ? y + 1 : y };
 
                     builder.AddContent(1,
-                            @<g class="rz-series-data-label-group" @key="@($"{label.Position}-{seriesIndex}")">
+                            @<g class="rz-series-data-label-group" data-seriesindex="@seriesIndex" @key="@($"{label.Position}-{seriesIndex}")">
                                 @if (chip)
                                 {
                                     <rect class="rz-series-data-label-chip" x="@rectX.ToInvariantString()" y="@rectY.ToInvariantString()" width="@width.ToInvariantString()" height="@height.ToInvariantString()" rx="4" ry="4"></rect>

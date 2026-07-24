@@ -43,8 +43,8 @@
                 </div>
                 @if (item.Template != null)
                 {
-                    <div class="rz-chkbox-template" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
-                        @item.Template(item)
+                    <div class="rz-chkbox-template" @onkeydown:stopPropagation>
+                        @item.Template
                     </div>
                 }
                 else

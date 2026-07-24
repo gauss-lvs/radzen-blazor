@@ -20,7 +20,8 @@ namespace Radzen.Blazor
 
         /// <inheritdoc />
         [Parameter]
-        public override string Text { get; set; } = "Multi-Day";
+        public override string Text { get => text ?? Localize(nameof(RadzenStrings.MultiDayView_Text)); set => text = value; }
+        private string? text;
 
         /// <summary>
         /// Gets or sets the time format.
@@ -94,14 +95,11 @@ namespace Radzen.Blazor
             get
             {
                 var culture = Scheduler?.Culture ?? System.Globalization.CultureInfo.CurrentCulture;
-                if (StartDate == EndDate.AddDays(-1))
-                {
-                    return $"{StartDate.ToString(culture.DateTimeFormat.ShortDatePattern, culture)}";
-                }
-                else
-                {
-                    return $"{StartDate.ToString(culture.DateTimeFormat.ShortDatePattern, culture)} - {EndDate.AddDays(-1).ToString(culture.DateTimeFormat.ShortDatePattern, culture)}";
-                }
+                var end = EndDate.AddDays(-1);
+                var title = StartDate == end
+                    ? $"{StartDate.ToString(culture.DateTimeFormat.ShortDatePattern, culture)}"
+                    : $"{StartDate.ToString(culture.DateTimeFormat.ShortDatePattern, culture)} - {end.ToString(culture.DateTimeFormat.ShortDatePattern, culture)}";
+                return FormatTitle(StartDate, end, title);
             }
         }
 

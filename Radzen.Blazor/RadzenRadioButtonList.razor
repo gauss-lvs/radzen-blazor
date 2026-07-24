@@ -36,8 +36,8 @@
                 </div>
                 @if (item.Template != null)
                 {
-                    <div class="rz-radiobutton-template" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
-                        @item.Template(item)
+                    <div class="rz-radiobutton-template" @onkeydown:stopPropagation>
+                        @item.Template
                     </div>
                 } 
                 else 

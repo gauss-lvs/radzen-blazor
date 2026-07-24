@@ -24,7 +24,7 @@
             <div class="rz-group-header" @onmouseup=@(args => EndColumnDropToGroup())>
                 @if (@HeaderTemplate != null && ShowHeader)
                 {
-                    <div class="rz-custom-header" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+                    <div class="rz-custom-header" @onkeydown:stopPropagation>
                         @HeaderTemplate
                     </div>
                 }
@@ -106,7 +106,7 @@
             @if (@HeaderTemplate != null && ShowHeader)
             {
                 <div class="rz-group-header">
-                    <div class="rz-custom-header" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+                    <div class="rz-custom-header" @onkeydown:stopPropagation>
                         @HeaderTemplate
                     </div>
                 </div>
@@ -201,7 +201,7 @@
                     }
                     @if (FilterRowActive)
                     {
-                        <tr role="row" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+                        <tr role="row" @onkeydown:stopPropagation>
                              @if (ShowGroupExpandColumn)
                                 {
                                     @foreach (var g in Groups)
@@ -244,7 +244,7 @@
                             }
                             else
                             {
-                                <tr role="row" class=" rz-datatable-emptymessage-row" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+                                <tr role="row" class=" rz-datatable-emptymessage-row" @onkeydown:stopPropagation>
                                     <td role="gridcell" class="rz-datatable-emptymessage" colspan="@(visibleColumns.Sum(c => c.GetColSpan()) + (Template != null && ShowExpandColumn ? 1 : 0))">
                                         @if (EmptyTemplate != null)
                                         {
@@ -260,7 +260,7 @@
                         }
                         else
                         {
-                            <tr role="row" class=" rz-datatable-emptymessage-row" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+                            <tr role="row" class=" rz-datatable-emptymessage-row" @onkeydown:stopPropagation>
                                 <td role="gridcell" class="rz-datatable-emptymessage" colspan="@(visibleColumns.Sum(c => c.GetColSpan()) + (Template != null && ShowExpandColumn ? 1 : 0) + Groups.Count)">
                                     @if (EmptyTemplate != null)
                                     {
@@ -277,7 +277,7 @@
                 </tbody>
                 @if (allColumns.Where(c => c.Visible && c.FooterTemplate != null).Any())
                 {
-                    <tfoot role="rowgroup" class="rz-datatable-tfoot" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+                    <tfoot role="rowgroup" class="rz-datatable-tfoot" @onkeydown:stopPropagation>
                         @for (var i = 0; i < deepestChildColumnLevel + 1; i++)
                         {
                             <tr role="row">
@@ -325,7 +325,7 @@
             @if (IsLoading)
             {
                 <div class="rz-datatable-loading"></div>
-                <div class="rz-datatable-loading-content" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+                <div class="rz-datatable-loading-content" @onkeydown:stopPropagation>
                     @if(LoadingTemplate != null)
                     {
                     @LoadingTemplate
@@ -344,7 +344,7 @@
         }
         @if (@FooterTemplate != null)
         {
-            <div class="rz-custom-footer" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+            <div class="rz-custom-footer" @onkeydown:stopPropagation>
                 @FooterTemplate
             </div>
         }
@@ -359,7 +359,7 @@
             <text>
                 @if (AllowFiltering && column.Filterable && column.Columns == null && (!string.IsNullOrEmpty(column.GetFilterProperty()) || column.FilterTemplate != null))
                 {
-                    <div class="rz-cell-filter" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+                    <div class="rz-cell-filter" @onkeydown:stopPropagation>
                         <div class="rz-cell-filter-content">
                             @if (column.FilterTemplate != null)
                             {
@@ -567,7 +567,7 @@
                                         }
                                         else
                                         {
-                                            <input autocomplete="off" aria-label=@(column.Title + FilterValueAriaLabel + column.GetFilterValue()) disabled=@(!column.CanSetFilterValue()) id="@(getFilterInputId(column))" @onchange="@((args) => OnFilter(args, column))" @onkeydown="@((args) => OnFilterKeyPress(args, column))" value="@column.GetFilterValue()" type="text" placeholder="@column.GetFilterPlaceholder()" class="rz-textbox" style="width: 100%;" />
+                                            <input autocomplete="off" aria-label=@(column.Title + FilterValueAriaLabel + column.GetFilterValue()) disabled=@(!column.CanSetFilterValue()) id="@(getFilterInputId(column))" @onchange="@((args) => OnFilter(args, column))" @onkeydown="@getFilterKeyDownHandler(column)" value="@column.GetFilterValue()" type="text" placeholder="@column.GetFilterPlaceholder()" class="rz-textbox" style="width: 100%;" />
                                             @if (column.GetFilterValue() != null && filters.Any(d => d.Property == column.Property && $"{d.FilterProperty}" == $"{column.FilterProperty}"))
                                             {
                                                 <button type="button" tabindex="-1" class="notranslate rzi rz-cell-filter-clear" style="position:absolute;inset-inline-end:10px;" aria-label="@ClearFilterText" @onclick="@((args) => ClearFilter(column))">close</button>
@@ -656,7 +656,7 @@
             <text>
             @if (this.AllowCompositeDataCells ? RowIndex == column.GetLevel() : (column.Parent != null && RowIndex == column.GetLevel() || column.Columns == null))
             {
-                <td role="gridcell" @attributes="@CellAttributes" @oncontextmenu:preventDefault="@this.CellContextMenu.HasDelegate" @oncontextmenu:stopPropagation="@this.CellContextMenu.HasDelegate" @onkeydown:stopPropagation="stopGuardKeydownPropagation" @onkeydown="OnGuardKeyDown">
+                <td role="gridcell" @attributes="@CellAttributes" @oncontextmenu:preventDefault="@this.CellContextMenu.HasDelegate" @oncontextmenu:stopPropagation="@this.CellContextMenu.HasDelegate" @onkeydown:stopPropagation>
                     @if (this.Responsive)
                     {
                         <span class="rz-column-title">

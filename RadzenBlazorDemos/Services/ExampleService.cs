@@ -2350,7 +2350,7 @@ namespace RadzenBlazorDemos
                     Children = new [] {
                         new Example
                         {
-                            Toc = [ new () { Text = "Get and Set the value of DropDown", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of DropDown using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Define Text and Value properties", Anchor = "#text-and-value-properties" }, new () { Text = "DropDown with template", Anchor = "#template" }, new () { Text = "Disable specific item", Anchor = "#disable-item" }, new () { Text = "Clear selected item", Anchor = "#clear-selected-item" }, new () { Text = "Editable DropDown", Anchor = "#editable-dropdown" }, new () { Text = "Open and close events", Anchor = "#open-and-close-event" }, new () { Text = "DropDown Sizes", Anchor = "#sizes" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                            Toc = [ new () { Text = "Get and Set the value of DropDown", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of DropDown using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Define Text and Value properties", Anchor = "#text-and-value-properties" }, new () { Text = "DropDown with template", Anchor = "#template" }, new () { Text = "Disable specific item", Anchor = "#disable-item" }, new () { Text = "Clear selected item", Anchor = "#clear-selected-item" }, new () { Text = "Editable DropDown", Anchor = "#editable-dropdown" }, new () { Text = "Open and close events", Anchor = "#open-and-close-event" }, new () { Text = "Loading indicator", Anchor = "#loading" }, new () { Text = "DropDown Sizes", Anchor = "#sizes" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                             Name = "Single selection",
                             Path = "dropdown",
                             Title = "Blazor DropDown / Select Component | Free UI Components by Radzen",
@@ -2572,7 +2572,7 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
-                    Toc = [ new () { Text = "Get and Set the value of ListBox", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of ListBox using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Define Text and Value properties", Anchor = "#text-value-properties" }, new () { Text = "ListBox with template", Anchor = "#template" }, new () { Text = "Multiple selection", Anchor = "#multiple-selection" }, new () { Text = "Filtering case sensitivity and filter operator", Anchor = "#filtering" }, new () { Text = "Custom filtering with LoadData event", Anchor = "#loaddata-event" }, new () { Text = "Virtualization using IQueryable", Anchor = "#virtualization-using-iqueryable" }, new () { Text = "Virtualization with LoadData event", Anchor = "#virtualization-with-loaddata" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
+                    Toc = [ new () { Text = "Get and Set the value of ListBox", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of ListBox using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Define Text and Value properties", Anchor = "#text-value-properties" }, new () { Text = "ListBox with template", Anchor = "#template" }, new () { Text = "Multiple selection", Anchor = "#multiple-selection" }, new () { Text = "Filtering case sensitivity and filter operator", Anchor = "#filtering" }, new () { Text = "Custom filtering with LoadData event", Anchor = "#loaddata-event" }, new () { Text = "Loading indicator", Anchor = "#loading" }, new () { Text = "Virtualization using IQueryable", Anchor = "#virtualization-using-iqueryable" }, new () { Text = "Virtualization with LoadData event", Anchor = "#virtualization-with-loaddata" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                     Name = "ListBox",
                     Title = "Blazor ListBox - Selectable List | Free UI Components by Radzen",
                     Path = "listbox",
@@ -2937,6 +2937,15 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Name = "Localization",
+                    Path = "spreadsheet-localization",
+                    Title = "Blazor Spreadsheet Localization | Free UI Components by Radzen",
+                    Description = "Culture-aware editing, number formatting, and formula entry - type 10,50 and =SUM(A1;B1) in comma-decimal cultures.",
+                    Tags = new [] { "spreadsheet", "localization", "culture", "globalization", "locale", "decimal", "separator", "international" },
+                    Related = new [] { "spreadsheet", "spreadsheet-cell-formatting", "spreadsheet-data-validation" }
+                },
+                new Example
+                {
                     Name = "Filtering & Sorting",
                     Path = "spreadsheet-filtering-sorting",
                     Title = "Blazor Spreadsheet Filtering & Sorting | Free UI Components by Radzen",
@@ -3121,6 +3130,21 @@ namespace RadzenBlazorDemos
                 },
                 new Example
                 {
+                    Name = "Top N groups",
+                    Path = "/pivot-data-grid-max-groups",
+                    New = true,
+                    Title = "Blazor Pivot DataGrid - Top N Groups with Others | Free UI Components by Radzen",
+                    Description = "Limit the number of row and column groups in the Blazor Pivot DataGrid with MaxGroups and combine the remaining items into a single Others group.",
+                    Tags = new [] { "pivot", "crosstab", "analysis", "aggregation", "top", "top n", "others", "maxgroups", "limit", "datagrid", "table" },
+                    Related = new [] { "pivot-data-grid", "pivot-data-grid-load-data", "pivot-data-grid-dynamic" },
+                    Faq = new []
+                    {
+                        new FaqItem { Question = "How do I show only the top N groups in the Pivot DataGrid?", Answer = "Set MaxGroups on RadzenPivotRow or RadzenPivotColumn; the most significant groups are kept and the rest are combined into a single group labeled via OthersLabel." },
+                        new FaqItem { Question = "How are the top groups selected?", Answer = "Groups are ranked by the value of the sorted aggregate, or the first aggregate when no aggregate sorting is applied, in descending order." }
+                    }
+                },
+                new Example
+                {
                     Name = "LoadData",
                     Path = "/pivot-data-grid-load-data",
                     Title = "Blazor Pivot DataGrid - LoadData Binding | Free UI Components by Radzen",
@@ -3185,6 +3209,14 @@ namespace RadzenBlazorDemos
                     Title = "Import and Export Excel (XLSX) and CSV in Blazor | Radzen",
                     Description = "Import and export Excel (XLSX) and CSV files in Blazor. Upload a file, parse the data, and display the rows, or generate a file users can download.",
                     Tags = new [] { "document", "processing", "import", "export", "xlsx", "csv", "excel", "upload", "download", "read", "write", "parse", "separator", "encoding", "quoting" }
+                },
+                new Example
+                {
+                    Name = "Localization",
+                    Path = "document-processing-localization",
+                    Title = "Culture-Aware Excel Processing in Blazor and C# | Radzen",
+                    Description = "Parse, display, and localize spreadsheet values and formulas per culture in code while files stay canonical and host-independent.",
+                    Tags = new [] { "document", "processing", "localization", "culture", "globalization", "locale", "decimal", "separator", "formula", "invariant" }
                 },
                 new Example
                 {

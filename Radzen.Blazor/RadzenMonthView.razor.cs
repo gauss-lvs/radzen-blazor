@@ -22,12 +22,17 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public override string Title
         {
-            get => Scheduler?.CurrentDate.ToString("MMMM yyyy", Scheduler.Culture ?? System.Globalization.CultureInfo.CurrentCulture) ?? "";
+            get
+            {
+                var date = Scheduler?.CurrentDate.Date ?? DateTime.Today;
+                return FormatTitle(date.StartOfMonth(), date.EndOfMonth(), Scheduler?.CurrentDate.ToString("MMMM yyyy", Scheduler.Culture ?? System.Globalization.CultureInfo.CurrentCulture) ?? "");
+            }
         }
 
         /// <inheritdoc />
         [Parameter]
-        public override string Text { get; set; } = "Month";
+        public override string Text { get => text ?? Localize(nameof(RadzenStrings.MonthView_Text)); set => text = value; }
+        private string? text;
 
         /// <summary>
         /// Specifies the maximum appointnments to render in a slot.

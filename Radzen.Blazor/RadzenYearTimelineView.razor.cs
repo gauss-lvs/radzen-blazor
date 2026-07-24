@@ -22,30 +22,9 @@ namespace Radzen.Blazor
         public override string Icon => "view_timeline";
 
         /// <inheritdoc />
-        public override string Title
-        {
-            get
-            {
-                if (Scheduler == null)
-                {
-                    return "";
-                }
-
-                var culture = Scheduler.Culture ?? System.Globalization.CultureInfo.CurrentCulture;
-                if (StartMonth == Month.January)
-                {
-                    return Scheduler.CurrentDate.ToString("yyyy", culture);
-                }
-                else
-                {
-                    return (Scheduler.CurrentDate.Month < (int)StartMonth + 1) ? $"{Scheduler.CurrentDate.AddYears(-1).ToString("yyyy", culture)}-{Scheduler.CurrentDate.ToString("yyyy", culture)}" : $"{Scheduler.CurrentDate.ToString("yyyy", culture)}-{Scheduler.CurrentDate.AddYears(+1).ToString("yyyy", culture)}";
-                }                
-            }
-        }
-
-        /// <inheritdoc />
         [Parameter]
-        public override string Text { get; set; } = "Timeline";
+        public override string Text { get => text ?? Localize(nameof(RadzenStrings.YearTimelineView_Text)); set => text = value; }
+        private string? text;
 
         /// <summary>
         /// Specifies the maximum appointnments to render in a slot.

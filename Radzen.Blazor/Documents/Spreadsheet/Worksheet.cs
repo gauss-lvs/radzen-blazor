@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -233,6 +234,8 @@ public partial class Worksheet
         get => workbook ??= new Workbook(this);
         internal set => workbook = value;
     }
+
+    internal CultureInfo Culture => Workbook.Culture;
 
     /// <summary>
     /// Returns true if the cell at the given address is editable (either protection is off or the cell is unlocked).
@@ -1096,4 +1099,29 @@ public partial class Worksheet
         }
     }
 
+    /// <summary>
+    /// Checks if all cells in the specified range are editable.
+    /// </summary>
+    /// <param name="range">The range of cells to validate.</param>
+    /// <returns><c>true</c> if the entire range can be modified; otherwise, <c>false</c>.</returns>
+    public bool IsRangeEditable(RangeRef range)
+    {
+        if (!Protection.IsProtected)
+        {
+            return true;
+        }
+
+        for (int r = range.Start.Row; r <= range.End.Row; r++)
+        {
+            for (int c = range.Start.Column; c <= range.End.Column; c++)
+            {
+                if (!IsCellEditable(new CellRef(r, c)))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 }

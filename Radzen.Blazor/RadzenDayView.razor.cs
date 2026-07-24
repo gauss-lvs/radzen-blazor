@@ -21,7 +21,8 @@ namespace Radzen.Blazor
 
         /// <inheritdoc />
         [Parameter]
-        public override string Text { get; set; } = "Day";
+        public override string Text { get => text ?? Localize(nameof(RadzenStrings.DayView_Text)); set => text = value; }
+        private string? text;
 
         /// <summary>
         /// Gets or sets the time format.
@@ -58,7 +59,8 @@ namespace Radzen.Blazor
             get
             {
                 var culture = Scheduler?.Culture ?? CultureInfo.CurrentCulture;
-                return Scheduler?.CurrentDate.ToString(Scheduler.Culture.DateTimeFormat.ShortDatePattern ?? "d", culture) ?? "";
+                var date = Scheduler?.CurrentDate.Date ?? DateTime.Today;
+                return FormatTitle(date, date, Scheduler?.CurrentDate.ToString(Scheduler.Culture.DateTimeFormat.ShortDatePattern ?? "d", culture) ?? "");
             }
         }
 

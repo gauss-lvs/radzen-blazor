@@ -21,7 +21,8 @@ namespace Radzen.Blazor
 
         /// <inheritdoc />
         [Parameter]
-        public override string Text { get; set; } = "Agenda";
+        public override string Text { get => text ?? Localize(nameof(RadzenStrings.AgendaView_Text)); set => text = value; }
+        private string? text;
 
         /// <summary>
         /// Gets or sets the time format.
@@ -39,20 +40,24 @@ namespace Radzen.Blazor
         [Parameter]
         public string MultiDayText { get => multiDayText ?? Localize(nameof(RadzenStrings.AgendaView_MultiDayText)); set => multiDayText = value; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to show the time display for appointments.
+        /// </summary>
+        /// <value><c>true</c> if the time display should be shown; otherwise, <c>false</c>.</value>
+        [Parameter]
+        public bool ShowTimeDisplay { get; set; } = true;
+
         /// <inheritdoc />
         public override string Title
         {
             get
             {
                 var culture = Scheduler?.Culture ?? CultureInfo.CurrentCulture;
-                if (StartDate == EndDate.AddDays(-1))
-                {
-                    return $"{StartDate.ToString(culture.DateTimeFormat.ShortDatePattern, culture)}";
-                }
-                else
-                {
-                    return $"{StartDate.ToString(culture.DateTimeFormat.ShortDatePattern, culture)} - {EndDate.AddDays(-1).ToString(culture.DateTimeFormat.ShortDatePattern, culture)}";
-                }
+                var end = EndDate.AddDays(-1);
+                var title = StartDate == end
+                    ? $"{StartDate.ToString(culture.DateTimeFormat.ShortDatePattern, culture)}"
+                    : $"{StartDate.ToString(culture.DateTimeFormat.ShortDatePattern, culture)} - {end.ToString(culture.DateTimeFormat.ShortDatePattern, culture)}";
+                return FormatTitle(StartDate, end, title);
             }
         }
 
