@@ -2,10 +2,9 @@
 //
 // `_kern-map.scss` already carries every KERN value that Radzen exposes as a
 // theme variable. This file adds the parts of the KERN specification that have
-// no variable counterpart: the three-ring focus indicator, the primary /
-// secondary / tertiary button model, link decoration, the underline-only input
-// chrome, and the structural rules of accordion, tabs, alert, badge, grid,
-// pagination, switch and tree.
+// no variable counterpart: the primary / secondary / tertiary button model,
+// link decoration, the underline-only input chrome, and the structural rules of
+// accordion, tabs, alert, badge, grid, pagination, switch and tree.
 //
 // Every declaration references a `--kern-*` custom property, so an application
 // can retheme by overriding KERN tokens alone.
@@ -66,49 +65,37 @@ $kern-severities: (
 }
 
 // ---------------------------------------------------------------------------
-// Focus — mixins/focus-outline.scss
-//   box-shadow: 0 0 0 2px on-default, 0 0 0 4px focus-border-inside,
-//               0 0 0 6px focus-border-outside;  outline: 0
+// Focus — KERN 2.7.1
+//   outline: 4px solid var(--kern-color-action-focus-default);
+//   outline-offset: 2px   (0 on form controls, which sit flush in their field)
+//
+// This is a single outline, not the three-ring box-shadow of KERN 2.4.x. It maps
+// exactly onto Radzen's own `--rz-outline-focus` / `--rz-outline-offset`, which
+// `_kern-map.scss` points at the KERN focus token — so every component Radzen
+// already wires up needs nothing here. Only the few elements Radzen leaves
+// without a focus rule are covered below.
 // ---------------------------------------------------------------------------
 
-@mixin kern-focus-ring($angular: false) {
-  border-radius: if($angular, var(--kern-metric-border-radius-none), var(--kern-metric-border-radius-default));
-  box-shadow: var(--kern-focus-ring);
-  outline: 0;
-  outline-color: transparent;
+@mixin kern-focus-outline($offset: var(--rz-outline-offset)) {
+  outline: var(--rz-outline-focus);
+  outline-offset: $offset;
+  box-shadow: none;
   position: relative;
   z-index: 1;
 }
 
-.rz-button,
 .rz-link,
 .rz-splitbutton-menubutton,
-.rz-panel-titlebar-toggler,
-.rz-fieldset-toggler,
-.rz-pager-element,
 .rz-chip,
-.rz-selectbar .rz-button,
-.rz-steps-number,
-.rz-slider-handle,
 .rz-navigation-item-link,
 .rz-tree-toggler,
-.rz-colorpicker-trigger,
-.rz-datepicker-trigger,
-.rz-timespanpicker-trigger,
 .rz-dialog-titlebar-close,
-.rz-fab {
-  &:focus-visible {
-    @include kern-focus-ring;
-  }
-}
-
-// KERN renders square focus rings where the control has no radius of its own.
 .rz-accordion-header > a,
 .rz-accordion-header > button,
 .rz-tabview-nav li > a,
 .rz-tabview-nav li > button {
   &:focus-visible {
-    @include kern-focus-ring($angular: true);
+    @include kern-focus-outline;
   }
 }
 
@@ -185,13 +172,9 @@ $kern-severities: (
   background-color: var(--kern-color-layout-background-default);
   background-image: none;
   border-color: var(--kern-color-action-default);
+  // Suppresses the inset shadow Radzen uses to draw outlined borders; the focus
+  // indicator is an outline in KERN 2.7.1, so it no longer collides with this.
   box-shadow: none;
-
-  // Outranks the `box-shadow: none` above, which exists only to suppress the
-  // inset shadow Radzen uses to draw outlined borders.
-  &:focus-visible {
-    box-shadow: var(--kern-focus-ring);
-  }
 
   &:not(.rz-state-disabled) {
     @media (hover: hover) and (pointer: fine) {
@@ -217,10 +200,6 @@ $kern-severities: (
   background-color: transparent;
   border-color: transparent;
   text-decoration-color: var(--kern-color-action-default);
-
-  &:focus-visible {
-    box-shadow: var(--kern-focus-ring);
-  }
 
   &:not(.rz-state-disabled) {
     @media (hover: hover) and (pointer: fine) {
@@ -385,9 +364,9 @@ textarea[readonly].rz-textarea {
 .rz-form-field-label,
 label.rz-label {
   color: var(--kern-color-layout-text-default);
-  font-size: var(--kern-typography-font-size-static-medium);
+  font-size: var(--kern-typography-font-size-medium-static);
   font-weight: var(--kern-typography-font-weight-medium);
-  line-height: var(--kern-typography-line-height-static-medium);
+  line-height: var(--kern-typography-line-height-medium-static);
   letter-spacing: var(--kern-metric-space-none);
 }
 
@@ -395,9 +374,9 @@ label.rz-label {
 .rz-form-field-helper,
 .rz-helper-text {
   color: var(--kern-color-layout-text-muted);
-  font-size: var(--kern-typography-font-size-static-medium);
+  font-size: var(--kern-typography-font-size-medium-static);
   font-weight: var(--kern-typography-font-weight-regular);
-  line-height: var(--kern-typography-line-height-static-medium);
+  line-height: var(--kern-typography-line-height-medium-static);
 }
 
 // ---------------------------------------------------------------------------
@@ -568,9 +547,9 @@ label.rz-label {
   box-shadow: none;
 
   .rz-alert-title {
-    font-size: var(--kern-typography-font-size-adaptive-medium);
+    font-size: var(--kern-typography-font-size-medium-adaptive);
     font-weight: var(--kern-typography-font-weight-semi-bold);
-    line-height: var(--kern-typography-line-height-adaptive-medium);
+    line-height: var(--kern-typography-line-height-medium-adaptive);
   }
 
   &.rz-variant-text {
@@ -725,11 +704,11 @@ $kern-shades: 'lighter', 'light', 'default', 'dark', 'darker';
   .rz-progressbar-value,
   .rz-progressbar-value::before,
   .rz-progressbar-value::after {
-    background-color: var(--kern-color-feedback-loader);
+    background-color: var(--kern-color-feedback-default);
   }
 
   .rz-progressbar-circular-value {
-    stroke: var(--kern-color-feedback-loader);
+    stroke: var(--kern-color-feedback-default);
   }
 }
 

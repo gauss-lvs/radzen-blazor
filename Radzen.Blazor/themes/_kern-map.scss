@@ -20,8 +20,8 @@ $kern-dark: false !default;
 // Theme colors
 // ===========================================================================
 
-$rz-white: $kern-neutral-000;
-$rz-black: $kern-neutral-1000;
+$rz-white: $kern-color-white;
+$rz-black: $kern-color-black;
 
 // KERN has a single interactive accent ("action"). Radzen splits it into
 // primary (emphasis) and secondary (selection / interactive state); both map to
@@ -37,7 +37,7 @@ $rz-danger:    $kern-color-feedback-danger;
 
   // Neutral surface / text ramp — KERN neutral palette + layout tokens.
   $rz-base:        $kern-neutral-100 !global;
-  $rz-base-50:     $kern-neutral-000 !global;                    // #ffffff
+  $rz-base-50:     $kern-color-white !global;                    // #ffffff
   $rz-base-100:    $kern-color-layout-background-hued !global;   // #f6f6f8
   $rz-base-200:    $kern-neutral-100 !global;                    // #e8e8ea
   $rz-base-300:    $kern-color-layout-border !global;            // #a6abc4 — `--rz-border-normal`
@@ -69,13 +69,13 @@ $rz-danger:    $kern-color-feedback-danger;
   $rz-info-dark:    $kern-lightblue-650 !global;
   $rz-info-darker:  $kern-lightblue-700 !global;
 
-  $rz-success-light:   $kern-turquoise-600 !global;
-  $rz-success-dark:    $kern-turquoise-700 !global;
-  $rz-success-darker:  $kern-turquoise-750 !global;
+  $rz-success-light:   $kern-turquois-600 !global;
+  $rz-success-dark:    $kern-turquois-700 !global;
+  $rz-success-darker:  $kern-turquois-750 !global;
 
-  $rz-warning-light:   $kern-dataport-red-550 !global;
-  $rz-warning-dark:    $kern-dataport-red-650 !global;
-  $rz-warning-darker:  $kern-dataport-red-700 !global;
+  $rz-warning-light:   $kern-orange-550 !global;
+  $rz-warning-dark:    $kern-orange-650 !global;
+  $rz-warning-darker:  $kern-orange-700 !global;
 
   $rz-danger-light:   #d31410 !global;
   $rz-danger-dark:    #a20d08 !global;   // KERN button danger hover  (color-mix 85% black)
@@ -83,30 +83,30 @@ $rz-danger:    $kern-color-feedback-danger;
 
   // Chart series — KERN has no chart spec; the ramp is built from KERN primitives
   // so charts stay inside the KERN color world (8 hues × 3 tonal bands).
-  $rz-series-1:  $kern-darkblue-700 !global;
-  $rz-series-2:  $kern-turquoise-500 !global;
-  $rz-series-3:  $kern-dataport-red-500 !global;
-  $rz-series-4:  $kern-violet-500 !global;
-  $rz-series-5:  $kern-green-550 !global;
-  $rz-series-6:  $kern-lightblue-600 !global;
-  $rz-series-7:  $kern-orange-450 !global;
-  $rz-series-8:  $kern-neutral-600 !global;
-  $rz-series-9:  $kern-darkblue-450 !global;
-  $rz-series-10: $kern-turquoise-350 !global;
-  $rz-series-11: $kern-dataport-red-350 !global;
-  $rz-series-12: $kern-violet-350 !global;
-  $rz-series-13: $kern-green-350 !global;
-  $rz-series-14: $kern-lightblue-350 !global;
-  $rz-series-15: $kern-orange-300 !global;
-  $rz-series-16: $kern-neutral-400 !global;
-  $rz-series-17: $kern-darkblue-850 !global;
-  $rz-series-18: $kern-turquoise-750 !global;
-  $rz-series-19: $kern-dataport-red-700 !global;
-  $rz-series-20: $kern-violet-700 !global;
-  $rz-series-21: $kern-green-750 !global;
-  $rz-series-22: $kern-lightblue-800 !global;
-  $rz-series-23: $kern-orange-600 !global;
-  $rz-series-24: $kern-neutral-800 !global;
+  $rz-series-1: $kern-darkblue-700 !global;
+  $rz-series-2: $kern-turquois-600 !global;
+  $rz-series-3: $kern-violet-600 !global;
+  $rz-series-4: $kern-green-600 !global;
+  $rz-series-5: $kern-lightblue-600 !global;
+  $rz-series-6: $kern-orange-600 !global;
+  $rz-series-7: $kern-limette-600 !global;
+  $rz-series-8: $kern-grey-700 !global;
+  $rz-series-9: $kern-darkblue-500 !global;
+  $rz-series-10: $kern-turquois-450 !global;
+  $rz-series-11: $kern-violet-450 !global;
+  $rz-series-12: $kern-green-450 !global;
+  $rz-series-13: $kern-lightblue-450 !global;
+  $rz-series-14: $kern-orange-450 !global;
+  $rz-series-15: $kern-limette-450 !global;
+  $rz-series-16: $kern-grey-500 !global;
+  $rz-series-17: $kern-darkblue-900 !global;
+  $rz-series-18: $kern-turquois-850 !global;
+  $rz-series-19: $kern-violet-850 !global;
+  $rz-series-20: $kern-green-850 !global;
+  $rz-series-21: $kern-lightblue-850 !global;
+  $rz-series-22: $kern-orange-850 !global;
+  $rz-series-23: $kern-limette-850 !global;
+  $rz-series-24: $kern-grey-900 !global;
 
 } @else {
 
@@ -156,30 +156,30 @@ $rz-danger:    $kern-color-feedback-danger;
   $rz-danger-darker:  #e05a51 !global;
 
   // Series shifted to the light and mid bands so every hue reads on #18171e.
-  $rz-series-1:  $kern-darkblue-250 !global;
-  $rz-series-2:  $kern-turquoise-300 !global;
-  $rz-series-3:  $kern-dataport-red-300 !global;
-  $rz-series-4:  $kern-violet-300 !global;
-  $rz-series-5:  $kern-green-300 !global;
-  $rz-series-6:  $kern-lightblue-300 !global;
-  $rz-series-7:  $kern-orange-250 !global;
-  $rz-series-8:  $kern-neutral-350 !global;
-  $rz-series-9:  $kern-darkblue-150 !global;
-  $rz-series-10: $kern-turquoise-150 !global;
-  $rz-series-11: $kern-dataport-red-150 !global;
-  $rz-series-12: $kern-violet-150 !global;
-  $rz-series-13: $kern-green-150 !global;
-  $rz-series-14: $kern-lightblue-150 !global;
-  $rz-series-15: $kern-orange-150 !global;
-  $rz-series-16: $kern-neutral-200 !global;
-  $rz-series-17: $kern-darkblue-400 !global;
-  $rz-series-18: $kern-turquoise-450 !global;
-  $rz-series-19: $kern-dataport-red-450 !global;
-  $rz-series-20: $kern-violet-450 !global;
-  $rz-series-21: $kern-green-450 !global;
-  $rz-series-22: $kern-lightblue-450 !global;
-  $rz-series-23: $kern-orange-400 !global;
-  $rz-series-24: $kern-neutral-500 !global;
+  $rz-series-1: $kern-darkblue-300 !global;
+  $rz-series-2: $kern-turquois-300 !global;
+  $rz-series-3: $kern-violet-300 !global;
+  $rz-series-4: $kern-green-300 !global;
+  $rz-series-5: $kern-lightblue-300 !global;
+  $rz-series-6: $kern-orange-300 !global;
+  $rz-series-7: $kern-limette-300 !global;
+  $rz-series-8: $kern-grey-300 !global;
+  $rz-series-9: $kern-darkblue-150 !global;
+  $rz-series-10: $kern-turquois-150 !global;
+  $rz-series-11: $kern-violet-150 !global;
+  $rz-series-12: $kern-green-150 !global;
+  $rz-series-13: $kern-lightblue-150 !global;
+  $rz-series-14: $kern-orange-150 !global;
+  $rz-series-15: $kern-limette-150 !global;
+  $rz-series-16: $kern-grey-150 !global;
+  $rz-series-17: $kern-darkblue-450 !global;
+  $rz-series-18: $kern-turquois-450 !global;
+  $rz-series-19: $kern-violet-450 !global;
+  $rz-series-20: $kern-green-450 !global;
+  $rz-series-21: $kern-lightblue-450 !global;
+  $rz-series-22: $kern-orange-450 !global;
+  $rz-series-23: $kern-limette-450 !global;
+  $rz-series-24: $kern-grey-500 !global;
 
   // On a dark theme every KERN accent is *light*, so the text drawn on top of a
   // filled accent must be dark. Radzen's defaults assume white — override them.
@@ -246,19 +246,19 @@ $rz-danger-lighter:  $kern-color-feedback-danger-background;
 $rz-border-width:  $kern-metric-border-width-light;    // 1px
 $rz-border-radius: $kern-metric-border-radius-default; // 4px
 $rz-root-font-size: 16px;
-$rz-body-font-size: $kern-typography-font-size-static-medium;  // 18px
+$rz-body-font-size: $kern-typography-font-size-medium-static;  // 18px
 $rz-body-line-height: 1.3333;                                  // 24 / 18
 $rz-body-background-color: var(--kern-color-layout-background-default);
 $rz-text-font-family: $kern-typography-font-family-fira-sans, 'Fira Sans Regular',
   'Noto Sans', 'Noto Sans Regular', 'SF Pro Text', 'Segoe UI', SegoeUI, Roboto,
   Arial, Helvetica, sans-serif;
 
-// KERN focus ring: 2px white + 4px #6e7596 + 6px #c2c6d6. Only the middle ring can be
-// expressed as an `outline`; `_kern-components.scss` renders the exact three-ring
-// box-shadow on top of this for every focusable KERN control.
-$rz-outline-width:  $kern-metric-border-width-bold;               // 4px
-$rz-outline-offset: $kern-metric-border-width-default;            // 2px
-$rz-outline-color:  var(--kern-color-action-focus-border-inside);   // #6e7596
+// KERN 2.7.1 focus indicator: `outline: 4px solid <action-focus>` at a 2px offset
+// (0 on form controls). It maps 1:1 onto Radzen's outline tokens, so every
+// `$*-focus-outline` below simply points at `--rz-outline-focus`.
+$rz-outline-width:  $kern-metric-border-width-bold;            // 4px
+$rz-outline-offset: $kern-metric-border-width-default;         // 2px
+$rz-outline-color:  var(--kern-color-action-focus-default);    // #454b6b light / #a9aec6 dark
 
 // ===========================================================================
 // Semantic text / link / background
@@ -280,8 +280,8 @@ $rz-link-color:                  var(--kern-color-action-default);
 $rz-link-text-decoration:        underline;
 $rz-link-hover-color:            var(--kern-color-action-default);
 $rz-link-hover-text-decoration:  underline;
-$rz-link-focus-outline:          none;
-$rz-link-focus-outline-offset:   0;
+$rz-link-focus-outline: var(--rz-outline-focus);
+$rz-link-focus-outline-offset: var(--rz-outline-offset);
 
 $rz-base-background-color: var(--kern-color-layout-background-default);
 
@@ -295,7 +295,7 @@ $rz-text-selection-color: inherit;
 $rz-border-normal:   var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
 $rz-border-hover:    var(--kern-metric-border-width-light) solid var(--kern-color-form-input-border);
 $rz-border-focus:    var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border);
-$rz-border-disabled: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-muted);
+$rz-border-disabled: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-default);
 
 $rz-border-radius-0:  $kern-metric-border-radius-none;    // 0
 $rz-border-radius-1:  $kern-metric-border-radius-small;   // 2px
@@ -361,49 +361,49 @@ $rz-icon-optical-size: 24;
 // ===========================================================================
 
 $headings: (
-  h1: (font-size: var(--kern-typography-font-size-adaptive-x-large), line-height: var(--kern-typography-line-height-adaptive-x-large), font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
-  h2: (font-size: var(--kern-typography-font-size-adaptive-large),   line-height: var(--kern-typography-line-height-adaptive-large),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
-  h3: (font-size: var(--kern-typography-font-size-adaptive-medium),  line-height: var(--kern-typography-line-height-adaptive-medium),  font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  h4: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  h5: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  h6: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-regular),   letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small))
+  h1: (font-size: var(--kern-typography-font-size-x-large-adaptive), line-height: var(--kern-typography-line-height-x-large-adaptive), font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  h2: (font-size: var(--kern-typography-font-size-large-adaptive),   line-height: var(--kern-typography-line-height-large-adaptive),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  h3: (font-size: var(--kern-typography-font-size-medium-adaptive),  line-height: var(--kern-typography-line-height-medium-adaptive),  font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h4: (font-size: var(--kern-typography-font-size-medium-static),    line-height: var(--kern-typography-line-height-medium-static),    font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h5: (font-size: var(--kern-typography-font-size-medium-static),    line-height: var(--kern-typography-line-height-medium-static),    font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h6: (font-size: var(--kern-typography-font-size-medium-static),    line-height: var(--kern-typography-line-height-medium-static),    font-weight: var(--kern-typography-font-weight-regular),   letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small))
 );
 
 $headings-thin: (
-  h1: (font-size: var(--kern-typography-font-size-adaptive-x-large), font-weight: var(--kern-typography-font-weight-regular)),
-  h2: (font-size: var(--kern-typography-font-size-adaptive-large),   font-weight: var(--kern-typography-font-weight-regular)),
-  h3: (font-size: var(--kern-typography-font-size-adaptive-medium),  font-weight: var(--kern-typography-font-weight-regular)),
-  h4: (font-size: var(--kern-typography-font-size-static-medium),    font-weight: var(--kern-typography-font-weight-regular)),
-  h5: (font-size: var(--kern-typography-font-size-static-medium),    font-weight: var(--kern-typography-font-weight-regular)),
-  h6: (font-size: var(--kern-typography-font-size-static-small),     font-weight: var(--kern-typography-font-weight-regular))
+  h1: (font-size: var(--kern-typography-font-size-x-large-adaptive), font-weight: var(--kern-typography-font-weight-regular)),
+  h2: (font-size: var(--kern-typography-font-size-large-adaptive),   font-weight: var(--kern-typography-font-weight-regular)),
+  h3: (font-size: var(--kern-typography-font-size-medium-adaptive),  font-weight: var(--kern-typography-font-weight-regular)),
+  h4: (font-size: var(--kern-typography-font-size-medium-static),    font-weight: var(--kern-typography-font-weight-regular)),
+  h5: (font-size: var(--kern-typography-font-size-medium-static),    font-weight: var(--kern-typography-font-weight-regular)),
+  h6: (font-size: var(--kern-typography-font-size-small-static),     font-weight: var(--kern-typography-font-weight-regular))
 );
 
 // Radzen's `.rz-text-*` scale mapped onto KERN's display / heading / title /
 // body / preline / subline / label styles, including the KERN baseline padding.
 $text: (
-  display-h1: (font-size: var(--kern-typography-font-size-adaptive-2x-large), line-height: var(--kern-typography-line-height-adaptive-2x-large), font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
-  display-h2: (font-size: var(--kern-typography-font-size-adaptive-x-large),  line-height: var(--kern-typography-line-height-adaptive-x-large),  font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
-  display-h3: (font-size: var(--kern-typography-font-size-adaptive-large),    line-height: var(--kern-typography-line-height-adaptive-large),    font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  display-h4: (font-size: var(--kern-typography-font-size-adaptive-medium),   line-height: var(--kern-typography-line-height-adaptive-medium),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  display-h5: (font-size: var(--kern-typography-font-size-static-large),      line-height: var(--kern-typography-line-height-static-large),      font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  display-h6: (font-size: var(--kern-typography-font-size-static-medium),     line-height: var(--kern-typography-line-height-static-medium),     font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  h1: (font-size: var(--kern-typography-font-size-adaptive-x-large), line-height: var(--kern-typography-line-height-adaptive-x-large), font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
-  h2: (font-size: var(--kern-typography-font-size-adaptive-large),   line-height: var(--kern-typography-line-height-adaptive-large),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
-  h3: (font-size: var(--kern-typography-font-size-adaptive-medium),  line-height: var(--kern-typography-line-height-adaptive-medium),  font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  h4: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  h5: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  h6: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-regular),   letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  display-h1: (font-size: var(--kern-typography-font-size-2x-large-adaptive), line-height: var(--kern-typography-line-height-2x-large-adaptive), font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  display-h2: (font-size: var(--kern-typography-font-size-x-large-adaptive),  line-height: var(--kern-typography-line-height-x-large-adaptive),  font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  display-h3: (font-size: var(--kern-typography-font-size-large-adaptive),    line-height: var(--kern-typography-line-height-large-adaptive),    font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  display-h4: (font-size: var(--kern-typography-font-size-medium-adaptive),   line-height: var(--kern-typography-line-height-medium-adaptive),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  display-h5: (font-size: var(--kern-typography-font-size-large-static),      line-height: var(--kern-typography-line-height-large-static),      font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  display-h6: (font-size: var(--kern-typography-font-size-medium-static),     line-height: var(--kern-typography-line-height-medium-static),     font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h1: (font-size: var(--kern-typography-font-size-x-large-adaptive), line-height: var(--kern-typography-line-height-x-large-adaptive), font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  h2: (font-size: var(--kern-typography-font-size-large-adaptive),   line-height: var(--kern-typography-line-height-large-adaptive),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  h3: (font-size: var(--kern-typography-font-size-medium-adaptive),  line-height: var(--kern-typography-line-height-medium-adaptive),  font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h4: (font-size: var(--kern-typography-font-size-medium-static),    line-height: var(--kern-typography-line-height-medium-static),    font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h5: (font-size: var(--kern-typography-font-size-medium-static),    line-height: var(--kern-typography-line-height-medium-static),    font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h6: (font-size: var(--kern-typography-font-size-medium-static),    line-height: var(--kern-typography-line-height-medium-static),    font-weight: var(--kern-typography-font-weight-regular),   letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
   // KERN title-default / title-small
-  subtitle1: (font-size: var(--kern-typography-font-size-adaptive-medium), line-height: var(--kern-typography-line-height-adaptive-medium), font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  subtitle2: (font-size: var(--kern-typography-font-size-static-medium),   line-height: var(--kern-typography-line-height-static-medium),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  subtitle1: (font-size: var(--kern-typography-font-size-medium-adaptive), line-height: var(--kern-typography-line-height-medium-adaptive), font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  subtitle2: (font-size: var(--kern-typography-font-size-medium-static),   line-height: var(--kern-typography-line-height-medium-static),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
   // KERN body-default / body-small
-  body1: (font-size: var(--kern-typography-font-size-static-medium), line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-regular), letter-spacing: 0, color: var(--rz-text-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  body2: (font-size: var(--kern-typography-font-size-static-small),  line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-regular), letter-spacing: 0, color: var(--rz-text-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  body1: (font-size: var(--kern-typography-font-size-medium-static), line-height: var(--kern-typography-line-height-medium-static), font-weight: var(--kern-typography-font-weight-regular), letter-spacing: 0, color: var(--rz-text-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  body2: (font-size: var(--kern-typography-font-size-small-static),  line-height: var(--kern-typography-line-height-medium-static), font-weight: var(--kern-typography-font-weight-regular), letter-spacing: 0, color: var(--rz-text-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
   // KERN label-default
-  button: (font-size: var(--kern-typography-font-size-static-medium), line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-medium), letter-spacing: 0, color: var(--rz-text-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  button: (font-size: var(--kern-typography-font-size-medium-static), line-height: var(--kern-typography-line-height-medium-static), font-weight: var(--kern-typography-font-weight-medium), letter-spacing: 0, color: var(--rz-text-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
   // KERN preline-small / subline-small (muted)
-  caption:  (font-size: var(--kern-typography-font-size-static-small), line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-regular), letter-spacing: 0, color: var(--rz-text-secondary-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
-  overline: (font-size: var(--kern-typography-font-size-static-small), line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-medium),  letter-spacing: 0, text-transform: none, color: var(--rz-text-secondary-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small))
+  caption:  (font-size: var(--kern-typography-font-size-small-static), line-height: var(--kern-typography-line-height-medium-static), font-weight: var(--kern-typography-font-weight-regular), letter-spacing: 0, color: var(--rz-text-secondary-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  overline: (font-size: var(--kern-typography-font-size-small-static), line-height: var(--kern-typography-line-height-medium-static), font-weight: var(--kern-typography-font-weight-medium),  letter-spacing: 0, text-transform: none, color: var(--rz-text-secondary-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small))
 );
 
 // ===========================================================================
@@ -427,10 +427,10 @@ $accordion-item-margin: 0;
 $accordion-item-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
 $accordion-item-background-color: transparent;
 $accordion-item-color: var(--kern-color-action-default);
-$accordion-item-focus-outline: none;
-$accordion-item-focus-outline-offset: 0;
-$accordion-item-line-height: $kern-typography-line-height-adaptive-medium;   // 24px
-$accordion-item-font-size:   $kern-typography-font-size-adaptive-medium;     // 21px
+$accordion-item-focus-outline: var(--rz-outline-focus);
+$accordion-item-focus-outline-offset: var(--rz-outline-offset);
+$accordion-item-line-height: $kern-typography-line-height-medium-adaptive;   // 24px
+$accordion-item-font-size:   $kern-typography-font-size-medium-adaptive;     // 21px
 $accordion-item-font-weight: $kern-typography-font-weight-semi-bold;
 $accordion-icon-width:  $kern-metric-dimension-default;   // 24px
 $accordion-icon-height: $kern-metric-dimension-default;
@@ -442,7 +442,7 @@ $accordion-selected-color: var(--kern-color-action-default);
 $accordion-hover-color:    var(--kern-color-action-default);
 $accordion-content-padding-block:  $kern-metric-baseline-body-default-padding-top $kern-metric-space-large;
 $accordion-content-padding-inline: $kern-metric-space-x-small;
-$accordion-content-font-size: $kern-typography-font-size-static-medium;
+$accordion-content-font-size: $kern-typography-font-size-medium-static;
 $accordion-border-radius: $kern-metric-border-radius-none;
 $accordion-shadow: none;
 
@@ -461,7 +461,7 @@ $alert-border-radius: $kern-metric-border-radius-default;
 $alert-message-margin: $kern-metric-space-small 0;
 $alert-title-color: var(--rz-text-title-color);
 $alert-icon-color: var(--rz-alert-color);
-$alert-icon-size: $kern-component-alert-icon-size-md;   // 40px
+$alert-icon-size: $kern-alert-icon-size;   // 40px
 $alert-icon-margin: 0;
 
 $alert-sizes: (
@@ -480,9 +480,9 @@ $badge-border-radius: $kern-metric-border-radius-default;
 $badge-pill-border-radius: $kern-metric-border-radius-large;
 $badge-padding:      $kern-metric-space-2x-small $kern-metric-space-default $kern-metric-space-2x-small $kern-12;
 $badge-pill-padding: $kern-metric-space-2x-small $kern-metric-space-default;
-$badge-font-size:   $kern-typography-font-size-static-small;      // 16px
+$badge-font-size:   $kern-typography-font-size-small-static;      // 16px
 $badge-font-weight: $kern-typography-font-weight-medium;          // 500
-$badge-line-height: $kern-typography-line-height-static-medium;   // 24px
+$badge-line-height: $kern-typography-line-height-medium-static;   // 24px
 $badge-text-transform: none;
 $badge-letter-spacing: 0;
 
@@ -499,18 +499,16 @@ $button-background-size: auto;
 $button-border-radius: $kern-metric-border-radius-default;
 $button-shadow: none;
 $button-transition: var(--rz-transition-all), width 0, height 0;
-$button-line-height: $kern-typography-line-height-static-medium;
+$button-line-height: $kern-typography-line-height-medium-static;
 $button-vertical-align: top;
 $button-hover-shadow: none;
 $button-hover-gradient: none;
 $button-hover-background-size: auto;
-// Radzen draws the filled-button focus state through this token with a
-// specificity the component layer cannot outrank, so the KERN ring goes here.
-$button-focus-shadow: var(--kern-focus-ring);
+$button-focus-shadow: none;
 $button-focus-gradient: none;
 $button-focus-background-size: auto;
-$button-focus-outline: none;           // replaced by the KERN three-ring focus
-$button-focus-outline-offset: 0;
+$button-focus-outline: var(--rz-outline-focus);           // replaced by the KERN three-ring focus
+$button-focus-outline-offset: var(--rz-outline-offset);
 $button-active-shadow: none;
 $button-active-gradient: none;
 $button-active-background-size: auto;
@@ -524,9 +522,9 @@ $button-size-lg: $kern-metric-dimension-2x-large; // 56px
 
 $button-sizes: (
   lg: (
-    font-size: $kern-typography-font-size-static-large,
+    font-size: $kern-typography-font-size-large-static,
     padding: $kern-metric-space-small $kern-metric-space-large,
-    line-height: $kern-typography-line-height-static-large,
+    line-height: $kern-typography-line-height-large-static,
     height: auto,
     min-height: var(--rz-button-size-lg),
     min-width: var(--rz-button-size-lg),
@@ -538,9 +536,9 @@ $button-sizes: (
     icon-only-padding: $kern-metric-space-small
   ),
   md: (
-    font-size: $kern-typography-font-size-static-medium,
+    font-size: $kern-typography-font-size-medium-static,
     padding: $kern-metric-space-small $kern-metric-space-default,
-    line-height: $kern-typography-line-height-static-medium,
+    line-height: $kern-typography-line-height-medium-static,
     height: auto,
     min-height: var(--rz-button-size-md),
     min-width: var(--rz-button-size-md),
@@ -551,9 +549,9 @@ $button-sizes: (
     icon-only-padding: $kern-metric-space-small
   ),
   sm: (
-    font-size: $kern-typography-font-size-static-small,
+    font-size: $kern-typography-font-size-small-static,
     padding: $kern-metric-space-small $kern-12,
-    line-height: $kern-typography-line-height-static-medium,
+    line-height: $kern-typography-line-height-medium-static,
     height: auto,
     min-height: var(--rz-button-size-sm),
     min-width: var(--rz-button-size-sm),
@@ -564,9 +562,9 @@ $button-sizes: (
     icon-only-padding: $kern-metric-space-small
   ),
   xs: (
-    font-size: $kern-typography-font-size-static-small,
+    font-size: $kern-typography-font-size-small-static,
     padding: $kern-metric-space-x-small $kern-metric-space-small,
-    line-height: $kern-typography-line-height-static-medium,
+    line-height: $kern-typography-line-height-medium-static,
     height: auto,
     min-height: var(--rz-button-size-xs),
     min-width: var(--rz-button-size-xs),
@@ -586,7 +584,7 @@ $card-padding: $kern-metric-space-large;
 $card-background-color: var(--kern-color-layout-background-default);
 $card-flat-background-color: var(--kern-color-layout-background-hued);
 $card-shadow: none;
-$card-border: var(--kern-metric-border-width-light) solid var(--layout-border);
+$card-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-default);
 $card-border-radius: $kern-metric-border-radius-default;
 $card-heading-margin-bottom: $kern-metric-space-default;
 
@@ -623,10 +621,10 @@ $chart-axis-color: var(--kern-color-layout-border);
 $chart-grid-line-color: color-mix(in srgb, var(--rz-chart-axis-color) 50%, transparent);
 $chart-area-opacity: 0.6;
 $chart-axis-label-color: var(--rz-text-secondary-color);
-$chart-axis-font-size:   $kern-typography-font-size-static-small;
-$chart-legend-font-size: $kern-typography-font-size-static-small;
-$chart-legend-focus-outline: none;
-$chart-legend-focus-outline-offset: 0;
+$chart-axis-font-size:   $kern-typography-font-size-small-static;
+$chart-legend-font-size: $kern-typography-font-size-small-static;
+$chart-legend-focus-outline: var(--rz-outline-focus);
+$chart-legend-focus-outline-offset: var(--rz-outline-offset);
 $chart-tooltip-background: var(--kern-color-layout-background-default);
 $chart-tooltip-color: var(--kern-color-layout-text-default);
 $chart-tooltip-border-radius: var(--rz-tooltip-border-radius);
@@ -668,7 +666,7 @@ $rz-chat-header-padding-inline: $kern-metric-space-default $kern-metric-space-sm
 $rz-chat-header-background-color: var(--kern-color-layout-background-hued);
 $rz-chat-header-bottom-border: var(--rz-border-normal);
 $rz-chat-header-shadow: none;
-$rz-chat-header-title-font-size:   $kern-typography-font-size-adaptive-medium;
+$rz-chat-header-title-font-size:   $kern-typography-font-size-medium-adaptive;
 $rz-chat-header-title-font-weight: $kern-typography-font-weight-semi-bold;
 $rz-chat-message-user-color: var(--rz-on-primary-lighter);
 $rz-chat-message-user-background-color: var(--rz-primary-lighter);
@@ -678,7 +676,7 @@ $rz-chat-message-text-padding: $kern-metric-space-small $kern-metric-space-defau
 $rz-chat-message-text-border-radius: $kern-metric-border-radius-default;
 $rz-chat-avatar-size: $kern-metric-dimension-large;
 $rz-chat-avatar-border-radius: $kern-metric-border-radius-circle;
-$rz-chat-avatar-font-size:   $kern-typography-font-size-static-small;
+$rz-chat-avatar-font-size:   $kern-typography-font-size-small-static;
 $rz-chat-avatar-font-weight: $kern-typography-font-weight-semi-bold;
 $rz-chat-message-info-padding: 0;
 $rz-chat-message-callout-radius: $kern-metric-border-radius-small;
@@ -697,7 +695,7 @@ $checkbox-label-margin-block: 0;
 $checkbox-label-margin-inline: $kern-metric-space-small $kern-metric-space-default;
 $checkbox-margin-block: 0;
 $checkbox-margin-inline: 0;
-$checkbox-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$checkbox-focus-outline: var(--rz-outline-focus);
 $checkbox-focus-outline-offset: 0;
 $checkbox-checked-background-color: var(--kern-color-form-input-background);
 $checkbox-checked-hover-background-color: var(--kern-color-form-input-background);
@@ -726,14 +724,14 @@ $chip-padding-block:  $kern-metric-space-x-small;
 $chip-padding-inline: $kern-12;
 $chip-gap: $kern-metric-space-small;
 $chip-border-radius: $kern-metric-border-radius-default;
-$chip-font-size: $kern-typography-font-size-static-small;
+$chip-font-size: $kern-typography-font-size-small-static;
 $chip-icon-size: $kern-metric-dimension-default;
 $chip-font-weight: $kern-typography-font-weight-medium;
 $chip-border-width: $kern-metric-border-width-light;
 $chip-selected-outline: none;
 $chip-selected-outline-offset: 0;
 $chip-disabled-opacity: $kern-color-action-state-opacity-disabled;
-$chip-sm-font-size: $kern-typography-font-size-static-small;
+$chip-sm-font-size: $kern-typography-font-size-small-static;
 $chip-sm-icon-size: $kern-metric-dimension-small;
 $chip-sm-padding-block:  $kern-metric-space-2x-small;
 $chip-sm-padding-inline: $kern-metric-space-small;
@@ -755,7 +753,7 @@ $colorpicker-panel-shadow: var(--rz-shadow-3);
 $colorpicker-panel-padding: $kern-metric-space-default;
 $colorpicker-panel-max-width: $kern-384;
 $colorpicker-saturation-height: $kern-192;
-$colorpicker-focus-outline: none;
+$colorpicker-focus-outline: var(--rz-outline-focus);
 $colorpicker-focus-outline-offset: 0;
 $colorpicker-value-border-radius: $kern-metric-border-radius-small;
 $colorpicker-value-size-xs: $kern-metric-space-default;
@@ -816,7 +814,7 @@ $datepicker-trigger-icon-size-xs: $kern-metric-dimension-small;
 $datepicker-trigger-icon-size-sm: $kern-metric-dimension-default;
 $datepicker-trigger-icon-size-md: $kern-metric-dimension-default;
 $datepicker-trigger-icon-size-lg: $kern-metric-dimension-default;
-$datepicker-line-height: $kern-typography-line-height-static-medium;
+$datepicker-line-height: $kern-typography-line-height-medium-static;
 $datepicker-trigger-icon-color: var(--kern-color-action-default);
 $datepicker-trigger-icon-hover-color: var(--kern-color-action-state-indicator-shade-hover);
 $datepicker-popup-width: $kern-384;
@@ -836,10 +834,10 @@ $datepicker-prev-next-button-border-radius: $kern-metric-border-radius-default;
 $datepicker-calendar-padding-block:  $kern-metric-space-small;
 $datepicker-calendar-padding-inline: $kern-metric-space-small;
 $datepicker-calendar-item-padding: $kern-metric-space-small;
-$datepicker-calendar-header-font-size: $kern-typography-font-size-static-small;
+$datepicker-calendar-header-font-size: $kern-typography-font-size-small-static;
 $datepicker-calendar-header-text-transform: none;
 $datepicker-calendar-header-color: var(--rz-text-secondary-color);
-$datepicker-calendar-font-size: $kern-typography-font-size-static-small;
+$datepicker-calendar-font-size: $kern-typography-font-size-small-static;
 $datepicker-calendar-color: var(--kern-color-layout-text-default);
 $datepicker-calendar-hover-color: var(--kern-color-layout-text-default);
 $datepicker-calendar-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
@@ -856,7 +854,7 @@ $datepicker-calendar-today-box-shadow: inset 0 0 0 var(--kern-metric-border-widt
 $datepicker-calendar-today-border-radius: $kern-metric-border-radius-default;
 $datepicker-month-dropdown-width: $kern-160;
 $datepicker-year-dropdown-width:  $kern-96;
-$datepicker-focus-outline: none;
+$datepicker-focus-outline: var(--rz-outline-focus);
 $datepicker-focus-outline-offset: 0;
 
 $timepicker-color: var(--kern-color-layout-text-default);
@@ -886,8 +884,8 @@ $dialog-title-background-color: var(--kern-color-layout-background-default);
 $dialog-title-border: none;
 $dialog-title-padding-block:  $kern-metric-space-large $kern-metric-space-small;
 $dialog-title-padding-inline: $kern-metric-space-large;
-$dialog-title-font-size:   $kern-typography-font-size-adaptive-medium;    // 21/24px
-$dialog-title-line-height: $kern-typography-line-height-adaptive-medium;
+$dialog-title-font-size:   $kern-typography-font-size-medium-adaptive;    // 21/24px
+$dialog-title-line-height: $kern-typography-line-height-medium-adaptive;
 $dialog-title-font-weight: $kern-typography-font-weight-semi-bold;
 $dialog-title-letter-spacing: 0;
 $dialog-title-color: var(--rz-text-title-color);
@@ -896,7 +894,7 @@ $dialog-close-color: var(--kern-color-action-default);
 $dialog-close-hover-color: var(--kern-color-action-state-indicator-shade-hover);
 $dialog-close-vertical-align: middle;
 $dialog-content-padding: $kern-metric-space-small $kern-metric-space-large $kern-metric-space-large;
-$dialog-mask-background-color: var(--kern-neutral-1000);
+$dialog-mask-background-color: var(--kern-color-black);
 $dialog-border-radius: $kern-metric-border-radius-large;
 $dialog-mask-zindex: 1000;
 $dialog-zindex: 1001;
@@ -923,10 +921,10 @@ $dropdown-panel-padding: $kern-metric-space-x-small 0;
 $dropdown-items-margin: 0;
 $dropdown-items-padding: 0;
 $dropdown-item-padding: $kern-metric-space-small $kern-metric-space-default;
-$dropdown-item-font-size: $kern-typography-font-size-static-medium;
+$dropdown-item-font-size: $kern-typography-font-size-medium-static;
 $dropdown-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
 $dropdown-item-hover-color: var(--kern-color-layout-text-default);
-$dropdown-item-selected-background-color: var(--kern-color-action-state-indicator-tint-selected-opacity);
+$dropdown-item-selected-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
 $dropdown-item-selected-color: var(--kern-color-layout-text-default);
 $dropdown-item-selected-shadow: none;
 $dropdown-item-selected-hover-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
@@ -955,8 +953,8 @@ $editor-border: var(--kern-metric-border-width-light) solid var(--kern-color-lay
 $editor-border-radius: $kern-metric-border-radius-default;
 $editor-toolbar-background-color: var(--kern-color-layout-background-hued);
 $editor-content-background-color: var(--kern-color-layout-background-default);
-$editor-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
-$editor-focus-outline-offset: calc(-1 * var(--kern-metric-border-width-bold));
+$editor-focus-outline: var(--rz-outline-focus);
+$editor-focus-outline-offset: 0;
 
 // ===========================================================================
 // Fieldset
@@ -966,7 +964,7 @@ $fieldset-border: var(--rz-border-normal);
 $fieldset-border-radius: $kern-metric-border-radius-default;
 $fieldset-padding: $kern-metric-space-large;
 $fieldset-legend-color: var(--kern-color-layout-text-default);
-$fieldset-legend-font-size: $kern-typography-font-size-static-medium;
+$fieldset-legend-font-size: $kern-typography-font-size-medium-static;
 $fieldset-legend-margin-block: 0;
 $fieldset-legend-margin-inline: $kern-metric-space-default 0;
 $fieldset-legend-padding-block: 0;
@@ -979,8 +977,8 @@ $fieldset-toggle-background-color: transparent;
 $fieldset-toggle-color: var(--kern-color-action-default);
 $fieldset-toggle-font-size: $kern-metric-dimension-default;
 $fieldset-toggle-border: none;
-$fieldset-toggle-focus-outline: none;
-$fieldset-toggle-focus-outline-offset: 0;
+$fieldset-toggle-focus-outline: var(--rz-outline-focus);
+$fieldset-toggle-focus-outline-offset: var(--rz-outline-offset);
 
 // ===========================================================================
 // Fab
@@ -1032,8 +1030,8 @@ $sidebar-toggle-background-color: transparent;
 $sidebar-toggle-hover-color: var(--kern-color-action-default);
 $sidebar-toggle-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
 $sidebar-toggle-hover-border-radius: $kern-metric-border-radius-default;
-$sidebar-toggle-focus-outline: none;
-$sidebar-toggle-focus-outline-offset: 0;
+$sidebar-toggle-focus-outline: var(--rz-outline-focus);
+$sidebar-toggle-focus-outline-offset: var(--rz-outline-offset);
 
 // ===========================================================================
 // FormField  (mixins/kol-form-field.scss)
@@ -1097,7 +1095,7 @@ $form-field-helper-padding: $kern-metric-baseline-body-default-padding-top 0 $ke
 // ===========================================================================
 
 $form-error-color: var(--kern-color-feedback-danger);
-$form-error-font-size: $kern-typography-font-size-static-medium;
+$form-error-font-size: $kern-typography-font-size-medium-static;
 $validator-background-color: var(--kern-color-feedback-danger-background);
 $validator-color: var(--kern-color-feedback-danger);
 $validator-shadow: none;
@@ -1112,11 +1110,11 @@ $validator-transform: translateY(var(--kern-metric-space-small));
 
 $gauge-scale-color: var(--kern-color-layout-border);
 $gauge-scale-label-color: var(--rz-text-secondary-color);
-$gauge-scale-font-size: $kern-typography-font-size-static-small;
+$gauge-scale-font-size: $kern-typography-font-size-small-static;
 $gauge-pointer-color: var(--kern-color-layout-text-default);
-$gauge-arc-scale-color: var(--kern-color-feedback-loader-background);
+$gauge-arc-scale-color: var(--kern-color-feedback-default-background);
 $gauge-arc-scale-label-color: var(--rz-text-secondary-color);
-$gauge-arc-value-color: var(--kern-color-feedback-loader);
+$gauge-arc-value-color: var(--kern-color-feedback-default);
 
 // ===========================================================================
 // Map / Gravatar
@@ -1144,23 +1142,23 @@ $grid-right-cell-border: none;
 $grid-bottom-cell-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
 $grid-cell-padding: calc(var(--kern-metric-baseline-body-default-padding-top) + var(--kern-metric-space-small)) var(--kern-metric-space-x-small) calc(var(--kern-metric-baseline-body-default-padding-bottom) + var(--kern-metric-space-small)) var(--kern-metric-space-x-small);
 $grid-cell-color: var(--kern-color-layout-text-default);
-$grid-cell-font-size: $kern-typography-font-size-static-medium;
+$grid-cell-font-size: $kern-typography-font-size-medium-static;
 $grid-cell-line-height: 1.25;
-$grid-cell-focus-background-color: var(--kern-color-action-state-indicator-tint-selected-opacity);
+$grid-cell-focus-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
 $grid-cell-focus-color: var(--kern-color-layout-text-default);
-$grid-cell-focus-outline: none;
+$grid-cell-focus-outline: var(--rz-outline-focus);
 $grid-cell-focus-outline-offset: 0;
 $grid-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
 $grid-hover-color: var(--kern-color-layout-text-default);
-$grid-focus-outline: none;
-$grid-focus-outline-offset: 0;
+$grid-focus-outline: var(--rz-outline-focus);
+$grid-focus-outline-offset: var(--rz-outline-offset);
 $grid-selected-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
 $grid-selected-color: var(--kern-color-layout-text-default);
 $grid-toolbar-background-color: var(--kern-color-layout-background-default);
 $grid-header-cell-border: none;
 $grid-header-cell-border-bottom: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
 $grid-header-background-color: var(--kern-color-layout-background-default);
-$grid-header-font-size:   $kern-typography-font-size-static-medium;    // 18px
+$grid-header-font-size:   $kern-typography-font-size-medium-static;    // 18px
 $grid-header-line-height: 1.25;
 $grid-header-font-weight: $kern-typography-font-weight-semi-bold;      // 600
 $grid-header-text-transform: none;
@@ -1175,7 +1173,7 @@ $grid-filter-background-color: var(--kern-color-layout-background-default);
 $grid-filter-padding: $kern-metric-space-default;
 $grid-filter-margin: 0;
 $grid-filter-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
-$grid-filter-font-size: $kern-typography-font-size-static-medium;
+$grid-filter-font-size: $kern-typography-font-size-medium-static;
 $grid-filter-icon-width:  $kern-metric-dimension-default;
 $grid-filter-icon-height: $kern-metric-dimension-default;
 $grid-filter-icon-margin-inline: 0 $kern-metric-space-x-small;
@@ -1217,7 +1215,7 @@ $grid-detail-template-border: none;
 $grid-detail-template-border-radius: 0;
 $grid-detail-template-padding: $kern-metric-space-default;
 $grid-detail-template-background-color: var(--kern-color-layout-background-hued);
-$grid-loading-indicator-color: var(--kern-color-feedback-loader);
+$grid-loading-indicator-color: var(--kern-color-feedback-default);
 $grid-loading-indicator-background-color: var(--kern-color-layout-background-default);
 $grid-loading-indicator-background-opacity: 0.72;
 $grid-frozen-cell-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
@@ -1259,7 +1257,7 @@ $input-size-xs: $kern-metric-dimension-large;    // 32px
 $input-size-sm: $kern-40;                        // 40px
 $input-size-md: $kern-metric-dimension-x-large;  // 48px
 $input-size-lg: $kern-metric-dimension-2x-large; // 56px
-$input-font-size: $kern-typography-font-size-static-medium;
+$input-font-size: $kern-typography-font-size-medium-static;
 $input-height: $kern-metric-dimension-x-large;
 $input-line-height: calc(var(--rz-input-height) - 2 * var(--rz-input-padding-block) - 2 * var(--rz-border-width));
 $input-padding-block:  $kern-11-pad;
@@ -1272,10 +1270,10 @@ $input-padding-inline-xs: $kern-metric-space-small;
 $input-padding-inline-sm: $kern-12;
 $input-padding-inline-md: $kern-metric-space-default;
 $input-padding-inline-lg: $kern-metric-space-default;
-$input-font-size-xs: $kern-typography-font-size-static-small;
-$input-font-size-sm: $kern-typography-font-size-static-medium;
-$input-font-size-md: $kern-typography-font-size-static-medium;
-$input-font-size-lg: $kern-typography-font-size-static-medium;
+$input-font-size-xs: $kern-typography-font-size-small-static;
+$input-font-size-sm: $kern-typography-font-size-medium-static;
+$input-font-size-md: $kern-typography-font-size-medium-static;
+$input-font-size-lg: $kern-typography-font-size-medium-static;
 $input-value-color: var(--kern-color-layout-text-default);
 $input-placeholder-color: var(--kern-color-layout-text-muted);
 $input-background-color: var(--kern-color-form-input-background);
@@ -1291,7 +1289,7 @@ $input-focus-shadow: none;
 $input-focus-background-color: var(--kern-color-form-input-background);
 $input-focus-border: none;
 $input-focus-border-block-end: var(--rz-input-border-block-end);
-$input-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$input-focus-outline: var(--rz-outline-focus);
 $input-focus-outline-offset: 0;
 $input-disabled-border: none;
 $input-disabled-border-block-end: var(--rz-input-border-block-end);
@@ -1357,8 +1355,8 @@ $menu-item-border-radius: $kern-metric-border-radius-default;
 $menu-item-color: var(--kern-color-action-default);
 $menu-item-hover-color: var(--kern-color-action-default);
 $menu-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
-$menu-item-focus-outline: none;
-$menu-item-focus-outline-offset: 0;
+$menu-item-focus-outline: var(--rz-outline-focus);
+$menu-item-focus-outline-offset: var(--rz-outline-offset);
 $menu-item-selected-color: var(--kern-color-action-default);
 $menu-item-selected-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
 $menu-item-icon-margin-inline: 0 $kern-metric-space-small;
@@ -1409,7 +1407,7 @@ $notification-info-icon-color: var(--kern-color-feedback-info);
 // Numeric  (components/input-number.scss)
 // ===========================================================================
 
-$numeric-line-height: $kern-typography-line-height-static-medium;
+$numeric-line-height: $kern-typography-line-height-medium-static;
 $numeric-input-padding-block-xs: $kern-3;
 $numeric-input-padding-block-sm: $kern-7;
 $numeric-input-padding-block-md: $kern-11-pad;
@@ -1474,7 +1472,7 @@ $pager-next-button-hover-background-color: var(--kern-color-action-state-indicat
 $pager-next-button-hover-color: var(--kern-color-action-default);
 $pager-dropdown-width: $kern-128;
 $pager-summary-padding: $kern-metric-space-default;
-$pager-summary-font-size: $kern-typography-font-size-static-small;
+$pager-summary-font-size: $kern-typography-font-size-small-static;
 $pager-summary-color: var(--kern-color-layout-text-muted);
 
 // ===========================================================================
@@ -1483,11 +1481,11 @@ $pager-summary-color: var(--kern-color-layout-text-muted);
 
 $panel-menu-padding-block:  $kern-metric-space-small;
 $panel-menu-padding-inline: $kern-metric-space-small;
-$panel-menu-font-size: $kern-typography-font-size-static-medium;
+$panel-menu-font-size: $kern-typography-font-size-medium-static;
 $panel-menu-font-weight: $kern-typography-font-weight-medium;
-$panel-menu-focus-outline: none;
-$panel-menu-focus-outline-offset: 0;
-$panel-menu-item-line-height: $kern-typography-line-height-static-medium;
+$panel-menu-focus-outline: var(--rz-outline-focus);
+$panel-menu-focus-outline-offset: var(--rz-outline-offset);
+$panel-menu-item-line-height: $kern-typography-line-height-medium-static;
 $panel-menu-item-padding-block:  $kern-12;
 $panel-menu-item-padding-inline: $kern-metric-space-small;
 $panel-menu-item-margin-block:  0;
@@ -1510,7 +1508,7 @@ $panel-menu-item-2nd-level-margin-block:  0;
 $panel-menu-item-2nd-level-margin-inline: 0;
 $panel-menu-item-2nd-level-border-radius: $kern-metric-border-radius-default;
 $panel-menu-item-2nd-level-offset: $kern-metric-space-x-large;
-$panel-menu-item-2nd-level-font-size: $kern-typography-font-size-static-medium;
+$panel-menu-item-2nd-level-font-size: $kern-typography-font-size-medium-static;
 $panel-menu-item-2nd-level-font-weight: $kern-typography-font-weight-regular;
 $panel-menu-item-2nd-level-color: var(--kern-color-action-default);
 $panel-menu-item-2nd-level-background-color: var(--kern-color-layout-background-hued);
@@ -1541,7 +1539,7 @@ $panel-menu-toggle-icon-opacity: 1;
 
 $panel-background-color: var(--kern-color-layout-background-default);
 $panel-padding: $kern-metric-space-default;
-$panel-title-line-height: $kern-typography-line-height-adaptive-medium;
+$panel-title-line-height: $kern-typography-line-height-medium-adaptive;
 $panel-title-font-weight: $kern-typography-font-weight-semi-bold;
 $panel-content-margin: 0;
 $panel-toggle-icon-width:  $kern-metric-dimension-default;
@@ -1549,8 +1547,8 @@ $panel-toggle-icon-height: $kern-metric-dimension-default;
 $panel-toggle-icon-font-size: $kern-metric-dimension-default;
 $panel-toggle-icon-border-radius: $kern-metric-border-radius-default;
 $panel-toggle-icon-background-color: transparent;
-$panel-toggle-icon-focus-outline: none;
-$panel-toggle-icon-focus-outline-offset: 0;
+$panel-toggle-icon-focus-outline: var(--rz-outline-focus);
+$panel-toggle-icon-focus-outline-offset: var(--rz-outline-offset);
 $panel-hover-color: var(--kern-color-action-default);
 $panel-border-radius: $kern-metric-border-radius-default;
 $panel-shadow: none;
@@ -1567,8 +1565,8 @@ $profile-menu-padding-inline: $kern-metric-space-default;
 $profile-menu-border-radius: $kern-metric-border-radius-default;
 $profile-menu-toggle-button-color: var(--kern-color-action-default);
 $profile-menu-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
-$profile-menu-item-focus-outline: none;
-$profile-menu-item-focus-outline-offset: 0;
+$profile-menu-item-focus-outline: var(--rz-outline-focus);
+$profile-menu-item-focus-outline-offset: var(--rz-outline-offset);
 $profile-menu-item-icon-width:  $kern-metric-dimension-default;
 $profile-menu-item-icon-height: $kern-metric-dimension-default;
 $profile-menu-item-icon-font-size: $kern-metric-dimension-default;
@@ -1580,20 +1578,20 @@ $profile-menu-item-icon-margin-inline: 0 $kern-metric-space-small;
 // ===========================================================================
 
 $progressbar-value: 100%;
-$progressbar-background-color: var(--kern-color-feedback-loader-background);
+$progressbar-background-color: var(--kern-color-feedback-default-background);
 $progressbar-color: var(--kern-color-layout-text-default);
-$progressbar-font-size: $kern-typography-font-size-static-small;
+$progressbar-font-size: $kern-typography-font-size-small-static;
 $progressbar-height: $kern-metric-space-default;
 $progressbar-border-radius: $kern-metric-border-radius-none;
-$progressbar-value-background-color: var(--kern-color-feedback-loader);
+$progressbar-value-background-color: var(--kern-color-feedback-default);
 $progressbar-value-transition: var(--rz-transition-all);
 $progressbar-circular-stroke-width: 8px;
 $progressbar-circular-value-stroke-width: 8px;
 $progressbar-circular-value-endpoint: butt;
 
 $progressbar-base-styles: (
-  base:  (background-color: var(--kern-color-feedback-loader),            color: var(--kern-color-layout-text-inverse)),
-  light: (background-color: var(--kern-color-feedback-loader-background), color: var(--kern-color-layout-text-default)),
+  base:  (background-color: var(--kern-color-feedback-default),            color: var(--kern-color-layout-text-inverse)),
+  light: (background-color: var(--kern-color-feedback-default-background), color: var(--kern-color-layout-text-default)),
   dark:  (background-color: var(--kern-color-layout-text-default),        color: var(--kern-color-layout-text-inverse))
 );
 
@@ -1617,7 +1615,7 @@ $radio-label-margin-block: 0;
 $radio-label-margin-inline: $kern-metric-space-small $kern-metric-space-default;
 $radio-margin-block: 0;
 $radio-margin-inline: 0;
-$radio-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$radio-focus-outline: var(--rz-outline-focus);
 $radio-focus-outline-offset: 0;
 $radio-active-background-color: transparent;
 $radio-active-shadow: none;
@@ -1654,7 +1652,7 @@ $rz-sankey-node-stroke-width: 0;
 $rz-sankey-link-stroke-width: 0;
 $rz-sankey-link-opacity: 0.5;
 $rz-sankey-link-hover-opacity: 0.7;
-$rz-sankey-label-font-size: $kern-typography-font-size-static-small;
+$rz-sankey-label-font-size: $kern-typography-font-size-small-static;
 $rz-sankey-label-color: var(--kern-color-layout-text-default);
 $rz-sankey-label-stroke: var(--kern-color-layout-background-default);
 $rz-sankey-label-stroke-width: $kern-metric-border-width-default;
@@ -1667,14 +1665,14 @@ $scheduler-toolbar-color: var(--kern-color-action-on-default);
 $scheduler-toolbar-button-background-color: var(--kern-color-action-default);
 $scheduler-border: var(--rz-border-normal);
 $scheduler-border-color: var(--kern-color-layout-border);
-$scheduler-minor-border-color: var(--kern-color-layout-border-muted);
+$scheduler-minor-border-color: var(--kern-color-decorative-border-default);
 $scheduler-border-radius: $kern-metric-border-radius-default;
 $scheduler-shadow: none;
 $scheduler-background-color: var(--kern-color-layout-background-default);
 $scheduler-color: var(--kern-color-layout-text-default);
 $scheduler-toolbar-padding: $kern-metric-space-small;
 $scheduler-toolbar-background-color: var(--kern-color-layout-background-default);
-$scheduler-toolbar-title-font-size:   $kern-typography-font-size-adaptive-medium;
+$scheduler-toolbar-title-font-size:   $kern-typography-font-size-medium-adaptive;
 $scheduler-toolbar-title-font-weight: $kern-typography-font-weight-semi-bold;
 $scheduler-toolbar-title-color: var(--rz-text-title-color);
 $scheduler-prev-next-button-background-color: var(--kern-color-action-default);
@@ -1692,7 +1690,7 @@ $scheduler-next-button-border-end-start-radius: 0;
 $scheduler-next-button-border-end-end-radius: $kern-metric-border-radius-default;
 $scheduler-today-button-margin-inline-start: $kern-metric-space-small;
 $scheduler-today-button-padding: $kern-metric-space-small $kern-metric-space-default;
-$scheduler-today-button-font-size: $kern-typography-font-size-static-medium;
+$scheduler-today-button-font-size: $kern-typography-font-size-medium-static;
 $scheduler-today-button-text-transform: none;
 $scheduler-view-button-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default);
 $scheduler-view-button-color: var(--kern-color-action-default);
@@ -1701,11 +1699,11 @@ $scheduler-view-selected-color: var(--kern-color-action-on-default);
 $scheduler-view-selected-background-color: var(--kern-color-action-default);
 $scheduler-view-selected-border-color: var(--kern-color-action-default);
 $scheduler-header-background-color: var(--kern-color-layout-background-default);
-$scheduler-header-font-size: $kern-typography-font-size-static-small;
+$scheduler-header-font-size: $kern-typography-font-size-small-static;
 $scheduler-header-font-size-small: $kern-font-size-14;
-$scheduler-header-agenda-font-size: $kern-typography-font-size-adaptive-medium;
+$scheduler-header-agenda-font-size: $kern-typography-font-size-medium-adaptive;
 $scheduler-header-agenda-font-weight: $kern-typography-font-weight-semi-bold;
-$scheduler-header-agenda-font-size-small: $kern-typography-font-size-static-medium;
+$scheduler-header-agenda-font-size-small: $kern-typography-font-size-medium-static;
 $scheduler-header-text-transform: none;
 $scheduler-header-agenda-text-transform: none;
 $scheduler-header-color: var(--kern-color-layout-text-default);
@@ -1713,14 +1711,14 @@ $scheduler-header-border: var(--rz-border-normal);
 $scheduler-header-padding: $kern-metric-space-small 0;
 $scheduler-event-color: var(--kern-color-action-on-default);
 $scheduler-event-background-color: var(--kern-color-action-default);
-$scheduler-event-font-size: $kern-typography-font-size-static-small;
-$scheduler-event-line-height: $kern-typography-line-height-static-medium;
+$scheduler-event-font-size: $kern-typography-font-size-small-static;
+$scheduler-event-line-height: $kern-typography-line-height-medium-static;
 $scheduler-event-padding-block:  0 $kern-1;
 $scheduler-event-padding-inline: $kern-1;
 $scheduler-event-content-padding: $kern-metric-space-2x-small $kern-metric-space-x-small;
 $scheduler-event-list-button-color: var(--kern-color-action-default);
-$scheduler-event-list-button-font-size: $kern-typography-font-size-static-small;
-$scheduler-slot-title-font-size: $kern-typography-font-size-static-small;
+$scheduler-event-list-button-font-size: $kern-typography-font-size-small-static;
+$scheduler-slot-title-font-size: $kern-typography-font-size-small-static;
 $scheduler-slot-title-font-size-small: $kern-font-size-12;
 $scheduler-slot-title-padding: 0 $kern-metric-space-x-small;
 $scheduler-day-number-padding: 0 $kern-metric-space-small;
@@ -1735,8 +1733,8 @@ $scheduler-year-slot-title-width: 100%;
 $scheduler-year-slot-title-border-radius: $kern-metric-border-radius-default;
 $scheduler-planner-slot-width:  $kern-metric-dimension-x-large;
 $scheduler-planner-slot-height: $kern-96;
-$scheduler-focus-outline: none;
-$scheduler-focus-outline-offset: 0;
+$scheduler-focus-outline: var(--rz-outline-focus);
+$scheduler-focus-outline-offset: var(--rz-outline-offset);
 $scheduler-highlight-background-color: var(--kern-color-feedback-warning-background);
 
 // ===========================================================================
@@ -1755,7 +1753,7 @@ $scrollbar-size: $kern-12;
 $rz-security-code-input-min-width:  var(--rz-input-height);
 $rz-security-code-input-min-height: var(--rz-input-height);
 $rz-security-code-input-padding: $kern-metric-space-2x-small;
-$rz-security-code-input-font-size: $kern-typography-font-size-adaptive-medium;
+$rz-security-code-input-font-size: $kern-typography-font-size-medium-adaptive;
 $rz-security-code-input-font-weight: $kern-typography-font-weight-semi-bold;
 $rz-security-code-input-line-height: 1;
 
@@ -1777,16 +1775,16 @@ $selectbar-selected-background-color: var(--kern-color-action-default);
 $selectbar-selected-color: var(--kern-color-action-on-default);
 $selectbar-selected-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default);
 $selectbar-border-radius: $kern-metric-border-radius-default;
-$selectbar-focus-outline: none;
-$selectbar-focus-outline-offset: 0;
-$selectbar-button-focus-outline: none;
-$selectbar-button-focus-outline-offset: 0;
+$selectbar-focus-outline: var(--rz-outline-focus);
+$selectbar-focus-outline-offset: var(--rz-outline-offset);
+$selectbar-button-focus-outline: var(--rz-outline-focus);
+$selectbar-button-focus-outline-offset: var(--rz-outline-offset);
 
 // ===========================================================================
 // Skeleton
 // ===========================================================================
 
-$skeleton-background-color: var(--kern-color-feedback-loader-background);
+$skeleton-background-color: var(--kern-color-feedback-default-background);
 $skeleton-animation-color: var(--kern-color-layout-background-hued);
 $skeleton-border-radius: $kern-metric-border-radius-small;
 $skeleton-animation-duration: 1.5s;
@@ -1814,9 +1812,9 @@ $slider-handle-transition: background-color var(--rz-transition), color var(--rz
 $slider-handle-hover-border: none;
 $slider-handle-hover-background-color: var(--kern-color-action-state-indicator-shade-hover);
 $slider-handle-hover-shadow: none;
-$slider-handle-focus-outline: none;
+$slider-handle-focus-outline: var(--rz-outline-focus);
 $slider-handle-focus-outline-offset: 0;
-$slider-disabled-background-color: var(--kern-color-feedback-loader-background);
+$slider-disabled-background-color: var(--kern-color-feedback-default-background);
 $slider-disabled-border: none;
 $slider-disabled-range-background-color: var(--kern-color-layout-border);
 $slider-disabled-range-border: none;
@@ -1846,7 +1844,7 @@ $splitter-bar-hover-opacity: 1;
 // Spreadsheet
 // ===========================================================================
 
-$spreadsheet-tab-font-size: $kern-typography-font-size-static-small;
+$spreadsheet-tab-font-size: $kern-typography-font-size-small-static;
 $spreadsheet-cell-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
 $spreadsheet-header-background-color: var(--kern-color-layout-background-hued);
 $spreadsheet-header-active-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
@@ -1862,13 +1860,13 @@ $steps-number-padding-block:  $kern-metric-space-x-small;
 $steps-number-padding-inline: 0;
 $steps-number-width:  $kern-metric-dimension-large;
 $steps-number-height: $kern-metric-dimension-large;
-$steps-number-line-height: $kern-typography-line-height-static-medium;
+$steps-number-line-height: $kern-typography-line-height-medium-static;
 $steps-number-color: var(--kern-color-action-default);
 $steps-number-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
 $steps-number-selected-color: var(--kern-color-action-on-default);
 $steps-number-selected-background: var(--kern-color-action-default);
-$steps-number-focus-outline: none;
-$steps-number-focus-outline-offset: 0;
+$steps-number-focus-outline: var(--rz-outline-focus);
+$steps-number-focus-outline-offset: var(--rz-outline-offset);
 $steps-title-selected-color: var(--kern-color-action-default);
 $steps-title-margin-block: 0;
 $steps-title-margin-inline: $kern-metric-space-small $kern-metric-space-default;
@@ -1881,12 +1879,12 @@ $steps-button-color: var(--kern-color-action-default);
 // 3.5em × 1.5em track, loader colors, white thumb, 4px hover outline.
 // ===========================================================================
 
-$switch-background-color: var(--kern-color-feedback-loader-background);
-$switch-checked-background-color: var(--kern-color-feedback-loader);
+$switch-background-color: var(--kern-color-feedback-default-background);
+$switch-checked-background-color: var(--kern-color-feedback-default);
 $switch-box-shadow: none;
 $switch-circle-background-color: var(--kern-color-layout-background-default);
 $switch-checked-circle-background-color: var(--kern-color-layout-background-default);
-$switch-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$switch-focus-outline: var(--rz-outline-focus);
 $switch-focus-outline-offset: 0;
 $switch-transition: background-color var(--rz-transition), color var(--rz-transition), border-color var(--rz-transition), box-shadow var(--rz-transition);
 $switch-thumb-transition: transform var(--rz-transition);
@@ -1901,8 +1899,8 @@ $tabs-shadow: none;
 $tabs-border: none;
 $tabs-border-radius: $kern-metric-border-radius-none;
 $tabs-background-color: transparent;
-$tabs-tab-font-size:   $kern-typography-font-size-static-medium;
-$tabs-tab-line-height: $kern-typography-line-height-static-medium;
+$tabs-tab-font-size:   $kern-typography-font-size-medium-static;
+$tabs-tab-line-height: $kern-typography-line-height-medium-static;
 $tabs-tab-font-weight: $kern-typography-font-weight-medium;
 $tabs-tab-text-transform: none;
 $tabs-tab-letter-spacing: 0;
@@ -1917,8 +1915,8 @@ $tabs-tab-hover-background-color: var(--kern-color-action-state-indicator-tint-h
 $tabs-tab-hover-color: var(--kern-color-action-default);
 $tabs-tab-focus-background-color: transparent;
 $tabs-tab-focus-color: var(--kern-color-action-default);
-$tabs-tab-focus-outline: none;
-$tabs-tab-focus-outline-offset: 0;
+$tabs-tab-focus-outline: var(--rz-outline-focus);
+$tabs-tab-focus-outline-offset: var(--rz-outline-offset);
 $tabs-icon-font-size: $kern-metric-dimension-default;
 $tabs-icon-margin-inline: 0 $kern-metric-space-small;
 $tabs-transition: var(--rz-transition-all);
@@ -1955,14 +1953,14 @@ $rz-timeline-line-border-radius: $kern-metric-border-radius-none;
 // TimeSpanPicker
 // ===========================================================================
 
-$timespanpicker-line-height: $kern-typography-line-height-static-medium;
+$timespanpicker-line-height: $kern-typography-line-height-medium-static;
 $timespanpicker-trigger-icon-size-xs: $kern-metric-dimension-small;
 $timespanpicker-trigger-icon-size-sm: $kern-metric-dimension-default;
 $timespanpicker-trigger-icon-size-md: $kern-metric-dimension-default;
 $timespanpicker-trigger-icon-size-lg: $kern-metric-dimension-default;
 $timespanpicker-trigger-icon-color: var(--kern-color-action-default);
 $timespanpicker-trigger-icon-hover-color: var(--kern-color-action-state-indicator-shade-hover);
-$timespanpicker-focus-outline: none;
+$timespanpicker-focus-outline: var(--rz-outline-focus);
 $timespanpicker-focus-outline-offset: 0;
 $timespanpicker-popup-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
 $timespanpicker-popup-shadow: var(--rz-shadow-3);
@@ -1981,7 +1979,7 @@ $timespanpicker-unit-label-color: var(--kern-color-layout-text-muted);
 
 $rz-toc-link-padding-block:  $kern-metric-space-small;
 $rz-toc-link-padding-inline: $kern-12;
-$rz-toc-link-font-size: $kern-typography-font-size-static-medium;
+$rz-toc-link-font-size: $kern-typography-font-size-medium-static;
 $rz-toc-link-font-weight: $kern-typography-font-weight-regular;
 $rz-toc-link-border: none;
 $rz-toc-link-border-radius: $kern-metric-border-radius-default;
@@ -2002,7 +2000,7 @@ $rz-toc-horizontal-border-radius: $kern-metric-border-radius-none;
 $rz-toc-horizontal-background-color: transparent;
 $rz-toc-horizontal-link-padding-block:  $kern-12;
 $rz-toc-horizontal-link-padding-inline: $kern-metric-space-default;
-$rz-toc-horizontal-link-font-size: $kern-typography-font-size-static-medium;
+$rz-toc-horizontal-link-font-size: $kern-typography-font-size-medium-static;
 $rz-toc-horizontal-link-selected-indicator-inset-block: auto 0;
 $rz-toc-horizontal-link-selected-indicator-inset-inline: 0;
 $rz-toc-horizontal-link-selected-border: none;
@@ -2019,7 +2017,7 @@ $tooltip-color: var(--kern-color-layout-text-default);
 $tooltip-shadow: var(--rz-shadow-3);
 $tooltip-padding: $kern-12;
 $tooltip-border-radius: $kern-metric-border-radius-large;
-$tooltip-font-size: $kern-typography-font-size-static-medium;
+$tooltip-font-size: $kern-typography-font-size-medium-static;
 
 // ===========================================================================
 // Tree  (components/tree-item.scss)
@@ -2035,8 +2033,8 @@ $tree-node-margin-block:  $kern-metric-space-x-small;
 $tree-node-margin-inline: 0;
 $tree-node-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
 $tree-node-hover-color: var(--kern-color-action-default);
-$tree-node-focus-outline: none;
-$tree-node-focus-outline-offset: 0;
+$tree-node-focus-outline: var(--rz-outline-focus);
+$tree-node-focus-outline-offset: var(--rz-outline-offset);
 $tree-node-toggle-width: $kern-metric-dimension-default;
 $tree-node-toggle-color: var(--kern-color-action-default);
 $tree-node-toggle-hover-color: var(--kern-color-action-state-indicator-shade-hover);

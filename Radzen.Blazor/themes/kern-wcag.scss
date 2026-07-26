@@ -2,33 +2,25 @@
 //
 // Loaded *in addition to* `kern-base.css` when `ThemeService.Wcag` is on.
 //
-// The KERN palette is already built for WCAG 2.1 AA text contrast, so the only
-// adjustments needed are the non-text values that KERN leaves below the 3:1
-// boundary requirement (1.4.11) and the disabled-text color, which the standard
-// exempts but Radzen's WCAG mode raises anyway.
+// KERN 2.7.1 already clears WCAG 2.1 AA on its own: text is 15.9:1, the action
+// colour 8.6:1, the feedback colours 5.5–7.0:1, and `layout-border` was darkened
+// to #6e7597 (4.9:1), well past the 3:1 that 1.4.11 asks of UI boundaries.
 //
-// Because `_kern-map.scss` routes every derived value through a `--kern-*`
-// custom property, overriding the token here propagates to every border, rule,
-// axis and separator in the theme.
+// What remains below the bar is the decorative hairline (used for card and
+// panel edges) and disabled text — the latter is exempt from 1.4.3, but Radzen's
+// WCAG mode lifts it anyway.
 
 :root,
 .rz-kern {
-  /* Layout border — #a6abc4 is 2.3:1 on white; the KERN focus-ring tone is 5.0:1
-     and keeps the same blue-grey hue. Propagates to card, grid, panel, header,
-     footer, sidebar, menu, listbox, overlay, editor, scheduler, spreadsheet,
-     chart axis, rating and carousel borders. */
-  --kern-color-layout-border: #6e7596;
-  --layout-border: #6e7596;
+  /* Decorative hairline — #c0c3d5 is 1.9:1 on white; the layout border is 4.9:1
+     and keeps the same neutral hue. Affects card, tile and panel edges. */
+  --kern-color-decorative-border-default: #6e7597;
 
-  /* Disabled text and disabled borders. */
-  --rz-base-500: #605f6b;
-  --rz-text-disabled-color: #605f6b;
-  --rz-border-disabled: var(--kern-metric-border-width-light) solid #8a8993;
+  /* Disabled text — neutral-500 #6e7597 is 4.9:1, neutral-650 #51577a is 7.6:1. */
+  --rz-base-500: #51577a;
+  --rz-text-disabled-color: #51577a;
+  --rz-border-disabled: var(--kern-metric-border-width-light) solid #6e7597;
 
   /* Scrollbar thumb — a UI component boundary. */
-  --rz-scrollbar-color: #6e7596;
-
-  /* Progress track against the white page. */
-  --rz-progressbar-background-color: #c0bfc5;
-  --rz-skeleton-background-color: #c0bfc5;
+  --rz-scrollbar-color: #6e7597;
 }
