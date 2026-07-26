@@ -1,0 +1,995 @@
+// KERN UX-Standard design tokens.
+//
+// 1:1 SCSS transcription of the KERN Developer Kit token layer
+// (`src/kern/tokens/**` of https://gitlab.opencode.de/kern-ux/kern-developer-kit).
+// Every `--kern-*` custom property of the original is available here twice:
+//
+//   * as a Sass variable `$kern-…` so Radzen theme variables can be assigned from it
+//     at compile time (Radzen resolves most `$…` values before emitting CSS), and
+//   * as the original `--kern-…` custom property, emitted by `kern-token-properties()`
+//     so application code and `_kern-components.scss` can reference the KERN names.
+//
+// Sizes are the `to-rem(px)` values of the original at a 16px root font size.
+
+/* stylelint-disable */
+
+// ---------------------------------------------------------------------------
+// Primitives — sizes  (tokens/primitives/_sizes.scss)
+// ---------------------------------------------------------------------------
+
+$kern-0:    0;
+$kern-1:    0.0625rem;
+$kern-2:    0.125rem;
+$kern-3:    0.1875rem;
+$kern-4:    0.25rem;
+$kern-5:    0.3125rem;
+$kern-6:    0.375rem;
+$kern-7:    0.4375rem;
+$kern-8:    0.5rem;
+$kern-9:    0.5625rem;
+$kern-10:   0.625rem;
+$kern-12:   0.75rem;
+$kern-14:   0.875rem;
+$kern-16:   1rem;
+$kern-18:   1.125rem;
+$kern-20:   1.25rem;
+$kern-24:   1.5rem;
+$kern-32:   2rem;
+$kern-40:   2.5rem;
+$kern-48:   3rem;
+$kern-56:   3.5rem;
+$kern-64:   4rem;
+$kern-80:   5rem;
+$kern-96:   6rem;
+$kern-128:  8rem;
+$kern-160:  10rem;
+$kern-192:  12rem;
+$kern-224:  14rem;
+$kern-240:  15rem;
+$kern-256:  16rem;
+$kern-352:  22rem;
+$kern-360:  22.5rem;
+$kern-384:  24rem;
+$kern-480:  30rem;
+$kern-512:  32rem;
+$kern-736:  46rem;
+$kern-768:  48rem;
+$kern-992:  62rem;
+$kern-1024: 64rem;
+$kern-1140: 71.25rem;
+$kern-1248: 78rem;
+$kern-1280: 80rem;
+$kern-1504: 94rem;
+$kern-1536: 96rem;
+$kern-1600: 100rem;
+$kern-1920: 120rem;
+
+// ---------------------------------------------------------------------------
+// Primitives — font  (tokens/primitives/_font.scss)
+// ---------------------------------------------------------------------------
+
+$kern-typography-font-family-fira-sans: 'Fira Sans';
+$kern-typography-font-family-fira-mono: 'Fira Mono';
+
+$kern-font-size-12: 0.75rem;
+$kern-font-size-14: 0.875rem;
+$kern-font-size-16: 1rem;
+$kern-font-size-18: 1.125rem;
+$kern-font-size-20: 1.25rem;
+$kern-font-size-21: 1.3125rem;
+$kern-font-size-24: 1.5rem;
+$kern-font-size-26: 1.625rem;
+$kern-font-size-32: 2rem;
+$kern-font-size-40: 2.5rem;
+$kern-font-size-48: 3rem;
+$kern-font-size-56: 3.5rem;
+$kern-font-size-72: 4.5rem;
+$kern-font-size-80: 5rem;
+
+// ---------------------------------------------------------------------------
+// Primitives — colors  (tokens/primitives/_colors.scss)
+// ---------------------------------------------------------------------------
+
+// -- darkblue --
+$kern-darkblue-025: #f6f6fa;
+$kern-darkblue-050: #ebeff9;
+$kern-darkblue-100: #d7e0f4;
+$kern-darkblue-150: #c4d1ee;
+$kern-darkblue-200: #aabce7;
+$kern-darkblue-250: #96acdf;
+$kern-darkblue-300: #7a9ad6;
+$kern-darkblue-350: #658bce;
+$kern-darkblue-400: #507bc5;
+$kern-darkblue-450: #3668bb;
+$kern-darkblue-500: #3c5fcf;
+$kern-darkblue-550: #2c52b8;
+$kern-darkblue-600: #2f4fad;
+$kern-darkblue-650: #2145a3;
+$kern-darkblue-700: #2d47a3;
+$kern-darkblue-750: #1f3b8f;
+$kern-darkblue-800: #19327f;
+$kern-darkblue-850: #152973;
+$kern-darkblue-900: #101f5c;
+$kern-darkblue-950: #0c1747;
+
+// -- lightblue --
+$kern-lightblue-025: #f8fafe;
+$kern-lightblue-050: #def4fc;
+$kern-lightblue-100: #c4e8f8;
+$kern-lightblue-150: #abdcf3;
+$kern-lightblue-200: #90d0ee;
+$kern-lightblue-250: #71c2e8;
+$kern-lightblue-300: #4db2e0;
+$kern-lightblue-350: #3ba4d4;
+$kern-lightblue-400: #2f96c7;
+$kern-lightblue-450: #1f84b7;
+$kern-lightblue-500: #1c74a5;
+$kern-lightblue-550: #0d6596;
+$kern-lightblue-600: #00648f;
+$kern-lightblue-650: #00507c;
+$kern-lightblue-700: #00466d;
+$kern-lightblue-750: #003a59;
+$kern-lightblue-800: #002f48;
+$kern-lightblue-850: #002238;
+$kern-lightblue-900: #001828;
+$kern-lightblue-950: #000e1a;
+
+// -- turquoise --
+$kern-turquoise-025: #f6f9f9;
+$kern-turquoise-050: #eef6f7;
+$kern-turquoise-100: #d3eaec;
+$kern-turquoise-150: #b8dee0;
+$kern-turquoise-200: #a0d1d5;
+$kern-turquoise-250: #88c4c9;
+$kern-turquoise-300: #69b5bc;
+$kern-turquoise-350: #52a9b1;
+$kern-turquoise-400: #3b9ba5;
+$kern-turquoise-450: #268d98;
+$kern-turquoise-500: #157f8c;
+$kern-turquoise-550: #0a7581;
+$kern-turquoise-600: #006a77;
+$kern-turquoise-650: #005d6b;
+$kern-turquoise-700: #00545f;
+$kern-turquoise-750: #004651;
+$kern-turquoise-800: #003d46;
+$kern-turquoise-850: #00343c;
+$kern-turquoise-900: #002a31;
+$kern-turquoise-950: #002126;
+
+// -- green --
+$kern-green-025: #f8faf8;
+$kern-green-050: #f1f7f2;
+$kern-green-100: #dcecdf;
+$kern-green-150: #c7e1cc;
+$kern-green-200: #b0d5b7;
+$kern-green-250: #99c9a3;
+$kern-green-300: #80bc8d;
+$kern-green-350: #69b079;
+$kern-green-400: #52a364;
+$kern-green-450: #3c9650;
+$kern-green-500: #26893c;
+$kern-green-550: #147c2a;
+$kern-green-600: #026f1a;
+$kern-green-650: #00650d;
+$kern-green-700: #005700;
+$kern-green-750: #004e00;
+$kern-green-800: #004200;
+$kern-green-850: #003700;
+$kern-green-900: #002a00;
+$kern-green-950: #001f00;
+
+// -- limette --
+$kern-limette-025: #f1faf1;
+$kern-limette-050: #e6f4e6;
+$kern-limette-100: #c8e5c8;
+$kern-limette-150: #abd7ab;
+$kern-limette-200: #8dc88d;
+$kern-limette-250: #73bb73;
+$kern-limette-300: #5aac5a;
+$kern-limette-350: #429e42;
+$kern-limette-400: #309230;
+$kern-limette-450: #208420;
+$kern-limette-500: #117611;
+$kern-limette-550: #036803;
+$kern-limette-600: #005c00;
+$kern-limette-650: #004e00;
+$kern-limette-700: #004300;
+$kern-limette-750: #003900;
+$kern-limette-800: #002d00;
+$kern-limette-850: #002400;
+$kern-limette-900: #001a00;
+$kern-limette-950: #001200;
+
+// -- yellow --
+$kern-yellow-025: #eafadf;
+$kern-yellow-050: #dff4ca;
+$kern-yellow-100: #c6e699;
+$kern-yellow-150: #b1da71;
+$kern-yellow-200: #9ccd4e;
+$kern-yellow-250: #87be2c;
+$kern-yellow-300: #72b00f;
+$kern-yellow-350: #5da100;
+$kern-yellow-400: #499200;
+$kern-yellow-450: #368300;
+$kern-yellow-500: #237400;
+$kern-yellow-550: #126500;
+$kern-yellow-600: #015700;
+$kern-yellow-650: #004c00;
+$kern-yellow-700: #003f00;
+$kern-yellow-750: #003300;
+$kern-yellow-800: #002800;
+$kern-yellow-850: #001c00;
+$kern-yellow-900: #001300;
+$kern-yellow-950: #000a00;
+
+// -- orange --
+$kern-orange-025: #fafaf6;
+$kern-orange-050: #f3f4e9;
+$kern-orange-100: #e2e6c9;
+$kern-orange-150: #d1d7aa;
+$kern-orange-200: #bfc889;
+$kern-orange-250: #adb969;
+$kern-orange-300: #99a948;
+$kern-orange-350: #889930;
+$kern-orange-400: #768a1a;
+$kern-orange-450: #647a06;
+$kern-orange-500: #526b00;
+$kern-orange-550: #415c00;
+$kern-orange-600: #314d00;
+$kern-orange-650: #233f00;
+$kern-orange-700: #173200;
+$kern-orange-750: #0d2600;
+$kern-orange-800: #051a00;
+$kern-orange-850: #001000;
+$kern-orange-900: #000800;
+$kern-orange-950: #000200;
+
+// -- red --
+$kern-red-025: #fafaf9;
+$kern-red-050: #f6f2f0;
+$kern-red-100: #ebe0dc;
+$kern-red-150: #e0cfc8;
+$kern-red-200: #d4bdb3;
+$kern-red-250: #c8ac9f;
+$kern-red-300: #bb998a;
+$kern-red-350: #ae8776;
+$kern-red-400: #a07562;
+$kern-red-450: #92634e;
+$kern-red-500: #83513a;
+$kern-red-550: #744027;
+$kern-red-600: #642f15;
+$kern-red-650: #541f05;
+$kern-red-700: #441000;
+$kern-red-750: #350300;
+$kern-red-800: #260000;
+$kern-red-850: #1a0000;
+$kern-red-900: #0f0000;
+$kern-red-950: #060000;
+
+// -- violet --
+$kern-violet-025: #faf9fa;
+$kern-violet-050: #f4f1f4;
+$kern-violet-100: #e8dde8;
+$kern-violet-150: #ddcfdd;
+$kern-violet-200: #cdb8cd;
+$kern-violet-250: #bfa3bf;
+$kern-violet-300: #b18eb1;
+$kern-violet-350: #a2779f;
+$kern-violet-400: #94628e;
+$kern-violet-450: #844d7b;
+$kern-violet-500: #753969;
+$kern-violet-550: #662558;
+$kern-violet-600: #551246;
+$kern-violet-650: #450036;
+$kern-violet-700: #360026;
+$kern-violet-750: #280018;
+$kern-violet-800: #1b000b;
+$kern-violet-850: #100001;
+$kern-violet-900: #070000;
+$kern-violet-950: #010000;
+
+// -- neutral --
+$kern-neutral-000:  #ffffff;
+$kern-neutral-025:  #f9f9f9;
+$kern-neutral-050:  #f5f5f6;
+$kern-neutral-100:  #e8e8ea;
+$kern-neutral-150:  #dbdbde;
+$kern-neutral-200:  #cecdd2;
+$kern-neutral-250:  #c0bfc5;
+$kern-neutral-300:  #b5b4bb;
+$kern-neutral-350:  #a7a6ae;
+$kern-neutral-400:  #9897a0;
+$kern-neutral-450:  #8a8993;
+$kern-neutral-500:  #7c7b85;
+$kern-neutral-550:  #6d6c77;
+$kern-neutral-600:  #605f6b;
+$kern-neutral-650:  #52515d;
+$kern-neutral-700:  #45444f;
+$kern-neutral-750:  #383742;
+$kern-neutral-800:  #2c2b35;
+$kern-neutral-850:  #22212a;
+$kern-neutral-900:  #18171e;
+$kern-neutral-950:  #0f0e14;
+$kern-neutral-1000: #000000;
+
+// -- dataport-red --
+$kern-dataport-red-025: #f9f8f8;
+$kern-dataport-red-050: #f5f1f0;
+$kern-dataport-red-100: #e8ddd9;
+$kern-dataport-red-150: #dbcac3;
+$kern-dataport-red-200: #ceb6ad;
+$kern-dataport-red-250: #c1a398;
+$kern-dataport-red-300: #b38f82;
+$kern-dataport-red-350: #a57c6e;
+$kern-dataport-red-400: #986a5b;
+$kern-dataport-red-450: #8a5848;
+$kern-dataport-red-500: #7c4635;
+$kern-dataport-red-550: #6e3523;
+$kern-dataport-red-600: #602413;
+$kern-dataport-red-650: #521404;
+$kern-dataport-red-700: #440600;
+$kern-dataport-red-750: #360000;
+$kern-dataport-red-800: #290000;
+$kern-dataport-red-850: #1d0000;
+$kern-dataport-red-900: #130000;
+$kern-dataport-red-950: #0a0000;
+
+// -- gray --
+$kern-gray-025: #f9f9f9;
+$kern-gray-050: #f6f6f6;
+$kern-gray-100: #eaeaea;
+$kern-gray-150: #dddddd;
+$kern-gray-200: #d4d4d4;
+$kern-gray-250: #c9c9c9;
+$kern-gray-300: #bdbdbd;
+$kern-gray-350: #b3b3b3;
+$kern-gray-400: #a8a8a8;
+$kern-gray-450: #9d9d9d;
+$kern-gray-500: #909090;
+$kern-gray-550: #878787;
+$kern-gray-600: #7b7b7b;
+$kern-gray-650: #707070;
+$kern-gray-700: #666666;
+$kern-gray-750: #5a5a5a;
+$kern-gray-800: #4f4f4f;
+$kern-gray-850: #444444;
+$kern-gray-900: #3a3a3a;
+$kern-gray-950: #2e2e2e;
+
+// Derived sizes used by KERN component rules that hard-code a `to-rem()` value
+// rather than a primitive token.
+$kern-11-pad:  0.6875rem;   // vertical padding that yields a 48px control at 24px line-height
+$kern-15-pad:  0.9375rem;   // …the same for a 56px control
+$kern-28-icon: 1.75rem;     // mixins/checkbox.scss `.kol-icon { font-size: to-rem(28) }`
+
+// ---------------------------------------------------------------------------
+// Theme  (kern/kern-theme.scss)
+// ---------------------------------------------------------------------------
+
+$kern-theme-border-radius: $kern-4;
+
+// ---------------------------------------------------------------------------
+// Semantic colors — light  (tokens/_theme.scss `light-color`)
+// ---------------------------------------------------------------------------
+
+/* action */
+$kern-color-action-default:    #2d47a3;
+$kern-color-action-on-default: #ffffff;
+$kern-color-action-visited:    #74009e;
+
+/* action-focus */
+$kern-color-action-focus-background:     #404464;
+$kern-color-action-focus-border-inside:  #6e7596;
+$kern-color-action-focus-border-outside: #c2c6d6;
+
+/* action-state-opacity */
+$kern-color-action-state-opacity-hover:    0.08;
+$kern-color-action-state-opacity-pressed:  0.32;
+$kern-color-action-state-opacity-selected: 0.12;
+$kern-color-action-state-opacity-disabled: 0.4;
+$kern-color-action-state-opacity-active:   0.16;
+$kern-color-action-state-opacity-overlay:  0.72;
+
+/* action-state-indicator */
+$kern-color-action-state-indicator-shade-hover:  #2f57c0;
+$kern-color-action-state-indicator-shade-active: #4671dd;
+$kern-color-action-state-indicator-tint-hover:   #ebeff9;
+$kern-color-action-state-indicator-tint-active:  #d7e0f4;
+
+$kern-color-action-state-indicator-tint-hover-opacity:  rgba(45, 71, 163, 0.08);
+$kern-color-action-state-indicator-tint-active-opacity: rgba(45, 71, 163, 0.16);
+// Derived with the same recipe as above, for the remaining KERN state opacities.
+$kern-color-action-state-indicator-tint-selected-opacity: rgba(45, 71, 163, 0.12);
+$kern-color-action-state-indicator-tint-pressed-opacity:  rgba(45, 71, 163, 0.32);
+
+/* feedback */
+$kern-color-feedback-danger:             #be0f09;
+$kern-color-feedback-danger-background:  #feebe7;
+$kern-color-feedback-info:               #00648f;
+$kern-color-feedback-info-background:    #def4fc;
+$kern-color-feedback-success:            #006b50;
+$kern-color-feedback-success-background: #dff6ee;
+$kern-color-feedback-warning:            #8a4e00;
+$kern-color-feedback-warning-background: #fff0d1;
+
+/* feedback-loader */
+$kern-color-feedback-loader:            #404464;
+$kern-color-feedback-loader-background: #e0e2eb;
+
+/* form-inputs */
+$kern-color-form-input-background:          #f6f6f8;
+$kern-color-form-input-background-inverted: #ffffff;
+$kern-color-form-input-border:              #171a2b;
+
+/* layout */
+$kern-color-layout-border: #a6abc4;
+$kern-layout-border:       #a5aac3;
+
+/* layout-text */
+$kern-color-layout-text-default: #171a2b;
+$kern-color-layout-text-inverse: #f6f6f8;
+$kern-color-layout-text-muted:   #404464;
+
+/* layout-background */
+$kern-color-layout-background-default: #ffffff;
+$kern-color-layout-background-hued:    #f6f6f8;
+$kern-color-layout-background-overlay: rgba(0, 0, 0, 0.72);
+
+// ---------------------------------------------------------------------------
+// Metrics  (tokens/_variables.scss)
+// ---------------------------------------------------------------------------
+
+// border
+$kern-metric-border-width-none:    $kern-0;
+$kern-metric-border-width-light:   $kern-1;
+$kern-metric-border-width-default: $kern-2;
+$kern-metric-border-width-bold:    $kern-4;
+$kern-metric-border-width-heavy:   $kern-8;
+
+// border-radius
+$kern-metric-border-radius-none:    $kern-0;
+$kern-metric-border-radius-small:   $kern-2;
+$kern-metric-border-radius-default: $kern-theme-border-radius;
+$kern-metric-border-radius-large:   $kern-8;
+$kern-metric-border-radius-circle:  50%;
+
+// component
+$kern-component-badge-space-left:                  $kern-12;
+$kern-component-description-list-term-max-width:   $kern-352;
+$kern-component-alert-icon-size:                   $kern-32;
+$kern-component-alert-icon-size-md:                $kern-40;
+$kern-component-kopfzeile-font-size:               $kern-font-size-14;
+$kern-component-kopfzeile-font-size-md:            $kern-font-size-16;
+$kern-component-kopfzeile-line-height:             $kern-font-size-16;
+$kern-component-kopfzeile-line-height-md:          $kern-font-size-20;
+$kern-component-kopfzeile-padding:                 $kern-7;
+$kern-component-kopfzeile-padding-md:              $kern-5;
+
+// dimensions
+$kern-metric-dimension-2x-small: $kern-8;
+$kern-metric-dimension-x-small:  $kern-16;
+$kern-metric-dimension-small:    $kern-20;
+$kern-metric-dimension-default:  $kern-24;
+$kern-metric-dimension-large:    $kern-32;
+$kern-metric-dimension-x-large:  $kern-48;
+$kern-metric-dimension-2x-large: $kern-56;
+$kern-metric-dimension-3x-large: $kern-64;
+$kern-metric-dimension-4x-large: $kern-80;
+$kern-metric-dimension-5x-large: $kern-96;
+
+// dimensions-media
+$kern-metric-dimension-media-small:      $kern-96;
+$kern-metric-dimension-media-default:    $kern-160;
+$kern-metric-dimension-media-large:      $kern-240;
+$kern-metric-dimension-media-small-md:   $kern-128;
+$kern-metric-dimension-media-default-md: $kern-192;
+$kern-metric-dimension-media-large-md:   $kern-360;
+
+// screen-size
+$kern-metric-screen-size:    $kern-360;
+$kern-metric-screen-size-md: $kern-1920;
+
+// space
+$kern-metric-space-none:     $kern-0;
+$kern-metric-space-2x-small: $kern-2;
+$kern-metric-space-x-small:  $kern-4;
+$kern-metric-space-small:    $kern-8;
+$kern-metric-space-default:  $kern-16;
+$kern-metric-space-large:    $kern-24;
+$kern-metric-space-x-large:  $kern-32;
+
+// ---------------------------------------------------------------------------
+// Typography  (tokens/_variables.scss)
+// ---------------------------------------------------------------------------
+
+$kern-typography-font-family-default: $kern-typography-font-family-fira-sans;
+
+// line-height
+$kern-typography-line-height-static-medium:      $kern-font-size-24;
+$kern-typography-line-height-static-large:       $kern-font-size-32;
+$kern-typography-line-height-adaptive-medium:    $kern-font-size-24;
+$kern-typography-line-height-adaptive-large:     $kern-font-size-32;
+$kern-typography-line-height-adaptive-x-large:   $kern-font-size-40;
+$kern-typography-line-height-adaptive-2x-large:  $kern-font-size-56;
+// desktop (>= md)
+$kern-typography-line-height-adaptive-medium-md:   $kern-font-size-32;
+$kern-typography-line-height-adaptive-large-md:    $kern-font-size-40;
+$kern-typography-line-height-adaptive-x-large-md:  $kern-font-size-56;
+$kern-typography-line-height-adaptive-2x-large-md: $kern-font-size-80;
+
+// font-size
+$kern-typography-font-size-static-small:       $kern-font-size-16;
+$kern-typography-font-size-static-medium:      $kern-font-size-18;
+$kern-typography-font-size-static-large:       $kern-font-size-21;
+$kern-typography-font-size-adaptive-medium:    $kern-font-size-21;
+$kern-typography-font-size-adaptive-large:     $kern-font-size-26;
+$kern-typography-font-size-adaptive-x-large:   $kern-font-size-32;
+$kern-typography-font-size-adaptive-2x-large:  $kern-font-size-48;
+// desktop (>= md)
+$kern-typography-font-size-adaptive-medium-md:   $kern-font-size-24;
+$kern-typography-font-size-adaptive-large-md:    $kern-font-size-32;
+$kern-typography-font-size-adaptive-x-large-md:  $kern-font-size-48;
+$kern-typography-font-size-adaptive-2x-large-md: $kern-font-size-72;
+
+// font-weight
+$kern-typography-font-weight-regular:   400;
+$kern-typography-font-weight-medium:    500;
+$kern-typography-font-weight-semi-bold: 600;
+
+// ---------------------------------------------------------------------------
+// Baseline spacing  (tokens/_variables.scss)
+// ---------------------------------------------------------------------------
+
+$kern-metric-baseline-body-default-padding-top:    $kern-6;
+$kern-metric-baseline-body-default-padding-bottom: $kern-2;
+$kern-metric-baseline-body-large-padding-top:      $kern-1;
+$kern-metric-baseline-body-large-padding-bottom:   $kern-7;
+$kern-metric-baseline-body-small-padding-top:      $kern-7;
+$kern-metric-baseline-body-small-padding-bottom:   $kern-1;
+
+$kern-metric-baseline-heading-display-padding-top:    $kern-12;
+$kern-metric-baseline-heading-display-padding-bottom: $kern-12;
+$kern-metric-baseline-heading-x-large-padding-top:    $kern-9;
+$kern-metric-baseline-heading-x-large-padding-bottom: $kern-7;
+$kern-metric-baseline-heading-large-padding-top:      $kern-7;
+$kern-metric-baseline-heading-large-padding-bottom:   $kern-9;
+$kern-metric-baseline-heading-medium-padding-top:     $kern-5;
+$kern-metric-baseline-heading-medium-padding-bottom:  $kern-3;
+$kern-metric-baseline-heading-small-padding-top:      $kern-6;
+$kern-metric-baseline-heading-small-padding-bottom:   $kern-2;
+// desktop (>= md)
+$kern-metric-baseline-heading-display-padding-top-md:    $kern-16;
+$kern-metric-baseline-heading-display-padding-bottom-md: $kern-16;
+$kern-metric-baseline-heading-x-large-padding-top-md:    $kern-12;
+$kern-metric-baseline-heading-x-large-padding-bottom-md: $kern-12;
+$kern-metric-baseline-heading-large-padding-top-md:      $kern-9;
+$kern-metric-baseline-heading-large-padding-bottom-md:   $kern-7;
+$kern-metric-baseline-heading-medium-padding-top-md:     $kern-8;
+$kern-metric-baseline-heading-medium-padding-bottom-md:  $kern-8;
+
+$kern-metric-baseline-title-large-padding-top:      $kern-7;
+$kern-metric-baseline-title-large-padding-bottom:   $kern-9;
+$kern-metric-baseline-title-default-padding-top:    $kern-5;
+$kern-metric-baseline-title-default-padding-bottom: $kern-3;
+$kern-metric-baseline-title-small-padding-top:      $kern-6;
+$kern-metric-baseline-title-small-padding-bottom:   $kern-2;
+// desktop (>= md)
+$kern-metric-baseline-title-large-padding-top-md:      $kern-9;
+$kern-metric-baseline-title-large-padding-bottom-md:   $kern-7;
+$kern-metric-baseline-title-default-padding-top-md:    $kern-8;
+$kern-metric-baseline-title-default-padding-bottom-md: $kern-8;
+
+$kern-metric-baseline-preline-large-padding-top:      $kern-1;
+$kern-metric-baseline-preline-large-padding-bottom:   $kern-7;
+$kern-metric-baseline-preline-default-padding-top:    $kern-6;
+$kern-metric-baseline-preline-default-padding-bottom: $kern-2;
+$kern-metric-baseline-preline-small-padding-top:      $kern-7;
+$kern-metric-baseline-preline-small-padding-bottom:   $kern-1;
+
+$kern-metric-baseline-subline-large-padding-top:      $kern-1;
+$kern-metric-baseline-subline-large-padding-bottom:   $kern-7;
+$kern-metric-baseline-subline-default-padding-top:    $kern-6;
+$kern-metric-baseline-subline-default-padding-bottom: $kern-2;
+$kern-metric-baseline-subline-small-padding-top:      $kern-7;
+$kern-metric-baseline-subline-small-padding-bottom:   $kern-9;
+
+$kern-metric-baseline-label-large-padding-top:      $kern-1;
+$kern-metric-baseline-label-large-padding-bottom:   $kern-7;
+$kern-metric-baseline-label-default-padding-top:    $kern-6;
+$kern-metric-baseline-label-default-padding-bottom: $kern-2;
+$kern-metric-baseline-label-small-padding-top:      $kern-7;
+$kern-metric-baseline-label-small-padding-bottom:   $kern-1;
+
+// ---------------------------------------------------------------------------
+// Breakpoints  (kern/utilities/_maps.scss)
+// ---------------------------------------------------------------------------
+
+$kern-breakpoint-xs:  0;
+$kern-breakpoint-sm:  576px;
+$kern-breakpoint-md:  768px;
+$kern-breakpoint-lg:  992px;
+$kern-breakpoint-xl:  1200px;
+$kern-breakpoint-xxl: 1600px;
+
+// ---------------------------------------------------------------------------
+// Emit the KERN custom-property layer
+// ---------------------------------------------------------------------------
+
+@mixin kern-token-properties {
+  /* primitive-number */
+  --kern-0: #{$kern-0};
+  --kern-1: #{$kern-1};
+  --kern-2: #{$kern-2};
+  --kern-3: #{$kern-3};
+  --kern-4: #{$kern-4};
+  --kern-5: #{$kern-5};
+  --kern-6: #{$kern-6};
+  --kern-7: #{$kern-7};
+  --kern-8: #{$kern-8};
+  --kern-9: #{$kern-9};
+  --kern-10: #{$kern-10};
+  --kern-12: #{$kern-12};
+  --kern-14: #{$kern-14};
+  --kern-16: #{$kern-16};
+  --kern-18: #{$kern-18};
+  --kern-20: #{$kern-20};
+  --kern-24: #{$kern-24};
+  --kern-32: #{$kern-32};
+  --kern-40: #{$kern-40};
+  --kern-48: #{$kern-48};
+  --kern-56: #{$kern-56};
+  --kern-64: #{$kern-64};
+  --kern-80: #{$kern-80};
+  --kern-96: #{$kern-96};
+  --kern-128: #{$kern-128};
+  --kern-160: #{$kern-160};
+  --kern-192: #{$kern-192};
+  --kern-224: #{$kern-224};
+  --kern-240: #{$kern-240};
+  --kern-256: #{$kern-256};
+  --kern-352: #{$kern-352};
+  --kern-360: #{$kern-360};
+  --kern-384: #{$kern-384};
+  --kern-480: #{$kern-480};
+  --kern-512: #{$kern-512};
+  --kern-736: #{$kern-736};
+  --kern-768: #{$kern-768};
+  --kern-992: #{$kern-992};
+  --kern-1024: #{$kern-1024};
+  --kern-1140: #{$kern-1140};
+  --kern-1248: #{$kern-1248};
+  --kern-1280: #{$kern-1280};
+  --kern-1504: #{$kern-1504};
+  --kern-1536: #{$kern-1536};
+  --kern-1600: #{$kern-1600};
+  --kern-1920: #{$kern-1920};
+
+  /* primitive-font */
+  --kern-typography-font-family-fira-sans: #{$kern-typography-font-family-fira-sans};
+  --kern-typography-font-family-fira-mono: #{$kern-typography-font-family-fira-mono};
+  --kern-font-size-12: #{$kern-font-size-12};
+  --kern-font-size-14: #{$kern-font-size-14};
+  --kern-font-size-16: #{$kern-font-size-16};
+  --kern-font-size-18: #{$kern-font-size-18};
+  --kern-font-size-20: #{$kern-font-size-20};
+  --kern-font-size-21: #{$kern-font-size-21};
+  --kern-font-size-24: #{$kern-font-size-24};
+  --kern-font-size-26: #{$kern-font-size-26};
+  --kern-font-size-32: #{$kern-font-size-32};
+  --kern-font-size-40: #{$kern-font-size-40};
+  --kern-font-size-48: #{$kern-font-size-48};
+  --kern-font-size-56: #{$kern-font-size-56};
+  --kern-font-size-72: #{$kern-font-size-72};
+  --kern-font-size-80: #{$kern-font-size-80};
+
+  /* primitive-colors */
+  @each $name, $value in (
+    'darkblue-025': $kern-darkblue-025, 'darkblue-050': $kern-darkblue-050, 'darkblue-100': $kern-darkblue-100,
+    'darkblue-150': $kern-darkblue-150, 'darkblue-200': $kern-darkblue-200, 'darkblue-250': $kern-darkblue-250,
+    'darkblue-300': $kern-darkblue-300, 'darkblue-350': $kern-darkblue-350, 'darkblue-400': $kern-darkblue-400,
+    'darkblue-450': $kern-darkblue-450, 'darkblue-500': $kern-darkblue-500, 'darkblue-550': $kern-darkblue-550,
+    'darkblue-600': $kern-darkblue-600, 'darkblue-650': $kern-darkblue-650, 'darkblue-700': $kern-darkblue-700,
+    'darkblue-750': $kern-darkblue-750, 'darkblue-800': $kern-darkblue-800, 'darkblue-850': $kern-darkblue-850,
+    'darkblue-900': $kern-darkblue-900, 'darkblue-950': $kern-darkblue-950,
+    'lightblue-025': $kern-lightblue-025, 'lightblue-050': $kern-lightblue-050, 'lightblue-100': $kern-lightblue-100,
+    'lightblue-150': $kern-lightblue-150, 'lightblue-200': $kern-lightblue-200, 'lightblue-250': $kern-lightblue-250,
+    'lightblue-300': $kern-lightblue-300, 'lightblue-350': $kern-lightblue-350, 'lightblue-400': $kern-lightblue-400,
+    'lightblue-450': $kern-lightblue-450, 'lightblue-500': $kern-lightblue-500, 'lightblue-550': $kern-lightblue-550,
+    'lightblue-600': $kern-lightblue-600, 'lightblue-650': $kern-lightblue-650, 'lightblue-700': $kern-lightblue-700,
+    'lightblue-750': $kern-lightblue-750, 'lightblue-800': $kern-lightblue-800, 'lightblue-850': $kern-lightblue-850,
+    'lightblue-900': $kern-lightblue-900, 'lightblue-950': $kern-lightblue-950,
+    'turquoise-025': $kern-turquoise-025, 'turquoise-050': $kern-turquoise-050, 'turquoise-100': $kern-turquoise-100,
+    'turquoise-150': $kern-turquoise-150, 'turquoise-200': $kern-turquoise-200, 'turquoise-250': $kern-turquoise-250,
+    'turquoise-300': $kern-turquoise-300, 'turquoise-350': $kern-turquoise-350, 'turquoise-400': $kern-turquoise-400,
+    'turquoise-450': $kern-turquoise-450, 'turquoise-500': $kern-turquoise-500, 'turquoise-550': $kern-turquoise-550,
+    'turquoise-600': $kern-turquoise-600, 'turquoise-650': $kern-turquoise-650, 'turquoise-700': $kern-turquoise-700,
+    'turquoise-750': $kern-turquoise-750, 'turquoise-800': $kern-turquoise-800, 'turquoise-850': $kern-turquoise-850,
+    'turquoise-900': $kern-turquoise-900, 'turquoise-950': $kern-turquoise-950,
+    'green-025': $kern-green-025, 'green-050': $kern-green-050, 'green-100': $kern-green-100,
+    'green-150': $kern-green-150, 'green-200': $kern-green-200, 'green-250': $kern-green-250,
+    'green-300': $kern-green-300, 'green-350': $kern-green-350, 'green-400': $kern-green-400,
+    'green-450': $kern-green-450, 'green-500': $kern-green-500, 'green-550': $kern-green-550,
+    'green-600': $kern-green-600, 'green-650': $kern-green-650, 'green-700': $kern-green-700,
+    'green-750': $kern-green-750, 'green-800': $kern-green-800, 'green-850': $kern-green-850,
+    'green-900': $kern-green-900, 'green-950': $kern-green-950,
+    'limette-025': $kern-limette-025, 'limette-050': $kern-limette-050, 'limette-100': $kern-limette-100,
+    'limette-150': $kern-limette-150, 'limette-200': $kern-limette-200, 'limette-250': $kern-limette-250,
+    'limette-300': $kern-limette-300, 'limette-350': $kern-limette-350, 'limette-400': $kern-limette-400,
+    'limette-450': $kern-limette-450, 'limette-500': $kern-limette-500, 'limette-550': $kern-limette-550,
+    'limette-600': $kern-limette-600, 'limette-650': $kern-limette-650, 'limette-700': $kern-limette-700,
+    'limette-750': $kern-limette-750, 'limette-800': $kern-limette-800, 'limette-850': $kern-limette-850,
+    'limette-900': $kern-limette-900, 'limette-950': $kern-limette-950,
+    'yellow-025': $kern-yellow-025, 'yellow-050': $kern-yellow-050, 'yellow-100': $kern-yellow-100,
+    'yellow-150': $kern-yellow-150, 'yellow-200': $kern-yellow-200, 'yellow-250': $kern-yellow-250,
+    'yellow-300': $kern-yellow-300, 'yellow-350': $kern-yellow-350, 'yellow-400': $kern-yellow-400,
+    'yellow-450': $kern-yellow-450, 'yellow-500': $kern-yellow-500, 'yellow-550': $kern-yellow-550,
+    'yellow-600': $kern-yellow-600, 'yellow-650': $kern-yellow-650, 'yellow-700': $kern-yellow-700,
+    'yellow-750': $kern-yellow-750, 'yellow-800': $kern-yellow-800, 'yellow-850': $kern-yellow-850,
+    'yellow-900': $kern-yellow-900, 'yellow-950': $kern-yellow-950,
+    'orange-025': $kern-orange-025, 'orange-050': $kern-orange-050, 'orange-100': $kern-orange-100,
+    'orange-150': $kern-orange-150, 'orange-200': $kern-orange-200, 'orange-250': $kern-orange-250,
+    'orange-300': $kern-orange-300, 'orange-350': $kern-orange-350, 'orange-400': $kern-orange-400,
+    'orange-450': $kern-orange-450, 'orange-500': $kern-orange-500, 'orange-550': $kern-orange-550,
+    'orange-600': $kern-orange-600, 'orange-650': $kern-orange-650, 'orange-700': $kern-orange-700,
+    'orange-750': $kern-orange-750, 'orange-800': $kern-orange-800, 'orange-850': $kern-orange-850,
+    'orange-900': $kern-orange-900, 'orange-950': $kern-orange-950,
+    'red-025': $kern-red-025, 'red-050': $kern-red-050, 'red-100': $kern-red-100,
+    'red-150': $kern-red-150, 'red-200': $kern-red-200, 'red-250': $kern-red-250,
+    'red-300': $kern-red-300, 'red-350': $kern-red-350, 'red-400': $kern-red-400,
+    'red-450': $kern-red-450, 'red-500': $kern-red-500, 'red-550': $kern-red-550,
+    'red-600': $kern-red-600, 'red-650': $kern-red-650, 'red-700': $kern-red-700,
+    'red-750': $kern-red-750, 'red-800': $kern-red-800, 'red-850': $kern-red-850,
+    'red-900': $kern-red-900, 'red-950': $kern-red-950,
+    'violet-025': $kern-violet-025, 'violet-050': $kern-violet-050, 'violet-100': $kern-violet-100,
+    'violet-150': $kern-violet-150, 'violet-200': $kern-violet-200, 'violet-250': $kern-violet-250,
+    'violet-300': $kern-violet-300, 'violet-350': $kern-violet-350, 'violet-400': $kern-violet-400,
+    'violet-450': $kern-violet-450, 'violet-500': $kern-violet-500, 'violet-550': $kern-violet-550,
+    'violet-600': $kern-violet-600, 'violet-650': $kern-violet-650, 'violet-700': $kern-violet-700,
+    'violet-750': $kern-violet-750, 'violet-800': $kern-violet-800, 'violet-850': $kern-violet-850,
+    'violet-900': $kern-violet-900, 'violet-950': $kern-violet-950,
+    'neutral-000': $kern-neutral-000, 'neutral-025': $kern-neutral-025, 'neutral-050': $kern-neutral-050,
+    'neutral-100': $kern-neutral-100, 'neutral-150': $kern-neutral-150, 'neutral-200': $kern-neutral-200,
+    'neutral-250': $kern-neutral-250, 'neutral-300': $kern-neutral-300, 'neutral-350': $kern-neutral-350,
+    'neutral-400': $kern-neutral-400, 'neutral-450': $kern-neutral-450, 'neutral-500': $kern-neutral-500,
+    'neutral-550': $kern-neutral-550, 'neutral-600': $kern-neutral-600, 'neutral-650': $kern-neutral-650,
+    'neutral-700': $kern-neutral-700, 'neutral-750': $kern-neutral-750, 'neutral-800': $kern-neutral-800,
+    'neutral-850': $kern-neutral-850, 'neutral-900': $kern-neutral-900, 'neutral-950': $kern-neutral-950,
+    'neutral-1000': $kern-neutral-1000,
+    'dataport-red-025': $kern-dataport-red-025, 'dataport-red-050': $kern-dataport-red-050,
+    'dataport-red-100': $kern-dataport-red-100, 'dataport-red-150': $kern-dataport-red-150,
+    'dataport-red-200': $kern-dataport-red-200, 'dataport-red-250': $kern-dataport-red-250,
+    'dataport-red-300': $kern-dataport-red-300, 'dataport-red-350': $kern-dataport-red-350,
+    'dataport-red-400': $kern-dataport-red-400, 'dataport-red-450': $kern-dataport-red-450,
+    'dataport-red-500': $kern-dataport-red-500, 'dataport-red-550': $kern-dataport-red-550,
+    'dataport-red-600': $kern-dataport-red-600, 'dataport-red-650': $kern-dataport-red-650,
+    'dataport-red-700': $kern-dataport-red-700, 'dataport-red-750': $kern-dataport-red-750,
+    'dataport-red-800': $kern-dataport-red-800, 'dataport-red-850': $kern-dataport-red-850,
+    'dataport-red-900': $kern-dataport-red-900, 'dataport-red-950': $kern-dataport-red-950,
+    'gray-025': $kern-gray-025, 'gray-050': $kern-gray-050, 'gray-100': $kern-gray-100,
+    'gray-150': $kern-gray-150, 'gray-200': $kern-gray-200, 'gray-250': $kern-gray-250,
+    'gray-300': $kern-gray-300, 'gray-350': $kern-gray-350, 'gray-400': $kern-gray-400,
+    'gray-450': $kern-gray-450, 'gray-500': $kern-gray-500, 'gray-550': $kern-gray-550,
+    'gray-600': $kern-gray-600, 'gray-650': $kern-gray-650, 'gray-700': $kern-gray-700,
+    'gray-750': $kern-gray-750, 'gray-800': $kern-gray-800, 'gray-850': $kern-gray-850,
+    'gray-900': $kern-gray-900, 'gray-950': $kern-gray-950
+  ) {
+    --kern-#{$name}: #{$value};
+  }
+
+  /* theme */
+  --theme-border-radius: #{$kern-theme-border-radius};
+
+  /* focus indicator — mixins/focus-outline.scss, as a single reusable shadow */
+  --kern-focus-ring:
+    0 0 0 2px #{$kern-color-action-on-default},
+    0 0 0 4px #{$kern-color-action-focus-border-inside},
+    0 0 0 6px #{$kern-color-action-focus-border-outside};
+
+  /* action */
+  --kern-color-action-default: #{$kern-color-action-default};
+  --kern-color-action-on-default: #{$kern-color-action-on-default};
+  --kern-color-action-visited: #{$kern-color-action-visited};
+
+  /* action-focus */
+  --kern-color-action-focus-background: #{$kern-color-action-focus-background};
+  --kern-color-action-focus-border-inside: #{$kern-color-action-focus-border-inside};
+  --kern-color-action-focus-border-outside: #{$kern-color-action-focus-border-outside};
+
+  /* action-state-indicator */
+  --kern-color-action-state-indicator-default: var(--kern-color-action-default);
+  --kern-color-action-state-indicator-shade: var(--kern-color-layout-text-default);
+  --kern-color-action-state-indicator-tint: var(--kern-color-action-on-default);
+  --kern-color-action-state-indicator-shade-hover: #{$kern-color-action-state-indicator-shade-hover};
+  --kern-color-action-state-indicator-shade-active: #{$kern-color-action-state-indicator-shade-active};
+  --kern-color-action-state-indicator-tint-hover: #{$kern-color-action-state-indicator-tint-hover};
+  --kern-color-action-state-indicator-tint-active: #{$kern-color-action-state-indicator-tint-active};
+  --kern-color-action-state-indicator-tint-hover-opacity: #{$kern-color-action-state-indicator-tint-hover-opacity};
+  --kern-color-action-state-indicator-tint-active-opacity: #{$kern-color-action-state-indicator-tint-active-opacity};
+  --kern-color-action-state-indicator-tint-selected-opacity: #{$kern-color-action-state-indicator-tint-selected-opacity};
+  --kern-color-action-state-indicator-tint-pressed-opacity: #{$kern-color-action-state-indicator-tint-pressed-opacity};
+
+  /* action-state-opacity */
+  --kern-color-action-state-opacity-hover: #{$kern-color-action-state-opacity-hover};
+  --kern-color-action-state-opacity-pressed: #{$kern-color-action-state-opacity-pressed};
+  --kern-color-action-state-opacity-selected: #{$kern-color-action-state-opacity-selected};
+  --kern-color-action-state-opacity-disabled: #{$kern-color-action-state-opacity-disabled};
+  --kern-color-action-state-opacity-active: #{$kern-color-action-state-opacity-active};
+  --kern-color-action-state-opacity-overlay: #{$kern-color-action-state-opacity-overlay};
+
+  /* feedback */
+  --kern-color-feedback-danger: #{$kern-color-feedback-danger};
+  --kern-color-feedback-danger-background: #{$kern-color-feedback-danger-background};
+  --kern-color-feedback-info: #{$kern-color-feedback-info};
+  --kern-color-feedback-info-background: #{$kern-color-feedback-info-background};
+  --kern-color-feedback-success: #{$kern-color-feedback-success};
+  --kern-color-feedback-success-background: #{$kern-color-feedback-success-background};
+  --kern-color-feedback-warning: #{$kern-color-feedback-warning};
+  --kern-color-feedback-warning-background: #{$kern-color-feedback-warning-background};
+  --kern-color-feedback-loader: #{$kern-color-feedback-loader};
+  --kern-color-feedback-loader-background: #{$kern-color-feedback-loader-background};
+
+  /* form-inputs */
+  --kern-color-form-input-background: #{$kern-color-form-input-background};
+  --kern-color-form-input-background-inverted: #{$kern-color-form-input-background-inverted};
+  --kern-color-form-input-border: #{$kern-color-form-input-border};
+
+  /* layout */
+  --kern-color-layout-border: #{$kern-color-layout-border};
+  --layout-border: #{$kern-layout-border};
+  --kern-color-layout-text-default: #{$kern-color-layout-text-default};
+  --kern-color-layout-text-inverse: #{$kern-color-layout-text-inverse};
+  --kern-color-layout-text-muted: #{$kern-color-layout-text-muted};
+  --kern-color-layout-background-default: #{$kern-color-layout-background-default};
+  --kern-color-layout-background-hued: #{$kern-color-layout-background-hued};
+  --kern-color-layout-background-overlay: #{$kern-color-layout-background-overlay};
+
+  /* border */
+  --kern-metric-border-width-none: #{$kern-metric-border-width-none};
+  --kern-metric-border-width-light: #{$kern-metric-border-width-light};
+  --kern-metric-border-width-default: #{$kern-metric-border-width-default};
+  --kern-metric-border-width-bold: #{$kern-metric-border-width-bold};
+  --kern-metric-border-width-heavy: #{$kern-metric-border-width-heavy};
+
+  /* border-radius */
+  --kern-metric-border-radius-none: #{$kern-metric-border-radius-none};
+  --kern-metric-border-radius-small: #{$kern-metric-border-radius-small};
+  --kern-metric-border-radius-default: #{$kern-metric-border-radius-default};
+  --kern-metric-border-radius-large: #{$kern-metric-border-radius-large};
+  --kern-metric-border-radius-circle: #{$kern-metric-border-radius-circle};
+
+  /* component */
+  --kern-component-badge-space-left: #{$kern-component-badge-space-left};
+  --kern-component-description-list-term-max-width: #{$kern-component-description-list-term-max-width};
+  --kern-component-alert-icon-size: #{$kern-component-alert-icon-size};
+  --kern-component-kopfzeile-font-family: #{$kern-typography-font-family-fira-sans}, 'Fira Sans Regular', 'Noto Sans',
+    'Noto Sans Regular', 'SF Pro Text', 'Segoe UI', SegoeUI, Roboto, Arial, Helvetica, sans-serif;
+  --kern-component-kopfzeile-font-size: #{$kern-component-kopfzeile-font-size};
+  --kern-component-kopfzeile-line-height: #{$kern-component-kopfzeile-line-height};
+  --kern-component-kopfzeile-padding: #{$kern-component-kopfzeile-padding};
+
+  /* dimensions */
+  --kern-metric-dimension-2x-small: #{$kern-metric-dimension-2x-small};
+  --kern-metric-dimension-x-small: #{$kern-metric-dimension-x-small};
+  --kern-metric-dimension-small: #{$kern-metric-dimension-small};
+  --kern-metric-dimension-default: #{$kern-metric-dimension-default};
+  --kern-metric-dimension-large: #{$kern-metric-dimension-large};
+  --kern-metric-dimension-x-large: #{$kern-metric-dimension-x-large};
+  --kern-metric-dimension-2x-large: #{$kern-metric-dimension-2x-large};
+  --kern-metric-dimension-3x-large: #{$kern-metric-dimension-3x-large};
+  --kern-metric-dimension-4x-large: #{$kern-metric-dimension-4x-large};
+  --kern-metric-dimension-5x-large: #{$kern-metric-dimension-5x-large};
+  --kern-metric-dimension-media-small: #{$kern-metric-dimension-media-small};
+  --kern-metric-dimension-media-default: #{$kern-metric-dimension-media-default};
+  --kern-metric-dimension-media-large: #{$kern-metric-dimension-media-large};
+
+  /* screen-size */
+  --kern-metric-screen-size: #{$kern-metric-screen-size};
+
+  /* space */
+  --kern-metric-space-none: #{$kern-metric-space-none};
+  --kern-metric-space-2x-small: #{$kern-metric-space-2x-small};
+  --kern-metric-space-x-small: #{$kern-metric-space-x-small};
+  --kern-metric-space-small: #{$kern-metric-space-small};
+  --kern-metric-space-default: #{$kern-metric-space-default};
+  --kern-metric-space-large: #{$kern-metric-space-large};
+  --kern-metric-space-x-large: #{$kern-metric-space-x-large};
+
+  /* typography */
+  --kern-typography-font-family-default: #{$kern-typography-font-family-default};
+  --kern-typography-line-height-static-medium: #{$kern-typography-line-height-static-medium};
+  --kern-typography-line-height-static-large: #{$kern-typography-line-height-static-large};
+  --kern-typography-line-height-adaptive-medium: #{$kern-typography-line-height-adaptive-medium};
+  --kern-typography-line-height-adaptive-large: #{$kern-typography-line-height-adaptive-large};
+  --kern-typography-line-height-adaptive-x-large: #{$kern-typography-line-height-adaptive-x-large};
+  --kern-typography-line-height-adaptive-2x-large: #{$kern-typography-line-height-adaptive-2x-large};
+  --kern-typography-font-size-static-small: #{$kern-typography-font-size-static-small};
+  --kern-typography-font-size-static-medium: #{$kern-typography-font-size-static-medium};
+  --kern-typography-font-size-static-large: #{$kern-typography-font-size-static-large};
+  --kern-typography-font-size-adaptive-medium: #{$kern-typography-font-size-adaptive-medium};
+  --kern-typography-font-size-adaptive-large: #{$kern-typography-font-size-adaptive-large};
+  --kern-typography-font-size-adaptive-x-large: #{$kern-typography-font-size-adaptive-x-large};
+  --kern-typography-font-size-adaptive-2x-large: #{$kern-typography-font-size-adaptive-2x-large};
+  --kern-typography-font-weight-regular: #{$kern-typography-font-weight-regular};
+  --kern-typography-font-weight-medium: #{$kern-typography-font-weight-medium};
+  --kern-typography-font-weight-semi-bold: #{$kern-typography-font-weight-semi-bold};
+
+  /* text-spacing — spacing-baseline */
+  --kern-metric-baseline-body-default-padding-top: #{$kern-metric-baseline-body-default-padding-top};
+  --kern-metric-baseline-body-default-padding-bottom: #{$kern-metric-baseline-body-default-padding-bottom};
+  --kern-metric-baseline-body-large-padding-top: #{$kern-metric-baseline-body-large-padding-top};
+  --kern-metric-baseline-body-large-padding-bottom: #{$kern-metric-baseline-body-large-padding-bottom};
+  --kern-metric-baseline-body-small-padding-top: #{$kern-metric-baseline-body-small-padding-top};
+  --kern-metric-baseline-body-small-padding-bottom: #{$kern-metric-baseline-body-small-padding-bottom};
+  --kern-metric-baseline-heading-display-padding-top: #{$kern-metric-baseline-heading-display-padding-top};
+  --kern-metric-baseline-heading-display-padding-bottom: #{$kern-metric-baseline-heading-display-padding-bottom};
+  --kern-metric-baseline-heading-x-large-padding-top: #{$kern-metric-baseline-heading-x-large-padding-top};
+  --kern-metric-baseline-heading-x-large-padding-bottom: #{$kern-metric-baseline-heading-x-large-padding-bottom};
+  --kern-metric-baseline-heading-large-padding-top: #{$kern-metric-baseline-heading-large-padding-top};
+  --kern-metric-baseline-heading-large-padding-bottom: #{$kern-metric-baseline-heading-large-padding-bottom};
+  --kern-metric-baseline-heading-medium-padding-top: #{$kern-metric-baseline-heading-medium-padding-top};
+  --kern-metric-baseline-heading-medium-padding-bottom: #{$kern-metric-baseline-heading-medium-padding-bottom};
+  --kern-metric-baseline-heading-small-padding-top: #{$kern-metric-baseline-heading-small-padding-top};
+  --kern-metric-baseline-heading-small-padding-bottom: #{$kern-metric-baseline-heading-small-padding-bottom};
+  --kern-metric-baseline-title-large-padding-top: #{$kern-metric-baseline-title-large-padding-top};
+  --kern-metric-baseline-title-large-padding-bottom: #{$kern-metric-baseline-title-large-padding-bottom};
+  --kern-metric-baseline-title-default-padding-top: #{$kern-metric-baseline-title-default-padding-top};
+  --kern-metric-baseline-title-default-padding-bottom: #{$kern-metric-baseline-title-default-padding-bottom};
+  --kern-metric-baseline-title-small-padding-top: #{$kern-metric-baseline-title-small-padding-top};
+  --kern-metric-baseline-title-small-padding-bottom: #{$kern-metric-baseline-title-small-padding-bottom};
+  --kern-metric-baseline-preline-large-padding-top: #{$kern-metric-baseline-preline-large-padding-top};
+  --kern-metric-baseline-preline-large-padding-bottom: #{$kern-metric-baseline-preline-large-padding-bottom};
+  --kern-metric-baseline-preline-default-padding-top: #{$kern-metric-baseline-preline-default-padding-top};
+  --kern-metric-baseline-preline-default-padding-bottom: #{$kern-metric-baseline-preline-default-padding-bottom};
+  --kern-metric-baseline-preline-small-padding-top: #{$kern-metric-baseline-preline-small-padding-top};
+  --kern-metric-baseline-preline-small-padding-bottom: #{$kern-metric-baseline-preline-small-padding-bottom};
+  --kern-metric-baseline-subline-large-padding-top: #{$kern-metric-baseline-subline-large-padding-top};
+  --kern-metric-baseline-subline-large-padding-bottom: #{$kern-metric-baseline-subline-large-padding-bottom};
+  --kern-metric-baseline-subline-default-padding-top: #{$kern-metric-baseline-subline-default-padding-top};
+  --kern-metric-baseline-subline-default-padding-bottom: #{$kern-metric-baseline-subline-default-padding-bottom};
+  --kern-metric-baseline-subline-small-padding-top: #{$kern-metric-baseline-subline-small-padding-top};
+  --kern-metric-baseline-subline-small-padding-bottom: #{$kern-metric-baseline-subline-small-padding-bottom};
+  --kern-metric-baseline-label-large-padding-top: #{$kern-metric-baseline-label-large-padding-top};
+  --kern-metric-baseline-label-large-padding-bottom: #{$kern-metric-baseline-label-large-padding-bottom};
+  --kern-metric-baseline-label-default-padding-top: #{$kern-metric-baseline-label-default-padding-top};
+  --kern-metric-baseline-label-default-padding-bottom: #{$kern-metric-baseline-label-default-padding-bottom};
+  --kern-metric-baseline-label-small-padding-top: #{$kern-metric-baseline-label-small-padding-top};
+  --kern-metric-baseline-label-small-padding-bottom: #{$kern-metric-baseline-label-small-padding-bottom};
+
+  /* Desktop overrides — KERN `@media (min-width: md)` block */
+  @media (min-width: #{$kern-breakpoint-md}) {
+    --kern-component-alert-icon-size: #{$kern-component-alert-icon-size-md};
+    --kern-component-kopfzeile-font-size: #{$kern-component-kopfzeile-font-size-md};
+    --kern-component-kopfzeile-line-height: #{$kern-component-kopfzeile-line-height-md};
+    --kern-component-kopfzeile-padding: #{$kern-component-kopfzeile-padding-md};
+
+    --kern-metric-dimension-media-small: #{$kern-metric-dimension-media-small-md};
+    --kern-metric-dimension-media-default: #{$kern-metric-dimension-media-default-md};
+    --kern-metric-dimension-media-large: #{$kern-metric-dimension-media-large-md};
+
+    --kern-metric-screen-size: #{$kern-metric-screen-size-md};
+
+    --kern-typography-line-height-adaptive-medium: #{$kern-typography-line-height-adaptive-medium-md};
+    --kern-typography-line-height-adaptive-large: #{$kern-typography-line-height-adaptive-large-md};
+    --kern-typography-line-height-adaptive-x-large: #{$kern-typography-line-height-adaptive-x-large-md};
+    --kern-typography-line-height-adaptive-2x-large: #{$kern-typography-line-height-adaptive-2x-large-md};
+
+    --kern-typography-font-size-adaptive-medium: #{$kern-typography-font-size-adaptive-medium-md};
+    --kern-typography-font-size-adaptive-large: #{$kern-typography-font-size-adaptive-large-md};
+    --kern-typography-font-size-adaptive-x-large: #{$kern-typography-font-size-adaptive-x-large-md};
+    --kern-typography-font-size-adaptive-2x-large: #{$kern-typography-font-size-adaptive-2x-large-md};
+
+    --kern-metric-baseline-heading-x-large-padding-top: #{$kern-metric-baseline-heading-x-large-padding-top-md};
+    --kern-metric-baseline-heading-x-large-padding-bottom: #{$kern-metric-baseline-heading-x-large-padding-bottom-md};
+    --kern-metric-baseline-heading-large-padding-top: #{$kern-metric-baseline-heading-large-padding-top-md};
+    --kern-metric-baseline-heading-large-padding-bottom: #{$kern-metric-baseline-heading-large-padding-bottom-md};
+    --kern-metric-baseline-heading-medium-padding-top: #{$kern-metric-baseline-heading-medium-padding-top-md};
+    --kern-metric-baseline-heading-medium-padding-bottom: #{$kern-metric-baseline-heading-medium-padding-bottom-md};
+    --kern-metric-baseline-heading-display-padding-top: #{$kern-metric-baseline-heading-display-padding-top-md};
+    --kern-metric-baseline-heading-display-padding-bottom: #{$kern-metric-baseline-heading-display-padding-bottom-md};
+
+    --kern-metric-baseline-title-large-padding-top: #{$kern-metric-baseline-title-large-padding-top-md};
+    --kern-metric-baseline-title-large-padding-bottom: #{$kern-metric-baseline-title-large-padding-bottom-md};
+    --kern-metric-baseline-title-default-padding-top: #{$kern-metric-baseline-title-default-padding-top-md};
+    --kern-metric-baseline-title-default-padding-bottom: #{$kern-metric-baseline-title-default-padding-bottom-md};
+  }
+}

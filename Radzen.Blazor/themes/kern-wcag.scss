@@ -1,0 +1,34 @@
+// KERN — WCAG contrast overlay.
+//
+// Loaded *in addition to* `kern-base.css` when `ThemeService.Wcag` is on.
+//
+// The KERN palette is already built for WCAG 2.1 AA text contrast, so the only
+// adjustments needed are the non-text values that KERN leaves below the 3:1
+// boundary requirement (1.4.11) and the disabled-text color, which the standard
+// exempts but Radzen's WCAG mode raises anyway.
+//
+// Because `_kern-map.scss` routes every derived value through a `--kern-*`
+// custom property, overriding the token here propagates to every border, rule,
+// axis and separator in the theme.
+
+:root,
+.rz-kern {
+  /* Layout border — #a6abc4 is 2.3:1 on white; the KERN focus-ring tone is 5.0:1
+     and keeps the same blue-grey hue. Propagates to card, grid, panel, header,
+     footer, sidebar, menu, listbox, overlay, editor, scheduler, spreadsheet,
+     chart axis, rating and carousel borders. */
+  --kern-color-layout-border: #6e7596;
+  --layout-border: #6e7596;
+
+  /* Disabled text and disabled borders. */
+  --rz-base-500: #605f6b;
+  --rz-text-disabled-color: #605f6b;
+  --rz-border-disabled: var(--kern-metric-border-width-light) solid #8a8993;
+
+  /* Scrollbar thumb — a UI component boundary. */
+  --rz-scrollbar-color: #6e7596;
+
+  /* Progress track against the white page. */
+  --rz-progressbar-background-color: #c0bfc5;
+  --rz-skeleton-background-color: #c0bfc5;
+}

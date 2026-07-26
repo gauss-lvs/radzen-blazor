@@ -1,0 +1,1928 @@
+// KERN → Radzen variable mapping.
+//
+// Assigns every Radzen theme/component SCSS variable from the KERN tokens in
+// `_kern-tokens.scss`. Imported *before* `components`, so these plain assignments
+// win over the `!default` declarations inside the component partials and therefore
+// end up in every `--rz-*` custom property emitted by `_css-variables.scss`.
+//
+// Variables that are not listed here resolve, by design, through a `--rz-*`
+// token that IS mapped below (e.g. `$card-border: var(--rz-border-normal)`), so
+// the whole `--rz-*` surface is KERN-derived.
+
+@use 'sass:map';
+
+// ===========================================================================
+// Theme colors
+// ===========================================================================
+
+$rz-white: $kern-neutral-000;
+$rz-black: $kern-neutral-1000;
+
+// KERN has a single interactive accent ("action"). Radzen splits it into
+// primary (emphasis) and secondary (selection / interactive state); both map to
+// action so selections, checks, links and buttons share the KERN accent.
+$rz-primary:   $kern-color-action-default;
+$rz-secondary: $kern-color-action-default;
+$rz-info:      $kern-color-feedback-info;
+$rz-success:   $kern-color-feedback-success;
+$rz-warning:   $kern-color-feedback-warning;
+$rz-danger:    $kern-color-feedback-danger;
+
+// Neutral surface / text ramp — KERN neutral palette + layout tokens.
+$rz-base:        $kern-neutral-100;
+$rz-base-50:     $kern-neutral-000;                    // #ffffff
+$rz-base-100:    $kern-color-layout-background-hued;   // #f6f6f8
+$rz-base-200:    $kern-neutral-100;                    // #e8e8ea
+$rz-base-300:    $kern-color-layout-border;            // #a6abc4 — `--rz-border-normal`
+$rz-base-400:    $kern-neutral-350;                    // #a7a6ae
+$rz-base-500:    $kern-neutral-450;                    // #8a8993 — disabled text
+$rz-base-600:    $kern-color-layout-text-muted;        // #404464 — tertiary text
+$rz-base-700:    $kern-color-layout-text-muted;        // #404464 — secondary text
+$rz-base-800:    $kern-color-layout-text-default;      // #171a2b — body text
+$rz-base-900:    $kern-color-layout-text-default;      // #171a2b — title text
+$rz-base-light:   $kern-neutral-100;
+$rz-base-lighter: $kern-color-layout-background-hued;
+$rz-base-dark:    $kern-neutral-600;
+$rz-base-darker:  $kern-color-layout-text-default;
+
+// Action shades — KERN state indicators.
+$rz-primary-light:   $kern-color-action-state-indicator-shade-hover;   // #2f57c0
+$rz-primary-lighter: $kern-color-action-state-indicator-tint-active-opacity;
+$rz-primary-dark:    $kern-darkblue-750;                               // #1f3b8f
+$rz-primary-darker:  $kern-darkblue-800;                               // #19327f
+
+$rz-secondary-light:   $kern-color-action-state-indicator-shade-hover;
+$rz-secondary-lighter: $kern-color-action-state-indicator-tint-active-opacity;
+$rz-secondary-dark:    $kern-darkblue-750;
+$rz-secondary-darker:  $kern-darkblue-800;
+
+// Feedback shades — `-lighter` is KERN's feedback *background* so tinted
+// surfaces (alert, badge, notification, hover rows) match KERN exactly.
+$rz-info-light:   $kern-lightblue-550;
+$rz-info-lighter: $kern-color-feedback-info-background;
+$rz-info-dark:    $kern-lightblue-650;
+$rz-info-darker:  $kern-lightblue-700;
+
+$rz-success-light:   $kern-turquoise-600;
+$rz-success-lighter: $kern-color-feedback-success-background;
+$rz-success-dark:    $kern-turquoise-700;
+$rz-success-darker:  $kern-turquoise-750;
+
+$rz-warning-light:   $kern-dataport-red-550;
+$rz-warning-lighter: $kern-color-feedback-warning-background;
+$rz-warning-dark:    $kern-dataport-red-650;
+$rz-warning-darker:  $kern-dataport-red-700;
+
+$rz-danger-light:   #d31410;
+$rz-danger-lighter: $kern-color-feedback-danger-background;
+$rz-danger-dark:    #a20d08;   // KERN button danger hover  (color-mix 85% black)
+$rz-danger-darker:  #980c07;   // KERN button danger active (color-mix 80% black)
+
+// Chart series — KERN has no chart spec; the ramp is built from KERN primitives
+// so charts stay inside the KERN color world (8 hues × 3 tonal bands).
+$rz-series-1:  $kern-darkblue-700;
+$rz-series-2:  $kern-turquoise-500;
+$rz-series-3:  $kern-dataport-red-500;
+$rz-series-4:  $kern-violet-500;
+$rz-series-5:  $kern-green-550;
+$rz-series-6:  $kern-lightblue-600;
+$rz-series-7:  $kern-orange-450;
+$rz-series-8:  $kern-neutral-600;
+$rz-series-9:  $kern-darkblue-450;
+$rz-series-10: $kern-turquoise-350;
+$rz-series-11: $kern-dataport-red-350;
+$rz-series-12: $kern-violet-350;
+$rz-series-13: $kern-green-350;
+$rz-series-14: $kern-lightblue-350;
+$rz-series-15: $kern-orange-300;
+$rz-series-16: $kern-neutral-400;
+$rz-series-17: $kern-darkblue-850;
+$rz-series-18: $kern-turquoise-750;
+$rz-series-19: $kern-dataport-red-700;
+$rz-series-20: $kern-violet-700;
+$rz-series-21: $kern-green-750;
+$rz-series-22: $kern-lightblue-800;
+$rz-series-23: $kern-orange-600;
+$rz-series-24: $kern-neutral-800;
+
+// ===========================================================================
+// Theme constants
+// ===========================================================================
+
+$rz-border-width:  $kern-metric-border-width-light;    // 1px
+$rz-border-radius: $kern-metric-border-radius-default; // 4px
+$rz-root-font-size: 16px;
+$rz-body-font-size: $kern-typography-font-size-static-medium;  // 18px
+$rz-body-line-height: 1.3333;                                  // 24 / 18
+$rz-body-background-color: var(--kern-color-layout-background-default);
+$rz-text-font-family: $kern-typography-font-family-fira-sans, 'Fira Sans Regular',
+  'Noto Sans', 'Noto Sans Regular', 'SF Pro Text', 'Segoe UI', SegoeUI, Roboto,
+  Arial, Helvetica, sans-serif;
+
+// KERN focus ring: 2px white + 4px #6e7596 + 6px #c2c6d6. Only the middle ring can be
+// expressed as an `outline`; `_kern-components.scss` renders the exact three-ring
+// box-shadow on top of this for every focusable KERN control.
+$rz-outline-width:  $kern-metric-border-width-bold;               // 4px
+$rz-outline-offset: $kern-metric-border-width-default;            // 2px
+$rz-outline-color:  var(--kern-color-action-focus-border-inside);   // #6e7596
+
+// ===========================================================================
+// Semantic text / link / background
+// ===========================================================================
+
+$rz-text-title-color:     var(--kern-color-layout-text-default);
+$rz-text-color:           var(--kern-color-layout-text-default);
+$rz-text-secondary-color: var(--kern-color-layout-text-muted);
+$rz-text-tertiary-color:  var(--kern-color-layout-text-muted);
+$rz-text-disabled-color:  var(--rz-base-500);
+$rz-text-contrast-color:  var(--kern-color-layout-text-inverse);
+
+// KERN link: action color, always underlined, 1px thickness, 2px offset,
+// 3px on hover/active, visited purple. Thickness/offset live in the components partial.
+$rz-link-color:                  var(--kern-color-action-default);
+$rz-link-text-decoration:        underline;
+$rz-link-hover-color:            var(--kern-color-action-default);
+$rz-link-hover-text-decoration:  underline;
+$rz-link-focus-outline:          none;
+$rz-link-focus-outline-offset:   0;
+
+$rz-base-background-color: var(--kern-color-layout-background-default);
+
+$rz-text-selection-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$rz-text-selection-color: inherit;
+
+// ===========================================================================
+// Border / outline / radius / shadow / motion
+// ===========================================================================
+
+$rz-border-normal:   var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$rz-border-hover:    var(--kern-metric-border-width-light) solid var(--kern-color-form-input-border);
+$rz-border-focus:    var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border);
+$rz-border-disabled: var(--kern-metric-border-width-light) solid var(--kern-neutral-150);
+
+$rz-border-radius-0:  $kern-metric-border-radius-none;    // 0
+$rz-border-radius-1:  $kern-metric-border-radius-small;   // 2px
+$rz-border-radius-2:  $kern-metric-border-radius-default; // 4px
+$rz-border-radius-3:  $kern-6;                            // 6px
+$rz-border-radius-4:  $kern-metric-border-radius-large;   // 8px
+$rz-border-radius-5:  $kern-12;
+$rz-border-radius-6:  $kern-16;
+$rz-border-radius-7:  $kern-20;
+$rz-border-radius-8:  $kern-24;
+$rz-border-radius-9:  $kern-32;
+$rz-border-radius-10: $kern-48;
+
+$rz-outline-normal: none;
+$rz-outline-focus:  var(--rz-outline-width) solid var(--rz-outline-color);
+
+// KERN is a low-elevation system: surfaces carry a 1px border, not a shadow.
+// The ramp interpolates between KERN's two specified shadows — the suggestion
+// popup (level 3) and the modal / drawer (level 9).
+$rz-shadow-0:  none;
+$rz-shadow-1:  0 1px 2px rgba(0, 0, 0, 0.1);
+$rz-shadow-2:  0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.1);
+$rz-shadow-3:  0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.1);
+$rz-shadow-4:  0 6px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.1);
+$rz-shadow-5:  0 8px 16px rgba(0, 0, 0, 0.14), 0 2px 4px rgba(0, 0, 0, 0.1);
+$rz-shadow-6:  0 12px 24px rgba(0, 0, 0, 0.16), 0 4px 8px rgba(0, 0, 0, 0.1);
+$rz-shadow-7:  0 16px 32px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
+$rz-shadow-8:  0 20px 48px rgba(0, 0, 0, 0.24), 0 6px 12px rgba(0, 0, 0, 0.1);
+$rz-shadow-9:  0 24px 60px rgba(0, 0, 0, 0.3), 0 8px 16px 0 rgba(0, 0, 0, 0.1);
+$rz-shadow-10: 0 32px 72px rgba(0, 0, 0, 0.32), 0 8px 16px 0 rgba(0, 0, 0, 0.1);
+
+// KERN transition: 80ms cubic-bezier(0.65, 0, 0.35, 1); expanders 200ms.
+$rz-transition:          80ms cubic-bezier(0.65, 0, 0.35, 1);
+$rz-transition-all:      all 80ms cubic-bezier(0.65, 0, 0.35, 1);
+$rz-expander-transition: 200ms cubic-bezier(0.65, 0, 0.35, 1);
+
+$rz-easing-emphasized:            cubic-bezier(0.65, 0, 0.35, 1);
+$rz-easing-emphasized-decelerate: cubic-bezier(0.65, 0, 0.35, 1);
+$rz-easing-emphasized-accelerate: cubic-bezier(0.65, 0, 0.35, 1);
+$rz-easing-spring:                cubic-bezier(0.65, 0, 0.35, 1);
+$rz-duration-short:  80ms;
+$rz-duration-medium: 200ms;
+$rz-duration-long:   300ms;
+$rz-ripple-duration: 0s;   // KERN has no ripple
+
+// Layout gaps — KERN space scale.
+$rz-gap:     $kern-metric-space-default;   // 16px
+$rz-row-gap: $kern-metric-space-default;
+
+// ===========================================================================
+// Icons  (KERN uses a 24px material-symbols subset)
+// ===========================================================================
+
+$rz-icon-font-family: 'Material Symbols';
+$rz-icon-size:        $kern-metric-dimension-default;   // 24px
+$rz-icon-fill:        0;
+$rz-icon-weight:      $kern-typography-font-weight-regular;
+$rz-icon-grade:       0;
+$rz-icon-optical-size: 24;
+
+// ===========================================================================
+// Typography  (mixins/typography.scss + kern/utilities/_mixins.scss)
+// ===========================================================================
+
+$headings: (
+  h1: (font-size: var(--kern-typography-font-size-adaptive-x-large), line-height: var(--kern-typography-line-height-adaptive-x-large), font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  h2: (font-size: var(--kern-typography-font-size-adaptive-large),   line-height: var(--kern-typography-line-height-adaptive-large),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  h3: (font-size: var(--kern-typography-font-size-adaptive-medium),  line-height: var(--kern-typography-line-height-adaptive-medium),  font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h4: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h5: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h6: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-regular),   letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small))
+);
+
+$headings-thin: (
+  h1: (font-size: var(--kern-typography-font-size-adaptive-x-large), font-weight: var(--kern-typography-font-weight-regular)),
+  h2: (font-size: var(--kern-typography-font-size-adaptive-large),   font-weight: var(--kern-typography-font-weight-regular)),
+  h3: (font-size: var(--kern-typography-font-size-adaptive-medium),  font-weight: var(--kern-typography-font-weight-regular)),
+  h4: (font-size: var(--kern-typography-font-size-static-medium),    font-weight: var(--kern-typography-font-weight-regular)),
+  h5: (font-size: var(--kern-typography-font-size-static-medium),    font-weight: var(--kern-typography-font-weight-regular)),
+  h6: (font-size: var(--kern-typography-font-size-static-small),     font-weight: var(--kern-typography-font-weight-regular))
+);
+
+// Radzen's `.rz-text-*` scale mapped onto KERN's display / heading / title /
+// body / preline / subline / label styles, including the KERN baseline padding.
+$text: (
+  display-h1: (font-size: var(--kern-typography-font-size-adaptive-2x-large), line-height: var(--kern-typography-line-height-adaptive-2x-large), font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  display-h2: (font-size: var(--kern-typography-font-size-adaptive-x-large),  line-height: var(--kern-typography-line-height-adaptive-x-large),  font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  display-h3: (font-size: var(--kern-typography-font-size-adaptive-large),    line-height: var(--kern-typography-line-height-adaptive-large),    font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  display-h4: (font-size: var(--kern-typography-font-size-adaptive-medium),   line-height: var(--kern-typography-line-height-adaptive-medium),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  display-h5: (font-size: var(--kern-typography-font-size-static-large),      line-height: var(--kern-typography-line-height-static-large),      font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  display-h6: (font-size: var(--kern-typography-font-size-static-medium),     line-height: var(--kern-typography-line-height-static-medium),     font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h1: (font-size: var(--kern-typography-font-size-adaptive-x-large), line-height: var(--kern-typography-line-height-adaptive-x-large), font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  h2: (font-size: var(--kern-typography-font-size-adaptive-large),   line-height: var(--kern-typography-line-height-adaptive-large),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-default)),
+  h3: (font-size: var(--kern-typography-font-size-adaptive-medium),  line-height: var(--kern-typography-line-height-adaptive-medium),  font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h4: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h5: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-medium),    letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  h6: (font-size: var(--kern-typography-font-size-static-medium),    line-height: var(--kern-typography-line-height-static-medium),    font-weight: var(--kern-typography-font-weight-regular),   letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  // KERN title-default / title-small
+  subtitle1: (font-size: var(--kern-typography-font-size-adaptive-medium), line-height: var(--kern-typography-line-height-adaptive-medium), font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  subtitle2: (font-size: var(--kern-typography-font-size-static-medium),   line-height: var(--kern-typography-line-height-static-medium),   font-weight: var(--kern-typography-font-weight-semi-bold), letter-spacing: 0, color: var(--rz-text-title-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  // KERN body-default / body-small
+  body1: (font-size: var(--kern-typography-font-size-static-medium), line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-regular), letter-spacing: 0, color: var(--rz-text-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  body2: (font-size: var(--kern-typography-font-size-static-small),  line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-regular), letter-spacing: 0, color: var(--rz-text-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  // KERN label-default
+  button: (font-size: var(--kern-typography-font-size-static-medium), line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-medium), letter-spacing: 0, color: var(--rz-text-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  // KERN preline-small / subline-small (muted)
+  caption:  (font-size: var(--kern-typography-font-size-static-small), line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-regular), letter-spacing: 0, color: var(--rz-text-secondary-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small)),
+  overline: (font-size: var(--kern-typography-font-size-static-small), line-height: var(--kern-typography-line-height-static-medium), font-weight: var(--kern-typography-font-weight-medium),  letter-spacing: 0, text-transform: none, color: var(--rz-text-secondary-color), margin-block-start: 0, margin-block-end: var(--kern-metric-space-small))
+);
+
+// ===========================================================================
+// Layout body / layout
+// ===========================================================================
+
+$layout-body-margin: 0;
+$layout-body-padding: $kern-metric-space-default;
+$layout-body-border-radius: $kern-metric-border-radius-none;
+$layout-body-background-color: transparent;
+$layout-background-color: var(--rz-body-background-color);
+
+// ===========================================================================
+// Accordion  (components/accordion.scss)
+// 1px top+bottom rule, action-colored 21px semi-bold header, 16px/4px padding.
+// ===========================================================================
+
+$accordion-item-padding-block:  $kern-metric-space-default;
+$accordion-item-padding-inline: $kern-metric-space-x-small;
+$accordion-item-margin: 0;
+$accordion-item-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$accordion-item-background-color: transparent;
+$accordion-item-color: var(--kern-color-action-default);
+$accordion-item-focus-outline: none;
+$accordion-item-focus-outline-offset: 0;
+$accordion-item-line-height: $kern-typography-line-height-adaptive-medium;   // 24px
+$accordion-item-font-size:   $kern-typography-font-size-adaptive-medium;     // 21px
+$accordion-item-font-weight: $kern-typography-font-weight-semi-bold;
+$accordion-icon-width:  $kern-metric-dimension-default;   // 24px
+$accordion-icon-height: $kern-metric-dimension-default;
+$accordion-icon-font-size: $kern-metric-dimension-default;
+$accordion-icon-margin-inline: 0 $kern-metric-space-small;
+$accordion-toggle-icon-margin-inline: 0 0;
+$accordion-toggle-icon-order: 1;    // KERN puts the chevron at the end (row-reverse)
+$accordion-selected-color: var(--kern-color-action-default);
+$accordion-hover-color:    var(--kern-color-action-default);
+$accordion-content-padding-block:  $kern-metric-baseline-body-default-padding-top $kern-metric-space-large;
+$accordion-content-padding-inline: $kern-metric-space-x-small;
+$accordion-content-font-size: $kern-typography-font-size-static-medium;
+$accordion-border-radius: $kern-metric-border-radius-none;
+$accordion-shadow: none;
+
+// ===========================================================================
+// Alert  (mixins/kol-alert.scss — "card" variant)
+// 2px severity border, tinted header strip, white content, 40px icon.
+// ===========================================================================
+
+$alert-margin:  $kern-metric-space-default 0;
+$alert-padding: $kern-metric-space-default;
+$alert-gap:     $kern-metric-space-small;
+$alert-color: var(--rz-text-color);
+$alert-background-color: var(--kern-color-layout-background-default);
+$alert-box-shadow: none;
+$alert-border-radius: $kern-metric-border-radius-default;
+$alert-message-margin: $kern-metric-space-small 0;
+$alert-title-color: var(--rz-text-title-color);
+$alert-icon-color: var(--rz-alert-color);
+$alert-icon-size: $kern-component-alert-icon-size-md;   // 40px
+$alert-icon-margin: 0;
+
+$alert-sizes: (
+  lg: (gap: $kern-metric-space-large,    margin: $kern-metric-space-large 0,   padding: $kern-metric-space-large,    message-margin: $kern-metric-space-small 0),
+  md: (gap: $kern-metric-space-small,    margin: $kern-metric-space-default 0, padding: $kern-metric-space-default,  message-margin: $kern-metric-space-small 0),
+  sm: (gap: $kern-metric-space-small,    margin: $kern-metric-space-small 0,   padding: $kern-metric-space-small,    message-margin: $kern-metric-space-2x-small 0),
+  xs: (gap: $kern-metric-space-x-small,  margin: $kern-metric-space-x-small 0, padding: $kern-metric-space-x-small,  message-margin: 0)
+);
+
+// ===========================================================================
+// Badge  (components/badge.scss)
+// 4px radius, 32px min-height, 1px currentColor border, 16px/500/24px label.
+// ===========================================================================
+
+$badge-border-radius: $kern-metric-border-radius-default;
+$badge-pill-border-radius: $kern-metric-border-radius-large;
+$badge-padding:      $kern-metric-space-2x-small $kern-metric-space-default $kern-metric-space-2x-small $kern-12;
+$badge-pill-padding: $kern-metric-space-2x-small $kern-metric-space-default;
+$badge-font-size:   $kern-typography-font-size-static-small;      // 16px
+$badge-font-weight: $kern-typography-font-weight-medium;          // 500
+$badge-line-height: $kern-typography-line-height-static-medium;   // 24px
+$badge-text-transform: none;
+$badge-letter-spacing: 0;
+
+// ===========================================================================
+// Button  (mixins/button.scss)
+// 48px min box, 8px/16px padding, 1px border, 4px radius, 18px/500 label,
+// 24px icon, 8px gap, disabled opacity 0.4, no shadows or gradients.
+// ===========================================================================
+
+$button-base-background-color: var(--rz-primary);
+$button-base-color: var(--rz-on-primary);
+$button-base-outlined-border-color: var(--rz-primary);
+$button-background-size: auto;
+$button-border-radius: $kern-metric-border-radius-default;
+$button-shadow: none;
+$button-transition: var(--rz-transition-all), width 0, height 0;
+$button-line-height: $kern-typography-line-height-static-medium;
+$button-vertical-align: top;
+$button-hover-shadow: none;
+$button-hover-gradient: none;
+$button-hover-background-size: auto;
+// Radzen draws the filled-button focus state through this token with a
+// specificity the component layer cannot outrank, so the KERN ring goes here.
+$button-focus-shadow: var(--kern-focus-ring);
+$button-focus-gradient: none;
+$button-focus-background-size: auto;
+$button-focus-outline: none;           // replaced by the KERN three-ring focus
+$button-focus-outline-offset: 0;
+$button-active-shadow: none;
+$button-active-gradient: none;
+$button-active-background-size: auto;
+$button-disabled-opacity: $kern-color-action-state-opacity-disabled;   // 0.4
+$button-empty-opacity: 1;
+
+$button-size-xs: $kern-metric-dimension-large;    // 32px
+$button-size-sm: $kern-40;                        // 40px
+$button-size-md: $kern-metric-dimension-x-large;  // 48px
+$button-size-lg: $kern-metric-dimension-2x-large; // 56px
+
+$button-sizes: (
+  lg: (
+    font-size: $kern-typography-font-size-static-large,
+    padding: $kern-metric-space-small $kern-metric-space-large,
+    line-height: $kern-typography-line-height-static-large,
+    height: auto,
+    min-height: var(--rz-button-size-lg),
+    min-width: var(--rz-button-size-lg),
+    font-weight: $kern-typography-font-weight-medium,
+    border-radius: var(--rz-border-radius),
+    gap: $kern-metric-space-small,
+    icon: (font-size: $kern-metric-dimension-large, height: $kern-metric-dimension-large, line-height: $kern-metric-dimension-large, width: $kern-metric-dimension-large),
+    text-with-icon-padding: $kern-metric-space-small $kern-metric-space-large,
+    icon-only-padding: $kern-metric-space-small
+  ),
+  md: (
+    font-size: $kern-typography-font-size-static-medium,
+    padding: $kern-metric-space-small $kern-metric-space-default,
+    line-height: $kern-typography-line-height-static-medium,
+    height: auto,
+    min-height: var(--rz-button-size-md),
+    min-width: var(--rz-button-size-md),
+    font-weight: $kern-typography-font-weight-medium,
+    gap: $kern-metric-space-small,
+    icon: (font-size: $kern-metric-dimension-default, line-height: $kern-metric-dimension-default, width: $kern-metric-dimension-default, height: $kern-metric-dimension-default),
+    text-with-icon-padding: $kern-metric-space-small $kern-metric-space-default,
+    icon-only-padding: $kern-metric-space-small
+  ),
+  sm: (
+    font-size: $kern-typography-font-size-static-small,
+    padding: $kern-metric-space-small $kern-12,
+    line-height: $kern-typography-line-height-static-medium,
+    height: auto,
+    min-height: var(--rz-button-size-sm),
+    min-width: var(--rz-button-size-sm),
+    font-weight: $kern-typography-font-weight-medium,
+    gap: $kern-metric-space-x-small,
+    icon: (font-size: $kern-metric-dimension-small, line-height: $kern-metric-dimension-small, width: $kern-metric-dimension-small, height: $kern-metric-dimension-small),
+    text-with-icon-padding: $kern-metric-space-small $kern-12,
+    icon-only-padding: $kern-metric-space-small
+  ),
+  xs: (
+    font-size: $kern-typography-font-size-static-small,
+    padding: $kern-metric-space-x-small $kern-metric-space-small,
+    line-height: $kern-typography-line-height-static-medium,
+    height: auto,
+    min-height: var(--rz-button-size-xs),
+    min-width: var(--rz-button-size-xs),
+    font-weight: $kern-typography-font-weight-medium,
+    gap: $kern-metric-space-x-small,
+    icon: (font-size: $kern-metric-dimension-small, line-height: $kern-metric-dimension-small, width: $kern-metric-dimension-small, height: $kern-metric-dimension-small),
+    text-with-icon-padding: $kern-metric-space-x-small $kern-metric-space-small,
+    icon-only-padding: $kern-metric-space-x-small
+  )
+);
+
+// ===========================================================================
+// Card  (mixins/card.scss) — 1px layout border, 4px radius, no shadow.
+// ===========================================================================
+
+$card-padding: $kern-metric-space-large;
+$card-background-color: var(--kern-color-layout-background-default);
+$card-flat-background-color: var(--kern-color-layout-background-hued);
+$card-shadow: none;
+$card-border: var(--kern-metric-border-width-light) solid var(--layout-border);
+$card-border-radius: $kern-metric-border-radius-default;
+$card-heading-margin-bottom: $kern-metric-space-default;
+
+// ===========================================================================
+// Carousel
+// ===========================================================================
+
+$rz-carousel-pager-button-width:  $kern-12;
+$rz-carousel-pager-button-height: $kern-12;
+$rz-carousel-pager-button-border: var(--kern-metric-border-width-default) solid var(--kern-color-layout-border);
+$rz-carousel-pager-button-border-radius: $kern-metric-border-radius-circle;
+$rz-carousel-pager-button-background-color: var(--kern-color-layout-border);
+$rz-carousel-pager-button-color: var(--rz-on-base);
+$rz-carousel-pager-button-hover-border: var(--kern-metric-border-width-default) solid var(--kern-color-action-default);
+$rz-carousel-pager-button-hover-background-color: transparent;
+$rz-carousel-pager-button-hover-color: var(--kern-color-action-default);
+$rz-carousel-pager-button-active-width:  $kern-12;
+$rz-carousel-pager-button-active-height: $kern-12;
+$rz-carousel-pager-button-active-border: var(--kern-metric-border-width-default) solid var(--kern-color-action-default);
+$rz-carousel-pager-button-active-background-color: var(--kern-color-action-default);
+$rz-carousel-pager-button-active-color: var(--kern-color-action-on-default);
+$rz-carousel-pager-overlay-opacity: 0.72;   // KERN overlay opacity
+$rz-carousel-pager-gap: $kern-metric-space-small;
+$rz-carousel-pager-height: $kern-metric-dimension-x-large;
+$rz-carousel-prev-next-button-border-radius: var(--rz-button-border-radius);
+$rz-carousel-prev-next-button-inset: $kern-metric-space-default;
+$rz-carousel-border-radius: var(--rz-card-border-radius);
+
+// ===========================================================================
+// Chart
+// ===========================================================================
+
+$chart-axis-color: var(--kern-color-layout-border);
+$chart-grid-line-color: color-mix(in srgb, var(--rz-chart-axis-color) 50%, transparent);
+$chart-area-opacity: 0.6;
+$chart-axis-label-color: var(--rz-text-secondary-color);
+$chart-axis-font-size:   $kern-typography-font-size-static-small;
+$chart-legend-font-size: $kern-typography-font-size-static-small;
+$chart-legend-focus-outline: none;
+$chart-legend-focus-outline-offset: 0;
+$chart-tooltip-background: var(--kern-color-layout-background-default);
+$chart-tooltip-color: var(--kern-color-layout-text-default);
+$chart-tooltip-border-radius: var(--rz-tooltip-border-radius);
+$chart-tooltip-font-size: var(--rz-tooltip-font-size);
+$chart-tooltip-item-border-radius: $kern-metric-border-radius-default;
+$chart-tooltip-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$chart-marker-stroke: var(--kern-color-layout-background-default);
+
+// ===========================================================================
+// Range navigator
+// ===========================================================================
+
+$range-nav-height: $kern-80;
+$range-nav-compact-height: $kern-metric-space-default;
+$range-nav-border-radius: $kern-metric-border-radius-default;
+$range-nav-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$range-nav-shade-background-color: var(--kern-color-layout-background-default);
+$range-nav-shade-opacity: 0.7;
+$range-nav-compact-background-color: var(--kern-color-layout-background-hued);
+$range-nav-compact-border-radius: $kern-metric-border-radius-default;
+$range-nav-compact-window-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$range-nav-handle-width: $kern-metric-space-small;
+$range-nav-handle-height: $kern-metric-dimension-default;
+$range-nav-handle-border-radius: $kern-metric-border-radius-small;
+$range-nav-handle-background-color: var(--kern-color-action-default);
+$range-nav-handle-hover-background-color: var(--kern-color-action-state-indicator-shade-hover);
+$range-nav-handle-shadow: none;
+$range-nav-handle-hover-shadow: none;
+
+// ===========================================================================
+// Chat
+// ===========================================================================
+
+$rz-chat-background-color: var(--kern-color-layout-background-default);
+$rz-chat-border: var(--rz-border-normal);
+$rz-chat-border-radius: $kern-metric-border-radius-default;
+$rz-chat-header-padding-block:  $kern-metric-space-small;
+$rz-chat-header-padding-inline: $kern-metric-space-default $kern-metric-space-small;
+$rz-chat-header-background-color: var(--kern-color-layout-background-hued);
+$rz-chat-header-bottom-border: var(--rz-border-normal);
+$rz-chat-header-shadow: none;
+$rz-chat-header-title-font-size:   $kern-typography-font-size-adaptive-medium;
+$rz-chat-header-title-font-weight: $kern-typography-font-weight-semi-bold;
+$rz-chat-message-user-color: var(--rz-on-primary-lighter);
+$rz-chat-message-user-background-color: var(--rz-primary-lighter);
+$rz-chat-message-assistant-color: var(--kern-color-layout-text-default);
+$rz-chat-message-assistant-background-color: var(--kern-color-layout-background-hued);
+$rz-chat-message-text-padding: $kern-metric-space-small $kern-metric-space-default;
+$rz-chat-message-text-border-radius: $kern-metric-border-radius-default;
+$rz-chat-avatar-size: $kern-metric-dimension-large;
+$rz-chat-avatar-border-radius: $kern-metric-border-radius-circle;
+$rz-chat-avatar-font-size:   $kern-typography-font-size-static-small;
+$rz-chat-avatar-font-weight: $kern-typography-font-weight-semi-bold;
+$rz-chat-message-info-padding: 0;
+$rz-chat-message-callout-radius: $kern-metric-border-radius-small;
+
+// ===========================================================================
+// Checkbox  (mixins/checkbox.scss)
+// 32px box, 2px radius, 2px dark border on the input surface, 28px dark check,
+// hover 4px border, focus 4px ring. NOT a color-filled box.
+// ===========================================================================
+
+$checkbox-width:  $kern-metric-dimension-large;   // 32px
+$checkbox-height: $kern-metric-dimension-large;
+$checkbox-border-radius: $kern-metric-border-radius-small;
+$checkbox-border-width:  $kern-metric-border-width-default;
+$checkbox-label-margin-block: 0;
+$checkbox-label-margin-inline: $kern-metric-space-small $kern-metric-space-default;
+$checkbox-margin-block: 0;
+$checkbox-margin-inline: 0;
+$checkbox-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$checkbox-focus-outline-offset: 0;
+$checkbox-checked-background-color: var(--kern-color-form-input-background);
+$checkbox-checked-hover-background-color: var(--kern-color-form-input-background);
+$checkbox-checked-disabled-background-color: var(--kern-color-form-input-background);
+$checkbox-checked-color: var(--kern-color-form-input-border);
+$checkbox-checked-shadow: none;
+$checkbox-checked-border: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border);
+$checkbox-checked-hover-border: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$checkbox-checked-disabled-border: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border);
+$checkbox-checked-icon-background-color: transparent;
+$checkbox-checked-icon-border-radius: 0;
+$checkbox-icon-width:  $kern-28-icon;
+$checkbox-icon-height: $kern-28-icon;
+$checkbox-icon-font-size: $kern-28-icon;
+$checkbox-tri-icon-width:  $kern-28-icon;
+$checkbox-tri-icon-height: $kern-28-icon;
+$checkbox-tri-icon-font-size: $kern-28-icon;
+
+// ===========================================================================
+// Chip
+// ===========================================================================
+
+$chip-background-color: var(--kern-color-layout-background-hued);
+$chip-color: var(--kern-color-layout-text-default);
+$chip-padding-block:  $kern-metric-space-x-small;
+$chip-padding-inline: $kern-12;
+$chip-gap: $kern-metric-space-small;
+$chip-border-radius: $kern-metric-border-radius-default;
+$chip-font-size: $kern-typography-font-size-static-small;
+$chip-icon-size: $kern-metric-dimension-default;
+$chip-font-weight: $kern-typography-font-weight-medium;
+$chip-border-width: $kern-metric-border-width-light;
+$chip-selected-outline: none;
+$chip-selected-outline-offset: 0;
+$chip-disabled-opacity: $kern-color-action-state-opacity-disabled;
+$chip-sm-font-size: $kern-typography-font-size-static-small;
+$chip-sm-icon-size: $kern-metric-dimension-small;
+$chip-sm-padding-block:  $kern-metric-space-2x-small;
+$chip-sm-padding-inline: $kern-metric-space-small;
+$chip-sm-gap: $kern-metric-space-x-small;
+$chip-xs-font-size: $kern-font-size-14;
+$chip-xs-icon-size: $kern-metric-space-default;
+$chip-xs-padding-block:  $kern-metric-space-2x-small;
+$chip-xs-padding-inline: $kern-metric-space-small;
+$chip-xs-gap: $kern-metric-space-x-small;
+$chip-list-gap: $kern-metric-space-small;
+
+// ===========================================================================
+// ColorPicker
+// ===========================================================================
+
+$colorpicker-panel-border: var(--rz-border-normal);
+$colorpicker-panel-background-color: var(--kern-color-layout-background-default);
+$colorpicker-panel-shadow: var(--rz-shadow-3);
+$colorpicker-panel-padding: $kern-metric-space-default;
+$colorpicker-panel-max-width: $kern-384;
+$colorpicker-saturation-height: $kern-192;
+$colorpicker-focus-outline: none;
+$colorpicker-focus-outline-offset: 0;
+$colorpicker-value-border-radius: $kern-metric-border-radius-small;
+$colorpicker-value-size-xs: $kern-metric-space-default;
+$colorpicker-value-size-sm: $kern-metric-dimension-small;
+$colorpicker-value-size-md: $kern-metric-dimension-default;
+$colorpicker-value-size-lg: $kern-metric-dimension-default;
+$colorpicker-trigger-icon-size-xs: $kern-metric-dimension-small;
+$colorpicker-trigger-icon-size-sm: $kern-metric-dimension-small;
+$colorpicker-trigger-icon-size-md: $kern-metric-dimension-default;
+$colorpicker-trigger-icon-size-lg: $kern-metric-dimension-default;
+$colorpicker-items-gap: $kern-metric-space-small;
+$colorpicker-item-size: $kern-metric-dimension-default;
+$colorpicker-item-border-radius: $kern-metric-border-radius-small;
+$colorpicker-item-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
+$colorpicker-item-selected-transform: scale(1.25);
+$colorpicker-handle-size: $kern-12;
+$colorpicker-handle-border: var(--kern-metric-border-width-default) solid var(--kern-neutral-000);
+$colorpicker-handle-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+$colorpicker-hex-input-padding:  $kern-metric-space-x-small $kern-metric-space-small;
+$colorpicker-hex-input-height:   $kern-metric-dimension-large;
+$colorpicker-rgba-input-padding: $kern-metric-space-x-small $kern-metric-space-small;
+$colorpicker-rgba-input-height:  $kern-metric-dimension-large;
+$colorpicker-input-labels-color: var(--rz-text-secondary-color);
+
+// ===========================================================================
+// DataFilter
+// ===========================================================================
+
+$datafilter-item-padding-inline-start: $kern-metric-space-x-large;
+$datafilter-item-padding-block: $kern-metric-space-x-small;
+$datafilter-item-indentation: $kern-metric-space-x-small;
+$datafilter-item-path-width: $kern-metric-space-default;
+$datafilter-item-path-height: calc(var(--kern-metric-space-x-small) + (var(--rz-input-height) / 2));
+$datafilter-item-path-border: var(--rz-border-normal);
+$datafilter-item-path-border-radius: $kern-metric-border-radius-default;
+
+// ===========================================================================
+// DataList
+// ===========================================================================
+
+$datalist-background-color: var(--kern-color-layout-background-default);
+$datalist-shadow: none;
+$datalist-padding: $kern-metric-space-small;
+$datalist-border: var(--rz-border-normal);
+$datalist-border-radius: $kern-metric-border-radius-default;
+$datalist-item-shadow: none;
+$datalist-item-border: var(--rz-border-normal);
+$datalist-item-margin-block:  $kern-metric-space-small;
+$datalist-item-margin-inline: $kern-metric-space-small;
+$datalist-item-padding: $kern-metric-space-default;
+$datalist-item-background-color: var(--kern-color-layout-background-default);
+
+// ===========================================================================
+// DatePicker / TimePicker
+// ===========================================================================
+
+$datepicker-trigger-icon-size-xs: $kern-metric-dimension-small;
+$datepicker-trigger-icon-size-sm: $kern-metric-dimension-default;
+$datepicker-trigger-icon-size-md: $kern-metric-dimension-default;
+$datepicker-trigger-icon-size-lg: $kern-metric-dimension-default;
+$datepicker-line-height: $kern-typography-line-height-static-medium;
+$datepicker-trigger-icon-color: var(--kern-color-action-default);
+$datepicker-trigger-icon-hover-color: var(--kern-color-action-state-indicator-shade-hover);
+$datepicker-popup-width: $kern-384;
+$datepicker-panel-border: var(--rz-border-normal);
+$datepicker-panel-background-color: var(--kern-color-layout-background-default);
+$datepicker-panel-shadow: var(--rz-shadow-3);
+$datepicker-panel-margin: $kern-metric-space-x-small 0 0;
+$datepicker-header-color: var(--kern-color-layout-text-default);
+$datepicker-header-background-color: var(--kern-color-layout-background-hued);
+$datepicker-header-padding-block:  $kern-metric-space-small;
+$datepicker-header-padding-inline: $kern-metric-space-small;
+$datepicker-header-border: none;
+$datepicker-footer-padding: 0 $kern-metric-space-default;
+$datepicker-footer-line-height: $kern-metric-dimension-x-large;
+$datepicker-prev-next-icon-size: $kern-metric-dimension-default;
+$datepicker-prev-next-button-border-radius: $kern-metric-border-radius-default;
+$datepicker-calendar-padding-block:  $kern-metric-space-small;
+$datepicker-calendar-padding-inline: $kern-metric-space-small;
+$datepicker-calendar-item-padding: $kern-metric-space-small;
+$datepicker-calendar-header-font-size: $kern-typography-font-size-static-small;
+$datepicker-calendar-header-text-transform: none;
+$datepicker-calendar-header-color: var(--rz-text-secondary-color);
+$datepicker-calendar-font-size: $kern-typography-font-size-static-small;
+$datepicker-calendar-color: var(--kern-color-layout-text-default);
+$datepicker-calendar-hover-color: var(--kern-color-layout-text-default);
+$datepicker-calendar-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$datepicker-calendar-selected-color: var(--kern-color-action-on-default);
+$datepicker-calendar-selected-background-color: var(--kern-color-action-default);
+$datepicker-calendar-selected-hover-color: var(--kern-color-action-on-default);
+$datepicker-calendar-selected-hover-background-color: var(--kern-color-action-state-indicator-shade-hover);
+$datepicker-calendar-border: none;
+$datepicker-calendar-border-radius: $kern-metric-border-radius-default;
+$datepicker-calendar-transition: var(--rz-transition-all);
+$datepicker-calendar-today-color: var(--kern-color-action-default);
+$datepicker-calendar-today-background-color: transparent;
+$datepicker-calendar-today-box-shadow: inset 0 0 0 var(--kern-metric-border-width-default) var(--kern-color-action-default);
+$datepicker-calendar-today-border-radius: $kern-metric-border-radius-default;
+$datepicker-month-dropdown-width: $kern-160;
+$datepicker-year-dropdown-width:  $kern-96;
+$datepicker-focus-outline: none;
+$datepicker-focus-outline-offset: 0;
+
+$timepicker-color: var(--kern-color-layout-text-default);
+$timepicker-background-color: var(--kern-color-layout-background-hued);
+$timepicker-separator-color: var(--kern-color-layout-text-default);
+$timepicker-padding-block:  $kern-metric-space-small;
+$timepicker-padding-inline: $kern-metric-space-small;
+$timepicker-hour-padding: $kern-metric-space-small;
+$timepicker-button-color: var(--kern-color-action-on-default);
+$timepicker-button-background-color: var(--kern-color-action-default);
+$timepicker-button-width:  $kern-metric-space-default;
+$timepicker-button-height: $kern-metric-space-default;
+$timepicker-button-border-radius: $kern-metric-border-radius-small;
+$timepicker-button-padding: $kern-metric-space-small $kern-metric-space-default !important;
+$timepicker-gap: $kern-metric-space-small;
+$timepicker-separator-margin: 0 $kern-metric-space-small;
+$timepicker-border: none;
+
+// ===========================================================================
+// Dialog  (components/modal.scss)
+// 8px radius, KERN modal shadow, 72% black backdrop, title = KERN h3.
+// ===========================================================================
+
+$dialog-background-color: var(--kern-color-layout-background-default);
+$dialog-shadow: var(--rz-shadow-9);
+$dialog-title-background-color: var(--kern-color-layout-background-default);
+$dialog-title-border: none;
+$dialog-title-padding-block:  $kern-metric-space-large $kern-metric-space-small;
+$dialog-title-padding-inline: $kern-metric-space-large;
+$dialog-title-font-size:   $kern-typography-font-size-adaptive-medium;    // 21/24px
+$dialog-title-line-height: $kern-typography-line-height-adaptive-medium;
+$dialog-title-font-weight: $kern-typography-font-weight-semi-bold;
+$dialog-title-letter-spacing: 0;
+$dialog-title-color: var(--rz-text-title-color);
+$dialog-close-font-size: $kern-metric-dimension-default;
+$dialog-close-color: var(--kern-color-action-default);
+$dialog-close-hover-color: var(--kern-color-action-state-indicator-shade-hover);
+$dialog-close-vertical-align: middle;
+$dialog-content-padding: $kern-metric-space-small $kern-metric-space-large $kern-metric-space-large;
+$dialog-mask-background-color: var(--kern-neutral-1000);
+$dialog-border-radius: $kern-metric-border-radius-large;
+$dialog-mask-zindex: 1000;
+$dialog-zindex: 1001;
+$dialog-transition: 200ms cubic-bezier(0.65, 0, 0.35, 1);
+$dialog-resize-bar-color: var(--rz-splitter-bar-color);
+$dialog-resize-bar-background-color: var(--rz-splitter-bar-background-color);
+$dialog-resize-bar-hover-opacity: var(--rz-splitter-bar-hover-opacity);
+$dialog-resize-bar-thickness: $kern-metric-space-small;
+$dialog-resize-bar-length: 100%;
+$dialog-resize-bar-handle-size: $kern-metric-space-default;
+
+// ===========================================================================
+// DropDown  (components/select.scss + custom-suggestions-*)
+// Filled surface + 2px underline (inherits input), action chevron,
+// 40px options with 8px/16px padding and KERN state tints.
+// ===========================================================================
+
+$dropdown-trigger-icon-width:  $kern-metric-dimension-default;
+$dropdown-trigger-icon-height: $kern-metric-dimension-default;
+$dropdown-trigger-icon-margin-block: 0;
+$dropdown-trigger-icon-margin-inline: 0 $kern-metric-space-default;
+$dropdown-horizontal-padding: $kern-metric-space-default;
+$dropdown-panel-padding: $kern-metric-space-x-small 0;
+$dropdown-items-margin: 0;
+$dropdown-items-padding: 0;
+$dropdown-item-padding: $kern-metric-space-small $kern-metric-space-default;
+$dropdown-item-font-size: $kern-typography-font-size-static-medium;
+$dropdown-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$dropdown-item-hover-color: var(--kern-color-layout-text-default);
+$dropdown-item-selected-background-color: var(--kern-color-action-state-indicator-tint-selected-opacity);
+$dropdown-item-selected-color: var(--kern-color-layout-text-default);
+$dropdown-item-selected-shadow: none;
+$dropdown-item-selected-hover-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$dropdown-item-selected-hover-color: var(--kern-color-layout-text-default);
+$dropdown-item-transition: var(--rz-transition-all);
+$dropdown-item-disabled-opacity: $kern-color-action-state-opacity-disabled;
+$dropdown-item-border-radius: 0;
+$dropdown-label-padding-block: 0;
+$dropdown-label-padding-inline: 0 $kern-metric-dimension-default;
+$dropdown-filter-border: var(--rz-border-normal);
+$dropdown-filter-padding: $kern-metric-space-small;
+$dropdown-open-background-color: var(--kern-color-form-input-background);
+$dropdown-open-border: none;
+$dropdown-panel-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$dropdown-panel-shadow: var(--rz-shadow-3);
+$dropdown-chips-padding-block:  $kern-metric-space-x-small;
+$dropdown-chips-padding-inline: $kern-metric-space-small;
+$multiselect-checkbox-margin-block: 0;
+$multiselect-checkbox-margin-inline: 0 $kern-metric-space-small;
+
+// ===========================================================================
+// Editor
+// ===========================================================================
+
+$editor-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$editor-border-radius: $kern-metric-border-radius-default;
+$editor-toolbar-background-color: var(--kern-color-layout-background-hued);
+$editor-content-background-color: var(--kern-color-layout-background-default);
+$editor-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$editor-focus-outline-offset: calc(-1 * var(--kern-metric-border-width-bold));
+
+// ===========================================================================
+// Fieldset
+// ===========================================================================
+
+$fieldset-border: var(--rz-border-normal);
+$fieldset-border-radius: $kern-metric-border-radius-default;
+$fieldset-padding: $kern-metric-space-large;
+$fieldset-legend-color: var(--kern-color-layout-text-default);
+$fieldset-legend-font-size: $kern-typography-font-size-static-medium;
+$fieldset-legend-margin-block: 0;
+$fieldset-legend-margin-inline: $kern-metric-space-default 0;
+$fieldset-legend-padding-block: 0;
+$fieldset-legend-padding-inline: $kern-metric-space-small;
+$fieldset-toggle-width:  $kern-metric-dimension-default;
+$fieldset-toggle-height: $kern-metric-dimension-default;
+$fieldset-toggle-margin-block: 0;
+$fieldset-toggle-margin-inline: 0 $kern-metric-space-small;
+$fieldset-toggle-background-color: transparent;
+$fieldset-toggle-color: var(--kern-color-action-default);
+$fieldset-toggle-font-size: $kern-metric-dimension-default;
+$fieldset-toggle-border: none;
+$fieldset-toggle-focus-outline: none;
+$fieldset-toggle-focus-outline-offset: 0;
+
+// ===========================================================================
+// Fab
+// ===========================================================================
+
+$fab-inset-block-start: auto;
+$fab-inset-block-end:   $kern-metric-space-large;
+$fab-inset-inline-start: auto;
+$fab-inset-inline-end:  $kern-metric-space-large;
+$fab-zindex: 1000;
+$fab-border-radius: $kern-metric-border-radius-large;
+$fab-active-border-radius: $kern-metric-border-radius-default;
+$fab-shadow: var(--rz-shadow-4);
+$fab-hover-shadow: var(--rz-shadow-6);
+$fab-active-shadow: var(--rz-shadow-4);
+$fab-item-transition: 200ms cubic-bezier(0.65, 0, 0.35, 1);
+$fabmenu-offset: $kern-metric-space-small;
+
+// ===========================================================================
+// Footer / Header / Sidebar
+// ===========================================================================
+
+$footer-padding: $kern-metric-space-default;
+$footer-background-color: var(--kern-color-layout-background-hued);
+$footer-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$footer-color: var(--kern-color-layout-text-default);
+$footer-z: 2;
+
+$header-background-color: var(--kern-color-layout-background-default);
+$header-min-height: $kern-metric-dimension-3x-large;   // 64px
+$header-z: 2;
+$header-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$header-color: var(--kern-color-layout-text-default);
+$header-shadow: none;
+
+$sidebar-z: 1;
+$sidebar-width: $kern-256;
+$sidebar-border-inline-end: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$sidebar-background-color: var(--kern-color-layout-background-hued);
+$sidebar-color: var(--kern-color-layout-text-default);
+
+$sidebar-toggle-icon-width:  $kern-metric-dimension-default;
+$sidebar-toggle-icon-height: $kern-metric-dimension-default;
+$sidebar-toggle-margin-inline-end: $kern-metric-space-default;
+$sidebar-toggle-padding: $kern-12;
+$sidebar-toggle-border: none;
+$sidebar-toggle-color: var(--kern-color-action-default);
+$sidebar-toggle-background-color: transparent;
+$sidebar-toggle-hover-color: var(--kern-color-action-default);
+$sidebar-toggle-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$sidebar-toggle-hover-border-radius: $kern-metric-border-radius-default;
+$sidebar-toggle-focus-outline: none;
+$sidebar-toggle-focus-outline-offset: 0;
+
+// ===========================================================================
+// FormField  (mixins/kol-form-field.scss)
+// 48px filled control, 18px/500 label, 8px gap, filled surface + underline.
+// ===========================================================================
+
+$form-field-margin-block: $kern-metric-space-default 0;
+$form-field-margin-inline: 0;
+$form-field-start-end-padding-block: 0;
+$form-field-start-end-padding-inline: $kern-metric-space-default;
+$form-field-filled-height: $kern-metric-dimension-x-large;      // 48px
+$form-field-filled-padding-block:  $kern-20 $kern-4;
+$form-field-filled-padding-inline: $kern-metric-space-default;
+$form-field-filled-numeric-padding-block:  $kern-20 $kern-4;
+$form-field-filled-numeric-padding-inline: $kern-metric-space-default $kern-metric-dimension-default;
+$form-field-filled-background-color: var(--kern-color-form-input-background);
+$form-field-filled-hover-background-color: var(--kern-color-form-input-background);
+$form-field-filled-border: none;
+$form-field-filled-hover-border: none;
+$form-field-filled-focus-border: none;
+$form-field-filled-border-radius: $kern-metric-border-radius-small;
+$form-field-filled-label-floating-top: $kern-metric-space-x-small;
+$form-field-filled-height-xs: $kern-metric-dimension-large;     // 32px
+$form-field-filled-height-sm: $kern-40;                         // 40px
+$form-field-filled-height-md: $kern-metric-dimension-x-large;   // 48px
+$form-field-filled-height-lg: $kern-metric-dimension-2x-large;  // 56px
+$form-field-filled-padding-block-xs: $kern-12 0;
+$form-field-filled-padding-block-sm: $kern-16 $kern-2;
+$form-field-filled-padding-block-md: $kern-20 $kern-4;
+$form-field-filled-padding-block-lg: $kern-24 $kern-6;
+$form-field-filled-padding-inline-xs: $kern-metric-space-small;
+$form-field-filled-padding-inline-sm: $kern-12;
+$form-field-filled-padding-inline-md: $kern-metric-space-default;
+$form-field-filled-padding-inline-lg: $kern-metric-space-default;
+$form-field-filled-label-floating-top-xs: $kern-1;
+$form-field-filled-label-floating-top-sm: $kern-2;
+$form-field-filled-label-floating-top-md: $kern-metric-space-x-small;
+$form-field-filled-label-floating-top-lg: $kern-metric-space-small;
+$form-field-filled-label-floating-font-size-xs: $kern-font-size-12;
+$form-field-filled-label-floating-font-size-sm: $kern-font-size-12;
+$form-field-filled-label-floating-font-size-md: $kern-font-size-14;
+$form-field-filled-label-floating-font-size-lg: $kern-font-size-16;
+$form-field-filled-hover-shadow: var(--rz-input-hover-shadow);
+$form-field-filled-focus-shadow: none;
+$form-field-filled-underline-display: none;
+$form-field-shadow: none;
+$form-field-hover-shadow: none;
+$form-field-focus-shadow: none;
+$form-field-label-color: var(--kern-color-layout-text-default);
+$form-field-label-focus-color: var(--kern-color-layout-text-default);
+$form-field-label-padding: $kern-metric-baseline-label-default-padding-top 0 $kern-metric-baseline-label-default-padding-bottom;
+$form-field-text-label-padding: $kern-metric-baseline-label-default-padding-top 0 $kern-metric-baseline-label-default-padding-bottom;
+$form-field-label-inset-inline-start: $kern-metric-space-default;
+$form-field-label-textarea-top: $kern-metric-space-small;
+$form-field-label-floating-top: calc(-1 * var(--kern-12));
+$form-field-label-floating-background-color: var(--kern-color-form-input-background);
+$form-field-helper-padding: $kern-metric-baseline-body-default-padding-top 0 $kern-metric-baseline-body-default-padding-bottom;
+
+// ===========================================================================
+// Forms / validation  (KERN error = 4px danger rule on the inline start edge)
+// ===========================================================================
+
+$form-error-color: var(--kern-color-feedback-danger);
+$form-error-font-size: $kern-typography-font-size-static-medium;
+$validator-background-color: var(--kern-color-feedback-danger-background);
+$validator-color: var(--kern-color-feedback-danger);
+$validator-shadow: none;
+$validator-text-padding: 0;
+$validator-padding: $kern-metric-space-small $kern-metric-space-default;
+$validator-pointer-size: 0;
+$validator-transform: translateY(var(--kern-metric-space-small));
+
+// ===========================================================================
+// Gauge
+// ===========================================================================
+
+$gauge-scale-color: var(--kern-color-layout-border);
+$gauge-scale-label-color: var(--rz-text-secondary-color);
+$gauge-scale-font-size: $kern-typography-font-size-static-small;
+$gauge-pointer-color: var(--kern-color-layout-text-default);
+$gauge-arc-scale-color: var(--kern-color-feedback-loader-background);
+$gauge-arc-scale-label-color: var(--rz-text-secondary-color);
+$gauge-arc-value-color: var(--kern-color-feedback-loader);
+
+// ===========================================================================
+// Map / Gravatar
+// ===========================================================================
+
+$map-height: $kern-160;
+$map-padding: $kern-metric-space-large;
+$map-background-color: var(--kern-color-layout-background-default);
+$map-shadow: none;
+
+$gravatar-width:  $kern-metric-dimension-large;
+$gravatar-height: $kern-metric-dimension-large;
+$gravatar-border-radius: $kern-metric-border-radius-circle;
+$gravatar-box-shadow: none;
+
+// ===========================================================================
+// DataGrid  (mixins/kol-table-stateless-wc.scss)
+// No vertical rules: cells carry a 1px inset bottom rule; 18px/600 headers;
+// 8px+baseline padding; action tints for hover/selection.
+// ===========================================================================
+
+$grid-data-border-shadow: none;
+$grid-cell-border: none;
+$grid-right-cell-border: none;
+$grid-bottom-cell-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$grid-cell-padding: calc(var(--kern-metric-baseline-body-default-padding-top) + var(--kern-metric-space-small)) var(--kern-metric-space-x-small) calc(var(--kern-metric-baseline-body-default-padding-bottom) + var(--kern-metric-space-small)) var(--kern-metric-space-x-small);
+$grid-cell-color: var(--kern-color-layout-text-default);
+$grid-cell-font-size: $kern-typography-font-size-static-medium;
+$grid-cell-line-height: 1.25;
+$grid-cell-focus-background-color: var(--kern-color-action-state-indicator-tint-selected-opacity);
+$grid-cell-focus-color: var(--kern-color-layout-text-default);
+$grid-cell-focus-outline: none;
+$grid-cell-focus-outline-offset: 0;
+$grid-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$grid-hover-color: var(--kern-color-layout-text-default);
+$grid-focus-outline: none;
+$grid-focus-outline-offset: 0;
+$grid-selected-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$grid-selected-color: var(--kern-color-layout-text-default);
+$grid-toolbar-background-color: var(--kern-color-layout-background-default);
+$grid-header-cell-border: none;
+$grid-header-cell-border-bottom: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$grid-header-background-color: var(--kern-color-layout-background-default);
+$grid-header-font-size:   $kern-typography-font-size-static-medium;    // 18px
+$grid-header-line-height: 1.25;
+$grid-header-font-weight: $kern-typography-font-weight-semi-bold;      // 600
+$grid-header-text-transform: none;
+$grid-header-color: var(--kern-color-layout-text-default);
+$grid-header-cell-padding: calc(var(--kern-metric-baseline-body-default-padding-top) + var(--kern-metric-space-small)) 0 calc(var(--kern-metric-baseline-body-default-padding-bottom) + var(--kern-metric-space-small));
+$grid-header-title-padding-inline: $kern-metric-space-x-small 0;
+$grid-header-sorted-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$grid-header-padding: $kern-metric-space-default;
+$grid-foot-cell-color: var(--kern-color-layout-text-default);
+$grid-foot-background-color: var(--kern-color-layout-background-default);
+$grid-filter-background-color: var(--kern-color-layout-background-default);
+$grid-filter-padding: $kern-metric-space-default;
+$grid-filter-margin: 0;
+$grid-filter-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$grid-filter-font-size: $kern-typography-font-size-static-medium;
+$grid-filter-icon-width:  $kern-metric-dimension-default;
+$grid-filter-icon-height: $kern-metric-dimension-default;
+$grid-filter-icon-margin-inline: 0 $kern-metric-space-x-small;
+$grid-filter-icon-font-size: $kern-metric-dimension-default;
+$grid-filter-color: var(--kern-color-layout-text-muted);
+$grid-filter-focus-color: var(--kern-color-action-default);
+$grid-filter-gap: $kern-metric-space-default;
+$grid-filter-buttons-padding: 0 $kern-metric-space-default $kern-metric-space-default;
+$grid-filter-buttons-border: none;
+$grid-filter-buttons-background-color: var(--kern-color-layout-background-default);
+$grid-filter-button-padding-inline: $kern-metric-space-default;
+$grid-clear-filter-button-background-color: transparent;
+$grid-clear-filter-button-color: var(--kern-color-action-default);
+$grid-clear-filter-button-shadow: none;
+$grid-apply-filter-button-background-color: var(--kern-color-action-default);
+$grid-apply-filter-button-color: var(--kern-color-action-on-default);
+$grid-apply-filter-button-shadow: none;
+$grid-header-filter-icon-margin-inline: auto $kern-metric-space-small;
+$grid-header-filter-icon-hover-color: var(--kern-color-action-default);
+$grid-header-filter-icon-active-color: var(--kern-color-action-default);
+$grid-header-filter-icon-font-size: $kern-metric-dimension-default;
+$grid-simple-filter-icon-active-color: var(--kern-color-action-default);
+$grid-simple-filter-icon-active-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$grid-border: none;
+$grid-border-radius: $kern-metric-border-radius-none;
+$grid-sort-icon-width:  $kern-metric-dimension-default;
+$grid-sort-icon-height: $kern-metric-dimension-default;
+$grid-sort-icon-color: var(--kern-color-action-default);
+$grid-shadow: none;
+$grid-background-color: var(--kern-color-layout-background-default);
+$grid-stripe-background-color: var(--kern-color-layout-background-hued);
+$grid-stripe-odd-background-color: var(--kern-color-layout-background-default);
+$grid-column-resizer-width: $kern-metric-space-small;
+$grid-column-resizer-helper-width: $kern-metric-border-width-default;
+$grid-column-resizer-helper-background-color: var(--kern-color-action-default);
+$grid-column-icon-width: $kern-metric-dimension-large;
+$grid-column-icon-padding: 0;
+$grid-detail-template-border: none;
+$grid-detail-template-border-radius: 0;
+$grid-detail-template-padding: $kern-metric-space-default;
+$grid-detail-template-background-color: var(--kern-color-layout-background-hued);
+$grid-loading-indicator-color: var(--kern-color-feedback-loader);
+$grid-loading-indicator-background-color: var(--kern-color-layout-background-default);
+$grid-loading-indicator-background-opacity: 0.72;
+$grid-frozen-cell-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$grid-frozen-cell-background-color: var(--kern-color-layout-background-default);
+$grid-frozen-stripe-background-color: var(--rz-grid-stripe-background-color);
+$grid-frozen-stripe-odd-background-color: var(--rz-grid-stripe-odd-background-color);
+$grid-state-transition: var(--rz-transition-all);
+$grid-group-header-padding: $kern-metric-space-small;
+$grid-group-header-gap: $kern-metric-space-small;
+$grid-group-header-item-color: var(--kern-color-layout-text-default);
+$grid-group-header-item-background-color: var(--kern-color-layout-background-hued);
+$grid-group-header-item-padding-block:  $kern-metric-space-small;
+$grid-group-header-item-padding-inline: $kern-metric-space-default;
+$grid-group-header-item-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$grid-group-header-item-border-radius: $kern-metric-border-radius-default;
+$grid-group-header-item-title-margin-inline: 0 $kern-metric-space-small;
+$column-drag-handle-color: var(--kern-color-action-default);
+$column-drag-handle-hover-color: var(--kern-color-action-state-indicator-shade-hover);
+$column-drag-handle-margin-inline: 0 auto;
+$column-draggable-shadow: var(--rz-shadow-3);
+
+// ===========================================================================
+// Gantt
+// ===========================================================================
+
+$gantt-row-height: $kern-metric-dimension-x-large;
+$gantt-border: var(--rz-border-normal);
+$gantt-border-radius: $kern-metric-border-radius-default;
+$gantt-background-color: var(--kern-color-layout-background-default);
+$gantt-event-border-radius: $kern-metric-border-radius-default;
+
+// ===========================================================================
+// Input  (mixins/kol-input-container.scss)
+// Filled #f6f6f8 surface, 2px dark bottom rule, 2px radius, 48px, 16px inline
+// padding, 18px/24px text; hover thickens the rule, focus adds a 4px outline.
+// ===========================================================================
+
+$input-size-xs: $kern-metric-dimension-large;    // 32px
+$input-size-sm: $kern-40;                        // 40px
+$input-size-md: $kern-metric-dimension-x-large;  // 48px
+$input-size-lg: $kern-metric-dimension-2x-large; // 56px
+$input-font-size: $kern-typography-font-size-static-medium;
+$input-height: $kern-metric-dimension-x-large;
+$input-line-height: calc(var(--rz-input-height) - 2 * var(--rz-input-padding-block) - 2 * var(--rz-border-width));
+$input-padding-block:  $kern-11-pad;
+$input-padding-inline: $kern-metric-space-default;
+$input-padding-block-xs: $kern-3;
+$input-padding-block-sm: $kern-7;
+$input-padding-block-md: $kern-11-pad;
+$input-padding-block-lg: $kern-15-pad;
+$input-padding-inline-xs: $kern-metric-space-small;
+$input-padding-inline-sm: $kern-12;
+$input-padding-inline-md: $kern-metric-space-default;
+$input-padding-inline-lg: $kern-metric-space-default;
+$input-font-size-xs: $kern-typography-font-size-static-small;
+$input-font-size-sm: $kern-typography-font-size-static-medium;
+$input-font-size-md: $kern-typography-font-size-static-medium;
+$input-font-size-lg: $kern-typography-font-size-static-medium;
+$input-value-color: var(--kern-color-layout-text-default);
+$input-placeholder-color: var(--kern-color-layout-text-muted);
+$input-background-color: var(--kern-color-form-input-background);
+$input-border: none;
+$input-border-block-end: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border);
+$input-border-radius: $kern-metric-border-radius-small;
+$input-shadow: none;
+$input-hover-shadow: inset 0 calc(-1 * var(--kern-metric-border-width-default)) 0 0 var(--kern-color-form-input-border);
+$input-hover-background-color: var(--kern-color-form-input-background);
+$input-hover-border: none;
+$input-hover-border-block-end: var(--rz-input-border-block-end);
+$input-focus-shadow: none;
+$input-focus-background-color: var(--kern-color-form-input-background);
+$input-focus-border: none;
+$input-focus-border-block-end: var(--rz-input-border-block-end);
+$input-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$input-focus-outline-offset: 0;
+$input-disabled-border: none;
+$input-disabled-border-block-end: var(--rz-input-border-block-end);
+$input-disabled-shadow: none;
+$input-disabled-background-color: var(--kern-color-form-input-background);
+$input-disabled-color: var(--kern-color-layout-text-default);
+$input-disabled-placeholder-color: var(--kern-color-layout-text-muted);
+$input-disabled-opacity: $kern-color-action-state-opacity-disabled;   // 0.4
+$input-transition: var(--rz-transition-all), width 0, height 0;
+
+$text-area-padding-block:  $kern-metric-space-small;
+$text-area-padding-inline: $kern-metric-space-default;
+
+// ===========================================================================
+// Listbox
+// ===========================================================================
+
+$listbox-background-color: var(--kern-color-form-input-background);
+$listbox-border-radius: $kern-metric-border-radius-small;
+$listbox-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$listbox-focus-border: var(--kern-metric-border-width-light) solid var(--kern-color-form-input-border);
+$listbox-focus-shadow: none;
+$listbox-filter-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$listbox-padding: $kern-metric-space-x-small 0;
+$listbox-item-padding: var(--rz-dropdown-item-padding);
+$listbox-item-margin: 0;
+$listbox-checkbox-margin-block: 0;
+$listbox-checkbox-margin-inline: 0 $kern-metric-space-small;
+$listbox-header-padding-block:  $kern-metric-space-small;
+$listbox-header-padding-inline: $kern-metric-space-default;
+$listbox-header-icon-width:  $kern-metric-dimension-default;
+$listbox-header-icon-height: $kern-metric-dimension-default;
+$listbox-header-icon-margin: 0;
+
+// ===========================================================================
+// Login / Lookup
+// ===========================================================================
+
+$login-register-background-color: var(--kern-color-layout-background-hued);
+$login-register-padding-block:  $kern-metric-space-default;
+$login-register-padding-inline: $kern-metric-space-default;
+$login-register-margin-block: $kern-metric-space-x-large 0;
+$login-register-margin-inline: 0;
+$login-register-button-margin-block: 0;
+$login-register-button-margin-inline: 0;
+
+$lookup-panel-background-color: var(--kern-color-layout-background-default);
+$lookup-panel-padding: $kern-metric-space-default;
+$lookup-search-gap: $kern-metric-space-small;
+$lookup-search-margin-bottom: $kern-metric-space-small;
+
+// ===========================================================================
+// Menu  (components/nav.scss)
+// 48px targets, 4px radius, action-colored labels, action tint on hover.
+// ===========================================================================
+
+$menu-background-color: var(--kern-color-layout-background-default);
+$menu-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$menu-border-radius: $kern-metric-border-radius-default;
+$menu-item-padding-block:  $kern-12;
+$menu-item-padding-inline: $kern-metric-space-small;
+$menu-item-border-radius: $kern-metric-border-radius-default;
+$menu-item-color: var(--kern-color-action-default);
+$menu-item-hover-color: var(--kern-color-action-default);
+$menu-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$menu-item-focus-outline: none;
+$menu-item-focus-outline-offset: 0;
+$menu-item-selected-color: var(--kern-color-action-default);
+$menu-item-selected-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$menu-item-icon-margin-inline: 0 $kern-metric-space-small;
+$menu-item-icon-color: var(--kern-color-action-default);
+$menu-item-icon-hover-color: var(--kern-color-action-default);
+$menu-item-offset: $kern-metric-space-default;
+$menu-item-transition: var(--rz-transition-all);
+$menu-item-disabled-opacity: $kern-color-action-state-opacity-disabled;
+$menu-top-item-padding-block:  $kern-12;
+$menu-top-item-padding-inline: $kern-metric-space-small;
+$menu-top-item-border-radius: $kern-metric-border-radius-default;
+$menu-top-item-color: var(--kern-color-action-default);
+$menu-top-item-background-color: transparent;
+$menu-top-item-hover-color: var(--kern-color-action-default);
+$menu-top-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$menu-top-item-selected-color: var(--kern-color-action-default);
+$menu-top-item-selected-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$menu-top-item-icon-color: var(--kern-color-action-default);
+$menu-top-item-icon-hover-color: var(--kern-color-action-default);
+$context-menu-padding-block:  $kern-metric-space-small;
+$context-menu-padding-inline: $kern-metric-space-small;
+$context-menu-box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.1);
+
+// ===========================================================================
+// Notification  (KERN toast = alert card variant)
+// ===========================================================================
+
+$notification-padding: $kern-metric-space-default $kern-metric-space-large;
+$notification-gap: $kern-metric-space-small;
+$notification-icon-margin: 0;
+$notification-container-background-color: transparent;
+$notification-shadow: var(--rz-shadow-3);
+$notification-border-radius: $kern-metric-border-radius-default;
+$notification-success-color: var(--kern-color-layout-text-default);
+$notification-success-background-color: var(--kern-color-feedback-success-background);
+$notification-success-icon-color: var(--kern-color-feedback-success);
+$notification-warning-color: var(--kern-color-layout-text-default);
+$notification-warning-background-color: var(--kern-color-feedback-warning-background);
+$notification-warning-icon-color: var(--kern-color-feedback-warning);
+$notification-error-color: var(--kern-color-layout-text-default);
+$notification-error-background-color: var(--kern-color-feedback-danger-background);
+$notification-error-icon-color: var(--kern-color-feedback-danger);
+$notification-info-color: var(--kern-color-layout-text-default);
+$notification-info-background-color: var(--kern-color-feedback-info-background);
+$notification-info-icon-color: var(--kern-color-feedback-info);
+
+// ===========================================================================
+// Numeric  (components/input-number.scss)
+// ===========================================================================
+
+$numeric-line-height: $kern-typography-line-height-static-medium;
+$numeric-input-padding-block-xs: $kern-3;
+$numeric-input-padding-block-sm: $kern-7;
+$numeric-input-padding-block-md: $kern-11-pad;
+$numeric-input-padding-block-lg: $kern-15-pad;
+$numeric-input-padding-inline-xs: $kern-metric-space-small $kern-metric-space-large;
+$numeric-input-padding-inline-sm: $kern-12 $kern-metric-dimension-default;
+$numeric-input-padding-inline-md: $kern-metric-space-default $kern-metric-dimension-default;
+$numeric-input-padding-inline-lg: $kern-metric-space-default $kern-metric-dimension-default;
+$numeric-button-width-xs:  $kern-10;
+$numeric-button-width-sm:  $kern-12;
+$numeric-button-width-md:  $kern-metric-space-default;
+$numeric-button-width-lg:  $kern-metric-space-default;
+$numeric-button-height-xs: $kern-10;
+$numeric-button-height-sm: $kern-12;
+$numeric-button-height-md: $kern-metric-space-default;
+$numeric-button-height-lg: $kern-metric-space-default;
+$numeric-button-offset-xs: 0;
+$numeric-button-offset-sm: $kern-1;
+$numeric-button-offset-md: $kern-2;
+$numeric-button-offset-lg: $kern-2;
+$numeric-button-border-radius: $kern-metric-border-radius-small;
+$numeric-button-background-color: transparent;
+$numeric-button-color: var(--kern-color-action-default);
+$numeric-button-disabled-background-color: transparent;
+$numeric-button-disabled-color: var(--kern-color-layout-text-muted);
+
+// ===========================================================================
+// Overlay panel
+// ===========================================================================
+
+$overlay-shadow: var(--rz-shadow-3);
+$overlay-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$overlay-background-color: var(--kern-color-layout-background-default);
+
+// ===========================================================================
+// Pager  (mixins/pagination.scss)
+// KERN pagination = outlined action buttons; the selected page is a filled one.
+// ===========================================================================
+
+$pager-background-color: var(--kern-color-layout-background-default);
+$pager-padding: $kern-metric-space-small;
+$pager-gap: $kern-metric-space-small;
+$pager-border: none;
+$pager-button-border-radius: $kern-metric-border-radius-default;
+$pager-numeric-button-background-color: var(--kern-color-layout-background-default);
+$pager-numeric-button-color: var(--kern-color-action-default);
+$pager-numeric-button-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default);
+$pager-numeric-button-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$pager-numeric-button-hover-color: var(--kern-color-action-default);
+$pager-numeric-button-padding: $kern-metric-space-small;
+$pager-numeric-button-selected-background-color: var(--kern-color-action-default);
+$pager-numeric-button-selected-color: var(--kern-color-action-on-default);
+$pager-numeric-button-selected-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default);
+$pager-numeric-button-selected-padding: $kern-metric-space-small;
+$pager-numeric-button-min-width: $kern-metric-dimension-x-large;   // 48px
+$pager-back-button-background-color: var(--kern-color-layout-background-default);
+$pager-back-button-color: var(--kern-color-action-default);
+$pager-back-button-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$pager-next-button-background-color: var(--kern-color-layout-background-default);
+$pager-next-button-color: var(--kern-color-action-default);
+$pager-next-button-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$pager-next-button-hover-color: var(--kern-color-action-default);
+$pager-dropdown-width: $kern-128;
+$pager-summary-padding: $kern-metric-space-default;
+$pager-summary-font-size: $kern-typography-font-size-static-small;
+$pager-summary-color: var(--kern-color-layout-text-muted);
+
+// ===========================================================================
+// PanelMenu  (KERN nav — light surface, action labels, no dark chrome)
+// ===========================================================================
+
+$panel-menu-padding-block:  $kern-metric-space-small;
+$panel-menu-padding-inline: $kern-metric-space-small;
+$panel-menu-font-size: $kern-typography-font-size-static-medium;
+$panel-menu-font-weight: $kern-typography-font-weight-medium;
+$panel-menu-focus-outline: none;
+$panel-menu-focus-outline-offset: 0;
+$panel-menu-item-line-height: $kern-typography-line-height-static-medium;
+$panel-menu-item-padding-block:  $kern-12;
+$panel-menu-item-padding-inline: $kern-metric-space-small;
+$panel-menu-item-margin-block:  0;
+$panel-menu-item-margin-inline: 0;
+$panel-menu-item-border: none;
+$panel-menu-item-border-radius: $kern-metric-border-radius-default;
+$panel-menu-item-color: var(--kern-color-action-default);
+$panel-menu-item-background-color: var(--kern-color-layout-background-hued);
+$panel-menu-item-hover-color: var(--kern-color-action-default);
+$panel-menu-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$panel-menu-item-active-color: var(--kern-color-action-default);
+$panel-menu-item-active-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$panel-menu-item-active-indicator: var(--kern-color-action-default);
+$panel-menu-item-offset: $kern-metric-space-default;
+$panel-menu-item-transition: color var(--rz-transition), background-color var(--rz-transition);
+$panel-menu-2nd-level-vertical-offset: 0;
+$panel-menu-item-2nd-level-padding-block:  $kern-metric-space-small;
+$panel-menu-item-2nd-level-padding-inline: $kern-metric-space-small;
+$panel-menu-item-2nd-level-margin-block:  0;
+$panel-menu-item-2nd-level-margin-inline: 0;
+$panel-menu-item-2nd-level-border-radius: $kern-metric-border-radius-default;
+$panel-menu-item-2nd-level-offset: $kern-metric-space-x-large;
+$panel-menu-item-2nd-level-font-size: $kern-typography-font-size-static-medium;
+$panel-menu-item-2nd-level-font-weight: $kern-typography-font-weight-regular;
+$panel-menu-item-2nd-level-color: var(--kern-color-action-default);
+$panel-menu-item-2nd-level-background-color: var(--kern-color-layout-background-hued);
+$panel-menu-item-2nd-level-hover-color: var(--kern-color-action-default);
+$panel-menu-item-2nd-level-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$panel-menu-item-2nd-level-active-color: var(--kern-color-action-default);
+$panel-menu-item-2nd-level-active-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$panel-menu-item-2nd-level-active-font-weight: $kern-typography-font-weight-semi-bold;
+$panel-menu-item-3rd-level-color: var(--kern-color-action-default);
+$panel-menu-item-3rd-level-background-color: var(--kern-color-layout-background-hued);
+$panel-menu-item-3rd-level-hover-color: var(--kern-color-action-default);
+$panel-menu-item-3rd-level-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$panel-menu-item-3rd-level-active-color: var(--kern-color-action-default);
+$panel-menu-item-3rd-level-active-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$panel-menu-icon-width:  $kern-metric-dimension-default;
+$panel-menu-icon-height: $kern-metric-dimension-default;
+$panel-menu-icon-font-size: $kern-metric-dimension-default;
+$panel-menu-icon-color: var(--kern-color-action-default);
+$panel-menu-icon-margin-inline: 0 $kern-metric-space-small;
+$panel-menu-icon-2nd-level-margin-inline: calc(-1 * var(--kern-metric-space-x-large)) $kern-metric-space-small;
+$panel-menu-icon-2nd-level-icon-size: $kern-metric-dimension-default;
+$panel-menu-toggle-icon-font-size: $kern-metric-dimension-default;
+$panel-menu-toggle-icon-opacity: 1;
+
+// ===========================================================================
+// Panel  (KERN details/accordion look)
+// ===========================================================================
+
+$panel-background-color: var(--kern-color-layout-background-default);
+$panel-padding: $kern-metric-space-default;
+$panel-title-line-height: $kern-typography-line-height-adaptive-medium;
+$panel-title-font-weight: $kern-typography-font-weight-semi-bold;
+$panel-content-margin: 0;
+$panel-toggle-icon-width:  $kern-metric-dimension-default;
+$panel-toggle-icon-height: $kern-metric-dimension-default;
+$panel-toggle-icon-font-size: $kern-metric-dimension-default;
+$panel-toggle-icon-border-radius: $kern-metric-border-radius-default;
+$panel-toggle-icon-background-color: transparent;
+$panel-toggle-icon-focus-outline: none;
+$panel-toggle-icon-focus-outline-offset: 0;
+$panel-hover-color: var(--kern-color-action-default);
+$panel-border-radius: $kern-metric-border-radius-default;
+$panel-shadow: none;
+
+// ===========================================================================
+// ProfileMenu
+// ===========================================================================
+
+$profile-menu-background-color: var(--kern-color-layout-background-default);
+$profile-menu-top-item-background-color: transparent;
+$profile-menu-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$profile-menu-padding-block:  $kern-12;
+$profile-menu-padding-inline: $kern-metric-space-default;
+$profile-menu-border-radius: $kern-metric-border-radius-default;
+$profile-menu-toggle-button-color: var(--kern-color-action-default);
+$profile-menu-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$profile-menu-item-focus-outline: none;
+$profile-menu-item-focus-outline-offset: 0;
+$profile-menu-item-icon-width:  $kern-metric-dimension-default;
+$profile-menu-item-icon-height: $kern-metric-dimension-default;
+$profile-menu-item-icon-font-size: $kern-metric-dimension-default;
+$profile-menu-item-icon-margin-inline: 0 $kern-metric-space-small;
+
+// ===========================================================================
+// ProgressBar  (components/progress.scss)
+// Square bar, loader colors, 8px stroke on the circular variant.
+// ===========================================================================
+
+$progressbar-value: 100%;
+$progressbar-background-color: var(--kern-color-feedback-loader-background);
+$progressbar-color: var(--kern-color-layout-text-default);
+$progressbar-font-size: $kern-typography-font-size-static-small;
+$progressbar-height: $kern-metric-space-default;
+$progressbar-border-radius: $kern-metric-border-radius-none;
+$progressbar-value-background-color: var(--kern-color-feedback-loader);
+$progressbar-value-transition: var(--rz-transition-all);
+$progressbar-circular-stroke-width: 8px;
+$progressbar-circular-value-stroke-width: 8px;
+$progressbar-circular-value-endpoint: butt;
+
+$progressbar-base-styles: (
+  base:  (background-color: var(--kern-color-feedback-loader),            color: var(--kern-color-layout-text-inverse)),
+  light: (background-color: var(--kern-color-feedback-loader-background), color: var(--kern-color-layout-text-default)),
+  dark:  (background-color: var(--kern-color-layout-text-default),        color: var(--kern-color-layout-text-inverse))
+);
+
+$progressbar-circular-sizes: (
+  lg: (size: $kern-96, font-size: var(--rz-progressbar-font-size)),
+  md: (size: $kern-64, font-size: var(--rz-progressbar-font-size)),
+  sm: (size: $kern-metric-dimension-x-large, font-size: $kern-font-size-14),
+  xs: (size: $kern-metric-dimension-large,   font-size: $kern-font-size-12)
+);
+
+// ===========================================================================
+// Radio  (mixins/radio.scss)
+// 32px circle, 2px dark ring on a transparent field, 12px dark dot.
+// ===========================================================================
+
+$radio-width:  $kern-metric-dimension-large;   // 32px
+$radio-height: $kern-metric-dimension-large;
+$radio-border-radius: $kern-metric-border-radius-circle;
+$radio-border-width: $kern-metric-border-width-default;
+$radio-label-margin-block: 0;
+$radio-label-margin-inline: $kern-metric-space-small $kern-metric-space-default;
+$radio-margin-block: 0;
+$radio-margin-inline: 0;
+$radio-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$radio-focus-outline-offset: 0;
+$radio-active-background-color: transparent;
+$radio-active-shadow: none;
+$radio-checked-background-color: transparent;
+$radio-checked-hover-background-color: transparent;
+$radio-checked-hover-shadow: none;
+$radio-checked-color: var(--kern-color-form-input-border);
+$radio-circle-background-color: transparent;
+$radio-circle-shadow: none;
+$radio-circle-hover-background-color: transparent;
+$radio-icon-width:  $kern-12;    // 12px dot
+$radio-icon-height: $kern-12;
+$radio-checked-border: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border);
+
+// ===========================================================================
+// Rating
+// ===========================================================================
+
+$rating-color: var(--kern-color-layout-border);
+$rating-opacity: 1;
+$rating-font-size: $kern-metric-dimension-large;
+$rating-selected-color: var(--kern-color-action-default);
+$rating-focus-color: var(--kern-color-action-state-indicator-shade-hover);
+$rating-disabled-color: var(--kern-color-layout-border);
+$rating-disabled-opacity: $kern-color-action-state-opacity-disabled;
+$rating-ban-icon: 'highlight_off';
+$rating-ban-icon-color: var(--kern-color-layout-text-muted);
+
+// ===========================================================================
+// Sankey
+// ===========================================================================
+
+$rz-sankey-node-stroke-width: 0;
+$rz-sankey-link-stroke-width: 0;
+$rz-sankey-link-opacity: 0.5;
+$rz-sankey-link-hover-opacity: 0.7;
+$rz-sankey-label-font-size: $kern-typography-font-size-static-small;
+$rz-sankey-label-color: var(--kern-color-layout-text-default);
+$rz-sankey-label-stroke: var(--kern-color-layout-background-default);
+$rz-sankey-label-stroke-width: $kern-metric-border-width-default;
+
+// ===========================================================================
+// Scheduler
+// ===========================================================================
+
+$scheduler-toolbar-color: var(--kern-color-action-on-default);
+$scheduler-toolbar-button-background-color: var(--kern-color-action-default);
+$scheduler-border: var(--rz-border-normal);
+$scheduler-border-color: var(--kern-color-layout-border);
+$scheduler-minor-border-color: var(--kern-neutral-150);
+$scheduler-border-radius: $kern-metric-border-radius-default;
+$scheduler-shadow: none;
+$scheduler-background-color: var(--kern-color-layout-background-default);
+$scheduler-color: var(--kern-color-layout-text-default);
+$scheduler-toolbar-padding: $kern-metric-space-small;
+$scheduler-toolbar-background-color: var(--kern-color-layout-background-default);
+$scheduler-toolbar-title-font-size:   $kern-typography-font-size-adaptive-medium;
+$scheduler-toolbar-title-font-weight: $kern-typography-font-weight-semi-bold;
+$scheduler-toolbar-title-color: var(--rz-text-title-color);
+$scheduler-prev-next-button-background-color: var(--kern-color-action-default);
+$scheduler-prev-next-button-color: var(--kern-color-action-on-default);
+$scheduler-prev-next-button-padding-block:  $kern-metric-space-small;
+$scheduler-prev-next-button-padding-inline: $kern-metric-space-small;
+$scheduler-prev-next-button-font-size: $kern-metric-dimension-default;
+$scheduler-prev-button-border-start-start-radius: $kern-metric-border-radius-default;
+$scheduler-prev-button-border-start-end-radius: 0;
+$scheduler-prev-button-border-end-start-radius: $kern-metric-border-radius-default;
+$scheduler-prev-button-border-end-end-radius: 0;
+$scheduler-next-button-border-start-start-radius: 0;
+$scheduler-next-button-border-start-end-radius: $kern-metric-border-radius-default;
+$scheduler-next-button-border-end-start-radius: 0;
+$scheduler-next-button-border-end-end-radius: $kern-metric-border-radius-default;
+$scheduler-today-button-margin-inline-start: $kern-metric-space-small;
+$scheduler-today-button-padding: $kern-metric-space-small $kern-metric-space-default;
+$scheduler-today-button-font-size: $kern-typography-font-size-static-medium;
+$scheduler-today-button-text-transform: none;
+$scheduler-view-button-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default);
+$scheduler-view-button-color: var(--kern-color-action-default);
+$scheduler-view-button-background-color: var(--kern-color-layout-background-default);
+$scheduler-view-selected-color: var(--kern-color-action-on-default);
+$scheduler-view-selected-background-color: var(--kern-color-action-default);
+$scheduler-view-selected-border-color: var(--kern-color-action-default);
+$scheduler-header-background-color: var(--kern-color-layout-background-default);
+$scheduler-header-font-size: $kern-typography-font-size-static-small;
+$scheduler-header-font-size-small: $kern-font-size-14;
+$scheduler-header-agenda-font-size: $kern-typography-font-size-adaptive-medium;
+$scheduler-header-agenda-font-weight: $kern-typography-font-weight-semi-bold;
+$scheduler-header-agenda-font-size-small: $kern-typography-font-size-static-medium;
+$scheduler-header-text-transform: none;
+$scheduler-header-agenda-text-transform: none;
+$scheduler-header-color: var(--kern-color-layout-text-default);
+$scheduler-header-border: var(--rz-border-normal);
+$scheduler-header-padding: $kern-metric-space-small 0;
+$scheduler-event-color: var(--kern-color-action-on-default);
+$scheduler-event-background-color: var(--kern-color-action-default);
+$scheduler-event-font-size: $kern-typography-font-size-static-small;
+$scheduler-event-line-height: $kern-typography-line-height-static-medium;
+$scheduler-event-padding-block:  0 $kern-1;
+$scheduler-event-padding-inline: $kern-1;
+$scheduler-event-content-padding: $kern-metric-space-2x-small $kern-metric-space-x-small;
+$scheduler-event-list-button-color: var(--kern-color-action-default);
+$scheduler-event-list-button-font-size: $kern-typography-font-size-static-small;
+$scheduler-slot-title-font-size: $kern-typography-font-size-static-small;
+$scheduler-slot-title-font-size-small: $kern-font-size-12;
+$scheduler-slot-title-padding: 0 $kern-metric-space-x-small;
+$scheduler-day-number-padding: 0 $kern-metric-space-small;
+$scheduler-weekend-color: var(--kern-color-layout-text-muted);
+$scheduler-weekend-background-color: var(--kern-color-layout-background-hued);
+$scheduler-other-month-background-color: var(--kern-color-layout-background-hued);
+$scheduler-timeline-slot-width:  $kern-128;
+$scheduler-timeline-slot-height: $kern-128;
+$scheduler-year-padding: $kern-metric-space-large;
+$scheduler-year-slot-padding: $kern-1;
+$scheduler-year-slot-title-width: 100%;
+$scheduler-year-slot-title-border-radius: $kern-metric-border-radius-default;
+$scheduler-planner-slot-width:  $kern-metric-dimension-x-large;
+$scheduler-planner-slot-height: $kern-96;
+$scheduler-focus-outline: none;
+$scheduler-focus-outline-offset: 0;
+$scheduler-highlight-background-color: var(--kern-color-feedback-warning-background);
+
+// ===========================================================================
+// Scrollbar
+// ===========================================================================
+
+$scrollbar-background-color: transparent;
+$scrollbar-color: var(--kern-color-layout-border);
+$scrollbar-border-radius: $kern-metric-border-radius-default;
+$scrollbar-size: $kern-12;
+
+// ===========================================================================
+// SecurityCode / SignaturePad
+// ===========================================================================
+
+$rz-security-code-input-min-width:  var(--rz-input-height);
+$rz-security-code-input-min-height: var(--rz-input-height);
+$rz-security-code-input-padding: $kern-metric-space-2x-small;
+$rz-security-code-input-font-size: $kern-typography-font-size-adaptive-medium;
+$rz-security-code-input-font-weight: $kern-typography-font-weight-semi-bold;
+$rz-security-code-input-line-height: 1;
+
+$rz-signature-pad-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$rz-signature-pad-border-radius: $kern-metric-border-radius-default;
+$rz-signature-pad-background-color: var(--kern-color-form-input-background);
+$rz-signature-pad-placeholder-color: var(--kern-color-layout-text-muted);
+$rz-signature-pad-clear-color: var(--kern-color-action-default);
+$rz-signature-pad-clear-hover-color: var(--kern-color-action-state-indicator-shade-hover);
+
+// ===========================================================================
+// SelectBar  (KERN toggle group = outlined action buttons)
+// ===========================================================================
+
+$selectbar-background-color: var(--kern-color-layout-background-default);
+$selectbar-color: var(--kern-color-action-default);
+$selectbar-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default);
+$selectbar-selected-background-color: var(--kern-color-action-default);
+$selectbar-selected-color: var(--kern-color-action-on-default);
+$selectbar-selected-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default);
+$selectbar-border-radius: $kern-metric-border-radius-default;
+$selectbar-focus-outline: none;
+$selectbar-focus-outline-offset: 0;
+$selectbar-button-focus-outline: none;
+$selectbar-button-focus-outline-offset: 0;
+
+// ===========================================================================
+// Skeleton
+// ===========================================================================
+
+$skeleton-background-color: var(--kern-color-feedback-loader-background);
+$skeleton-animation-color: var(--kern-color-layout-background-hued);
+$skeleton-border-radius: $kern-metric-border-radius-small;
+$skeleton-animation-duration: 1.5s;
+
+// ===========================================================================
+// Slider  (components/input-range.scss)
+// 2px dark track that thickens to 4px on hover.
+// ===========================================================================
+
+$slider-background-color: var(--kern-color-form-input-border);
+$slider-border: none;
+$slider-border-radius: $kern-metric-border-radius-none;
+$slider-horizontal-height: $kern-metric-border-width-default;   // 2px
+$slider-horizontal-width: $kern-160;
+$slider-range-background-color: var(--kern-color-action-default);
+$slider-range-border: none;
+$slider-handle-width:  $kern-metric-dimension-default;
+$slider-handle-height: $kern-metric-dimension-default;
+$slider-handle-color: var(--kern-color-action-on-default);
+$slider-handle-background-color: var(--kern-color-action-default);
+$slider-handle-border: none;
+$slider-handle-border-radius: $kern-metric-border-radius-circle;
+$slider-handle-shadow: none;
+$slider-handle-transition: background-color var(--rz-transition), color var(--rz-transition), border var(--rz-transition), box-shadow var(--rz-transition);
+$slider-handle-hover-border: none;
+$slider-handle-hover-background-color: var(--kern-color-action-state-indicator-shade-hover);
+$slider-handle-hover-shadow: none;
+$slider-handle-focus-outline: none;
+$slider-handle-focus-outline-offset: 0;
+$slider-disabled-background-color: var(--kern-color-feedback-loader-background);
+$slider-disabled-border: none;
+$slider-disabled-range-background-color: var(--kern-color-layout-border);
+$slider-disabled-range-border: none;
+$slider-disabled-handle-background-color: var(--kern-color-layout-border);
+$slider-disabled-handle-border: none;
+
+// ===========================================================================
+// SplitButton  (components/split-button.scss)
+// ===========================================================================
+
+$splitbutton-menu-shadow: var(--rz-shadow-3);
+$splitbutton-menu-min-width: $kern-160;
+$splitbutton-background-color: var(--kern-color-action-default);
+$splitbutton-border-radius: $kern-metric-border-radius-default;
+
+// ===========================================================================
+// Splitter
+// ===========================================================================
+
+$splitter-bar-color: var(--kern-color-action-default);
+$splitter-bar-color-active: var(--kern-color-action-on-default);
+$splitter-bar-background-color: var(--kern-color-layout-background-hued);
+$splitter-bar-background-color-active: var(--kern-color-action-default);
+$splitter-bar-hover-opacity: 1;
+
+// ===========================================================================
+// Spreadsheet
+// ===========================================================================
+
+$spreadsheet-tab-font-size: $kern-typography-font-size-static-small;
+$spreadsheet-cell-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$spreadsheet-header-background-color: var(--kern-color-layout-background-hued);
+$spreadsheet-header-active-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$spreadsheet-splitter-background-color: var(--kern-color-layout-border);
+
+// ===========================================================================
+// Steps
+// ===========================================================================
+
+$steps-color: var(--kern-color-layout-text-default);
+$steps-number-border-radius: $kern-metric-border-radius-circle;
+$steps-number-padding-block:  $kern-metric-space-x-small;
+$steps-number-padding-inline: 0;
+$steps-number-width:  $kern-metric-dimension-large;
+$steps-number-height: $kern-metric-dimension-large;
+$steps-number-line-height: $kern-typography-line-height-static-medium;
+$steps-number-color: var(--kern-color-action-default);
+$steps-number-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$steps-number-selected-color: var(--kern-color-action-on-default);
+$steps-number-selected-background: var(--kern-color-action-default);
+$steps-number-focus-outline: none;
+$steps-number-focus-outline-offset: 0;
+$steps-title-selected-color: var(--kern-color-action-default);
+$steps-title-margin-block: 0;
+$steps-title-margin-inline: $kern-metric-space-small $kern-metric-space-default;
+$steps-buttons-padding-block:  $kern-metric-space-default;
+$steps-buttons-padding-inline: 0;
+$steps-button-color: var(--kern-color-action-default);
+
+// ===========================================================================
+// Switch  (components/input-checkbox.scss `--variant-switch`)
+// 3.5em × 1.5em track, loader colors, white thumb, 4px hover outline.
+// ===========================================================================
+
+$switch-background-color: var(--kern-color-feedback-loader-background);
+$switch-checked-background-color: var(--kern-color-feedback-loader);
+$switch-box-shadow: none;
+$switch-circle-background-color: var(--kern-neutral-000);
+$switch-checked-circle-background-color: var(--kern-neutral-000);
+$switch-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+$switch-focus-outline-offset: 0;
+$switch-transition: background-color var(--rz-transition), color var(--rz-transition), border-color var(--rz-transition), box-shadow var(--rz-transition);
+$switch-thumb-transition: transform var(--rz-transition);
+
+// ===========================================================================
+// Tabs  (components/tabs.scss)
+// Text tabs above a 1px action rule; the selected tab gets a 4px action underline.
+// ===========================================================================
+
+$tabs-padding: $kern-metric-space-large 0 0;
+$tabs-shadow: none;
+$tabs-border: none;
+$tabs-border-radius: $kern-metric-border-radius-none;
+$tabs-background-color: transparent;
+$tabs-tab-font-size:   $kern-typography-font-size-static-medium;
+$tabs-tab-line-height: $kern-typography-line-height-static-medium;
+$tabs-tab-font-weight: $kern-typography-font-weight-medium;
+$tabs-tab-text-transform: none;
+$tabs-tab-letter-spacing: 0;
+$tabs-tab-padding-block:  $kern-12;
+$tabs-tab-padding-inline: $kern-metric-space-default;
+$tabs-tab-background-color: transparent;
+$tabs-tab-color: var(--kern-color-action-default);
+$tabs-tab-selected-background-color: transparent;
+$tabs-tab-selected-color: var(--kern-color-action-default);
+$tabs-tab-selected-top-border-color: transparent;
+$tabs-tab-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$tabs-tab-hover-color: var(--kern-color-action-default);
+$tabs-tab-focus-background-color: transparent;
+$tabs-tab-focus-color: var(--kern-color-action-default);
+$tabs-tab-focus-outline: none;
+$tabs-tab-focus-outline-offset: 0;
+$tabs-icon-font-size: $kern-metric-dimension-default;
+$tabs-icon-margin-inline: 0 $kern-metric-space-small;
+$tabs-transition: var(--rz-transition-all);
+
+// ===========================================================================
+// TileLayout
+// ===========================================================================
+
+$tile-layout-gap: var(--rz-gap, var(--kern-metric-space-default));
+$tile-background-color: var(--kern-color-layout-background-default);
+$tile-border: var(--rz-card-border);
+$tile-border-radius: var(--rz-card-border-radius);
+$tile-shadow: none;
+$tile-header-background-color: var(--kern-color-layout-background-hued);
+$tile-overlay-border-color: var(--kern-color-action-default);
+$tile-overlay-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+
+// ===========================================================================
+// Timeline
+// ===========================================================================
+
+$rz-timeline-item-padding: $kern-metric-space-small;
+$rz-timeline-axis-size: $kern-metric-dimension-3x-large;
+$rz-timeline-point-size: $kern-metric-space-default;
+$rz-timeline-point-border: var(--kern-metric-border-width-default) solid var(--kern-color-layout-background-default);
+$rz-timeline-point-border-radius: $kern-metric-border-radius-circle;
+$rz-timeline-point-background-color: var(--kern-color-action-default);
+$rz-timeline-point-color: var(--kern-color-action-on-default);
+$rz-timeline-line-color: var(--kern-color-layout-border);
+$rz-timeline-line-width: $kern-metric-border-width-default;
+$rz-timeline-line-border-radius: $kern-metric-border-radius-none;
+
+// ===========================================================================
+// TimeSpanPicker
+// ===========================================================================
+
+$timespanpicker-line-height: $kern-typography-line-height-static-medium;
+$timespanpicker-trigger-icon-size-xs: $kern-metric-dimension-small;
+$timespanpicker-trigger-icon-size-sm: $kern-metric-dimension-default;
+$timespanpicker-trigger-icon-size-md: $kern-metric-dimension-default;
+$timespanpicker-trigger-icon-size-lg: $kern-metric-dimension-default;
+$timespanpicker-trigger-icon-color: var(--kern-color-action-default);
+$timespanpicker-trigger-icon-hover-color: var(--kern-color-action-state-indicator-shade-hover);
+$timespanpicker-focus-outline: none;
+$timespanpicker-focus-outline-offset: 0;
+$timespanpicker-popup-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
+$timespanpicker-popup-shadow: var(--rz-shadow-3);
+$timespanpicker-popup-margin: $kern-metric-space-x-small 0 0;
+$timespanpicker-popup-width: fit-content;
+$timespanpicker-panel-background-color: var(--kern-color-layout-background-default);
+$timespanpicker-panel-padding: $kern-metric-space-default;
+$timespanpicker-panel-gap: $kern-metric-space-small;
+$timespanpicker-panel-unit-gap: 0;
+$timespanpicker-panel-field-min-width: $kern-96;
+$timespanpicker-unit-label-color: var(--kern-color-layout-text-muted);
+
+// ===========================================================================
+// Toc
+// ===========================================================================
+
+$rz-toc-link-padding-block:  $kern-metric-space-small;
+$rz-toc-link-padding-inline: $kern-12;
+$rz-toc-link-font-size: $kern-typography-font-size-static-medium;
+$rz-toc-link-font-weight: $kern-typography-font-weight-regular;
+$rz-toc-link-border: none;
+$rz-toc-link-border-radius: $kern-metric-border-radius-default;
+$rz-toc-link-color: var(--kern-color-action-default);
+$rz-toc-link-background-color: transparent;
+$rz-toc-link-hover-color: var(--kern-color-action-default);
+$rz-toc-link-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$rz-toc-link-selected-border: none;
+$rz-toc-link-selected-color: var(--kern-color-action-default);
+$rz-toc-link-selected-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$rz-toc-link-selected-indicator-color: var(--kern-color-action-default);
+$rz-toc-link-selected-indicator-size: $kern-metric-border-width-bold;
+$rz-toc-link-selected-indicator-inset-block: 0;
+$rz-toc-link-selected-indicator-inset-inline: 0 auto;
+$rz-toc-link-selected-indicator-border-radius: 0;
+$rz-toc-horizontal-shadow: none;
+$rz-toc-horizontal-border-radius: $kern-metric-border-radius-none;
+$rz-toc-horizontal-background-color: transparent;
+$rz-toc-horizontal-link-padding-block:  $kern-12;
+$rz-toc-horizontal-link-padding-inline: $kern-metric-space-default;
+$rz-toc-horizontal-link-font-size: $kern-typography-font-size-static-medium;
+$rz-toc-horizontal-link-selected-indicator-inset-block: auto 0;
+$rz-toc-horizontal-link-selected-indicator-inset-inline: 0;
+$rz-toc-horizontal-link-selected-border: none;
+$rz-toc-horizontal-link-selected-color: var(--kern-color-action-default);
+$rz-toc-horizontal-link-selected-background-color: transparent;
+
+// ===========================================================================
+// Tooltip  (global.scss `.kol-tooltip`)
+// White surface, 1px layout border, 8px radius, 12px padding, 1.55 line-height.
+// ===========================================================================
+
+$tooltip-background-color: var(--kern-color-layout-background-default);
+$tooltip-color: var(--kern-color-layout-text-default);
+$tooltip-shadow: var(--rz-shadow-3);
+$tooltip-padding: $kern-12;
+$tooltip-border-radius: $kern-metric-border-radius-large;
+$tooltip-font-size: $kern-typography-font-size-static-medium;
+
+// ===========================================================================
+// Tree  (components/tree-item.scss)
+// ===========================================================================
+
+$tree-background-color: transparent;
+$tree-node-padding-block:  $kern-metric-space-small;
+$tree-node-padding-inline: $kern-metric-space-small;
+$tree-node-selected-background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+$tree-node-selected-color: var(--kern-color-action-default);
+$tree-node-selected-border-radius: $kern-metric-border-radius-default;
+$tree-node-margin-block:  $kern-metric-space-x-small;
+$tree-node-margin-inline: 0;
+$tree-node-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$tree-node-hover-color: var(--kern-color-action-default);
+$tree-node-focus-outline: none;
+$tree-node-focus-outline-offset: 0;
+$tree-node-toggle-width: $kern-metric-dimension-default;
+$tree-node-toggle-color: var(--kern-color-action-default);
+$tree-node-toggle-hover-color: var(--kern-color-action-state-indicator-shade-hover);
+$tree-transition: var(--rz-transition-all), width 0, height 0;
+
+// ===========================================================================
+// Upload  (components/input-file.scss — KERN uses action buttons)
+// ===========================================================================
+
+$upload-button-bar-background-color: transparent;
+$upload-button-bar-padding: 0;
+$upload-button-bar-border-radius: $kern-metric-border-radius-default;
+$upload-files-background-color: var(--kern-color-layout-background-hued);
+$upload-files-padding: $kern-metric-space-small $kern-metric-space-default;
+$upload-files-remove-background-color: transparent;
+$upload-files-remove-color: var(--kern-color-action-default);
+$upload-files-margin: $kern-metric-space-small 0;
+$upload-choose-background-color: var(--kern-color-action-default);
+$upload-choose-color: var(--kern-color-action-on-default);
+$upload-choose-hover-background-color: var(--kern-color-action-state-indicator-shade-hover);
+$upload-choose-hover-color: var(--kern-color-action-on-default);
+$upload-choose-active-background-color: var(--kern-color-action-state-indicator-shade-active);
+$upload-choose-active-color: var(--kern-color-action-on-default);
+$upload-cancel-background-color: transparent;
+$upload-cancel-color: var(--kern-color-action-default);
+$upload-button-background-color: var(--kern-color-action-default);
