@@ -249,9 +249,11 @@ $rz-root-font-size: 16px;
 $rz-body-font-size: $kern-typography-font-size-medium-static;  // 18px
 $rz-body-line-height: 1.3333;                                  // 24 / 18
 $rz-body-background-color: var(--kern-color-layout-background-default);
-$rz-text-font-family: $kern-typography-font-family-fira-sans, 'Fira Sans Regular',
-  'Noto Sans', 'Noto Sans Regular', 'SF Pro Text', 'Segoe UI', SegoeUI, Roboto,
-  Arial, Helvetica, sans-serif;
+// KERN's body font token is the terse `"Fira Sans", sans-serif`; the one place it
+// spells out a full fallback chain for Fira Sans is the Kopfzeile token, so that
+// list is reused here verbatim. (Composing the terse token with extra fallbacks
+// would put `sans-serif` mid-stack and strand everything behind it.)
+$rz-text-font-family: $kern-component-kopfzeile-font-family;
 
 // KERN 2.7.1 focus indicator: `outline: 4px solid <action-focus>` at a 2px offset
 // (0 on form controls). It maps 1:1 onto Radzen's outline tokens, so every
@@ -312,20 +314,23 @@ $rz-border-radius-10: $kern-48;
 $rz-outline-normal: none;
 $rz-outline-focus:  var(--rz-outline-width) solid var(--rz-outline-color);
 
-// KERN is a low-elevation system: surfaces carry a 1px border, not a shadow.
-// The ramp interpolates between KERN's two specified shadows — the suggestion
-// popup (level 3) and the modal / drawer (level 9).
+// KERN is a low-elevation system: surfaces carry a border, not a shadow, and it
+// specifies exactly three elevations. Radzen wants an eleven-step ramp, so the
+// three are banded across it — a KERN interface therefore only ever shows the
+// three depths KERN sanctions, instead of an invented gradient between them.
+// `--kern-shadow-elevation-*` is used rather than the Sass function so the value
+// re-resolves per theme (light casts a cool grey shadow, dark a black one).
 $rz-shadow-0:  none;
-$rz-shadow-1:  0 1px 2px rgba(0, 0, 0, 0.1);
-$rz-shadow-2:  0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.1);
-$rz-shadow-3:  0 4px 8px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.1);
-$rz-shadow-4:  0 6px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.1);
-$rz-shadow-5:  0 8px 16px rgba(0, 0, 0, 0.14), 0 2px 4px rgba(0, 0, 0, 0.1);
-$rz-shadow-6:  0 12px 24px rgba(0, 0, 0, 0.16), 0 4px 8px rgba(0, 0, 0, 0.1);
-$rz-shadow-7:  0 16px 32px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
-$rz-shadow-8:  0 20px 48px rgba(0, 0, 0, 0.24), 0 6px 12px rgba(0, 0, 0, 0.1);
-$rz-shadow-9:  0 24px 60px rgba(0, 0, 0, 0.3), 0 8px 16px 0 rgba(0, 0, 0, 0.1);
-$rz-shadow-10: 0 32px 72px rgba(0, 0, 0, 0.32), 0 8px 16px 0 rgba(0, 0, 0, 0.1);
+$rz-shadow-1:  var(--kern-shadow-elevation-low);
+$rz-shadow-2:  var(--kern-shadow-elevation-low);
+$rz-shadow-3:  var(--kern-shadow-elevation-low);
+$rz-shadow-4:  var(--kern-shadow-elevation-default);
+$rz-shadow-5:  var(--kern-shadow-elevation-default);
+$rz-shadow-6:  var(--kern-shadow-elevation-default);
+$rz-shadow-7:  var(--kern-shadow-elevation-high);
+$rz-shadow-8:  var(--kern-shadow-elevation-high);
+$rz-shadow-9:  var(--kern-shadow-elevation-high);
+$rz-shadow-10: var(--kern-shadow-elevation-high);
 
 // KERN transition: 80ms cubic-bezier(0.65, 0, 0.35, 1); expanders 200ms.
 $rz-transition:          80ms cubic-bezier(0.65, 0, 0.35, 1);
@@ -429,8 +434,8 @@ $accordion-item-background-color: transparent;
 $accordion-item-color: var(--kern-color-action-default);
 $accordion-item-focus-outline: var(--rz-outline-focus);
 $accordion-item-focus-outline-offset: var(--rz-outline-offset);
-$accordion-item-line-height: $kern-typography-line-height-medium-adaptive;   // 24px
-$accordion-item-font-size:   $kern-typography-font-size-medium-adaptive;     // 21px
+$accordion-item-line-height: var(--kern-typography-line-height-medium-adaptive);
+$accordion-item-font-size:   var(--kern-typography-font-size-medium-adaptive);
 $accordion-item-font-weight: $kern-typography-font-weight-semi-bold;
 $accordion-icon-width:  $kern-metric-dimension-default;   // 24px
 $accordion-icon-height: $kern-metric-dimension-default;
@@ -461,7 +466,7 @@ $alert-border-radius: $kern-metric-border-radius-default;
 $alert-message-margin: $kern-metric-space-small 0;
 $alert-title-color: var(--rz-text-title-color);
 $alert-icon-color: var(--rz-alert-color);
-$alert-icon-size: $kern-alert-icon-size;   // 40px
+$alert-icon-size: var(--kern-component-alert-icon-size);   // 40px, 32px below 768px
 $alert-icon-margin: 0;
 
 $alert-sizes: (
@@ -478,7 +483,7 @@ $alert-sizes: (
 
 $badge-border-radius: $kern-metric-border-radius-default;
 $badge-pill-border-radius: $kern-metric-border-radius-large;
-$badge-padding:      $kern-metric-space-2x-small $kern-metric-space-default $kern-metric-space-2x-small $kern-12;
+$badge-padding:      $kern-metric-space-2x-small $kern-metric-space-default $kern-metric-space-2x-small $kern-component-badge-space-left;
 $badge-pill-padding: $kern-metric-space-2x-small $kern-metric-space-default;
 $badge-font-size:   $kern-typography-font-size-small-static;      // 16px
 $badge-font-weight: $kern-typography-font-weight-medium;          // 500
@@ -666,7 +671,7 @@ $rz-chat-header-padding-inline: $kern-metric-space-default $kern-metric-space-sm
 $rz-chat-header-background-color: var(--kern-color-layout-background-hued);
 $rz-chat-header-bottom-border: var(--rz-border-normal);
 $rz-chat-header-shadow: none;
-$rz-chat-header-title-font-size:   $kern-typography-font-size-medium-adaptive;
+$rz-chat-header-title-font-size:   var(--kern-typography-font-size-medium-adaptive);
 $rz-chat-header-title-font-weight: $kern-typography-font-weight-semi-bold;
 $rz-chat-message-user-color: var(--rz-on-primary-lighter);
 $rz-chat-message-user-background-color: var(--rz-primary-lighter);
@@ -884,8 +889,8 @@ $dialog-title-background-color: var(--kern-color-layout-background-default);
 $dialog-title-border: none;
 $dialog-title-padding-block:  $kern-metric-space-large $kern-metric-space-small;
 $dialog-title-padding-inline: $kern-metric-space-large;
-$dialog-title-font-size:   $kern-typography-font-size-medium-adaptive;    // 21/24px
-$dialog-title-line-height: $kern-typography-line-height-medium-adaptive;
+$dialog-title-font-size:   var(--kern-typography-font-size-medium-adaptive);
+$dialog-title-line-height: var(--kern-typography-line-height-medium-adaptive);
 $dialog-title-font-weight: $kern-typography-font-weight-semi-bold;
 $dialog-title-letter-spacing: 0;
 $dialog-title-color: var(--rz-text-title-color);
@@ -1539,7 +1544,7 @@ $panel-menu-toggle-icon-opacity: 1;
 
 $panel-background-color: var(--kern-color-layout-background-default);
 $panel-padding: $kern-metric-space-default;
-$panel-title-line-height: $kern-typography-line-height-medium-adaptive;
+$panel-title-line-height: var(--kern-typography-line-height-medium-adaptive);
 $panel-title-font-weight: $kern-typography-font-weight-semi-bold;
 $panel-content-margin: 0;
 $panel-toggle-icon-width:  $kern-metric-dimension-default;
@@ -1672,7 +1677,7 @@ $scheduler-background-color: var(--kern-color-layout-background-default);
 $scheduler-color: var(--kern-color-layout-text-default);
 $scheduler-toolbar-padding: $kern-metric-space-small;
 $scheduler-toolbar-background-color: var(--kern-color-layout-background-default);
-$scheduler-toolbar-title-font-size:   $kern-typography-font-size-medium-adaptive;
+$scheduler-toolbar-title-font-size:   var(--kern-typography-font-size-medium-adaptive);
 $scheduler-toolbar-title-font-weight: $kern-typography-font-weight-semi-bold;
 $scheduler-toolbar-title-color: var(--rz-text-title-color);
 $scheduler-prev-next-button-background-color: var(--kern-color-action-default);
@@ -1701,7 +1706,7 @@ $scheduler-view-selected-border-color: var(--kern-color-action-default);
 $scheduler-header-background-color: var(--kern-color-layout-background-default);
 $scheduler-header-font-size: $kern-typography-font-size-small-static;
 $scheduler-header-font-size-small: $kern-font-size-14;
-$scheduler-header-agenda-font-size: $kern-typography-font-size-medium-adaptive;
+$scheduler-header-agenda-font-size: var(--kern-typography-font-size-medium-adaptive);
 $scheduler-header-agenda-font-weight: $kern-typography-font-weight-semi-bold;
 $scheduler-header-agenda-font-size-small: $kern-typography-font-size-medium-static;
 $scheduler-header-text-transform: none;
@@ -1753,7 +1758,7 @@ $scrollbar-size: $kern-12;
 $rz-security-code-input-min-width:  var(--rz-input-height);
 $rz-security-code-input-min-height: var(--rz-input-height);
 $rz-security-code-input-padding: $kern-metric-space-2x-small;
-$rz-security-code-input-font-size: $kern-typography-font-size-medium-adaptive;
+$rz-security-code-input-font-size: var(--kern-typography-font-size-medium-adaptive);
 $rz-security-code-input-font-weight: $kern-typography-font-weight-semi-bold;
 $rz-security-code-input-line-height: 1;
 

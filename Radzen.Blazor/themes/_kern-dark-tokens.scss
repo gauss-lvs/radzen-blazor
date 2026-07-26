@@ -48,3 +48,21 @@ $kern-color-decorative-border-level-1: #51577a;
 $kern-color-decorative-border-level-2: #5b6185;
 $kern-color-decorative-brand-default: #a9aec6;
 $kern-color-layout-background-overlay: rgba(0, 0, 0, 0.72);
+$kern-color-layout-border-level-1: #8187a7;
+$kern-color-layout-border-level-2: #8e93b1;
+$kern-color-layout-background-default-surface: #131525;
+
+// Dark tightens both state opacities by one step.
+$kern-color-action-state-opacity-hover: 88%;
+$kern-color-action-state-opacity-active: 76%;
+
+// The `-contextual` aliases resolve off the semantics above, so they have to be
+// re-derived after those are reassigned — `_kern-tokens.scss` computed them from
+// the light values.
+$kern-color-layout-layer-surface-contextual: $kern-color-layout-background-default-surface;
+$kern-color-decorative-border-contextual: $kern-color-decorative-border-default;
+$kern-color-decorative-brand-contextual: $kern-color-decorative-brand-default;
+$kern-color-action-state-indicator-default-contextual: $kern-color-action-state-indicator-default;
+
+// Elevation: same layer geometry, black instead of the light theme's cool grey.
+$kern-shadow-color: #000000;

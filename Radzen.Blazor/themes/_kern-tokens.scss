@@ -11,7 +11,21 @@
 //
 // Every token is available twice: as a `$kern-…` Sass variable (so Radzen theme
 // variables can be assigned at compile time) and, via `kern-token-properties()`,
-// as the original `--kern-…` custom property.
+// as the original `--kern-…` custom property. Coverage is complete: all 519
+// `--kern-*` the package declares are emitted with the package's value.
+//
+// Three places deviate from a literal transcription, all deliberate:
+//   * Colours are sRGB, not OKLCH (see above). Verified to render identically.
+//   * The 28 tokens that change at 768px keep the desktop value in the plain
+//     `$kern-…` variable and the mobile value in a `-mobile` twin; the mixin
+//     emits the latter under `@media (max-width: 767.98px)`. Upstream inverts
+//     that (mobile base, `min-width: 768px` override) — same two buckets.
+//   * Elevations are rebuilt by `kern-elevation()` from one `$kern-shadow-color`
+//     instead of splicing bare OKLCH components into every layer.
+//
+// Two tokens are declared upstream but resolve to nothing there, and are filled
+// in here at the value their name implies: `--kern-metric-dimension-6x-large`
+// and `-7x-large` (they reference primitives that do not exist).
 
 /* stylelint-disable */
 
@@ -264,6 +278,53 @@ $kern-grey-850: #2b2c2c;
 $kern-grey-900: #212121;
 $kern-grey-950: #161616;
 
+// The two brand-palette slots. KERN ships them filled with its own accent
+// ramps and expects a consuming authority to overwrite them with its brand
+// colours; nothing in the stock semantic layer references them.
+// -- brand-colorpalette-1 --
+$kern-color-brand-colorpalette-1-025: #f2f2fb;
+$kern-color-brand-colorpalette-1-050: #e8e9f8;
+$kern-color-brand-colorpalette-1-100: #dfe0f5;
+$kern-color-brand-colorpalette-1-150: #cfd0f0;
+$kern-color-brand-colorpalette-1-200: #bfc0ea;
+$kern-color-brand-colorpalette-1-250: #b2b3e6;
+$kern-color-brand-colorpalette-1-300: #a9aae2;
+$kern-color-brand-colorpalette-1-350: #9b9adc;
+$kern-color-brand-colorpalette-1-400: #8f8dd7;
+$kern-color-brand-colorpalette-1-450: #8380d1;
+$kern-color-brand-colorpalette-1-500: #716bc7;
+$kern-color-brand-colorpalette-1-550: #675fc1;
+$kern-color-brand-colorpalette-1-600: #5f54bb;
+$kern-color-brand-colorpalette-1-650: #5648b4;
+$kern-color-brand-colorpalette-1-700: #4b38ab;
+$kern-color-brand-colorpalette-1-750: #432aa2;
+$kern-color-brand-colorpalette-1-800: #3a1797;
+$kern-color-brand-colorpalette-1-850: #31008a;
+$kern-color-brand-colorpalette-1-900: #240070;
+$kern-color-brand-colorpalette-1-950: #180054;
+
+// -- brand-colorpalette-2 --
+$kern-color-brand-colorpalette-2-025: #c4ffee;
+$kern-color-brand-colorpalette-2-050: #9afce1;
+$kern-color-brand-colorpalette-2-100: #80f6d7;
+$kern-color-brand-colorpalette-2-150: #5ce9c7;
+$kern-color-brand-colorpalette-2-200: #42dab8;
+$kern-color-brand-colorpalette-2-250: #31cdab;
+$kern-color-brand-colorpalette-2-300: #28c4a4;
+$kern-color-brand-colorpalette-2-350: #1ab496;
+$kern-color-brand-colorpalette-2-400: #0ea88b;
+$kern-color-brand-colorpalette-2-450: #149a80;
+$kern-color-brand-colorpalette-2-500: #00866e;
+$kern-color-brand-colorpalette-2-550: #007a64;
+$kern-color-brand-colorpalette-2-600: #00705c;
+$kern-color-brand-colorpalette-2-650: #006552;
+$kern-color-brand-colorpalette-2-700: #005747;
+$kern-color-brand-colorpalette-2-750: #004b3d;
+$kern-color-brand-colorpalette-2-800: #003e32;
+$kern-color-brand-colorpalette-2-850: #003228;
+$kern-color-brand-colorpalette-2-900: #00271f;
+$kern-color-brand-colorpalette-2-950: #001b14;
+
 // ---------------------------------------------------------------------------
 // Primitives — sizes and font sizes
 // ---------------------------------------------------------------------------
@@ -390,6 +451,12 @@ $kern-metric-dimension-2x-small: 0.5rem;
 $kern-metric-dimension-3x-large: 4rem;
 $kern-metric-dimension-4x-large: 5rem;
 $kern-metric-dimension-5x-large: 6rem;
+// 6x/7x-large are declared upstream as var(--kern-120)/var(--kern-144), but the
+// primitive scale jumps 112 → 128 → 160, so those two primitives do not exist
+// and the tokens resolve to nothing in the package. Filled in at the size their
+// names and references imply.
+$kern-metric-dimension-6x-large: 7.5rem;
+$kern-metric-dimension-7x-large: 9rem;
 $kern-metric-dimension-default: 1.5rem;
 $kern-metric-dimension-large: 2rem;
 $kern-metric-dimension-media-default: 12rem;
@@ -398,6 +465,7 @@ $kern-metric-dimension-media-small: 8rem;
 $kern-metric-dimension-small: 1.25rem;
 $kern-metric-dimension-x-large: 3rem;
 $kern-metric-dimension-x-small: 1rem;
+$kern-metric-screen-size: 120rem;
 $kern-metric-space-10x-large: 10rem;
 $kern-metric-space-11x-large: 12rem;
 $kern-metric-space-2x-large: 2.5rem;
@@ -421,6 +489,8 @@ $kern-metric-space-x-small: 0.25rem;
 // ---------------------------------------------------------------------------
 
 $kern-typography-font-family-default: "Fira Sans", sans-serif;
+$kern-typography-font-family-fira-mono: "Fira Mono", monospace;
+$kern-typography-font-family-fira-sans: "Fira Sans", sans-serif;
 $kern-typography-font-size-2x-large-adaptive: 4.5rem;
 $kern-typography-font-size-large-adaptive: 2rem;
 $kern-typography-font-size-large-static: 1.3125rem;
@@ -490,6 +560,16 @@ $kern-color-decorative-border-level-1: #a9aec6;
 $kern-color-decorative-border-level-2: #c0c3d5;
 $kern-color-decorative-brand-default: #454b6b;
 $kern-color-layout-background-overlay: rgba(255, 255, 255, 0.72);
+$kern-color-layout-border-level-1: #5b6185;
+$kern-color-layout-border-level-2: #6e7597;
+$kern-color-layout-background-default-surface: #f3f4f7;
+
+// `-contextual` aliases KERN resolves per nesting level. Flattened here to the
+// level-0 value, which is what a Radzen app renders at.
+$kern-color-layout-layer-surface-contextual: $kern-color-layout-background-default-surface;
+$kern-color-decorative-border-contextual: $kern-color-decorative-border-default;
+$kern-color-decorative-brand-contextual: $kern-color-decorative-brand-default;
+$kern-color-action-state-indicator-default-contextual: $kern-color-action-state-indicator-default;
 
 $kern-color-action-state-opacity-hover: 92%;
 $kern-color-action-state-opacity-pressed: 0.32;
@@ -499,6 +579,90 @@ $kern-color-action-state-opacity-active: 84%;
 $kern-color-action-state-opacity-overlay: 0.72;
 
 // ---------------------------------------------------------------------------
+// Elevation
+// ---------------------------------------------------------------------------
+//
+// KERN specifies exactly three elevations, each a stack of layers sharing one
+// colour at rising alpha. Upstream keeps the colour as bare OKLCH components in
+// `--kern-shadow-color` and splices it into every layer; here the colour is one
+// Sass value and `kern-elevation()` rebuilds the stack, so the dark override of
+// `$kern-shadow-color` re-derives all three for free.
+
+$kern-shadow-color: #a3a6ae;   // oklch(0.725 0.012 271.4)
+
+// Layer geometry, verbatim from the package: (offset-y, blur, spread, alpha).
+$kern-elevation-layers: (
+  low: ((0.1px, 0.1px, 0, 0.04), (2.8px, 2.8px, -0.2px, 0.1), (6px, 6px, -0.4px, 0.14)),
+  default: ((0.4px, 0.4px, 0, 0.04), (3.6px, 3.6px, -0.2px, 0.09), (7.6px, 7.6px, -0.5px, 0.1),
+    (11.8px, 11.8px, -0.8px, 0.11), (16.3px, 16.3px, -1.1px, 0.11), (21px, 21px, -1.4px, 0.14)),
+  high: ((1.2px, 1.2px, -0.1px, 0.04), (6.6px, 6.6px, -0.4px, 0.08), (13.1px, 13.1px, -0.9px, 0.09),
+    (20.1px, 20.1px, -1.3px, 0.1), (27.5px, 27.5px, -1.8px, 0.1), (35.2px, 35.2px, -2.3px, 0.1),
+    (43.1px, 43.1px, -2.8px, 0.11), (51.2px, 51.2px, -3.3px, 0.11))
+);
+
+@function kern-elevation($level, $color: $kern-shadow-color) {
+  $out: ();
+  @each $l in map-get($kern-elevation-layers, $level) {
+    $out: append($out, 0 nth($l, 1) nth($l, 2) nth($l, 3) rgba($color, nth($l, 4)), comma);
+  }
+  @return $out;
+}
+
+// ---------------------------------------------------------------------------
+// Component tokens
+// ---------------------------------------------------------------------------
+
+$kern-component-alert-icon-size: 2.5rem;
+$kern-component-badge-space-left: 0.75rem;
+$kern-component-description-list-term-max-width: 22rem;
+
+// "Kopfzeile" is KERN's own page-header band; kept for completeness — Radzen has
+// no counterpart, so nothing in the map consumes these.
+$kern-component-kopfzeile-font-family: "Fira Sans", "Fira Sans Regular", "Noto Sans", "Noto Sans Regular", "SF Pro Text", "Segoe UI", SegoeUI, Roboto, Arial, Helvetica, sans-serif;
+$kern-component-kopfzeile-font-size: 1rem;
+$kern-component-kopfzeile-line-height: 1.25rem;
+$kern-component-kopfzeile-padding: 0.3125rem;
+
+// ---------------------------------------------------------------------------
+// Responsive tokens — the mobile half
+// ---------------------------------------------------------------------------
+//
+// KERN publishes 28 tokens that change at 768px. Upstream the base declaration
+// carries the mobile value and `@media (min-width: 768px)` raises it; this file
+// inverts that — the plain `$kern-…` variable is the desktop value (so the Sass
+// side keeps one obvious value per token) and `kern-token-properties()` emits
+// these under `@media (max-width: 767.98px)`. Same two buckets, same boundary.
+
+$kern-component-alert-icon-size-mobile:                       2rem;        // desktop 2.5rem
+$kern-component-kopfzeile-font-size-mobile:                    0.875rem;   // desktop 1rem
+$kern-component-kopfzeile-line-height-mobile:                  1rem;       // desktop 1.25rem
+$kern-component-kopfzeile-padding-mobile:                      0.4375rem;  // desktop 0.3125rem
+$kern-metric-baseline-heading-display-padding-bottom-mobile:   0.75rem;    // desktop 1rem
+$kern-metric-baseline-heading-display-padding-top-mobile:      0.75rem;    // desktop 1rem
+$kern-metric-baseline-heading-large-padding-bottom-mobile:     0.5625rem;  // desktop 0.4375rem
+$kern-metric-baseline-heading-large-padding-top-mobile:         0.4375rem;  // desktop 0.5625rem
+$kern-metric-baseline-heading-medium-padding-bottom-mobile:    0.1875rem;  // desktop 0.5rem
+$kern-metric-baseline-heading-medium-padding-top-mobile:       0.3125rem;  // desktop 0.5rem
+$kern-metric-baseline-heading-x-large-padding-bottom-mobile:   0.4375rem;  // desktop 0.75rem
+$kern-metric-baseline-heading-x-large-padding-top-mobile:      0.5625rem;  // desktop 0.75rem
+$kern-metric-baseline-title-default-padding-bottom-mobile:     0.1875rem;  // desktop 0.5rem
+$kern-metric-baseline-title-default-padding-top-mobile:        0.3125rem;  // desktop 0.5rem
+$kern-metric-baseline-title-large-padding-bottom-mobile:       0.5625rem;  // desktop 0.4375rem
+$kern-metric-baseline-title-large-padding-top-mobile:          0.4375rem;  // desktop 0.5625rem
+$kern-metric-dimension-media-default-mobile:                  10rem;       // desktop 12rem
+$kern-metric-dimension-media-large-mobile:                    15rem;       // desktop 22.5rem
+$kern-metric-dimension-media-small-mobile:                     6rem;       // desktop 8rem
+$kern-metric-screen-size-mobile:                              22.5rem;     // desktop 120rem
+$kern-typography-font-size-2x-large-adaptive-mobile:           3rem;       // desktop 4.5rem
+$kern-typography-font-size-large-adaptive-mobile:              1.625rem;   // desktop 2rem
+$kern-typography-font-size-medium-adaptive-mobile:             1.3125rem;  // desktop 1.5rem
+$kern-typography-font-size-x-large-adaptive-mobile:            2rem;       // desktop 3rem
+$kern-typography-line-height-2x-large-adaptive-mobile:         3.5rem;     // desktop 5rem
+$kern-typography-line-height-large-adaptive-mobile:            2rem;       // desktop 2.5rem
+$kern-typography-line-height-medium-adaptive-mobile:           1.5rem;     // desktop 2rem
+$kern-typography-line-height-x-large-adaptive-mobile:          2.5rem;     // desktop 3.5rem
+
+// ---------------------------------------------------------------------------
 // Derived — not KERN tokens, but values KERN hard-codes inside component rules
 // that this theme needs as variables.
 // ---------------------------------------------------------------------------
@@ -506,8 +670,6 @@ $kern-color-action-state-opacity-overlay: 0.72;
 $kern-11-pad:  0.6875rem;   // vertical padding yielding a 48px control at 24px line-height
 $kern-15-pad:  0.9375rem;   // …the same for a 56px control
 $kern-28-icon: 1.75rem;     // checkbox glyph size
-$kern-alert-icon-size: $kern-metric-dimension-large;   // 32px
-$kern-typography-font-family-fira-sans: $kern-typography-font-family-default;
 
 // Focus indicator as one reusable value — KERN 2.7.1 uses a single outline,
 // `outline: 4px solid <focus>` with a 2px offset (0 on form controls).
@@ -742,6 +904,46 @@ $kern-focus-outline-offset: $kern-metric-border-width-default;
   --kern-color-grey-850: #{$kern-grey-850};
   --kern-color-grey-900: #{$kern-grey-900};
   --kern-color-grey-950: #{$kern-grey-950};
+  --kern-color-brand-colorpalette-1-025: #{$kern-color-brand-colorpalette-1-025};
+  --kern-color-brand-colorpalette-1-050: #{$kern-color-brand-colorpalette-1-050};
+  --kern-color-brand-colorpalette-1-100: #{$kern-color-brand-colorpalette-1-100};
+  --kern-color-brand-colorpalette-1-150: #{$kern-color-brand-colorpalette-1-150};
+  --kern-color-brand-colorpalette-1-200: #{$kern-color-brand-colorpalette-1-200};
+  --kern-color-brand-colorpalette-1-250: #{$kern-color-brand-colorpalette-1-250};
+  --kern-color-brand-colorpalette-1-300: #{$kern-color-brand-colorpalette-1-300};
+  --kern-color-brand-colorpalette-1-350: #{$kern-color-brand-colorpalette-1-350};
+  --kern-color-brand-colorpalette-1-400: #{$kern-color-brand-colorpalette-1-400};
+  --kern-color-brand-colorpalette-1-450: #{$kern-color-brand-colorpalette-1-450};
+  --kern-color-brand-colorpalette-1-500: #{$kern-color-brand-colorpalette-1-500};
+  --kern-color-brand-colorpalette-1-550: #{$kern-color-brand-colorpalette-1-550};
+  --kern-color-brand-colorpalette-1-600: #{$kern-color-brand-colorpalette-1-600};
+  --kern-color-brand-colorpalette-1-650: #{$kern-color-brand-colorpalette-1-650};
+  --kern-color-brand-colorpalette-1-700: #{$kern-color-brand-colorpalette-1-700};
+  --kern-color-brand-colorpalette-1-750: #{$kern-color-brand-colorpalette-1-750};
+  --kern-color-brand-colorpalette-1-800: #{$kern-color-brand-colorpalette-1-800};
+  --kern-color-brand-colorpalette-1-850: #{$kern-color-brand-colorpalette-1-850};
+  --kern-color-brand-colorpalette-1-900: #{$kern-color-brand-colorpalette-1-900};
+  --kern-color-brand-colorpalette-1-950: #{$kern-color-brand-colorpalette-1-950};
+  --kern-color-brand-colorpalette-2-025: #{$kern-color-brand-colorpalette-2-025};
+  --kern-color-brand-colorpalette-2-050: #{$kern-color-brand-colorpalette-2-050};
+  --kern-color-brand-colorpalette-2-100: #{$kern-color-brand-colorpalette-2-100};
+  --kern-color-brand-colorpalette-2-150: #{$kern-color-brand-colorpalette-2-150};
+  --kern-color-brand-colorpalette-2-200: #{$kern-color-brand-colorpalette-2-200};
+  --kern-color-brand-colorpalette-2-250: #{$kern-color-brand-colorpalette-2-250};
+  --kern-color-brand-colorpalette-2-300: #{$kern-color-brand-colorpalette-2-300};
+  --kern-color-brand-colorpalette-2-350: #{$kern-color-brand-colorpalette-2-350};
+  --kern-color-brand-colorpalette-2-400: #{$kern-color-brand-colorpalette-2-400};
+  --kern-color-brand-colorpalette-2-450: #{$kern-color-brand-colorpalette-2-450};
+  --kern-color-brand-colorpalette-2-500: #{$kern-color-brand-colorpalette-2-500};
+  --kern-color-brand-colorpalette-2-550: #{$kern-color-brand-colorpalette-2-550};
+  --kern-color-brand-colorpalette-2-600: #{$kern-color-brand-colorpalette-2-600};
+  --kern-color-brand-colorpalette-2-650: #{$kern-color-brand-colorpalette-2-650};
+  --kern-color-brand-colorpalette-2-700: #{$kern-color-brand-colorpalette-2-700};
+  --kern-color-brand-colorpalette-2-750: #{$kern-color-brand-colorpalette-2-750};
+  --kern-color-brand-colorpalette-2-800: #{$kern-color-brand-colorpalette-2-800};
+  --kern-color-brand-colorpalette-2-850: #{$kern-color-brand-colorpalette-2-850};
+  --kern-color-brand-colorpalette-2-900: #{$kern-color-brand-colorpalette-2-900};
+  --kern-color-brand-colorpalette-2-950: #{$kern-color-brand-colorpalette-2-950};
 
   --kern-0: #{$kern-0};
   --kern-1: #{$kern-1};
@@ -868,6 +1070,7 @@ $kern-focus-outline-offset: $kern-metric-border-width-default;
   --kern-metric-dimension-small: #{$kern-metric-dimension-small};
   --kern-metric-dimension-x-large: #{$kern-metric-dimension-x-large};
   --kern-metric-dimension-x-small: #{$kern-metric-dimension-x-small};
+  --kern-metric-screen-size: #{$kern-metric-screen-size};
   --kern-metric-space-10x-large: #{$kern-metric-space-10x-large};
   --kern-metric-space-11x-large: #{$kern-metric-space-11x-large};
   --kern-metric-space-2x-large: #{$kern-metric-space-2x-large};
@@ -887,6 +1090,8 @@ $kern-focus-outline-offset: $kern-metric-border-width-default;
   --kern-metric-space-x-small: #{$kern-metric-space-x-small};
 
   --kern-typography-font-family-default: #{$kern-typography-font-family-default};
+  --kern-typography-font-family-fira-mono: #{$kern-typography-font-family-fira-mono};
+  --kern-typography-font-family-fira-sans: #{$kern-typography-font-family-fira-sans};
   --kern-typography-font-size-2x-large-adaptive: #{$kern-typography-font-size-2x-large-adaptive};
   --kern-typography-font-size-large-adaptive: #{$kern-typography-font-size-large-adaptive};
   --kern-typography-font-size-large-static: #{$kern-typography-font-size-large-static};
@@ -973,6 +1178,17 @@ $kern-focus-outline-offset: $kern-metric-border-width-default;
   --kern-color-decorative-border-level-2: #{$kern-color-decorative-border-level-2};
   --kern-color-decorative-brand-default: #{$kern-color-decorative-brand-default};
   --kern-color-layout-background-overlay: #{$kern-color-layout-background-overlay};
+  --kern-color-layout-border-level-1: #{$kern-color-layout-border-level-1};
+  --kern-color-layout-border-level-2: #{$kern-color-layout-border-level-2};
+  --kern-color-layout-background-default-surface: #{$kern-color-layout-background-default-surface};
+  --kern-color-layout-layer-surface-contextual: #{$kern-color-layout-layer-surface-contextual};
+  --kern-color-decorative-border-contextual: #{$kern-color-decorative-border-contextual};
+  --kern-color-decorative-brand-contextual: #{$kern-color-decorative-brand-contextual};
+  --kern-color-action-state-indicator-default-contextual: #{$kern-color-action-state-indicator-default-contextual};
+  // Upstream ships this misspelled twin as well (doubled `color-`), and it is the
+  // only one of the pair that actually resolves there. Mirrored so markup copied
+  // from the KERN docs keeps working.
+  --kern-color-color-action-state-indicator-default-contextual: #{$kern-color-action-state-indicator-default-contextual};
 
   --kern-color-action-state-opacity-hover: #{$kern-color-action-state-opacity-hover};
   --kern-color-action-state-opacity-pressed: #{$kern-color-action-state-opacity-pressed};
@@ -981,5 +1197,51 @@ $kern-focus-outline-offset: $kern-metric-border-width-default;
   --kern-color-action-state-opacity-active: #{$kern-color-action-state-opacity-active};
   --kern-color-action-state-opacity-overlay: #{$kern-color-action-state-opacity-overlay};
 
+  --kern-shadow-color: #{$kern-shadow-color};
+  --kern-shadow-elevation-low: #{kern-elevation(low)};
+  --kern-shadow-elevation-default: #{kern-elevation(default)};
+  --kern-shadow-elevation-high: #{kern-elevation(high)};
+
+  --kern-component-alert-icon-size: #{$kern-component-alert-icon-size};
+  --kern-component-badge-space-left: #{$kern-component-badge-space-left};
+  --kern-component-description-list-term-max-width: #{$kern-component-description-list-term-max-width};
+  --kern-component-kopfzeile-font-family: #{$kern-component-kopfzeile-font-family};
+  --kern-component-kopfzeile-font-size: #{$kern-component-kopfzeile-font-size};
+  --kern-component-kopfzeile-line-height: #{$kern-component-kopfzeile-line-height};
+  --kern-component-kopfzeile-padding: #{$kern-component-kopfzeile-padding};
+
   --kern-focus-outline: #{$kern-focus-outline-width} solid #{$kern-color-action-focus-default};
+
+  // KERN's 768px breakpoint. Sass hoists this out of the enclosing selector, so
+  // it compiles to a plain top-level @media re-declaring the 28 tokens.
+  @media (max-width: 767.98px) {
+    --kern-component-alert-icon-size: #{$kern-component-alert-icon-size-mobile};
+    --kern-component-kopfzeile-font-size: #{$kern-component-kopfzeile-font-size-mobile};
+    --kern-component-kopfzeile-line-height: #{$kern-component-kopfzeile-line-height-mobile};
+    --kern-component-kopfzeile-padding: #{$kern-component-kopfzeile-padding-mobile};
+    --kern-metric-baseline-heading-display-padding-bottom: #{$kern-metric-baseline-heading-display-padding-bottom-mobile};
+    --kern-metric-baseline-heading-display-padding-top: #{$kern-metric-baseline-heading-display-padding-top-mobile};
+    --kern-metric-baseline-heading-large-padding-bottom: #{$kern-metric-baseline-heading-large-padding-bottom-mobile};
+    --kern-metric-baseline-heading-large-padding-top: #{$kern-metric-baseline-heading-large-padding-top-mobile};
+    --kern-metric-baseline-heading-medium-padding-bottom: #{$kern-metric-baseline-heading-medium-padding-bottom-mobile};
+    --kern-metric-baseline-heading-medium-padding-top: #{$kern-metric-baseline-heading-medium-padding-top-mobile};
+    --kern-metric-baseline-heading-x-large-padding-bottom: #{$kern-metric-baseline-heading-x-large-padding-bottom-mobile};
+    --kern-metric-baseline-heading-x-large-padding-top: #{$kern-metric-baseline-heading-x-large-padding-top-mobile};
+    --kern-metric-baseline-title-default-padding-bottom: #{$kern-metric-baseline-title-default-padding-bottom-mobile};
+    --kern-metric-baseline-title-default-padding-top: #{$kern-metric-baseline-title-default-padding-top-mobile};
+    --kern-metric-baseline-title-large-padding-bottom: #{$kern-metric-baseline-title-large-padding-bottom-mobile};
+    --kern-metric-baseline-title-large-padding-top: #{$kern-metric-baseline-title-large-padding-top-mobile};
+    --kern-metric-dimension-media-default: #{$kern-metric-dimension-media-default-mobile};
+    --kern-metric-dimension-media-large: #{$kern-metric-dimension-media-large-mobile};
+    --kern-metric-dimension-media-small: #{$kern-metric-dimension-media-small-mobile};
+    --kern-metric-screen-size: #{$kern-metric-screen-size-mobile};
+    --kern-typography-font-size-2x-large-adaptive: #{$kern-typography-font-size-2x-large-adaptive-mobile};
+    --kern-typography-font-size-large-adaptive: #{$kern-typography-font-size-large-adaptive-mobile};
+    --kern-typography-font-size-medium-adaptive: #{$kern-typography-font-size-medium-adaptive-mobile};
+    --kern-typography-font-size-x-large-adaptive: #{$kern-typography-font-size-x-large-adaptive-mobile};
+    --kern-typography-line-height-2x-large-adaptive: #{$kern-typography-line-height-2x-large-adaptive-mobile};
+    --kern-typography-line-height-large-adaptive: #{$kern-typography-line-height-large-adaptive-mobile};
+    --kern-typography-line-height-medium-adaptive: #{$kern-typography-line-height-medium-adaptive-mobile};
+    --kern-typography-line-height-x-large-adaptive: #{$kern-typography-line-height-x-large-adaptive-mobile};
+  }
 }
