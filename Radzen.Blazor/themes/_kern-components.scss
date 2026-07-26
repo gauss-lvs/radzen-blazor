@@ -182,7 +182,7 @@ $kern-severities: (
 .rz-button.rz-variant-outlined.rz-primary,
 .rz-button.rz-variant-outlined.rz-secondary {
   color: var(--kern-color-action-default);
-  background-color: var(--kern-neutral-000);
+  background-color: var(--kern-color-layout-background-default);
   background-image: none;
   border-color: var(--kern-color-action-default);
   box-shadow: none;
@@ -242,6 +242,23 @@ $kern-severities: (
     &:not(.rz-state-disabled):hover {
       text-decoration-thickness: var(--kern-3);
     }
+  }
+}
+
+@if $kern-dark {
+  // Radzen derives the outlined/text `Light` variants from that style's *label*
+  // color, which on a dark page is the dark one — invisible. Borrow the surface
+  // color for the outline and label instead.
+  .rz-button.rz-variant-outlined.rz-light,
+  .rz-button.rz-variant-outlined.rz-light.rz-shade-default {
+    color: var(--rz-base-200);
+    box-shadow: inset 0 0 0 var(--rz-border-width) var(--rz-base-200);
+  }
+
+  .rz-button.rz-variant-text.rz-light,
+  .rz-button.rz-variant-text.rz-light.rz-shade-default {
+    color: var(--rz-base-200);
+    box-shadow: none;
   }
 }
 

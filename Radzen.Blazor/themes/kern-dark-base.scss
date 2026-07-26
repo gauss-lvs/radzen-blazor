@@ -1,0 +1,21 @@
+// KERN Dark — derived dark variant of the KERN UX-Standard theme.
+//
+// NOTE: KERN 2.4.1 specifies no dark theme. `_kern-dark-tokens.scss` documents
+// the derivation rules used to produce one from KERN's own primitives.
+//
+// `-base` variant: component styles only, no global element resets.
+
+@import 'variables';
+@import 'mixins';
+$base: true;
+$theme-dark: true;
+$theme-name: kern-dark;
+$kern-dark: true;
+
+@import 'kern-tokens';
+@import 'kern-dark-tokens';
+@import 'kern-map';
+
+@import 'fonts';
+@import 'components';
+@import 'kern-components';

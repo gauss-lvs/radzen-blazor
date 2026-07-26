@@ -11,6 +11,11 @@
 
 @use 'sass:map';
 
+// Set by `kern-dark*.scss` before this file is imported. Only the palette block
+// below branches on it — everything from "Theme constants" down flows through
+// `var(--kern-*)`, which `_kern-dark-tokens.scss` has already flipped.
+$kern-dark: false !default;
+
 // ===========================================================================
 // Theme colors
 // ===========================================================================
@@ -28,82 +33,211 @@ $rz-success:   $kern-color-feedback-success;
 $rz-warning:   $kern-color-feedback-warning;
 $rz-danger:    $kern-color-feedback-danger;
 
-// Neutral surface / text ramp — KERN neutral palette + layout tokens.
-$rz-base:        $kern-neutral-100;
-$rz-base-50:     $kern-neutral-000;                    // #ffffff
-$rz-base-100:    $kern-color-layout-background-hued;   // #f6f6f8
-$rz-base-200:    $kern-neutral-100;                    // #e8e8ea
-$rz-base-300:    $kern-color-layout-border;            // #a6abc4 — `--rz-border-normal`
-$rz-base-400:    $kern-neutral-350;                    // #a7a6ae
-$rz-base-500:    $kern-neutral-450;                    // #8a8993 — disabled text
-$rz-base-600:    $kern-color-layout-text-muted;        // #404464 — tertiary text
-$rz-base-700:    $kern-color-layout-text-muted;        // #404464 — secondary text
-$rz-base-800:    $kern-color-layout-text-default;      // #171a2b — body text
-$rz-base-900:    $kern-color-layout-text-default;      // #171a2b — title text
-$rz-base-light:   $kern-neutral-100;
-$rz-base-lighter: $kern-color-layout-background-hued;
-$rz-base-dark:    $kern-neutral-600;
-$rz-base-darker:  $kern-color-layout-text-default;
+@if $kern-dark == false {
 
-// Action shades — KERN state indicators.
-$rz-primary-light:   $kern-color-action-state-indicator-shade-hover;   // #2f57c0
-$rz-primary-lighter: $kern-color-action-state-indicator-tint-active-opacity;
-$rz-primary-dark:    $kern-darkblue-750;                               // #1f3b8f
-$rz-primary-darker:  $kern-darkblue-800;                               // #19327f
+  // Neutral surface / text ramp — KERN neutral palette + layout tokens.
+  $rz-base:        $kern-neutral-100 !global;
+  $rz-base-50:     $kern-neutral-000 !global;                    // #ffffff
+  $rz-base-100:    $kern-color-layout-background-hued !global;   // #f6f6f8
+  $rz-base-200:    $kern-neutral-100 !global;                    // #e8e8ea
+  $rz-base-300:    $kern-color-layout-border !global;            // #a6abc4 — `--rz-border-normal`
+  $rz-base-400:    $kern-neutral-350 !global;                    // #a7a6ae
+  $rz-base-500:    $kern-neutral-450 !global;                    // #8a8993 — disabled text
+  $rz-base-600:    $kern-color-layout-text-muted !global;        // #404464 — tertiary text
+  $rz-base-700:    $kern-color-layout-text-muted !global;        // #404464 — secondary text
+  $rz-base-800:    $kern-color-layout-text-default !global;      // #171a2b — body text
+  $rz-base-900:    $kern-color-layout-text-default !global;      // #171a2b — title text
+  $rz-base-light:   $kern-neutral-100 !global;
+  $rz-base-lighter: $kern-color-layout-background-hued !global;
+  $rz-base-dark:    $kern-neutral-600 !global;
+  $rz-base-darker:  $kern-color-layout-text-default !global;
 
-$rz-secondary-light:   $kern-color-action-state-indicator-shade-hover;
-$rz-secondary-lighter: $kern-color-action-state-indicator-tint-active-opacity;
-$rz-secondary-dark:    $kern-darkblue-750;
-$rz-secondary-darker:  $kern-darkblue-800;
+  // Action shades — KERN state indicators.
+  $rz-primary-light:   $kern-color-action-state-indicator-shade-hover !global;   // #2f57c0
+  $rz-primary-lighter: $kern-color-action-state-indicator-tint-active-opacity !global;
+  $rz-primary-dark:    $kern-darkblue-750 !global;                               // #1f3b8f
+  $rz-primary-darker:  $kern-darkblue-800 !global;                               // #19327f
 
-// Feedback shades — `-lighter` is KERN's feedback *background* so tinted
-// surfaces (alert, badge, notification, hover rows) match KERN exactly.
-$rz-info-light:   $kern-lightblue-550;
-$rz-info-lighter: $kern-color-feedback-info-background;
-$rz-info-dark:    $kern-lightblue-650;
-$rz-info-darker:  $kern-lightblue-700;
+  $rz-secondary-light:   $kern-color-action-state-indicator-shade-hover !global;
+  $rz-secondary-lighter: $kern-color-action-state-indicator-tint-active-opacity !global;
+  $rz-secondary-dark:    $kern-darkblue-750 !global;
+  $rz-secondary-darker:  $kern-darkblue-800 !global;
 
-$rz-success-light:   $kern-turquoise-600;
+  // Feedback shades — `-lighter` is KERN's feedback *background* so tinted
+  // surfaces (alert, badge, notification, hover rows) match KERN exactly.
+  $rz-info-light:   $kern-lightblue-550 !global;
+  $rz-info-dark:    $kern-lightblue-650 !global;
+  $rz-info-darker:  $kern-lightblue-700 !global;
+
+  $rz-success-light:   $kern-turquoise-600 !global;
+  $rz-success-dark:    $kern-turquoise-700 !global;
+  $rz-success-darker:  $kern-turquoise-750 !global;
+
+  $rz-warning-light:   $kern-dataport-red-550 !global;
+  $rz-warning-dark:    $kern-dataport-red-650 !global;
+  $rz-warning-darker:  $kern-dataport-red-700 !global;
+
+  $rz-danger-light:   #d31410 !global;
+  $rz-danger-dark:    #a20d08 !global;   // KERN button danger hover  (color-mix 85% black)
+  $rz-danger-darker:  #980c07 !global;   // KERN button danger active (color-mix 80% black)
+
+  // Chart series — KERN has no chart spec; the ramp is built from KERN primitives
+  // so charts stay inside the KERN color world (8 hues × 3 tonal bands).
+  $rz-series-1:  $kern-darkblue-700 !global;
+  $rz-series-2:  $kern-turquoise-500 !global;
+  $rz-series-3:  $kern-dataport-red-500 !global;
+  $rz-series-4:  $kern-violet-500 !global;
+  $rz-series-5:  $kern-green-550 !global;
+  $rz-series-6:  $kern-lightblue-600 !global;
+  $rz-series-7:  $kern-orange-450 !global;
+  $rz-series-8:  $kern-neutral-600 !global;
+  $rz-series-9:  $kern-darkblue-450 !global;
+  $rz-series-10: $kern-turquoise-350 !global;
+  $rz-series-11: $kern-dataport-red-350 !global;
+  $rz-series-12: $kern-violet-350 !global;
+  $rz-series-13: $kern-green-350 !global;
+  $rz-series-14: $kern-lightblue-350 !global;
+  $rz-series-15: $kern-orange-300 !global;
+  $rz-series-16: $kern-neutral-400 !global;
+  $rz-series-17: $kern-darkblue-850 !global;
+  $rz-series-18: $kern-turquoise-750 !global;
+  $rz-series-19: $kern-dataport-red-700 !global;
+  $rz-series-20: $kern-violet-700 !global;
+  $rz-series-21: $kern-green-750 !global;
+  $rz-series-22: $kern-lightblue-800 !global;
+  $rz-series-23: $kern-orange-600 !global;
+  $rz-series-24: $kern-neutral-800 !global;
+
+} @else {
+
+  // Radzen keeps the base ramp ordered light → dark in dark themes and flips the
+  // *semantic* assignments instead; the KERN neutral ramp is used verbatim.
+  $rz-base:        $kern-neutral-700 !global;                    // #45444f — chip/base surface
+  $rz-base-50:     $kern-neutral-050 !global;                    // #f5f5f6 — title text
+  $rz-base-100:    $kern-neutral-100 !global;                    // #e8e8ea
+  $rz-base-200:    $kern-neutral-200 !global;                    // #cecdd2
+  $rz-base-300:    $kern-neutral-300 !global;                    // #b5b4bb — muted text
+  $rz-base-400:    $kern-neutral-400 !global;                    // #9897a0
+  $rz-base-500:    $kern-neutral-500 !global;                    // #7c7b85 — disabled text
+  $rz-base-600:    $kern-neutral-600 !global;                    // #605f6b
+  $rz-base-700:    $kern-color-layout-border !global;            // #52515d — `--rz-border-normal`
+  $rz-base-800:    $kern-color-layout-background-hued !global;   // #22212a — raised surface
+  $rz-base-900:    $kern-color-layout-background-default !global;// #18171e — page
+  $rz-base-light:   $kern-neutral-600 !global;
+  $rz-base-lighter: $kern-neutral-500 !global;
+  $rz-base-dark:    $kern-neutral-800 !global;
+  $rz-base-darker:  $kern-neutral-900 !global;
+
+  // Emphasis lightens on a dark surface, so `-dark`/`-darker` step *up* the ramp.
+  $rz-primary-light:   $kern-color-action-state-indicator-shade-hover !global;   // #aabce7
+  $rz-primary-lighter: $kern-color-action-state-indicator-tint-active-opacity !global;
+  $rz-primary-dark:    $kern-darkblue-350 !global;                               // #658bce
+  $rz-primary-darker:  $kern-darkblue-400 !global;                               // #507bc5
+
+  $rz-secondary-light:   $kern-color-action-state-indicator-shade-hover !global;
+  $rz-secondary-lighter: $kern-color-action-state-indicator-tint-active-opacity !global;
+  $rz-secondary-dark:    $kern-darkblue-350 !global;
+  $rz-secondary-darker:  $kern-darkblue-400 !global;
+
+  $rz-info-light:   $kern-lightblue-250 !global;   // #71c2e8
+  $rz-info-dark:    $kern-lightblue-350 !global;   // #3ba4d4
+  $rz-info-darker:  $kern-lightblue-400 !global;   // #2f96c7
+
+  $rz-success-light:   #7fd6bb !global;
+  $rz-success-dark:    #3fae8c !global;
+  $rz-success-darker:  #2d9878 !global;
+
+  $rz-warning-light:   #f2bd7a !global;
+  $rz-warning-dark:    #d9913a !global;
+  $rz-warning-darker:  #c07d2c !global;
+
+  $rz-danger-light:   #ffada7 !global;
+  $rz-danger-dark:    #f26f66 !global;
+  $rz-danger-darker:  #e05a51 !global;
+
+  // Series shifted to the light and mid bands so every hue reads on #18171e.
+  $rz-series-1:  $kern-darkblue-250 !global;
+  $rz-series-2:  $kern-turquoise-300 !global;
+  $rz-series-3:  $kern-dataport-red-300 !global;
+  $rz-series-4:  $kern-violet-300 !global;
+  $rz-series-5:  $kern-green-300 !global;
+  $rz-series-6:  $kern-lightblue-300 !global;
+  $rz-series-7:  $kern-orange-250 !global;
+  $rz-series-8:  $kern-neutral-350 !global;
+  $rz-series-9:  $kern-darkblue-150 !global;
+  $rz-series-10: $kern-turquoise-150 !global;
+  $rz-series-11: $kern-dataport-red-150 !global;
+  $rz-series-12: $kern-violet-150 !global;
+  $rz-series-13: $kern-green-150 !global;
+  $rz-series-14: $kern-lightblue-150 !global;
+  $rz-series-15: $kern-orange-150 !global;
+  $rz-series-16: $kern-neutral-200 !global;
+  $rz-series-17: $kern-darkblue-400 !global;
+  $rz-series-18: $kern-turquoise-450 !global;
+  $rz-series-19: $kern-dataport-red-450 !global;
+  $rz-series-20: $kern-violet-450 !global;
+  $rz-series-21: $kern-green-450 !global;
+  $rz-series-22: $kern-lightblue-450 !global;
+  $rz-series-23: $kern-orange-400 !global;
+  $rz-series-24: $kern-neutral-500 !global;
+
+  // On a dark theme every KERN accent is *light*, so the text drawn on top of a
+  // filled accent must be dark. Radzen's defaults assume white — override them.
+  $rz-theme-colors-map: (
+    'on-base':            $kern-neutral-050,
+    'on-base-light':      $kern-neutral-050,
+    'on-base-lighter':    $kern-neutral-900,
+    'on-base-dark':       $kern-neutral-050,
+    'on-base-darker':     $kern-neutral-050,
+    'on-primary':         $kern-color-action-on-default,
+    'on-primary-light':   $kern-color-action-on-default,
+    'on-primary-lighter': $kern-color-action-default,
+    'on-primary-dark':    $kern-color-action-on-default,
+    'on-primary-darker':  $kern-color-action-on-default,
+    'on-secondary':         $kern-color-action-on-default,
+    'on-secondary-light':   $kern-color-action-on-default,
+    'on-secondary-lighter': $kern-color-action-default,
+    'on-secondary-dark':    $kern-color-action-on-default,
+    'on-secondary-darker':  $kern-color-action-on-default,
+    'on-info':         $kern-neutral-900,
+    'on-info-light':   $kern-neutral-900,
+    'on-info-lighter': $kern-color-feedback-info,
+    'on-info-dark':    $kern-neutral-900,
+    'on-info-darker':  $kern-neutral-900,
+    'on-success':         $kern-neutral-900,
+    'on-success-light':   $kern-neutral-900,
+    'on-success-lighter': $kern-color-feedback-success,
+    'on-success-dark':    $kern-neutral-900,
+    'on-success-darker':  $kern-neutral-900,
+    'on-warning':         $kern-neutral-900,
+    'on-warning-light':   $kern-neutral-900,
+    'on-warning-lighter': $kern-color-feedback-warning,
+    'on-warning-dark':    $kern-neutral-900,
+    'on-warning-darker':  $kern-neutral-900,
+    'on-danger':         $kern-neutral-900,
+    'on-danger-light':   $kern-neutral-900,
+    'on-danger-lighter': $kern-color-feedback-danger,
+    'on-danger-dark':    $kern-neutral-900,
+    'on-danger-darker':  $kern-neutral-900
+  ) !global;
+
+  // Radzen's `Light` / `Dark` button styles are literal, not theme-relative.
+  // Its stock dark themes point all three at the contrast (light) text, which
+  // leaves the filled Light button light-on-light and the filled Dark button
+  // invisible on a dark page. Pair each surface with a readable label instead.
+  $base-styles-map: (
+    base:  (background-color: var(--rz-base), color: $kern-neutral-050),
+    light: (background-color: $kern-neutral-200, color: $kern-neutral-900),
+    dark:  (background-color: $kern-neutral-950, color: $kern-neutral-050)
+  ) !global;
+}
+
+// The feedback `-lighter` shade is KERN's feedback *background* in both themes,
+// so tinted surfaces (alert, badge, notification, hover rows) always match.
+$rz-info-lighter:    $kern-color-feedback-info-background;
 $rz-success-lighter: $kern-color-feedback-success-background;
-$rz-success-dark:    $kern-turquoise-700;
-$rz-success-darker:  $kern-turquoise-750;
-
-$rz-warning-light:   $kern-dataport-red-550;
 $rz-warning-lighter: $kern-color-feedback-warning-background;
-$rz-warning-dark:    $kern-dataport-red-650;
-$rz-warning-darker:  $kern-dataport-red-700;
-
-$rz-danger-light:   #d31410;
-$rz-danger-lighter: $kern-color-feedback-danger-background;
-$rz-danger-dark:    #a20d08;   // KERN button danger hover  (color-mix 85% black)
-$rz-danger-darker:  #980c07;   // KERN button danger active (color-mix 80% black)
-
-// Chart series — KERN has no chart spec; the ramp is built from KERN primitives
-// so charts stay inside the KERN color world (8 hues × 3 tonal bands).
-$rz-series-1:  $kern-darkblue-700;
-$rz-series-2:  $kern-turquoise-500;
-$rz-series-3:  $kern-dataport-red-500;
-$rz-series-4:  $kern-violet-500;
-$rz-series-5:  $kern-green-550;
-$rz-series-6:  $kern-lightblue-600;
-$rz-series-7:  $kern-orange-450;
-$rz-series-8:  $kern-neutral-600;
-$rz-series-9:  $kern-darkblue-450;
-$rz-series-10: $kern-turquoise-350;
-$rz-series-11: $kern-dataport-red-350;
-$rz-series-12: $kern-violet-350;
-$rz-series-13: $kern-green-350;
-$rz-series-14: $kern-lightblue-350;
-$rz-series-15: $kern-orange-300;
-$rz-series-16: $kern-neutral-400;
-$rz-series-17: $kern-darkblue-850;
-$rz-series-18: $kern-turquoise-750;
-$rz-series-19: $kern-dataport-red-700;
-$rz-series-20: $kern-violet-700;
-$rz-series-21: $kern-green-750;
-$rz-series-22: $kern-lightblue-800;
-$rz-series-23: $kern-orange-600;
-$rz-series-24: $kern-neutral-800;
+$rz-danger-lighter:  $kern-color-feedback-danger-background;
 
 // ===========================================================================
 // Theme constants
@@ -135,7 +269,10 @@ $rz-text-color:           var(--kern-color-layout-text-default);
 $rz-text-secondary-color: var(--kern-color-layout-text-muted);
 $rz-text-tertiary-color:  var(--kern-color-layout-text-muted);
 $rz-text-disabled-color:  var(--rz-base-500);
-$rz-text-contrast-color:  var(--kern-color-layout-text-inverse);
+// "Text drawn on a dark surface" — light in both themes, so it must NOT follow
+// `layout-text-inverse` (which flips to dark). Radzen uses it for the dark
+// button/panel-menu/sidebar styles.
+$rz-text-contrast-color: if($kern-dark, var(--kern-color-layout-text-default), var(--kern-color-layout-text-inverse));
 
 // KERN link: action color, always underlined, 1px thickness, 2px offset,
 // 3px on hover/active, visited purple. Thickness/offset live in the components partial.
@@ -158,7 +295,7 @@ $rz-text-selection-color: inherit;
 $rz-border-normal:   var(--kern-metric-border-width-light) solid var(--kern-color-layout-border);
 $rz-border-hover:    var(--kern-metric-border-width-light) solid var(--kern-color-form-input-border);
 $rz-border-focus:    var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border);
-$rz-border-disabled: var(--kern-metric-border-width-light) solid var(--kern-neutral-150);
+$rz-border-disabled: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-muted);
 
 $rz-border-radius-0:  $kern-metric-border-radius-none;    // 0
 $rz-border-radius-1:  $kern-metric-border-radius-small;   // 2px
@@ -635,7 +772,7 @@ $colorpicker-item-border-radius: $kern-metric-border-radius-small;
 $colorpicker-item-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
 $colorpicker-item-selected-transform: scale(1.25);
 $colorpicker-handle-size: $kern-12;
-$colorpicker-handle-border: var(--kern-metric-border-width-default) solid var(--kern-neutral-000);
+$colorpicker-handle-border: var(--kern-metric-border-width-default) solid var(--kern-color-layout-background-default);
 $colorpicker-handle-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
 $colorpicker-hex-input-padding:  $kern-metric-space-x-small $kern-metric-space-small;
 $colorpicker-hex-input-height:   $kern-metric-dimension-large;
@@ -1530,7 +1667,7 @@ $scheduler-toolbar-color: var(--kern-color-action-on-default);
 $scheduler-toolbar-button-background-color: var(--kern-color-action-default);
 $scheduler-border: var(--rz-border-normal);
 $scheduler-border-color: var(--kern-color-layout-border);
-$scheduler-minor-border-color: var(--kern-neutral-150);
+$scheduler-minor-border-color: var(--kern-color-layout-border-muted);
 $scheduler-border-radius: $kern-metric-border-radius-default;
 $scheduler-shadow: none;
 $scheduler-background-color: var(--kern-color-layout-background-default);
@@ -1747,8 +1884,8 @@ $steps-button-color: var(--kern-color-action-default);
 $switch-background-color: var(--kern-color-feedback-loader-background);
 $switch-checked-background-color: var(--kern-color-feedback-loader);
 $switch-box-shadow: none;
-$switch-circle-background-color: var(--kern-neutral-000);
-$switch-checked-circle-background-color: var(--kern-neutral-000);
+$switch-circle-background-color: var(--kern-color-layout-background-default);
+$switch-checked-circle-background-color: var(--kern-color-layout-background-default);
 $switch-focus-outline: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
 $switch-focus-outline-offset: 0;
 $switch-transition: background-color var(--rz-transition), color var(--rz-transition), border-color var(--rz-transition), box-shadow var(--rz-transition);

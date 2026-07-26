@@ -424,6 +424,9 @@ $kern-color-form-input-border:              #171a2b;
 /* layout */
 $kern-color-layout-border: #a6abc4;
 $kern-layout-border:       #a5aac3;
+// Not a KERN token: the faint rule KERN uses for disabled fields and secondary
+// grid lines. Named so the dark theme can flip it with the rest of the layer.
+$kern-color-layout-border-muted: $kern-neutral-150;
 
 /* layout-text */
 $kern-color-layout-text-default: #171a2b;
@@ -835,6 +838,7 @@ $kern-breakpoint-xxl: 1600px;
 
   /* layout */
   --kern-color-layout-border: #{$kern-color-layout-border};
+  --kern-color-layout-border-muted: #{$kern-color-layout-border-muted};
   --layout-border: #{$kern-layout-border};
   --kern-color-layout-text-default: #{$kern-color-layout-text-default};
   --kern-color-layout-text-inverse: #{$kern-color-layout-text-inverse};

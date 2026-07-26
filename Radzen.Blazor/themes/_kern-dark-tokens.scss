@@ -1,0 +1,83 @@
+// KERN dark semantic colors.
+//
+// IMPORTANT: KERN UX-Standard 2.4.1 does **not** specify a dark theme — its
+// `tokens/_theme.scss` defines `light-color` only. This file is therefore a
+// derivation, not a transcription, and is not covered by the KERN standard.
+//
+// It reassigns the semantic `$kern-color-*` variables of `_kern-tokens.scss`
+// (which must be imported first). The primitive ramps, metrics and typography
+// are untouched — those are lightness-independent. Because
+// `kern-token-properties()` reads these variables when it is *included*, the
+// whole `--kern-*` layer, and with it every `--rz-*` value derived from it,
+// flips automatically.
+//
+// Derivation rules, applied in this order:
+//   1. Prefer an on-ramp KERN primitive at the mirrored lightness step
+//      (e.g. action darkblue-700 → darkblue-250).
+//   2. Where KERN's semantic token has no ramp (danger, success, warning,
+//      visited), shift its lightness while preserving hue and chroma — the same
+//      operation KERN itself uses for its state indicators.
+//   3. Target the light theme's contrast ratio against the page, not a fixed
+//      number, so the two themes read with the same weight.
+//
+// Resulting contrast against the page surface #18171e:
+//   text-default 16.1:1 · text-muted 8.5:1 · action 7.7:1 · info 7.2:1
+//   success 8.6:1 · warning 8.7:1 · danger 8.0:1 · layout-border 2.3:1
+//   (the light theme's border is 2.3:1 on white — decorative, by KERN's design)
+
+/* stylelint-disable */
+
+/* action */
+$kern-color-action-default:    $kern-darkblue-250;   // #96acdf ← darkblue-700
+$kern-color-action-on-default: $kern-neutral-900;    // #18171e — dark label on the light accent
+$kern-color-action-visited:    #cf8ae8;              // #74009e lifted to the dark-surface lightness
+
+/* action-focus */
+$kern-color-action-focus-background:     $kern-neutral-300;  // #b5b4bb
+$kern-color-action-focus-border-inside:  $kern-neutral-350;  // #a7a6ae
+$kern-color-action-focus-border-outside: $kern-neutral-600;  // #605f6b
+
+/* action-state-indicator — hover and pressed lighten, as they do in light mode */
+$kern-color-action-state-indicator-shade-hover:  $kern-darkblue-200;  // #aabce7
+$kern-color-action-state-indicator-shade-active: $kern-darkblue-150;  // #c4d1ee
+$kern-color-action-state-indicator-tint-hover:   $kern-darkblue-900;  // #101f5c
+$kern-color-action-state-indicator-tint-active:  $kern-darkblue-850;  // #152973
+
+$kern-color-action-state-indicator-tint-hover-opacity:    rgba(150, 172, 223, 0.08);
+$kern-color-action-state-indicator-tint-active-opacity:   rgba(150, 172, 223, 0.16);
+$kern-color-action-state-indicator-tint-selected-opacity: rgba(150, 172, 223, 0.12);
+$kern-color-action-state-indicator-tint-pressed-opacity:  rgba(150, 172, 223, 0.32);
+
+/* feedback — accents lifted, backgrounds become deep tints of the same hue */
+$kern-color-feedback-danger:             #ff8f87;
+$kern-color-feedback-danger-background:  #3a1512;
+$kern-color-feedback-info:               $kern-lightblue-300;  // #4db2e0 ← lightblue-600
+$kern-color-feedback-info-background:    $kern-lightblue-850;  // #002238
+$kern-color-feedback-success:            #5fc9a8;
+$kern-color-feedback-success-background: #0a2e26;
+$kern-color-feedback-warning:            #eda954;
+$kern-color-feedback-warning-background: #33230a;
+
+/* feedback-loader */
+$kern-color-feedback-loader:            $kern-neutral-300;  // #b5b4bb
+$kern-color-feedback-loader-background: $kern-neutral-750;  // #383742
+
+/* form-inputs — the field lifts off the page, mirroring light mode */
+$kern-color-form-input-background:          $kern-neutral-850;  // #22212a
+$kern-color-form-input-background-inverted: $kern-neutral-900;  // #18171e
+$kern-color-form-input-border:              $kern-neutral-050;  // #f5f5f6
+
+/* layout */
+$kern-color-layout-border:       $kern-neutral-650;  // #52515d
+$kern-layout-border:             $kern-neutral-650;  // #52515d
+$kern-color-layout-border-muted: $kern-neutral-750;  // #383742
+
+/* layout-text */
+$kern-color-layout-text-default: $kern-neutral-050;  // #f5f5f6
+$kern-color-layout-text-inverse: $kern-neutral-900;  // #18171e
+$kern-color-layout-text-muted:   $kern-neutral-300;  // #b5b4bb
+
+/* layout-background */
+$kern-color-layout-background-default: $kern-neutral-900;  // #18171e
+$kern-color-layout-background-hued:    $kern-neutral-850;  // #22212a
+$kern-color-layout-background-overlay: rgba(0, 0, 0, 0.72);

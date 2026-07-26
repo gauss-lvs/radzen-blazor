@@ -374,6 +374,23 @@ namespace Radzen
                 SeriesC = "#7c4635"
             },
             new Theme {
+                Text = "KERN Dark",
+                Value = "kern-dark",
+                Primary = "#96acdf",
+                Secondary = "#96acdf",
+                Base = "#18171e",
+                Selection = "rgba(150, 172, 223, 0.16)",
+                SelectionText = "#96acdf",
+                Content = "#22212a",
+                TitleText = "#f5f5f6",
+                ContentText = "#b5b4bb",
+                ButtonRadius = "4",
+                CardRadius = "4",
+                SeriesA = "#96acdf",
+                SeriesB = "#69b5bc",
+                SeriesC = "#b38f82"
+            },
+            new Theme {
                 Text = "Software",
                 Value = "software",
                 Primary = "#598087",
@@ -553,6 +570,7 @@ namespace Radzen
             "default" => true,
             "dark" => true,
             "kern" => true,
+            "kern-dark" => true,
             _ => false
         };
 
