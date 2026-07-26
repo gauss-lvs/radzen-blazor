@@ -385,16 +385,20 @@ label.rz-label {
 // input surface and thickens the border from 2px to 4px on hover.
 // ---------------------------------------------------------------------------
 
+// Radzen drives both boxes off the shared `--rz-input-hover-*` tokens, which this
+// theme repurposes for the KERN text field (no box border, 2px underline drawn as
+// an inset shadow). Left alone, hovering a checkbox or radio therefore erases the
+// ring — `border: none` zeroes the width — and paints the field underline across
+// its bottom edge. Every hover state below restates the border in full and clears
+// the inherited shadow; `.rz-state-active` is listed so the checked box, whose
+// Radzen hover rule is one class more specific, is covered too.
 .rz-chkbox .rz-chkbox-box,
 .rz-radiobutton .rz-radiobutton-box {
   border-width: var(--kern-metric-border-width-default);
   border-style: solid;
   border-color: var(--kern-color-form-input-border);
+  box-shadow: none;
   transition: none;
-
-  &:not(.rz-state-disabled):hover {
-    border-width: var(--kern-metric-border-width-bold);
-  }
 }
 
 .rz-chkbox .rz-chkbox-box {
@@ -403,6 +407,13 @@ label.rz-label {
 
   .rz-chkbox-icon {
     color: var(--kern-color-form-input-border);
+  }
+
+  &:hover:not(.rz-state-disabled),
+  &.rz-state-active:hover:not(.rz-state-disabled) {
+    border: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+    background-color: var(--kern-color-form-input-background);
+    box-shadow: none;
   }
 }
 
@@ -414,6 +425,13 @@ label.rz-label {
     background-color: var(--kern-color-form-input-border);
     border-radius: var(--kern-metric-border-radius-circle);
   }
+
+  &:hover:not(.rz-state-disabled),
+  &.rz-state-active:hover:not(.rz-state-disabled) {
+    border: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border);
+    background-color: transparent;
+    box-shadow: none;
+  }
 }
 
 .rz-chkbox.rz-state-disabled,
@@ -422,11 +440,22 @@ label.rz-label {
   cursor: default;
 }
 
-// Invalid checkbox / radio — danger tint and border.
+// Invalid checkbox / radio — danger tint and border. The hover selectors are
+// repeated here so the danger colour survives the rules above, which are one
+// class more specific than the plain invalid rule.
 .rz-state-invalid .rz-chkbox-box,
 .rz-state-invalid .rz-radiobutton-box {
   background-color: var(--kern-color-feedback-danger-background);
   border-color: var(--kern-color-feedback-danger);
+}
+
+.rz-state-invalid .rz-chkbox .rz-chkbox-box,
+.rz-state-invalid .rz-radiobutton .rz-radiobutton-box {
+  &:hover:not(.rz-state-disabled),
+  &.rz-state-active:hover:not(.rz-state-disabled) {
+    border-color: var(--kern-color-feedback-danger);
+    background-color: var(--kern-color-feedback-danger-background);
+  }
 }
 
 // ---------------------------------------------------------------------------
