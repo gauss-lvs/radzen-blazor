@@ -41,39 +41,104 @@
 // sind eine Stufe unspezifischer und behalten so ihren eigenen Offset
 // (Formularelemente 0, Gridzellen negativ, sonst 2px).
 // In der `-base`-Variante ist die Regel wirkungslos — dort fehlt der Reset.
-[class^='rz-']:not([tabindex='-1']):focus:focus-visible,
-[class*=' rz-']:not([tabindex='-1']):focus:focus-visible {
+//
+// Ausgenommen sind die Elemente, die weiter unten ihren Ring selbst setzen
+// (Checkbox/Radio und deren Listen). Sonst muessten jene Regeln gegen die
+// Spezifitaet dieser hier anschreiben.
+[class^='rz-']:not([tabindex='-1']):not(.rz-chkbox):not(.rz-checkbox):not(.rz-radio-btn):not(.rz-checkbox-list):not(.rz-radio-button-list):focus:focus-visible,
+[class*=' rz-']:not([tabindex='-1']):not(.rz-chkbox):not(.rz-checkbox):not(.rz-radio-btn):not(.rz-checkbox-list):not(.rz-radio-button-list):focus:focus-visible {
   outline: var(--rz-outline-focus);
 }
 
 // ---------------------------------------------------------------------------
+// KERN zeigt den Fokusring auf `:focus`, nicht nur auf `:focus-visible`
+// ---------------------------------------------------------------------------
+// `_button.scss`, `_check.scss` und `_input.scss` binden den Ring an `:focus`
+// (bei Checkbox/Radio ausdruecklich an `&:focus, &:focus-visible`). Er wird
+// dort also auch nach einem Mausklick gezeigt. Radzen bindet ihn durchgehend
+// an `:focus-visible`, sodass er beim Klicken ausbleibt.
+//
+// Textfeld und DropDown sind bereits richtig: Chrome wertet Texteingaben immer
+// als `:focus-visible`, und Radzens DropDown hat eine eigene `:focus`-Regel.
+// Angeglichen werden muessen Button, Checkbox, Radio und Switch.
+
+.rz-button:not(.rz-state-disabled):focus {
+  outline: var(--rz-outline-focus);
+  outline-offset: var(--rz-outline-offset);
+}
+
+// Der Switch ist nicht selbst fokussierbar — der Fokus liegt auf einem
+// versteckten Input darin. Radzen ringt ueber `:has(:focus-visible)`.
+.rz-switch:has(:focus) {
+  outline: var(--rz-outline-focus);
+  outline-offset: var(--rz-outline-offset);
+}
+
+// Checkbox und Radio werden weiter unten in ihrem eigenen Abschnitt behandelt:
+// der Ring gehoert dort an die Box und muss die Hover-Kante schlagen.
+
+// ---------------------------------------------------------------------------
 // Button
 // ---------------------------------------------------------------------------
-// Zuordnung der drei KERN-Auspraegungen auf Radzens Variantenachse:
-//   KERN primary   -> Variant.Filled    (gefuellt, Aktionsfarbe)
-//   KERN secondary -> Variant.Outlined  (1px Kontur, transparent)
-//   KERN tertiary  -> Variant.Text      (unterstrichen, transparent)
-// Die ButtonStyle-Achse bleibt damit frei fuer die Farbrolle.
-//
-// KERN toent Zustaende ueber Deckkraft-Mischungen statt ueber Verlauf oder
-// Innenschatten. Die Verlaeufe sind bereits per Variable abgeschaltet; hier
-// kommen die Toenungen dazu.
+// KERN kennt drei Auspraegungen. Zwei davon liegen auf Radzens ButtonStyle,
+// weil KERN sie genauso benennt, die dritte auf der Variantenachse:
+//   KERN primary   -> ButtonStyle.Primary   (gefuellt, Aktionsfarbe)
+//   KERN secondary -> ButtonStyle.Secondary (1px Kontur, transparent)
+//   KERN tertiary  -> Variant.Text          (unterstrichen, transparent)
+// Radzens Severity-Stile (Info/Success/Warning/Danger) und `Variant.Outlined`
+// bleiben erhalten und bekommen dieselbe Zustandslogik.
 
-.rz-button:not(.rz-state-disabled) {
-  // Gefuellt: KERN dunkelt die Flaeche ab (`shade-hover` / `shade-active`).
-  &:not(.rz-variant-outlined):not(.rz-variant-text):not(.rz-variant-flat) {
-    &:hover {
-      background-color: var(--kern-color-action-state-indicator-shade-hover);
-    }
+// KERNs Formel fuer die Zustandstoenung gefuellter Flaechen:
+// zum Seitenhintergrund hin mischen, um den Rest der Zustandsdeckkraft.
+// Im Light Mode ist das Weiss und 8 %, im Dark Mode Schwarz und 12 % — die
+// Tokens drehen selbst, die Formel bleibt dieselbe.
+@function kern-state-shade($color, $opacity-token) {
+  @return color-mix(in oklch, #{$color},
+    var(--kern-color-layout-background-default-contextual)
+    calc(100% - var(#{$opacity-token})));
+}
 
-    &:active {
-      background-color: var(--kern-color-action-state-indicator-shade-active);
-    }
+// Gefuellte Flaechen tönen zur EIGENEN Farbe hin ab. Ohne die Aufschluesselung
+// je Stil wuerde jeder Button beim Hover die Aktionsfarbe annehmen — ein roter
+// Danger-Button also blau.
+$kern-filled-button-styles: (
+  info:    var(--kern-color-feedback-info-contextual),
+  success: var(--kern-color-feedback-success-contextual),
+  warning: var(--kern-color-feedback-warning-contextual),
+  danger:  var(--kern-color-feedback-danger-contextual),
+  error:   var(--kern-color-feedback-danger-contextual),
+  base:    var(--kern-color-layout-layer-surface-contextual),
+  light:   var(--kern-color-neutral-050),
+  dark:    var(--kern-color-neutral-900)
+);
+
+@each $style, $color in $kern-filled-button-styles {
+  .rz-button.rz-#{$style}:not(.rz-state-disabled):not(.rz-variant-outlined):not(.rz-variant-text):not(.rz-shade-lighter) {
+    &:hover  { background-color: kern-state-shade($color, --kern-color-action-state-opacity-hover); }
+    &:active { background-color: kern-state-shade($color, --kern-color-action-state-opacity-active); }
   }
+}
 
-  // Kontur und Text: KERN legt eine Toenung der Aktionsfarbe unter.
+// Primary: KERN liefert fuer die Aktionsfarbe fertige Tokens.
+.rz-button.rz-primary:not(.rz-state-disabled):not(.rz-variant-outlined):not(.rz-variant-text):not(.rz-shade-lighter) {
+  &:hover  { background-color: var(--kern-color-action-state-indicator-shade-hover); }
+  &:active { background-color: var(--kern-color-action-state-indicator-shade-active); }
+}
+
+// KERNs Sekundaerbutton: transparent, 1px Kontur und Beschriftung in der
+// Aktionsfarbe. Radzen wuerde `Secondary` sonst gefuellt zeichnen, also
+// identisch zu `Primary`.
+.rz-button.rz-secondary:not(.rz-variant-outlined):not(.rz-variant-text) {
+  border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default-contextual);
+  background-color: transparent;
+  color: var(--kern-color-action-default-contextual);
+}
+
+// Kontur, Text und Sekundaer: KERN legt eine Toenung der Aktionsfarbe unter.
+.rz-button:not(.rz-state-disabled) {
   &.rz-variant-outlined,
-  &.rz-variant-text {
+  &.rz-variant-text,
+  &.rz-secondary:not(.rz-variant-outlined):not(.rz-variant-text) {
     &:hover {
       background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
     }
@@ -176,13 +241,64 @@
   }
 }
 
-// KERN blendet beim Fokus die Kante aus und zeigt nur die Outline.
+// KERN blendet beim Fokus die Kante aus und zeigt nur die Outline
+// (`_check.scss`: `&:focus { @include focus; border: 0 }`).
 .rz-chkbox-box.rz-state-focused,
 .rz-radiobutton-box.rz-state-focused {
   &:not(.rz-state-disabled),
   &:not(.rz-state-disabled):hover {
     border: 0;
   }
+}
+
+// Fokusring auf die Box legen — bei Tastatur UND bei Mausklick.
+//
+// KERN bindet den Ring an `&:focus, &:focus-visible` und setzt dabei die Kante
+// auf 0, auch wenn gleichzeitig gehovert wird. Radzen kennt nur
+// `:focus-visible`, sodass der Ring beim Klicken ausbliebe.
+//
+// Wohin der Fokus faellt, haengt vom Aufbau ab:
+//   Klick   -> `.rz-chkbox` (einzeln), `.rz-checkbox` (Liste), `.rz-radio-btn`
+//   Tastatur-> die Liste; sie markiert das aktive Element mit
+//              `.rz-state-focused` (Regel darueber)
+// Der Wrapper umfasst auch die Beschriftung, deshalb sitzt der Ring auf der
+// Box und nicht auf ihm.
+//
+// Die `:hover`-Varianten sind noetig, weil Radzens Hover-Regel oben bei
+// `.rz-state-active` auf (0,4,0) kommt; der Fokus muss sie schlagen.
+.rz-chkbox:focus > .rz-chkbox-box,
+.rz-chkbox:focus > .rz-chkbox-box:hover,
+.rz-checkbox:focus .rz-chkbox-box,
+.rz-checkbox:focus .rz-chkbox-box:hover,
+.rz-radio-btn:focus .rz-radiobutton-box,
+.rz-radio-btn:focus .rz-radiobutton-box:hover,
+.rz-radiobutton:focus > .rz-radiobutton-box,
+.rz-radiobutton:focus > .rz-radiobutton-box:hover {
+  &:not(.rz-state-disabled) {
+    outline: var(--rz-outline-focus);
+    outline-offset: 0;
+    border: 0;
+  }
+}
+
+// Der fokussierte Wrapper selbst bleibt ohne Ring — sonst laege ueber dem Ring
+// der Box zusaetzlich der Standardring des Browsers.
+.rz-chkbox:focus,
+.rz-checkbox:focus,
+.rz-radio-btn:focus,
+.rz-radiobutton:focus {
+  outline: none;
+}
+
+// Radzen umrandet bei Listen sowohl den Container (er ist der Tabstopp) als
+// auch das aktive Element. Mit KERNs 4px-Ring ergibt das einen doppelten
+// Rahmen — einen um die ganze Gruppe und einen um das Element. KERN kennt
+// keine Gruppenkomponente; der Ring gehoert an das Bedienelement. Der
+// Container-Ring entfaellt deshalb, sobald ein Element darin markiert ist;
+// ohne Markierung bleibt er als Rueckfallebene bestehen.
+.rz-checkbox-list:focus-visible:has(.rz-state-focused),
+.rz-radio-button-list:focus-visible:has(.rz-state-focused) {
+  outline: none;
 }
 
 // KERN: der Haken ist eine Linie in der Feldrandfarbe auf unveraenderter
