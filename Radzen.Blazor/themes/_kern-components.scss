@@ -221,6 +221,104 @@ $kern-filled-button-styles: (
 }
 
 // ---------------------------------------------------------------------------
+// FormField — KERNs Input Group
+// ---------------------------------------------------------------------------
+// KERN setzt Praefix und Suffix als eigenstaendige Kaesten neben das Feld, mit
+// 8px Abstand und je eigener Unterkante (`_input-group.scss`). Der Fokus gilt
+// ausdruecklich nur dem Eingabefeld, nicht der Gruppe.
+//
+// Radzen fasst Icon und Feld dagegen in `.rz-form-field-content` zusammen: der
+// Kasten traegt die Kante, das Feld darin wird blank geschaltet
+// (`%input-blank`). Damit ringte bisher beides — der Kasten ueber
+// `%input-focus`, das Feld ueber die Gegenregel ganz oben. Zwei ineinander
+// liegende Rahmen.
+//
+// Der Ring bleibt am Feld; die Gruppe gibt ihn ab.
+.rz-form-field.rz-state-focused .rz-form-field-content {
+  outline: none;
+}
+
+// Damit der Ring nicht mitten durch einen durchgehenden Rahmen schneidet,
+// bekommt die Gruppe KERNs Aufbau: Kante und Flaeche wandern vom Kasten an
+// seine Kinder, dazwischen liegt KERNs Abstand.
+.rz-form-field:has(> .rz-form-field-content > :is(.rz-form-field-start, .rz-form-field-end)):not(.rz-state-disabled) {
+  // Radzen zieht Kante und Flaeche je Variante und Zustand nach, zuletzt bei
+  // `flat`/`filled` im Fokus mit (0,5,0). Die Zustaende sind deshalb einzeln
+  // aufgefuehrt, damit diese Regel darueber liegt. Deaktivierte Felder bleiben
+  // ausgenommen und behalten Radzens Darstellung.
+  &,
+  &:hover,
+  &.rz-state-focused,
+  &.rz-state-focused:hover {
+    > .rz-form-field-content {
+      gap: var(--kern-metric-space-x-small);
+      border: 0;
+      background-color: transparent;
+      box-shadow: none;
+
+      // Die Unterstriche der Varianten `filled` und `text` liegen an der
+      // Gruppe und liefen sonst unter Icon und Feld zugleich durch.
+      &:before,
+      &:after {
+        display: none;
+      }
+    }
+  }
+
+  // KERNs `.kern-input-group-text`: eigener Kasten in gedaempfter Schrift.
+  :is(.rz-form-field-start, .rz-form-field-end):not(:has(.rz-button)) {
+    align-self: stretch;
+    border-block-end: var(--kern-metric-border-width-default) solid
+      var(--kern-color-form-input-border-contextual);
+    border-radius: var(--kern-metric-border-radius-small);
+    padding-inline: var(--kern-metric-space-default);
+    color: var(--kern-color-layout-text-muted-contextual);
+  }
+
+  // Schaltflaechen stehen bei KERN unveraendert in der Gruppe
+  // (`.kern-input-group .kern-btn`) — kein Kasten, kein Unterstrich.
+  :is(.rz-form-field-start, .rz-form-field-end):has(.rz-button) {
+    padding-inline: 0;
+  }
+
+  // Das Feld holt sich die Kante zurueck, die `%input-blank` entfernt hat —
+  // samt KERNs Verstaerkung auf 4px beim Hover. Bisher lag beides am Kasten.
+  > .rz-form-field-content > :not(.rz-form-field-start):not(.rz-form-field-end):not(.rz-form-field-label) {
+    border-block-end: var(--rz-input-border-block-end);
+    border-radius: var(--rz-input-border-radius);
+
+    &:hover:not(:focus):not(.rz-state-disabled) {
+      border-block-end: var(--rz-input-hover-border-block-end);
+    }
+  }
+}
+
+// In Ruhelage steht die Beschriftung im Feld und muss am Textanfang sitzen:
+// Praefixkasten (2x16px Polsterung um ein 24px-Icon), KERNs Abstand, dann die
+// Polsterung des Feldes. Radzen rechnet stattdessen mit einem Praefix ohne
+// eigene Polsterung — die Beschriftung laege sonst ueber dem Icon.
+//
+// Nur KERN-Tokens in der Rechnung: Radzen setzt `--rz-input-padding-inline`
+// bei `Variant.Text` auf ein einheitenloses `0`, und `calc()` ist streng
+// typisiert — die ganze Rechnung wuerde damit ungueltig und auf 0 zurueckfallen
+// (derselbe Grund, warum Radzens eigene Rechnung dort nicht greift).
+//
+// Dieselbe Spezifitaet wie Radzens Regel — die schwebende Lage steht eine
+// Stufe hoeher und bleibt unberuehrt. `:where()` haelt die Ausnahme unten auf
+// derselben Stufe.
+.rz-form-field-start ~ .rz-form-field-label {
+  inset-inline-start: calc(3 * var(--kern-metric-space-default) + 1.5rem +
+    var(--kern-metric-space-x-small));
+}
+
+// `Variant.Text` nimmt dem Feld die Polsterung; der Text beginnt direkt hinter
+// dem Abstand.
+:where(.rz-form-field.rz-variant-text) .rz-form-field-start ~ .rz-form-field-label {
+  inset-inline-start: calc(2 * var(--kern-metric-space-default) + 1.5rem +
+    var(--kern-metric-space-x-small));
+}
+
+// ---------------------------------------------------------------------------
 // Checkbox / Radio
 // ---------------------------------------------------------------------------
 // Beide erben in Radzen die Hover-Kante aus `--rz-input-hover-border`. Dieses
