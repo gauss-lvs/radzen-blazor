@@ -177,36 +177,90 @@ $kern-filled-button-styles: (
 // ---------------------------------------------------------------------------
 // Eingabefelder
 // ---------------------------------------------------------------------------
-// KERNs Feld hat nur eine untere Kante, die beim Hover von 2px auf 4px waechst.
-// Weil die Hoehe fest ist (48px, border-box), wandert der Text sonst um 2px
-// nach oben — KERN gleicht das mit padding-top aus, hier ebenso.
+// KERNs Feld hat nur eine untere Kante, die beim Hover von 2px auf 4px waechst
+// — nach innen, weil die Hoehe mit 48px fest ist (border-box). Der Text saesse
+// dann 1px zu hoch; KERN gleicht das mit `padding-top` aus, hier ebenso.
+//
+// Entscheidend ist, WER die Kante traegt — Radzen legt sie mal an das Feld
+// selbst, mal an einen umschliessenden Rahmen. Beide Faelle brauchen ein
+// anderes Rezept; die Aufteilung folgt Radzens eigener Liste (genau diese
+// Selektoren erweitern `%input` und tragen damit `border-block-end`).
+// `.mask` fehlt in beiden: der Selektor traegt bei Radzen kein `rz-`-Praefix
+// und gehoert damit nicht in die einbettbare Variante — die Maske selbst
+// rendert ohnehin als `.rz-textbox`.
 
-%kern-input-hover-shift {
-  padding-block-start: calc(var(--kern-metric-border-width-bold) - var(--kern-metric-border-width-default));
+// KERNs Unterkante als Innenschatten: optisch dasselbe wie eine dickere Kante,
+// aber ohne Einfluss auf die Groesse. Weiter unten mehrfach gebraucht.
+//
+// Die Dicke kommt als Zeichenkette herein. Sass wertet interpolierte Ausdruecke
+// in `calc()` selbst aus und gibt sie komprimiert wieder aus — aus
+// `var(--a) - var(--b)` wuerde `var(--a)-var(--b)`, und das ist als CSS
+// ungueltig: um `+` und `-` verlangt `calc()` Leerzeichen. Die Regel faellt
+// dann still aus. Als Zeichenkette bleibt der Ausdruck unangetastet.
+$kern-line-default: 'var(--kern-metric-border-width-default)';
+$kern-line-bold: 'var(--kern-metric-border-width-bold)';
+$kern-line-growth: 'var(--kern-metric-border-width-bold) - var(--kern-metric-border-width-default)';
+
+@function kern-underline($thickness) {
+  @return inset 0 calc(-1 * (#{$thickness})) 0 0 var(--kern-color-form-input-border-contextual);
 }
 
-.rz-textbox,
-.rz-textarea,
-.rz-password,
-.rz-spinner-input,
-.rz-numeric input,
-.rz-datepicker-input,
-.rz-mask,
-.rz-autocomplete-input {
+// 1. Das Feld traegt die Kante selbst: echte `<input>` mit fester Hoehe. Hier
+//    passt KERNs Rezept unveraendert.
+$kern-input-elements: '.rz-textbox, .rz-datepicker > .rz-inputtext, .rz-timespanpicker > .rz-inputtext, .rz-lookup-search input, .rz-lookup-search-input-container input';
+
+#{$kern-input-elements} {
   &:hover:not(:focus):not([readonly]):not(:disabled) {
-    @extend %kern-input-hover-shift;
+    padding-block-start: calc(var(--kern-metric-border-width-bold) - var(--kern-metric-border-width-default));
   }
 }
 
-// Fokus setzt die Kante zurueck auf 2px und legt KERNs Outline darum.
-.rz-textbox:focus,
-.rz-textarea:focus,
-.rz-password:focus,
-.rz-spinner-input:focus,
-.rz-datepicker-input:focus,
-.rz-mask:focus,
-.rz-autocomplete-input:focus {
-  padding-block-start: 0;
+// 2. Ein Rahmen traegt die Kante. Sein Innenraum darf sich nicht aendern, sonst
+//    wandert das Feld darin und mit ihm der Text — nachgemessen: 2px nach
+//    unten, weil der Rahmen sein Kind als Zeilenbox setzt und die Polsterung
+//    dort nicht als schlichter Versatz ankommt. Die zusaetzliche Dicke liegt
+//    deshalb als Innenschatten ueber dem Feld.
+//    Im FormField ist der Rahmen blank geschaltet und die Kante gehoert dem
+//    Kasten. Die Ausnahme verhindert, dass er dort eine zweite bekaeme — sie
+//    verkuerzte den Innenraum und schoebe den Text um 1px nach oben.
+$kern-input-wrappers: '.rz-numeric, .rz-dropdown, .rz-multiselect, .rz-colorpicker';
+
+:not(.rz-form-field-content) > :is(#{$kern-input-wrappers}) {
+  &:hover:not(:focus-within):not(.rz-state-disabled) {
+    border-block-end: var(--rz-input-border-block-end);
+    box-shadow: kern-underline($kern-line-growth);
+  }
+}
+
+// Der Textbereich gehoert zur zweiten Gruppe, obwohl er selbst das Feld ist:
+// seine Hoehe folgt `rows` (`height: auto`), die Kante wuechse also nach aussen
+// und schoebe alles darunter nach unten. KERN kennt das Problem nicht — dort
+// gibt `min-height` dem Feld eine feste Hoehe. Ein Polsterausgleich waere hier
+// ohnehin falsch (der Text steht oben) und zudem wirkungslos: KERNs Regel fuer
+// `textarea` setzt die Polsterung mit `!important`.
+// Im FormField ist der Textbereich blank geschaltet und der Kasten traegt die
+// Kante — die Ausnahme verhindert, dass er hier eine zweite bekaeme.
+:not(.rz-form-field-content) > .rz-textarea:hover:not(:focus):not([readonly]):not(:disabled) {
+  border-block-end: var(--rz-input-border-block-end);
+  box-shadow: kern-underline($kern-line-growth);
+}
+
+// Das AutoComplete bekommt von Radzen ueberhaupt keine Unterkante: es setzt nur
+// `border`, und das ist hier `none` — die Kante lebt in `border-block-end`.
+// Sichtbar wurde sie erst beim Hover, wo `%input-hover` sie nachtraegt und der
+// Rahmen dabei um 4px waechst, weil seine Hoehe dem Feld darin folgt.
+.rz-autocomplete {
+  box-shadow: kern-underline($kern-line-default);
+
+  &:hover:not(.rz-state-disabled) {
+    border-block-end: 0;
+    box-shadow: kern-underline($kern-line-bold);
+  }
+
+  &:focus-within:not(.rz-state-disabled) {
+    border-block-end: 0;
+    box-shadow: kern-underline($kern-line-default);
+  }
 }
 
 // KERN: schreibgeschuetzte Felder tragen eine 1px-Kante in `layout-border`,
@@ -236,6 +290,67 @@ $kern-filled-button-styles: (
 // Der Ring bleibt am Feld; die Gruppe gibt ihn ab.
 .rz-form-field.rz-state-focused .rz-form-field-content {
   outline: none;
+}
+
+// Die folgenden drei Regeln gelten nur ohne Praefix/Suffix — nur dort traegt
+// der Kasten die Kante. Mit Icon wandert sie an seine Kinder (Abschnitt unten),
+// und die Zustaende gehoeren dann dorthin.
+$kern-form-field-plain: '.rz-form-field:not(:has(> .rz-form-field-content > :is(.rz-form-field-start, .rz-form-field-end)))';
+
+// Der Hover gehoert dem Feld, nicht dem ganzen FormField. Radzen bindet ihn an
+// `.rz-form-field` — dazu zaehlen der Hilfetext darunter und der 10px hohe
+// Abstand ueber dem Kasten. Die Kante reagierte also dort, wo gar kein Feld
+// ist. Solange der Zeiger nicht ueber dem Kasten selbst steht, wird Radzens
+// Hover zurueckgenommen.
+//
+// Zurueckgesetzt wird nur die Breite. Die Kurzform waere je Variante falsch:
+// `filled` nimmt dem Kasten die Kante ganz (`border: none`), `text` faerbt sie
+// durchsichtig — beide bekaemen sonst eine sichtbare Linie dazu. Ueber die
+// Breite allein geht das nicht schief: ohne Stil bleibt sie wirkungslos, ohne
+// Farbe unsichtbar.
+#{$kern-form-field-plain}:not(.rz-state-disabled):not(.rz-state-focused):hover > .rz-form-field-content:not(:hover) {
+  border-block-end-width: var(--kern-metric-border-width-default);
+  box-shadow: none;
+}
+
+// Bei `filled` und `text` liegt der Unterstrich in `:after` und muss mit.
+// Nur dort — bei den uebrigen Varianten hat das Pseudoelement keinen `content`
+// und wuerde nur unnoetig beschrieben.
+#{$kern-form-field-plain}:is(.rz-variant-filled, .rz-variant-text):not(.rz-state-disabled):not(.rz-state-focused):hover > .rz-form-field-content:not(:hover):after {
+  border-block-end: var(--rz-input-border-block-end);
+}
+
+// Steht der Zeiger ueber dem Feld, waechst KERNs Kante von 2px auf 4px — nach
+// innen, weil das Feld mit festen 48px als border-box gezeichnet wird. Hier
+// liegt sie aber am Kasten, dessen Hoehe sich nach dem Feld darin richtet: als
+// Kante wuechse sie nach aussen, der Kasten wuerde 2px hoeher und alles
+// darunter rutschte mit. Die Breite bleibt deshalb stehen.
+#{$kern-form-field-plain}:not(.rz-state-disabled):not(.rz-state-focused) > .rz-form-field-content:hover {
+  border-block-end-width: var(--kern-metric-border-width-default);
+}
+
+// Die zusaetzlichen 2px liegen als Innenschatten darueber — gleiche Optik,
+// unveraenderte Geometrie. Nur dort, wo die Linie wirklich am Kasten haengt:
+// bei `filled` und `text` zeichnet sie das absolut liegende `:after`, das
+// Radzen von sich aus verdickt, ohne dass sich etwas verschiebt.
+#{$kern-form-field-plain}:not(.rz-variant-filled):not(.rz-variant-text):not(.rz-state-disabled):not(.rz-state-focused) > .rz-form-field-content:hover {
+  box-shadow: kern-underline($kern-line-growth);
+}
+
+// Traegt der Kasten die Kante, gehoert der Ausgleich fuer ihr Wachstum nicht an
+// das Feld darin — der Text rutschte sonst um 2px nach unten, obwohl sich an
+// seiner eigenen Kante nichts aendert. Bei einer Input Group (unten) liegt die
+// Kante am Feld selbst; dort bleibt der Ausgleich noetig.
+//
+// Zurueckgesetzt wird auf Radzens Ausgangswert, nicht auf 0: `filled` und
+// `flat` polstern das Feld oben um 23px, damit die schwebende Beschriftung
+// Platz hat. Ein hartes `0` haette sie darauf fallen lassen.
+#{$kern-form-field-plain} > .rz-form-field-content {
+  #{$kern-input-elements} {
+    &:hover:not(:focus) {
+      padding-block: var(--rz-input-padding-block);
+    }
+  }
 }
 
 // Damit der Ring nicht mitten durch einen durchgehenden Rahmen schneidet,

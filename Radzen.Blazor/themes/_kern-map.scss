@@ -1251,6 +1251,12 @@ $form-field-label-focus-color: var(--kern-color-action-default-contextual);
 $form-field-filled-background-color: var(--kern-color-layout-layer-surface-contextual);
 $form-field-filled-hover-background-color: var(--kern-color-layout-layer-surface-contextual);
 $form-field-filled-border-radius: var(--kern-metric-border-radius-small);
+// Radzen blendet den Unterstrich der Variante `filled` aus, weil ihr Kasten die
+// Kante selbst traegt (`$form-field-filled-border: var(--rz-input-border)`).
+// Hier ist dieses Token `none` — KERNs Kante lebt in `border-block-end`. Das
+// Feld staende damit ganz ohne Unterkante da. Der Unterstrich uebernimmt sie:
+// er liegt absolut und veraendert die Groesse des Kastens nicht.
+$form-field-filled-underline-display: block;
 $form-field-label-floating-background-color: transparent;
 $form-field-shadow: none;
 $form-field-hover-shadow: none;
