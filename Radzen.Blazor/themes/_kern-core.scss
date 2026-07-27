@@ -1,0 +1,23 @@
+// ---------------------------------------------------------------------------
+// KERN UX-Standard — Token- und Komponentenschicht
+// ---------------------------------------------------------------------------
+// Bindet das unveraenderte SCSS von @kern-ux/native (2.7.1) aus node_modules
+// ein. Es wird bewusst NICHTS am Paket angepasst, damit `npm update` genuegt.
+//
+// core/index.scss wird nicht direkt verwendet, weil es zusaetzlich `global`
+// laedt (Reset auf html/body/img/svg). Dieser Reset gehoert nur in die
+// Vollversion des Themes, nicht in die einbettbare `-base`-Variante — genauso
+// wie Radzen seine Element-Styles ueber `$base` ausblendet. `global` liegt
+// deshalb in _kern-global.scss.
+//
+// Reihenfolge wie in core/index.scss (ohne global):
+//   tokens -> layers -> components -> typography -> layout
+// ---------------------------------------------------------------------------
+
+@forward '../../node_modules/@kern-ux/native/src/scss/core/tokens';
+
+@use '../../node_modules/@kern-ux/native/src/scss/core/tokens';
+@use '../../node_modules/@kern-ux/native/src/scss/core/layers';
+@use '../../node_modules/@kern-ux/native/src/scss/core/components';
+@use '../../node_modules/@kern-ux/native/src/scss/core/typography';
+@use '../../node_modules/@kern-ux/native/src/scss/core/layout';

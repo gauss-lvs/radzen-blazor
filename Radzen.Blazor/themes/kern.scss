@@ -1,0 +1,25 @@
+// ===========================================================================
+// KERN — Light Mode, Vollversion
+// ===========================================================================
+// Wie kern-base.scss, zusaetzlich mit Radzens Element-Typografie (h1-h6) und
+// Scrollbalken-Styling. Fuer Anwendungen, in denen das Theme auch die nackten
+// HTML-Elemente gestalten soll.
+// ===========================================================================
+
+@use 'kern-core' as kern;
+@use 'kern-global';
+
+@import 'variables';
+@import 'mixins';
+
+$theme-name: kern;
+
+@import 'kern-map';
+@import 'kern-fonts';
+@import 'kern-root';
+@import 'components';
+@import 'kern-components';
+
+:root:not([data-kern-theme]):not(.kern-light):not(.kern-dark) {
+  @include kern.light-colors;
+}

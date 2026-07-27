@@ -389,6 +389,44 @@ namespace Radzen
                 SeriesA = "#376df5",
                 SeriesB = "#64dfdf",
                 SeriesC = "#f68769"
+            },
+            // KERN UX-Standard (kern-ux.de), @kern-ux/native 2.7.1.
+            // Die Farbwerte sind KERNs OKLCH-Primitive nach sRGB gewandelt und
+            // dienen nur der Vorschau im Theme-Auswahldialog; verbindlich sind
+            // die --kern-*-Token im Stylesheet.
+            new Theme {
+                Text = "KERN",
+                Value = "kern",
+                Primary = "#2044aa",        // action-default (darkblue-700)
+                Secondary = "#2044aa",      // KERN kennt nur einen Aktionsfarbton
+                Base = "#ffffff",           // layout-background-default
+                Selection = "rgba(32, 68, 170, 0.12)",
+                SelectionText = "#131525",
+                Content = "#f3f4f7",        // layout-background-default-surface
+                TitleText = "#131525",      // layout-text-default (neutral-950)
+                ContentText = "#51577a",    // layout-text-muted (neutral-650)
+                ButtonRadius = "4",
+                CardRadius = "4",
+                SeriesA = "#2044aa",
+                SeriesB = "#007155",
+                SeriesC = "#925400"
+            },
+            new Theme {
+                Text = "KERN Dark",
+                Value = "kern-dark",
+                Primary = "#97afe1",        // action-default (darkblue-300)
+                Secondary = "#97afe1",
+                Base = "#000000",           // layout-background-default
+                Selection = "rgba(151, 175, 225, 0.12)",
+                SelectionText = "#f3f4f7",
+                Content = "#131525",        // layout-background-default-surface
+                TitleText = "#f3f4f7",      // layout-text-default (neutral-025)
+                ContentText = "#b2b6cc",    // layout-text-muted (neutral-250)
+                ButtonRadius = "4",
+                CardRadius = "4",
+                SeriesA = "#97afe1",
+                SeriesB = "#3ecfa5",
+                SeriesC = "#e39a3d"
             }
         ];
 
@@ -535,6 +573,8 @@ namespace Radzen
             "software-dark" => true,
             "default" => true,
             "dark" => true,
+            "kern" => true,
+            "kern-dark" => true,
             _ => false
         };
 

@@ -1,0 +1,356 @@
+// ===========================================================================
+// KERN -> Radzen — Struktur, die sich nicht ueber Variablen ausdruecken laesst
+// ===========================================================================
+// Jede Regel hier hat einen Grund: Radzens Variablenoberflaeche kennt die
+// Eigenschaft nicht, oder KERN baut die Komponente anders auf. Alles, was ueber
+// eine Variable erreichbar war, steht in _kern-map.scss.
+// ===========================================================================
+
+@use 'sass:map';
+
+// ---------------------------------------------------------------------------
+// Schriftart
+// ---------------------------------------------------------------------------
+// Die `-base`-Variante bringt KERNs globale `*`-Regel bewusst nicht mit, hier
+// also klassengebunden — analog zu Radzens eigener box-sizing-Regel.
+//
+// `.rzi` muss ausgenommen bleiben: Radzens Icons sind Ligaturen der Schrift
+// "Material Symbols". Ihr `<i>` traegt oft zusaetzlich eine rz-Klasse
+// (z. B. `rzi rz-navigation-item-icon-children`) und wuerde sonst von dieser
+// Regel getroffen — die Ligatur bricht dann auf und der Icon-Name erscheint
+// als Text. Radzens eigene Regel `%rzi, .rzi` hat dieselbe Spezifitaet und
+// stuende hier davor, koennte sich also nicht wehren.
+[class^='rz-']:not(.rzi),
+[class*=' rz-']:not(.rzi) {
+  font-family: var(--rz-text-font-family);
+}
+
+// ---------------------------------------------------------------------------
+// Fokusring gegen KERNs Seiten-Reset absichern
+// ---------------------------------------------------------------------------
+// KERNs global.scss enthaelt fuer generische fokussierbare Elemente:
+//   [tabindex]:not([tabindex="-1"]):focus       -> 4px Outline
+//   [tabindex]:not([tabindex="-1"]):focus:focus-visible -> outline: 0
+// KERNs eigene Komponenten setzen den Ring auf `:focus` und sind davon nicht
+// betroffen. Radzen setzt ihn dagegen auf `:focus-visible` — und praktisch
+// jede fokussierbare Radzen-Komponente traegt ein tabindex-Attribut
+// (nachgezaehlt: 35 verschiedene). Ohne diese Regel verlieren sie in der
+// Vollversion alle ihren Fokusring.
+//
+// Nur `outline` wird gesetzt, nicht `outline-offset`: die Komponentenregeln
+// sind eine Stufe unspezifischer und behalten so ihren eigenen Offset
+// (Formularelemente 0, Gridzellen negativ, sonst 2px).
+// In der `-base`-Variante ist die Regel wirkungslos — dort fehlt der Reset.
+[class^='rz-']:not([tabindex='-1']):focus:focus-visible,
+[class*=' rz-']:not([tabindex='-1']):focus:focus-visible {
+  outline: var(--rz-outline-focus);
+}
+
+// ---------------------------------------------------------------------------
+// Button
+// ---------------------------------------------------------------------------
+// Zuordnung der drei KERN-Auspraegungen auf Radzens Variantenachse:
+//   KERN primary   -> Variant.Filled    (gefuellt, Aktionsfarbe)
+//   KERN secondary -> Variant.Outlined  (1px Kontur, transparent)
+//   KERN tertiary  -> Variant.Text      (unterstrichen, transparent)
+// Die ButtonStyle-Achse bleibt damit frei fuer die Farbrolle.
+//
+// KERN toent Zustaende ueber Deckkraft-Mischungen statt ueber Verlauf oder
+// Innenschatten. Die Verlaeufe sind bereits per Variable abgeschaltet; hier
+// kommen die Toenungen dazu.
+
+.rz-button:not(.rz-state-disabled) {
+  // Gefuellt: KERN dunkelt die Flaeche ab (`shade-hover` / `shade-active`).
+  &:not(.rz-variant-outlined):not(.rz-variant-text):not(.rz-variant-flat) {
+    &:hover {
+      background-color: var(--kern-color-action-state-indicator-shade-hover);
+    }
+
+    &:active {
+      background-color: var(--kern-color-action-state-indicator-shade-active);
+    }
+  }
+
+  // Kontur und Text: KERN legt eine Toenung der Aktionsfarbe unter.
+  &.rz-variant-outlined,
+  &.rz-variant-text {
+    &:hover {
+      background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+    }
+
+    &:active {
+      background-color: var(--kern-color-action-state-indicator-tint-active-opacity);
+    }
+  }
+}
+
+// KERNs Tertiaerbutton ist unterstrichen; beim Hover wird der Strich 3px dick.
+// Mit Icon entfaellt die Unterstreichung (KERN: `&:has(.kern-icon)`).
+.rz-button.rz-variant-text {
+  .rz-button-text {
+    text-decoration: underline;
+    text-decoration-skip-ink: none;
+    text-underline-offset: var(--kern-3);
+    text-decoration-thickness: var(--kern-1);
+  }
+
+  &:hover .rz-button-text {
+    text-decoration-thickness: var(--kern-3);
+  }
+
+  &.rz-button-icon-left .rz-button-text,
+  &.rz-button-icon-right .rz-button-text {
+    text-decoration: none;
+  }
+}
+
+// KERN: nicht klickbare Schaltflaechen zeigen den Verbotscursor.
+.rz-button.rz-state-disabled {
+  cursor: not-allowed;
+}
+
+// ---------------------------------------------------------------------------
+// Eingabefelder
+// ---------------------------------------------------------------------------
+// KERNs Feld hat nur eine untere Kante, die beim Hover von 2px auf 4px waechst.
+// Weil die Hoehe fest ist (48px, border-box), wandert der Text sonst um 2px
+// nach oben — KERN gleicht das mit padding-top aus, hier ebenso.
+
+%kern-input-hover-shift {
+  padding-block-start: calc(var(--kern-metric-border-width-bold) - var(--kern-metric-border-width-default));
+}
+
+.rz-textbox,
+.rz-textarea,
+.rz-password,
+.rz-spinner-input,
+.rz-numeric input,
+.rz-datepicker-input,
+.rz-mask,
+.rz-autocomplete-input {
+  &:hover:not(:focus):not([readonly]):not(:disabled) {
+    @extend %kern-input-hover-shift;
+  }
+}
+
+// Fokus setzt die Kante zurueck auf 2px und legt KERNs Outline darum.
+.rz-textbox:focus,
+.rz-textarea:focus,
+.rz-password:focus,
+.rz-spinner-input:focus,
+.rz-datepicker-input:focus,
+.rz-mask:focus,
+.rz-autocomplete-input:focus {
+  padding-block-start: 0;
+}
+
+// KERN: schreibgeschuetzte Felder tragen eine 1px-Kante in `layout-border`,
+// keinen Radius und keine eigene Flaeche.
+.rz-textbox[readonly],
+.rz-textarea[readonly],
+.rz-datepicker-input[readonly] {
+  border-block-end: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+  border-radius: var(--kern-metric-border-radius-none);
+  background-color: transparent;
+  cursor: not-allowed;
+}
+
+// ---------------------------------------------------------------------------
+// Checkbox / Radio
+// ---------------------------------------------------------------------------
+// Beide erben in Radzen die Hover-Kante aus `--rz-input-hover-border`. Dieses
+// Token traegt fuer das Textfeld `none` (die Kante lebt dort in
+// `border-block-end`) — ohne die folgenden Regeln verschwaende der Rahmen beim
+// Hover. Die Kurzform muss vollstaendig sein: `border-width` allein reicht
+// nicht, weil `border-style` aus Radzens Kurzform `none` bliebe.
+// `.rz-state-active` ist eigens aufgefuehrt, weil Radzens Regel dafuer eine
+// Klasse spezifischer ist.
+
+.rz-chkbox-box,
+.rz-radiobutton-box {
+  &:hover:not(.rz-state-disabled),
+  &.rz-state-active:hover:not(.rz-state-disabled) {
+    border: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border-contextual);
+    background-color: var(--kern-color-layout-layer-surface-contextual);
+    box-shadow: none;
+  }
+}
+
+// KERN blendet beim Fokus die Kante aus und zeigt nur die Outline.
+.rz-chkbox-box.rz-state-focused,
+.rz-radiobutton-box.rz-state-focused {
+  &:not(.rz-state-disabled),
+  &:not(.rz-state-disabled):hover {
+    border: 0;
+  }
+}
+
+// KERN: der Haken ist eine Linie in der Feldrandfarbe auf unveraenderter
+// Flaeche — die Box wird beim Anhaken nicht eingefaerbt.
+.rz-chkbox-box.rz-state-active .rzi {
+  color: var(--kern-color-form-input-border-contextual);
+}
+
+// ---------------------------------------------------------------------------
+// Link — KERN: 1px Unterstrich, 3px Abstand, beim Hover 3px dick
+// ---------------------------------------------------------------------------
+
+.rz-link {
+  text-decoration-line: underline;
+  text-decoration-style: solid;
+  text-decoration-skip-ink: none;
+  text-decoration-thickness: var(--kern-1);
+  text-underline-offset: var(--kern-3);
+
+  &:hover,
+  &:active {
+    text-decoration-thickness: var(--kern-3);
+  }
+
+  &:visited {
+    color: var(--kern-color-action-visited-contextual);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DataGrid / Tabelle
+// ---------------------------------------------------------------------------
+// KERN zeichnet Zeilentrenner als Innenschatten statt als Rahmen, damit die
+// Linie die Zellhoehe nicht veraendert. Kopf und Fuss bekommen dieselbe Linie.
+
+.rz-data-grid,
+.rz-datatable {
+  .rz-grid-table {
+    // Der Kopf traegt die Linie am `th`, der Rumpf an der Zelle. `th` fuehrt
+    // ausserdem eine Spaltenlinie als border-inline-end, die KERN nicht kennt.
+    th {
+      border: 0;
+    }
+
+    th .rz-column-title,
+    td.rz-data-cell {
+      border: 0;
+      box-shadow: inset 0 -1px 0 0 var(--kern-color-layout-border-contextual);
+    }
+
+    tfoot td {
+      border: 0;
+      box-shadow: inset 0 1px 0 0 var(--kern-color-layout-border-contextual);
+    }
+  }
+}
+
+// KERN richtet Zahlen rechts aus und laesst sie nicht umbrechen.
+.rz-data-grid .rz-numeric-cell,
+.rz-data-grid .rz-align-right {
+  text-align: right;
+  text-wrap: nowrap;
+}
+
+// ---------------------------------------------------------------------------
+// Alert
+// ---------------------------------------------------------------------------
+// KERN: getoente Flaeche, 2px Outline in der Feedbackfarbe, Text in der
+// normalen Textfarbe, Icon in der Feedbackfarbe. Radzens Standard waere eine
+// vollflaechig gesaettigte Farbe.
+//
+// Gesetzt werden die `--rz-alert-*`-Token, nicht `background-color`/`color`
+// direkt: die Direktwerte auf `.rz-alert` haetten Vorrang vor den Token und
+// wuerden alle Schattierungsvarianten aushebeln.
+
+@each $rz-style, $kern-role in (info: info, success: success, warning: warning, error: danger, danger: danger) {
+  .rz-alert.rz-#{$rz-style}:not(.rz-variant-outlined):not(.rz-variant-text) {
+    outline: var(--kern-metric-border-width-default) solid var(--kern-color-feedback-#{$kern-role}-contextual);
+    outline-offset: calc(-1 * var(--kern-metric-border-width-default));
+    box-shadow: none;
+
+    &,
+    &.rz-shade-lighter,
+    &.rz-shade-light,
+    &.rz-shade-default,
+    &.rz-shade-dark,
+    &.rz-shade-darker {
+      --rz-alert-background-color: var(--kern-color-feedback-#{$kern-role}-background-contextual);
+      --rz-alert-color: var(--kern-color-layout-text-default-contextual);
+      --rz-alert-title-color: var(--kern-color-layout-text-default-contextual);
+      --rz-alert-icon-color: var(--kern-color-feedback-#{$kern-role}-contextual);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Badge — KERN: getoent mit 1px Kontur in der Feedbackfarbe
+// ---------------------------------------------------------------------------
+
+@each $rz-style, $kern-role in (info: info, success: success, warning: warning, danger: danger) {
+  .rz-badge.rz-#{$rz-style}:not(.rz-variant-outlined):not(.rz-variant-text) {
+    border: var(--kern-metric-border-width-light) solid var(--kern-color-feedback-#{$kern-role}-contextual);
+    background-color: var(--kern-color-feedback-#{$kern-role}-background-contextual);
+    color: var(--kern-color-layout-text-default-contextual);
+  }
+}
+
+.rz-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--kern-metric-dimension-large);   // 32px
+}
+
+// ---------------------------------------------------------------------------
+// Accordion / Tabs / Panel
+// ---------------------------------------------------------------------------
+// KERN: 1px Trennlinien oben und unten, Titel in der Aktionsfarbe, beim Hover
+// eine Toenung. Die Kopfzeile ist bei Radzen `> a` bzw. `> button`.
+
+.rz-accordion .rz-accordion-header {
+  border-block: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+
+  + .rz-accordion-header {
+    border-block-start: 0;
+  }
+
+  > a,
+  > button {
+    color: var(--kern-color-action-default-contextual);
+
+    &:hover {
+      background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+    }
+  }
+}
+
+.rz-tabview-nav li:not(.rz-state-active) > a:hover {
+  background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+}
+
+// ---------------------------------------------------------------------------
+// Card — Radzens gefuellte Karte zeichnet keinen Rahmen und waere auf KERNs
+// weisser Flaeche unsichtbar.
+// ---------------------------------------------------------------------------
+
+.rz-card {
+  border: var(--rz-card-border);
+}
+
+// ---------------------------------------------------------------------------
+// ProgressBar — KERN: 8px hoch, 2px Radius, neutrale Feedbackfarbe
+// ---------------------------------------------------------------------------
+
+.rz-progressbar {
+  overflow: hidden;
+  border-radius: var(--kern-metric-border-radius-small);
+}
+
+// ---------------------------------------------------------------------------
+// Diagramme
+// ---------------------------------------------------------------------------
+// KERNs globaler Reset setzt `svg { height: auto }`. Das wuerde die von Radzen
+// per Attribut gesetzte Diagrammhoehe aushebeln — in der Vollversion, die den
+// Reset mitbringt, hier zurueckgenommen.
+
+.rz-chart svg,
+.rz-gauge svg,
+.rz-sparkline svg {
+  height: revert;
+  max-width: none;
+}

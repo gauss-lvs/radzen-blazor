@@ -1,0 +1,21 @@
+// ===========================================================================
+// KERN — Light Mode, WCAG-Verschaerfung
+// ===========================================================================
+// KERN 2.7.1 erfuellt AA bereits im Normalzustand; diese Ueberlagerung hebt
+// deshalb nur die beiden Stellen an, die konstruktionsbedingt darunter liegen:
+// die rein dekorative Haarlinie und der gedaempfte Text.
+// Wird vom ThemeService zusaetzlich geladen, wenn Wcag aktiv ist.
+// ===========================================================================
+
+:root {
+  // Dekorative Kanten auf die tragende Linienfarbe heben (3:1 fuer
+  // Bedienelement-Begrenzungen nach WCAG 1.4.11).
+  --kern-color-decorative-border-contextual: var(--kern-color-layout-border);
+  --kern-color-decorative-border-default: var(--kern-color-layout-border);
+  --kern-color-decorative-border-level-1: var(--kern-color-layout-border);
+  --kern-color-decorative-border-level-2: var(--kern-color-layout-border);
+
+  // Gedaempfter Text auf volle Textfarbe (4.5:1 statt der gedaempften Stufe).
+  --kern-color-layout-text-muted-contextual: var(--kern-color-layout-text-default);
+  --kern-color-layout-text-muted: var(--kern-color-layout-text-default);
+}

@@ -1,0 +1,22 @@
+// ===========================================================================
+// KERN — Dark Mode, Vollversion
+// ===========================================================================
+
+@use 'kern-core' as kern;
+@use 'kern-global';
+
+@import 'variables';
+@import 'mixins';
+
+$theme-dark: true;
+$theme-name: kern-dark;
+
+@import 'kern-map';
+@import 'kern-fonts';
+@import 'kern-root';
+@import 'components';
+@import 'kern-components';
+
+:root:not([data-kern-theme]):not(.kern-light):not(.kern-dark) {
+  @include kern.dark-colors;
+}

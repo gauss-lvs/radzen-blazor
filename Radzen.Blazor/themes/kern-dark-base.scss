@@ -1,0 +1,27 @@
+// ===========================================================================
+// KERN — Dark Mode, einbettbare Variante
+// ===========================================================================
+// Identisch zu kern-base.scss bis auf den erzwungenen Token-Satz: das gesamte
+// Mapping haengt an `--kern-*`, und KERNs `dark-colors` tauscht genau diese
+// Ebene aus. Es gibt daher keine dark-spezifischen Radzen-Variablen.
+// ===========================================================================
+
+@use 'kern-core' as kern;
+
+@import 'variables';
+@import 'mixins';
+
+$base: true;
+$theme-dark: true;
+$theme-name: kern-dark;
+
+@import 'kern-map';
+@import 'kern-fonts';
+@import 'kern-root';
+@import 'kern-utilities';
+@import 'components';
+@import 'kern-components';
+
+:root:not([data-kern-theme]):not(.kern-light):not(.kern-dark) {
+  @include kern.dark-colors;
+}

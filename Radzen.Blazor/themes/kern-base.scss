@@ -1,0 +1,31 @@
+// ===========================================================================
+// KERN — Light Mode, einbettbare Variante
+// ===========================================================================
+// Diese Datei laedt der ThemeService fuer das Theme "kern".
+//
+// Sie stylt ausschliesslich `.rz-*` und `.kern-*` und laesst die nackten
+// HTML-Elemente der Wirtsseite unberuehrt (Radzens `$base: true`-Konvention).
+// Die klassengebundenen KERN-Utilities kommen ueber _kern-utilities.scss dazu;
+// KERNs Seiten-Reset gibt es nur in der Vollversion kern.scss.
+// ===========================================================================
+
+@use 'kern-core' as kern;
+
+@import 'variables';
+@import 'mixins';
+
+$base: true;
+$theme-name: kern;
+
+@import 'kern-map';
+@import 'kern-fonts';
+@import 'kern-root';
+@import 'kern-utilities';
+@import 'components';
+@import 'kern-components';
+
+// Light Mode erzwingen. Die Ausnahmen lassen KERNs eigenen Umschalter
+// (`data-kern-theme` / `.kern-light` / `.kern-dark`) weiterhin gewinnen.
+:root:not([data-kern-theme]):not(.kern-light):not(.kern-dark) {
+  @include kern.light-colors;
+}

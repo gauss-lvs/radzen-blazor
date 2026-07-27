@@ -1,0 +1,50 @@
+// ---------------------------------------------------------------------------
+// KERNs kontextuelle Aliase zusaetzlich auf :root
+// ---------------------------------------------------------------------------
+// KERN deklariert die 25 `-contextual`-Aliase nur auf
+//   :is(body, .kern-light, .kern-dark, [data-kern-theme=…]) und .kern-level-*
+// Radzen deklariert seine `--rz-*` dagegen auf :root.
+//
+// CSS loest var() in einer Custom-Property am EIGENEN Element auf. Auf :root
+// gaebe es die Aliase also nicht: `--rz-primary: var(--kern-…-contextual)`
+// wuerde dort ungueltig und als ungueltig weitervererbt — jede darauf
+// aufbauende Farbe fiele aus. (Nachgemessen: Hintergrund wird transparent.)
+//
+// Deshalb hier dieselben Zuordnungen wie in KERNs Level 0. Die Spezifitaet ist
+// identisch zu KERNs eigenem Block (0,1,0), betrifft aber ein anderes Element
+// (html statt body) — KERNs Level-1/2-Verschachtelung bleibt damit intakt,
+// weil der naeher liegende .kern-level-* weiterhin vererbt.
+//
+// Quelle: @kern-ux/native/src/scss/core/layers/_levels.scss
+// ---------------------------------------------------------------------------
+
+:root {
+  --kern-color-layout-text-default-contextual: var(--kern-color-layout-text-default);
+  --kern-color-layout-text-muted-contextual: var(--kern-color-layout-text-muted);
+  --kern-color-layout-text-inverse-contextual: var(--kern-color-layout-text-inverse);
+  --kern-color-layout-layer-surface-contextual: var(--kern-color-layout-background-default-surface);
+  --kern-color-layout-background-default-contextual: var(--kern-color-layout-background-default);
+  --kern-color-layout-border-contextual: var(--kern-color-layout-border);
+  --kern-color-action-default-contextual: var(--kern-color-action-default);
+  --kern-color-action-on-default-contextual: var(--kern-color-action-on-default);
+  --kern-color-action-state-indicator-default-contextual: var(--kern-color-action-state-indicator-default);
+  // KERN schreibt den Alias auf Level 0 mit doppeltem "color" — beide Namen
+  // werden gesetzt, damit Paketcode und Theme-Code gleichermassen aufloesen.
+  --kern-color-color-action-state-indicator-default-contextual: var(--kern-color-action-state-indicator-default);
+  --kern-color-action-state-indicator-tint-contextual: var(--kern-color-action-state-indicator-tint);
+  --kern-color-action-visited-contextual: var(--kern-color-action-visited);
+  --kern-color-action-focus-default-contextual: var(--kern-color-action-focus-default);
+  --kern-color-decorative-brand-contextual: var(--kern-color-decorative-brand-default);
+  --kern-color-form-input-border-contextual: var(--kern-color-form-input-border);
+  --kern-color-decorative-border-contextual: var(--kern-color-decorative-border-default);
+  --kern-color-feedback-info-contextual: var(--kern-color-feedback-info);
+  --kern-color-feedback-info-background-contextual: var(--kern-color-feedback-info-background);
+  --kern-color-feedback-success-contextual: var(--kern-color-feedback-success);
+  --kern-color-feedback-success-background-contextual: var(--kern-color-feedback-success-background);
+  --kern-color-feedback-warning-contextual: var(--kern-color-feedback-warning);
+  --kern-color-feedback-warning-background-contextual: var(--kern-color-feedback-warning-background);
+  --kern-color-feedback-danger-contextual: var(--kern-color-feedback-danger);
+  --kern-color-feedback-danger-background-contextual: var(--kern-color-feedback-danger-background);
+  --kern-color-feedback-default-contextual: var(--kern-color-feedback-default);
+  --kern-color-feedback-default-background-contextual: var(--kern-color-feedback-default-background);
+}

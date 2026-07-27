@@ -1,0 +1,1406 @@
+// ===========================================================================
+// KERN UX-Standard -> Radzen Blazor — Variablen-Mapping
+// ===========================================================================
+// Jede Radzen-Themevariable wird hier auf ein KERN-Token abgebildet. Weil
+// saemtliche Zuweisungen ueber `var(--kern-*)` laufen und KERN Light/Dark
+// ueber genau diese Custom Properties umschaltet, ist diese Datei fuer beide
+// Modi identisch — es gibt keinen Light-/Dark-Zweig.
+//
+// Diese Datei wird VOR `@import 'components'` eingebunden. Radzen deklariert
+// alle Komponentenvariablen mit `!default`, die Zuweisungen hier gewinnen also.
+//
+// Konventionen aus KERN 2.7.1, die das Mapping tragen:
+//   Steuerelement-Hoehe  48px  (--kern-metric-dimension-x-large)
+//   Radius               4px   (default) / 2px (Formularfelder) / 8px (Dialog)
+//   Rahmen               1px light / 2px default / 4px bold
+//   Fokus                4px solid action-focus, Offset 2px (0 bei Formularen)
+//   Fliesstext           18px / 24px, Fira Sans 400
+//   Icon                 24px
+// ---------------------------------------------------------------------------
+
+@use 'sass:map';
+
+// ---------------------------------------------------------------------------
+// Palette
+// ---------------------------------------------------------------------------
+// KERN kennt genau EINEN Aktionsfarbton ("action") und vier Feedbackfarben.
+// Radzens Primary/Secondary werden daher beide auf `action` gelegt; die
+// Secondary-Schaltflaeche wird spaeter auf KERNs Outline-Variante gedreht.
+
+$rz-white: #ffffff;
+$rz-black: #000000;
+
+$rz-primary:   var(--kern-color-action-default-contextual);
+$rz-secondary: var(--kern-color-action-default-contextual);
+$rz-info:      var(--kern-color-feedback-info-contextual);
+$rz-success:   var(--kern-color-feedback-success-contextual);
+$rz-warning:   var(--kern-color-feedback-warning-contextual);
+$rz-danger:    var(--kern-color-feedback-danger-contextual);
+$rz-base:      var(--kern-color-decorative-border-contextual);
+
+// KERN hat keine Helligkeitsrampe je Farbe. Zustaende entstehen dort ueber
+// Deckkraft-Mischungen (`action-state-opacity-*`). `-light`/`-dark`/`-darker`
+// bleiben deshalb beim Grundton — das ist die KERN-konforme Auflösung und
+// haelt zugleich jeden Kontrastwert stabil. `-lighter` ist die Flaechentoenung.
+
+$rz-primary-light:   var(--kern-color-action-default-contextual);
+$rz-primary-lighter: color-mix(in oklch, var(--kern-color-action-default-contextual) 12%, transparent);
+$rz-primary-dark:    var(--kern-color-action-default-contextual);
+$rz-primary-darker:  var(--kern-color-action-default-contextual);
+
+$rz-secondary-light:   var(--kern-color-action-default-contextual);
+$rz-secondary-lighter: color-mix(in oklch, var(--kern-color-action-default-contextual) 12%, transparent);
+$rz-secondary-dark:    var(--kern-color-action-default-contextual);
+$rz-secondary-darker:  var(--kern-color-action-default-contextual);
+
+$rz-info-light:   var(--kern-color-feedback-info-contextual);
+$rz-info-lighter: var(--kern-color-feedback-info-background-contextual);
+$rz-info-dark:    var(--kern-color-feedback-info-contextual);
+$rz-info-darker:  var(--kern-color-feedback-info-contextual);
+
+$rz-success-light:   var(--kern-color-feedback-success-contextual);
+$rz-success-lighter: var(--kern-color-feedback-success-background-contextual);
+$rz-success-dark:    var(--kern-color-feedback-success-contextual);
+$rz-success-darker:  var(--kern-color-feedback-success-contextual);
+
+$rz-warning-light:   var(--kern-color-feedback-warning-contextual);
+$rz-warning-lighter: var(--kern-color-feedback-warning-background-contextual);
+$rz-warning-dark:    var(--kern-color-feedback-warning-contextual);
+$rz-warning-darker:  var(--kern-color-feedback-warning-contextual);
+
+$rz-danger-light:   var(--kern-color-feedback-danger-contextual);
+$rz-danger-lighter: var(--kern-color-feedback-danger-background-contextual);
+$rz-danger-dark:    var(--kern-color-feedback-danger-contextual);
+$rz-danger-darker:  var(--kern-color-feedback-danger-contextual);
+
+// Neutrale Rampe -> KERNs SEMANTISCHE Tokens (nicht die Primitive!), damit
+// die Stufen im Dark Mode mitdrehen. Reihenfolge hell -> dunkel im Light Mode.
+$rz-base-50:  var(--kern-color-layout-background-default-contextual);
+$rz-base-100: var(--kern-color-layout-layer-surface-contextual);
+$rz-base-200: var(--kern-color-layout-layer-surface-contextual);
+$rz-base-300: var(--kern-color-decorative-border-contextual);
+$rz-base-400: var(--kern-color-layout-border-contextual);
+$rz-base-500: var(--kern-color-layout-text-muted-contextual);
+$rz-base-600: var(--kern-color-layout-text-muted-contextual);
+$rz-base-700: var(--kern-color-layout-text-muted-contextual);
+$rz-base-800: var(--kern-color-layout-text-default-contextual);
+$rz-base-900: var(--kern-color-layout-text-default-contextual);
+
+$rz-base-light:   var(--kern-color-layout-layer-surface-contextual);
+$rz-base-lighter: var(--kern-color-layout-background-default-contextual);
+$rz-base-dark:    var(--kern-color-layout-border-contextual);
+$rz-base-darker:  var(--kern-color-layout-text-default-contextual);
+
+// Beschriftungsfarben auf gefuellten Flaechen.
+// Radzen laesst saemtliche `on-*` auf Weiss zeigen. Das traegt nur im Light
+// Mode: KERNs Aktions- und Feedbackfarben sind im Dark Mode hell, weisse
+// Schrift darauf waere unlesbar. `$rz-theme-colors-map` wird von Radzen mit
+// `map.merge(<Vorgaben>, $rz-theme-colors-map)` gebildet — was hier steht,
+// gewinnt.
+$rz-theme-colors-map: (
+  // KERN hat fuer die Aktionsfarbe ein eigenes Gegenstueck-Token.
+  "on-primary":   var(--kern-color-action-on-default-contextual),
+  "on-primary-light":  var(--kern-color-action-on-default-contextual),
+  "on-primary-dark":   var(--kern-color-action-on-default-contextual),
+  "on-primary-darker": var(--kern-color-action-on-default-contextual),
+  "on-secondary":        var(--kern-color-action-on-default-contextual),
+  "on-secondary-light":  var(--kern-color-action-on-default-contextual),
+  "on-secondary-dark":   var(--kern-color-action-on-default-contextual),
+  "on-secondary-darker": var(--kern-color-action-on-default-contextual),
+
+  // Fuer die Feedbackfarben kennt KERN kein Gegenstueck — dort werden sie nie
+  // vollflaechig eingesetzt. `layout-text-inverse` ist die korrekte Wahl: im
+  // Light Mode hell (auf dunklen Feedbackfarben), im Dark Mode dunkel.
+  "on-info":      var(--kern-color-layout-text-inverse-contextual),
+  "on-info-light":   var(--kern-color-layout-text-inverse-contextual),
+  "on-info-dark":    var(--kern-color-layout-text-inverse-contextual),
+  "on-info-darker":  var(--kern-color-layout-text-inverse-contextual),
+  "on-success":        var(--kern-color-layout-text-inverse-contextual),
+  "on-success-light":  var(--kern-color-layout-text-inverse-contextual),
+  "on-success-dark":   var(--kern-color-layout-text-inverse-contextual),
+  "on-success-darker": var(--kern-color-layout-text-inverse-contextual),
+  "on-warning":        var(--kern-color-layout-text-inverse-contextual),
+  "on-warning-light":  var(--kern-color-layout-text-inverse-contextual),
+  "on-warning-dark":   var(--kern-color-layout-text-inverse-contextual),
+  "on-warning-darker": var(--kern-color-layout-text-inverse-contextual),
+  "on-danger":        var(--kern-color-layout-text-inverse-contextual),
+  "on-danger-light":  var(--kern-color-layout-text-inverse-contextual),
+  "on-danger-dark":   var(--kern-color-layout-text-inverse-contextual),
+  "on-danger-darker": var(--kern-color-layout-text-inverse-contextual),
+
+  // Auf den getoenten `-lighter`-Flaechen steht der jeweilige Grundton.
+  "on-info-lighter":    var(--kern-color-feedback-info-contextual),
+  "on-success-lighter": var(--kern-color-feedback-success-contextual),
+  "on-warning-lighter": var(--kern-color-feedback-warning-contextual),
+  "on-danger-lighter":  var(--kern-color-feedback-danger-contextual),
+  "on-primary-lighter":   var(--kern-color-action-default-contextual),
+  "on-secondary-lighter": var(--kern-color-action-default-contextual),
+
+  // Neutrale Stufen: `-dark`/`-darker` sind invertierte Flaechen.
+  "on-base":         var(--kern-color-layout-text-default-contextual),
+  "on-base-light":   var(--kern-color-layout-text-default-contextual),
+  "on-base-lighter": var(--kern-color-layout-text-default-contextual),
+  "on-base-dark":    var(--kern-color-layout-text-inverse-contextual),
+  "on-base-darker":  var(--kern-color-layout-text-inverse-contextual)
+);
+
+// Diagrammreihen — KERNs Markenpalette, weit auseinanderliegende Farbtoene
+// zuerst, damit benachbarte Serien unterscheidbar bleiben.
+$rz-series-1:  var(--kern-color-darkblue-700);
+$rz-series-2:  var(--kern-color-turquois-600);
+$rz-series-3:  var(--kern-color-orange-600);
+$rz-series-4:  var(--kern-color-violet-700);
+$rz-series-5:  var(--kern-color-lightblue-600);
+$rz-series-6:  var(--kern-color-red-600);
+$rz-series-7:  var(--kern-color-green-600);
+$rz-series-8:  var(--kern-color-yellow-600);
+$rz-series-9:  var(--kern-color-darkblue-450);
+$rz-series-10: var(--kern-color-turquois-400);
+$rz-series-11: var(--kern-color-orange-400);
+$rz-series-12: var(--kern-color-violet-450);
+$rz-series-13: var(--kern-color-lightblue-400);
+$rz-series-14: var(--kern-color-red-400);
+$rz-series-15: var(--kern-color-green-400);
+$rz-series-16: var(--kern-color-yellow-400);
+$rz-series-17: var(--kern-color-darkblue-850);
+$rz-series-18: var(--kern-color-turquois-800);
+$rz-series-19: var(--kern-color-orange-800);
+$rz-series-20: var(--kern-color-violet-850);
+$rz-series-21: var(--kern-color-lightblue-800);
+$rz-series-22: var(--kern-color-red-800);
+$rz-series-23: var(--kern-color-green-800);
+$rz-series-24: var(--kern-color-yellow-800);
+
+// ---------------------------------------------------------------------------
+// Konstanten
+// ---------------------------------------------------------------------------
+
+$rz-border-width:   var(--kern-metric-border-width-light);       // 1px
+$rz-border-radius:  var(--kern-metric-border-radius-default);    // 4px
+$rz-root-font-size: 16px;
+$rz-body-font-size: var(--kern-typography-font-size-medium-static);   // 18px
+$rz-body-line-height: var(--kern-typography-line-height-medium-static); // 24px
+$rz-body-background-color: var(--kern-color-layout-background-default-contextual);
+$rz-text-font-family: var(--kern-typography-font-family-default);
+
+// Fokus: exakt KERNs `focus`-Mixin — 4px Outline in action-focus.
+// Der Offset ist 2px (`focus-offset`); Formularelemente setzen ihn auf 0.
+$rz-outline-width:  var(--kern-metric-border-width-bold);   // 4px
+$rz-outline-offset: var(--kern-metric-space-2x-small);      // 2px
+$rz-outline-color:  var(--kern-color-action-focus-default-contextual);
+
+$rz-base-background-color: var(--kern-color-layout-background-default-contextual);
+
+// ---------------------------------------------------------------------------
+// Text
+// ---------------------------------------------------------------------------
+
+$rz-text-title-color:     var(--kern-color-layout-text-default-contextual);
+$rz-text-color:           var(--kern-color-layout-text-default-contextual);
+$rz-text-secondary-color: var(--kern-color-layout-text-muted-contextual);
+$rz-text-tertiary-color:  var(--kern-color-layout-text-muted-contextual);
+$rz-text-disabled-color:  var(--kern-color-layout-text-muted-contextual);
+// "Text auf dunkler Flaeche" — muss in BEIDEN Modi die Gegenfarbe zur
+// Textfarbe sein, sonst wird der `Dark`-Stil im Dark Mode unlesbar.
+$rz-text-contrast-color:  var(--kern-color-layout-text-inverse-contextual);
+
+$rz-text-selection-background-color: color-mix(in oklch, var(--kern-color-action-default-contextual) 12%, transparent);
+$rz-text-selection-color: inherit;
+
+// ---------------------------------------------------------------------------
+// Link — KERN: unterstrichen 1px, Offset 3px, beim Hover 3px dick
+// ---------------------------------------------------------------------------
+
+$rz-link-color:                var(--kern-color-action-default-contextual);
+$rz-link-text-decoration:      underline;
+$rz-link-hover-color:          var(--kern-color-action-default-contextual);
+$rz-link-hover-text-decoration: underline;
+$rz-link-focus-outline:        var(--rz-outline-focus);
+$rz-link-focus-outline-offset: var(--rz-outline-offset);
+$link-color: var(--kern-color-action-default-contextual);
+
+// ---------------------------------------------------------------------------
+// Rahmen / Radien / Schatten / Bewegung
+// ---------------------------------------------------------------------------
+
+$rz-border-normal:   var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$rz-border-hover:    var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+$rz-border-focus:    var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+$rz-border-disabled: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+
+$rz-border-radius-0:  var(--kern-metric-border-radius-none);     // 0
+$rz-border-radius-1:  var(--kern-metric-border-radius-default);  // 4px
+$rz-border-radius-2:  var(--kern-metric-border-radius-large);    // 8px
+$rz-border-radius-3:  var(--kern-metric-space-small);            // 8px
+$rz-border-radius-4:  var(--kern-metric-space-default);          // 16px
+
+// KERN kennt genau drei Elevationen. Radzens 0..10 wird darauf gebaendert.
+$rz-shadow-0:  none;
+$rz-shadow-1:  var(--kern-shadow-elevation-low);
+$rz-shadow-2:  var(--kern-shadow-elevation-low);
+$rz-shadow-3:  var(--kern-shadow-elevation-low);
+$rz-shadow-4:  var(--kern-shadow-elevation-default);
+$rz-shadow-5:  var(--kern-shadow-elevation-default);
+$rz-shadow-6:  var(--kern-shadow-elevation-default);
+$rz-shadow-7:  var(--kern-shadow-elevation-default);
+$rz-shadow-8:  var(--kern-shadow-elevation-high);
+$rz-shadow-9:  var(--kern-shadow-elevation-high);
+$rz-shadow-10: var(--kern-shadow-elevation-high);
+
+// KERN definiert keinerlei Uebergaenge — Zustandswechsel sind dort sofort.
+$rz-transition: 0s linear;
+$rz-transition-all: all 0s linear;
+$rz-expander-transition: 0s linear;
+
+// ---------------------------------------------------------------------------
+// Icon — KERN-Standardgroesse 24px
+// ---------------------------------------------------------------------------
+
+$rz-icon-size: var(--kern-metric-dimension-default);
+
+// ---------------------------------------------------------------------------
+// Typografie — KERNs Stufen inkl. Baseline-Padding
+// ---------------------------------------------------------------------------
+
+$headings: (
+  h1: (font-size: var(--kern-typography-font-size-x-large-adaptive),
+       line-height: var(--kern-typography-line-height-x-large-adaptive),
+       font-weight: var(--kern-typography-font-weight-heading-default),
+       letter-spacing: var(--kern-metric-space-none),
+       color: var(--rz-text-title-color),
+       margin-block: 0,
+       padding-block: var(--kern-metric-baseline-heading-x-large-padding-top) var(--kern-metric-baseline-heading-x-large-padding-bottom)),
+  h2: (font-size: var(--kern-typography-font-size-large-adaptive),
+       line-height: var(--kern-typography-line-height-large-adaptive),
+       font-weight: var(--kern-typography-font-weight-heading-default),
+       letter-spacing: var(--kern-metric-space-none),
+       color: var(--rz-text-title-color),
+       margin-block: 0,
+       padding-block: var(--kern-metric-baseline-heading-large-padding-top) var(--kern-metric-baseline-heading-large-padding-bottom)),
+  h3: (font-size: var(--kern-typography-font-size-medium-adaptive),
+       line-height: var(--kern-typography-line-height-medium-adaptive),
+       font-weight: var(--kern-typography-font-weight-heading-default),
+       letter-spacing: var(--kern-metric-space-none),
+       color: var(--rz-text-title-color),
+       margin-block: 0,
+       padding-block: var(--kern-metric-baseline-heading-medium-padding-top) var(--kern-metric-baseline-heading-medium-padding-bottom)),
+  h4: (font-size: var(--kern-typography-font-size-medium-static),
+       line-height: var(--kern-typography-line-height-medium-static),
+       font-weight: var(--kern-typography-font-weight-heading-default),
+       letter-spacing: var(--kern-metric-space-none),
+       color: var(--rz-text-title-color),
+       margin-block: 0,
+       padding-block: var(--kern-metric-baseline-heading-small-padding-top) var(--kern-metric-baseline-heading-small-padding-bottom)),
+  h5: (font-size: var(--kern-typography-font-size-medium-static),
+       line-height: var(--kern-typography-line-height-medium-static),
+       font-weight: var(--kern-typography-font-weight-title-default),
+       letter-spacing: var(--kern-metric-space-none),
+       color: var(--rz-text-title-color),
+       margin-block: 0,
+       padding-block: var(--kern-metric-baseline-title-small-padding-top) var(--kern-metric-baseline-title-small-padding-bottom)),
+  h6: (font-size: var(--kern-typography-font-size-small-static),
+       line-height: var(--kern-typography-line-height-medium-static),
+       font-weight: var(--kern-typography-font-weight-label-default),
+       letter-spacing: var(--kern-metric-space-none),
+       color: var(--rz-text-title-color),
+       margin-block: 0,
+       padding-block: var(--kern-metric-baseline-label-small-padding-top) var(--kern-metric-baseline-label-small-padding-bottom))
+);
+
+$text: (
+  display-h1: (font-size: var(--kern-typography-font-size-2x-large-adaptive),
+               line-height: var(--kern-typography-line-height-2x-large-adaptive),
+               font-weight: var(--kern-typography-font-weight-heading-balanced),
+               letter-spacing: var(--kern-metric-space-none),
+               color: var(--rz-text-title-color), margin-block: 0,
+               padding-block: var(--kern-metric-baseline-heading-display-padding-top) var(--kern-metric-baseline-heading-display-padding-bottom)),
+  display-h2: (font-size: var(--kern-typography-font-size-x-large-adaptive),
+               line-height: var(--kern-typography-line-height-x-large-adaptive),
+               font-weight: var(--kern-typography-font-weight-heading-balanced),
+               letter-spacing: var(--kern-metric-space-none),
+               color: var(--rz-text-title-color), margin-block: 0,
+               padding-block: var(--kern-metric-baseline-heading-x-large-padding-top) var(--kern-metric-baseline-heading-x-large-padding-bottom)),
+  display-h3: (font-size: var(--kern-typography-font-size-large-adaptive),
+               line-height: var(--kern-typography-line-height-large-adaptive),
+               font-weight: var(--kern-typography-font-weight-heading-balanced),
+               letter-spacing: var(--kern-metric-space-none),
+               color: var(--rz-text-title-color), margin-block: 0,
+               padding-block: var(--kern-metric-baseline-heading-large-padding-top) var(--kern-metric-baseline-heading-large-padding-bottom)),
+  display-h4: (font-size: var(--kern-typography-font-size-medium-adaptive),
+               line-height: var(--kern-typography-line-height-medium-adaptive),
+               font-weight: var(--kern-typography-font-weight-heading-balanced),
+               letter-spacing: var(--kern-metric-space-none),
+               color: var(--rz-text-title-color), margin-block: 0,
+               padding-block: var(--kern-metric-baseline-heading-medium-padding-top) var(--kern-metric-baseline-heading-medium-padding-bottom)),
+  display-h5: (font-size: var(--kern-typography-font-size-medium-static),
+               line-height: var(--kern-typography-line-height-medium-static),
+               font-weight: var(--kern-typography-font-weight-heading-balanced),
+               letter-spacing: var(--kern-metric-space-none),
+               color: var(--rz-text-title-color), margin-block: 0,
+               padding-block: var(--kern-metric-baseline-heading-small-padding-top) var(--kern-metric-baseline-heading-small-padding-bottom)),
+  display-h6: (font-size: var(--kern-typography-font-size-small-static),
+               line-height: var(--kern-typography-line-height-medium-static),
+               font-weight: var(--kern-typography-font-weight-heading-balanced),
+               letter-spacing: var(--kern-metric-space-none),
+               color: var(--rz-text-title-color), margin-block: 0,
+               padding-block: var(--kern-metric-baseline-label-small-padding-top) var(--kern-metric-baseline-label-small-padding-bottom)),
+  h1: map.get($headings, h1),
+  h2: map.get($headings, h2),
+  h3: map.get($headings, h3),
+  h4: map.get($headings, h4),
+  h5: map.get($headings, h5),
+  h6: map.get($headings, h6),
+  subtitle1: (font-size: var(--kern-typography-font-size-medium-static),
+              line-height: var(--kern-typography-line-height-medium-static),
+              font-weight: var(--kern-typography-font-weight-subline-default),
+              letter-spacing: var(--kern-metric-space-none),
+              color: var(--rz-text-secondary-color), margin-block: 0,
+              padding-block: var(--kern-metric-baseline-subline-default-padding-top) var(--kern-metric-baseline-subline-default-padding-bottom)),
+  subtitle2: (font-size: var(--kern-typography-font-size-small-static),
+              line-height: var(--kern-typography-line-height-medium-static),
+              font-weight: var(--kern-typography-font-weight-subline-default),
+              letter-spacing: var(--kern-metric-space-none),
+              color: var(--rz-text-secondary-color), margin-block: 0,
+              padding-block: var(--kern-metric-baseline-subline-small-padding-top) var(--kern-metric-baseline-subline-small-padding-bottom)),
+  body1: (font-size: var(--kern-typography-font-size-medium-static),
+          line-height: var(--kern-typography-line-height-medium-static),
+          font-weight: var(--kern-typography-font-weight-body-default),
+          letter-spacing: var(--kern-metric-space-none),
+          color: var(--rz-text-color), margin-block: 0,
+          padding-block: var(--kern-metric-baseline-body-default-padding-top) var(--kern-metric-baseline-body-default-padding-bottom)),
+  body2: (font-size: var(--kern-typography-font-size-small-static),
+          line-height: var(--kern-typography-line-height-medium-static),
+          font-weight: var(--kern-typography-font-weight-body-default),
+          letter-spacing: var(--kern-metric-space-none),
+          color: var(--rz-text-color), margin-block: 0,
+          padding-block: var(--kern-metric-baseline-body-small-padding-top) var(--kern-metric-baseline-body-small-padding-bottom)),
+  button: (font-size: var(--kern-typography-font-size-medium-static),
+           line-height: var(--kern-typography-line-height-medium-static),
+           font-weight: var(--kern-typography-font-weight-body-default),
+           letter-spacing: var(--kern-metric-space-none),
+           text-transform: none, margin-block: 0),
+  caption: (font-size: var(--kern-typography-font-size-small-static),
+            line-height: var(--kern-typography-line-height-medium-static),
+            font-weight: var(--kern-typography-font-weight-body-default),
+            letter-spacing: var(--kern-metric-space-none),
+            color: var(--rz-text-secondary-color), margin-block: 0),
+  overline: (font-size: var(--kern-typography-font-size-small-static),
+             line-height: var(--kern-typography-line-height-medium-static),
+             font-weight: var(--kern-typography-font-weight-preline-default),
+             letter-spacing: var(--kern-metric-space-none),
+             text-transform: none,
+             color: var(--rz-text-secondary-color), margin-block: 0)
+);
+
+// ---------------------------------------------------------------------------
+// Basisstile (RadzenButton/Badge/Chip `Base`, `Light`, `Dark`)
+// ---------------------------------------------------------------------------
+// Radzens Vorgaben zeigen alle drei auf dieselbe Kontrastfarbe, was im Dark
+// Mode zu hell-auf-hell fuehrt. Hier explizit lesbare Paare aus KERN-Tokens.
+//
+// `Light` und `Dark` sind bei Radzen WOERTLICH gemeint, nicht themerelativ:
+// ein Light-Element soll in beiden Modi hell sein. Sie bekommen deshalb
+// KERN-Primitive, die nicht mitdrehen — mit den semantischen Tokens waere
+// `Light` im Light Mode weiss auf weiss und im Dark Mode schwarz auf schwarz.
+// `Base` bleibt dagegen themerelativ, das ist der neutrale Standardstil.
+
+$base-styles-map: (
+  base: (
+    background-color: var(--kern-color-layout-layer-surface-contextual),
+    color: var(--kern-color-layout-text-default-contextual)
+  ),
+  light: (
+    background-color: var(--kern-color-neutral-050),
+    color: var(--kern-color-neutral-950)
+  ),
+  dark: (
+    background-color: var(--kern-color-neutral-900),
+    color: var(--kern-color-neutral-025)
+  )
+);
+
+// ---------------------------------------------------------------------------
+// Button — KERN: 48px hoch, 0/16px Padding, Radius 4px, randlos
+// ---------------------------------------------------------------------------
+
+$button-base-background-color: var(--kern-color-action-default-contextual);
+$button-base-color:            var(--kern-color-action-on-default-contextual);
+$button-border-radius:         var(--kern-metric-border-radius-default);
+$button-shadow:                none;
+$button-line-height:           var(--kern-typography-line-height-medium-static);
+$button-vertical-align:        top;
+$button-transition:            var(--rz-transition-all), width 0, height 0;
+
+// KERN toent Hover/Active, statt einen Verlauf oder Innenschatten zu legen.
+$button-hover-shadow:     none;
+$button-hover-gradient:   none;
+$button-focus-shadow:     none;
+$button-focus-gradient:   none;
+$button-active-shadow:    none;
+$button-active-gradient:  none;
+
+$button-focus-outline:        var(--rz-outline-focus);
+$button-focus-outline-offset: var(--rz-outline-offset);
+
+$button-disabled-opacity: var(--kern-color-action-state-opacity-disabled);
+$button-empty-opacity:    var(--kern-color-action-state-opacity-disabled);
+$button-base-outlined-border-color: var(--kern-color-action-default-contextual);
+
+// KERN-Groessen: x-small 32px, Standard 48px. Dazwischen in 8px-Schritten.
+$button-size-xs: var(--kern-metric-dimension-large);    // 32px
+$button-size-sm: var(--kern-40);                        // 40px
+$button-size-md: var(--kern-metric-dimension-x-large);  // 48px
+$button-size-lg: var(--kern-metric-dimension-2x-large); // 56px
+
+// KERN legt das Innenmass zweistufig an: `.kern-btn` hat 0/16px, das innere
+// `.kern-label` nochmals 8px. Radzen hat kein Label-Element, die Werte sind
+// hier also bereits addiert (16+8 = 24px seitlich, 8px oben/unten).
+$button-sizes: (
+  lg: (
+    font-size: var(--kern-typography-font-size-medium-static),
+    padding: var(--kern-metric-space-small) var(--kern-metric-space-large),
+    line-height: var(--kern-typography-line-height-medium-static),
+    height: auto,
+    min-height: var(--rz-button-size-lg),
+    min-width: var(--rz-button-size-lg),
+    font-weight: var(--kern-typography-font-weight-body-default),
+    border-radius: var(--kern-metric-border-radius-default),
+    gap: var(--kern-metric-space-small),
+    icon: (font-size: var(--kern-metric-dimension-large),
+           line-height: var(--kern-metric-dimension-large),
+           width: var(--kern-metric-dimension-large),
+           height: var(--kern-metric-dimension-large)),
+    text-with-icon-padding: var(--kern-metric-space-small) var(--kern-metric-space-large)
+                            var(--kern-metric-space-small) var(--kern-metric-space-default),
+    icon-only-padding: var(--kern-metric-space-small)
+  ),
+  md: (
+    font-size: var(--kern-typography-font-size-medium-static),
+    padding: var(--kern-metric-space-small) var(--kern-metric-space-large),
+    line-height: var(--kern-typography-line-height-medium-static),
+    height: auto,
+    min-height: var(--rz-button-size-md),
+    min-width: var(--rz-button-size-md),
+    font-weight: var(--kern-typography-font-weight-body-default),
+    border-radius: var(--kern-metric-border-radius-default),
+    gap: var(--kern-metric-space-small),
+    icon: (font-size: var(--kern-metric-dimension-default),
+           line-height: var(--kern-metric-dimension-default),
+           width: var(--kern-metric-dimension-default),
+           height: var(--kern-metric-dimension-default)),
+    text-with-icon-padding: var(--kern-metric-space-small) var(--kern-metric-space-large)
+                            var(--kern-metric-space-small) var(--kern-metric-space-default),
+    icon-only-padding: var(--kern-metric-space-small)
+  ),
+  sm: (
+    font-size: var(--kern-typography-font-size-small-static),
+    padding: var(--kern-metric-space-x-small) var(--kern-metric-space-default),
+    line-height: var(--kern-typography-line-height-medium-static),
+    height: auto,
+    min-height: var(--rz-button-size-sm),
+    min-width: var(--rz-button-size-sm),
+    font-weight: var(--kern-typography-font-weight-body-default),
+    border-radius: var(--kern-metric-border-radius-default),
+    gap: var(--kern-metric-space-x-small),
+    icon: (font-size: var(--kern-metric-dimension-small),
+           line-height: var(--kern-metric-dimension-small),
+           width: var(--kern-metric-dimension-small),
+           height: var(--kern-metric-dimension-small)),
+    text-with-icon-padding: var(--kern-metric-space-x-small) var(--kern-metric-space-default)
+                            var(--kern-metric-space-x-small) var(--kern-metric-space-small),
+    icon-only-padding: var(--kern-metric-space-x-small)
+  ),
+  // KERNs `--x-small`: 32px hoch, 16px Schrift, 8px + 4px seitlich
+  xs: (
+    font-size: var(--kern-typography-font-size-small-static),
+    padding: var(--kern-metric-space-none) var(--kern-metric-space-default),
+    line-height: var(--kern-typography-line-height-medium-static),
+    height: auto,
+    min-height: var(--rz-button-size-xs),
+    min-width: var(--rz-button-size-xs),
+    font-weight: var(--kern-typography-font-weight-body-default),
+    border-radius: var(--kern-metric-border-radius-default),
+    gap: var(--kern-metric-space-x-small),
+    icon: (font-size: var(--kern-metric-dimension-small),
+           line-height: var(--kern-metric-dimension-small),
+           width: var(--kern-metric-dimension-small),
+           height: var(--kern-metric-dimension-small)),
+    text-with-icon-padding: var(--kern-metric-space-none) var(--kern-metric-space-default)
+                            var(--kern-metric-space-none) var(--kern-metric-space-small),
+    icon-only-padding: var(--kern-metric-space-x-small)
+  )
+);
+
+// ---------------------------------------------------------------------------
+// Eingabefelder — KERN: nur untere 2px-Kante, Flaeche `layer-surface`
+// ---------------------------------------------------------------------------
+
+$input-size-xs: var(--kern-metric-dimension-large);
+$input-size-sm: var(--kern-40);
+$input-size-md: var(--kern-metric-dimension-x-large);
+$input-size-lg: var(--kern-metric-dimension-2x-large);
+$input-height:  var(--kern-metric-dimension-x-large);
+
+$input-font-size:   var(--kern-typography-font-size-medium-static);
+$input-line-height: var(--kern-typography-line-height-medium-static);
+
+$input-padding-block:  var(--kern-metric-space-none);
+$input-padding-inline: var(--kern-metric-space-default);
+$input-padding-block-xs:  var(--kern-metric-space-none);
+$input-padding-block-sm:  var(--kern-metric-space-none);
+$input-padding-block-md:  var(--kern-metric-space-none);
+$input-padding-block-lg:  var(--kern-metric-space-none);
+$input-padding-inline-xs: var(--kern-metric-space-small);
+$input-padding-inline-sm: var(--kern-metric-space-default);
+$input-padding-inline-md: var(--kern-metric-space-default);
+$input-padding-inline-lg: var(--kern-metric-space-default);
+$input-font-size-xs: var(--kern-typography-font-size-small-static);
+$input-font-size-sm: var(--kern-typography-font-size-medium-static);
+$input-font-size-md: var(--kern-typography-font-size-medium-static);
+$input-font-size-lg: var(--kern-typography-font-size-medium-static);
+
+$input-value-color:       var(--kern-color-layout-text-default-contextual);
+$input-placeholder-color: var(--kern-color-layout-text-muted-contextual);
+$input-background-color:  var(--kern-color-layout-layer-surface-contextual);
+$input-border-radius:     var(--kern-metric-border-radius-small);   // 2px
+$input-shadow:            none;
+
+// Die Kante lebt ausschliesslich in `border-block-end`.
+$input-border:           none;
+$input-border-block-end: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border-contextual);
+
+$input-hover-background-color: var(--kern-color-layout-layer-surface-contextual);
+$input-hover-shadow:           none;
+$input-hover-border:           none;
+$input-hover-border-block-end: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border-contextual);
+
+$input-focus-background-color: var(--kern-color-layout-layer-surface-contextual);
+$input-focus-shadow:           none;
+$input-focus-border:           none;
+$input-focus-border-block-end: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border-contextual);
+// KERN setzt bei Formularelementen die Fokus-Outline ohne Offset.
+$input-focus-outline:        var(--rz-outline-focus);
+$input-focus-outline-offset: 0;
+
+$input-disabled-border:           none;
+$input-disabled-border-block-end: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border-contextual);
+$input-disabled-shadow:           none;
+$input-disabled-background-color: var(--kern-color-layout-layer-surface-contextual);
+$input-disabled-color:            var(--kern-color-layout-text-default-contextual);
+$input-disabled-placeholder-color: var(--kern-color-layout-text-muted-contextual);
+$input-disabled-opacity:          var(--kern-color-action-state-opacity-disabled);
+$input-transition: var(--rz-transition-all), width 0, height 0;
+
+$text-area-padding-block:  var(--kern-metric-space-small);
+$text-area-padding-inline: var(--kern-metric-space-default);
+
+// ---------------------------------------------------------------------------
+// Checkbox / Radio / Switch — KERN: 32px Box, 2px Rand, Hover 4px
+// ---------------------------------------------------------------------------
+
+$checkbox-width:  var(--kern-metric-dimension-large);   // 32px
+$checkbox-height: var(--kern-metric-dimension-large);
+$checkbox-border-radius: var(--kern-metric-border-radius-small);
+$checkbox-border-width:  var(--kern-metric-border-width-default);
+$checkbox-label-margin-inline: var(--kern-metric-space-default) var(--kern-metric-space-default);
+$checkbox-focus-outline:        var(--rz-outline-focus);
+$checkbox-focus-outline-offset: 0;
+// KERN faerbt die angehakte Box nicht ein — der Haken ist eine Linie in der
+// Randfarbe auf unveraenderter Flaeche.
+$checkbox-checked-background-color: var(--kern-color-layout-layer-surface-contextual);
+$checkbox-checked-color:            var(--kern-color-form-input-border-contextual);
+$checkbox-checked-hover-background-color: var(--kern-color-layout-layer-surface-contextual);
+$checkbox-checked-disabled-background-color: var(--kern-color-layout-layer-surface-contextual);
+$checkbox-checked-shadow: none;
+$checkbox-checked-border: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border-contextual);
+$checkbox-checked-hover-border: var(--kern-metric-border-width-bold) solid var(--kern-color-form-input-border-contextual);
+$checkbox-checked-disabled-border: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border-contextual);
+$checkbox-checked-icon-background-color: transparent;
+$checkbox-icon-width:     var(--kern-metric-dimension-default);
+$checkbox-icon-height:    var(--kern-metric-dimension-default);
+$checkbox-icon-font-size: var(--kern-metric-dimension-default);
+$checkbox-tri-icon-width:     var(--kern-metric-dimension-default);
+$checkbox-tri-icon-height:    var(--kern-metric-dimension-default);
+$checkbox-tri-icon-font-size: var(--kern-metric-dimension-default);
+
+$radio-width:  var(--kern-metric-dimension-large);
+$radio-height: var(--kern-metric-dimension-large);
+$radio-border-width: var(--kern-metric-border-width-default);
+$radio-label-margin-inline: var(--kern-metric-space-default);
+$radio-focus-outline:        var(--rz-outline-focus);
+$radio-focus-outline-offset: 0;
+$radio-active-background-color:  var(--kern-color-layout-layer-surface-contextual);
+$radio-active-shadow: none;
+$radio-checked-background-color: var(--kern-color-layout-layer-surface-contextual);
+$radio-checked-hover-background-color: var(--kern-color-layout-layer-surface-contextual);
+$radio-checked-hover-shadow: none;
+$radio-checked-color: var(--kern-color-form-input-border-contextual);
+$radio-checked-border: var(--kern-metric-border-width-default) solid var(--kern-color-form-input-border-contextual);
+// `.rzi-circle-on` ist der Punkt IM Kreis, nicht der Kreis selbst — KERN
+// zeichnet ihn 12px gross in der Randfarbe des Formularfelds.
+$radio-circle-background-color: var(--kern-color-form-input-border-contextual);
+$radio-circle-shadow: none;
+$radio-circle-hover-background-color: var(--kern-color-form-input-border-contextual);
+$radio-icon-width:  var(--kern-12);   // KERN: 12px Punkt
+$radio-icon-height: var(--kern-12);
+
+$switch-background-color: var(--kern-color-layout-border-contextual);
+$switch-checked-background-color: var(--kern-color-action-default-contextual);
+$switch-box-shadow: none;
+$switch-circle-background-color: var(--kern-color-layout-background-default-contextual);
+$switch-checked-circle-background-color: var(--kern-color-action-on-default-contextual);
+$switch-focus-outline:        var(--rz-outline-focus);
+$switch-focus-outline-offset: var(--rz-outline-offset);
+$switch-transition: none;
+$switch-thumb-transition: transform 0s linear;
+
+// ---------------------------------------------------------------------------
+// Card — KERN: 1px decorative-border, Radius 4px, 24px Innenabstand
+// ---------------------------------------------------------------------------
+
+$card-padding: var(--kern-metric-space-large);   // 24px
+$card-background-color: var(--kern-color-layout-background-default-contextual);
+$card-flat-background-color: var(--kern-color-layout-layer-surface-contextual);
+$card-shadow: none;
+$card-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$card-border-radius: var(--kern-metric-border-radius-default);
+$card-heading-margin-bottom: var(--kern-metric-space-default);
+
+// ---------------------------------------------------------------------------
+// Panel / Fieldset / Expander
+// ---------------------------------------------------------------------------
+
+$panel-background-color: var(--kern-color-layout-background-default-contextual);
+$panel-padding: var(--kern-metric-space-default);
+$panel-title-line-height: var(--kern-typography-line-height-medium-static);
+$panel-title-font-weight: var(--kern-typography-font-weight-title-default);
+$panel-toggle-icon-width:  var(--kern-metric-dimension-default);
+$panel-toggle-icon-height: var(--kern-metric-dimension-default);
+$panel-toggle-icon-font-size: var(--kern-metric-dimension-default);
+$panel-toggle-icon-border-radius: var(--kern-metric-border-radius-default);
+$panel-toggle-icon-background-color: transparent;
+$panel-toggle-icon-focus-outline: var(--rz-outline-focus);
+$panel-toggle-icon-focus-outline-offset: var(--rz-outline-offset);
+$panel-hover-color: var(--kern-color-action-default-contextual);
+$panel-border-radius: var(--kern-metric-border-radius-default);
+$panel-shadow: none;
+
+$fieldset-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$fieldset-border-radius: var(--kern-metric-border-radius-default);
+$fieldset-padding: var(--kern-metric-space-large);
+$fieldset-legend-color: var(--kern-color-layout-text-default-contextual);
+$fieldset-legend-font-size: var(--kern-typography-font-size-medium-static);
+$fieldset-toggle-background-color: transparent;
+$fieldset-toggle-color: var(--kern-color-action-default-contextual);
+$fieldset-toggle-focus-outline: var(--rz-outline-focus);
+$fieldset-toggle-focus-outline-offset: var(--rz-outline-offset);
+
+// ---------------------------------------------------------------------------
+// Accordion / Tabs — KERN: Aktionsfarbe auf Titel, 1px Trennlinien
+// ---------------------------------------------------------------------------
+
+$accordion-item-padding-block:  var(--kern-metric-space-default);
+$accordion-item-padding-inline: var(--kern-metric-space-x-small);
+$accordion-item-border: none;
+$accordion-item-background-color: var(--kern-color-layout-background-default-contextual);
+$accordion-item-color: var(--kern-color-action-default-contextual);
+$accordion-item-focus-outline: var(--rz-outline-focus);
+$accordion-item-focus-outline-offset: var(--rz-outline-offset);
+$accordion-item-line-height: var(--kern-typography-line-height-medium-static);
+$accordion-item-font-size:   var(--kern-typography-font-size-medium-static);
+$accordion-item-font-weight: var(--kern-typography-font-weight-title-default);
+$accordion-icon-width:  var(--kern-metric-dimension-default);
+$accordion-icon-height: var(--kern-metric-dimension-default);
+$accordion-icon-font-size: var(--kern-metric-dimension-default);
+$accordion-selected-color: var(--kern-color-action-default-contextual);
+$accordion-hover-color:    var(--kern-color-action-default-contextual);
+$accordion-content-padding-block:  var(--kern-metric-space-none) var(--kern-metric-space-large);
+$accordion-content-padding-inline: var(--kern-metric-space-x-small);
+$accordion-content-font-size: var(--kern-typography-font-size-medium-static);
+$accordion-border-radius: var(--kern-metric-border-radius-none);
+$accordion-shadow: none;
+
+$tabs-padding: var(--kern-metric-space-large);
+$tabs-shadow: none;
+$tabs-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+$tabs-border-radius: var(--kern-metric-border-radius-none);
+$tabs-background-color: var(--kern-color-layout-background-default-contextual);
+$tabs-tab-font-size:   var(--kern-typography-font-size-medium-static);
+$tabs-tab-line-height: var(--kern-typography-line-height-medium-static);
+$tabs-tab-font-weight: var(--kern-typography-font-weight-title-default);
+$tabs-tab-text-transform: none;
+$tabs-tab-letter-spacing: var(--kern-metric-space-none);
+$tabs-tab-padding-block:  var(--kern-metric-space-default);
+$tabs-tab-padding-inline: var(--kern-metric-space-default);
+$tabs-tab-background-color: transparent;
+$tabs-tab-color: var(--kern-color-action-default-contextual);
+$tabs-selected-tab-color: var(--kern-color-layout-text-default-contextual);
+$tabs-tab-selected-background-color: var(--kern-color-layout-background-default-contextual);
+$tabs-tab-selected-top-border-color: var(--kern-color-action-default-contextual);
+$tabs-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$tabs-hover-color: var(--kern-color-action-default-contextual);
+$tabs-tab-focus-background-color: transparent;
+$tabs-tab-focus-outline: var(--rz-outline-focus);
+$tabs-tab-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+$tabs-icon-font-size: var(--kern-metric-dimension-default);
+$tabs-transition: var(--rz-transition-all);
+
+// ---------------------------------------------------------------------------
+// DataGrid — KERN-Tabelle: 1px Innenschatten als Zeilenlinie
+// ---------------------------------------------------------------------------
+
+// KERNs Tabelle kennt weder Aussenrahmen noch Spaltenlinien — nur waagerechte
+// Trenner, und die als Innenschatten (siehe _kern-components.scss). Alle
+// Rahmenquellen werden deshalb abgeschaltet; `$grid-cell-border` speist auch
+// $grid-header-cell-border, $grid-frozen-cell-border und $grid-filter-border.
+$grid-border: none;
+$grid-border-radius: var(--kern-metric-border-radius-none);
+$grid-shadow: none;
+$grid-background-color: var(--kern-color-layout-background-default-contextual);
+$grid-data-border-shadow: none;
+$grid-cell-border: none;
+// Der Pager ist keine KERN-Komponente; er behaelt eine Trennlinie zur Tabelle.
+$pager-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+$grid-cell-padding: calc(var(--kern-metric-baseline-body-default-padding-top) + var(--kern-metric-space-small))
+                    calc(var(--kern-metric-space-none) + var(--kern-metric-space-x-small))
+                    calc(var(--kern-metric-baseline-body-default-padding-bottom) + var(--kern-metric-space-small))
+                    calc(var(--kern-metric-space-none) + var(--kern-metric-space-x-small));
+$grid-cell-color: var(--kern-color-layout-text-default-contextual);
+$grid-cell-font-size:   var(--kern-typography-font-size-medium-static);
+$grid-cell-line-height: var(--kern-typography-line-height-medium-static);
+$grid-cell-focus-background-color: color-mix(in oklch, var(--kern-color-action-default-contextual) 12%, transparent);
+$grid-cell-focus-color: var(--kern-color-layout-text-default-contextual);
+$grid-cell-focus-outline: var(--rz-outline-focus);
+$grid-cell-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+$grid-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$grid-hover-color: var(--kern-color-layout-text-default-contextual);
+$grid-focus-outline: var(--rz-outline-focus);
+$grid-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+$grid-selected-background-color: color-mix(in oklch, var(--kern-color-action-default-contextual) 12%, transparent);
+$grid-selected-color: var(--kern-color-layout-text-default-contextual);
+$grid-toolbar-background-color: var(--kern-color-layout-background-default-contextual);
+$grid-header-background-color: var(--kern-color-layout-background-default-contextual);
+$grid-header-font-size:   var(--kern-typography-font-size-medium-static);
+$grid-header-line-height: var(--kern-typography-line-height-medium-static);
+$grid-header-font-weight: var(--kern-typography-font-weight-semi-bold);
+$grid-header-text-transform: none;
+$grid-header-color: var(--kern-color-layout-text-default-contextual);
+$grid-header-cell-padding: calc(var(--kern-metric-baseline-body-default-padding-top) + var(--kern-metric-space-small))
+                           calc(var(--kern-metric-space-none) + var(--kern-metric-space-x-small));
+$grid-header-title-padding-inline: var(--kern-metric-space-none);
+$grid-header-sorted-background-color: var(--kern-color-layout-layer-surface-contextual);
+$grid-header-padding: var(--kern-metric-space-default);
+$grid-filter-background-color: var(--kern-color-layout-background-default-contextual);
+$grid-filter-padding: var(--kern-metric-space-default);
+$grid-filter-font-size: var(--kern-typography-font-size-medium-static);
+$grid-filter-icon-width:  var(--kern-metric-dimension-default);
+$grid-filter-icon-height: var(--kern-metric-dimension-default);
+$grid-filter-icon-font-size: var(--kern-metric-dimension-default);
+$grid-filter-color: var(--kern-color-action-default-contextual);
+$grid-filter-focus-color: var(--kern-color-action-default-contextual);
+$grid-filter-buttons-background-color: var(--kern-color-layout-background-default-contextual);
+$grid-clear-filter-button-background-color: transparent;
+$grid-clear-filter-button-color: var(--kern-color-action-default-contextual);
+$grid-clear-filter-button-shadow: none;
+$grid-apply-filter-button-background-color: var(--kern-color-action-default-contextual);
+$grid-apply-filter-button-color: var(--kern-color-action-on-default-contextual);
+$grid-apply-filter-button-shadow: none;
+$grid-header-filter-icon-hover-color: var(--kern-color-action-default-contextual);
+$grid-header-filter-icon-active-color: var(--kern-color-action-default-contextual);
+$grid-header-filter-icon-font-size: var(--kern-metric-dimension-default);
+$grid-simple-filter-icon-active-color: var(--kern-color-action-default-contextual);
+$grid-simple-filter-icon-active-background-color: transparent;
+$grid-sort-icon-width:  var(--kern-metric-dimension-default);
+$grid-sort-icon-height: var(--kern-metric-dimension-default);
+$grid-sort-icon-color: var(--kern-color-action-default-contextual);
+$grid-stripe-background-color: var(--kern-color-layout-layer-surface-contextual);
+$grid-column-resizer-helper-background-color: var(--kern-color-action-default-contextual);
+$grid-detail-template-background-color: var(--kern-color-layout-background-default-contextual);
+$grid-loading-indicator-background-color: var(--kern-color-layout-background-default-contextual);
+$grid-group-header-item-color: var(--kern-color-layout-text-default-contextual);
+$grid-group-header-item-background-color: var(--kern-color-layout-layer-surface-contextual);
+$grid-group-header-item-border-radius: var(--kern-metric-border-radius-default);
+$grid-state-transition: var(--rz-transition-all);
+
+// ---------------------------------------------------------------------------
+// Pager
+// ---------------------------------------------------------------------------
+
+$pager-background-color: var(--kern-color-layout-background-default-contextual);
+$pager-padding: var(--kern-metric-space-small);
+$pager-gap: var(--kern-metric-space-small);
+$pager-button-border-radius: var(--kern-metric-border-radius-default);
+$pager-numeric-button-background-color: transparent;
+$pager-numeric-button-color: var(--kern-color-action-default-contextual);
+$pager-numeric-button-border: var(--kern-metric-border-width-light) solid transparent;
+$pager-numeric-button-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$pager-numeric-button-hover-color: var(--kern-color-action-default-contextual);
+$pager-numeric-button-padding: var(--kern-metric-space-small);
+$pager-numeric-button-selected-background-color: var(--kern-color-action-default-contextual);
+$pager-numeric-button-selected-color: var(--kern-color-action-on-default-contextual);
+$pager-numeric-button-selected-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default-contextual);
+$pager-numeric-button-min-width: var(--kern-metric-dimension-x-large);
+$pager-back-button-background-color: transparent;
+$pager-back-button-color: var(--kern-color-action-default-contextual);
+$pager-back-button-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$pager-next-button-background-color: transparent;
+$pager-next-button-color: var(--kern-color-action-default-contextual);
+$pager-next-button-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$pager-next-button-hover-color: var(--kern-color-action-default-contextual);
+$pager-summary-font-size: var(--kern-typography-font-size-small-static);
+$pager-summary-color: var(--kern-color-layout-text-muted-contextual);
+
+// ---------------------------------------------------------------------------
+// Dropdown / Listbox / Menu / Tree — Auswahl in KERNs Aktionsfarbe
+// ---------------------------------------------------------------------------
+
+$dropdown-trigger-icon-width:  var(--kern-metric-dimension-default);
+$dropdown-trigger-icon-height: var(--kern-metric-dimension-default);
+$dropdown-trigger-icon-margin-inline: 0 var(--kern-metric-space-none);
+$dropdown-horizontal-padding: var(--kern-metric-space-default);
+$dropdown-item-font-size: var(--kern-typography-font-size-medium-static);
+$dropdown-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$dropdown-item-hover-color: var(--kern-color-layout-text-default-contextual);
+$dropdown-item-selected-background-color: var(--kern-color-action-default-contextual);
+$dropdown-item-selected-color: var(--kern-color-action-on-default-contextual);
+$dropdown-item-selected-shadow: none;
+$dropdown-item-selected-hover-background-color: var(--kern-color-action-default-contextual);
+$dropdown-item-selected-hover-color: var(--kern-color-action-on-default-contextual);
+$dropdown-item-disabled-opacity: var(--kern-color-action-state-opacity-disabled);
+$dropdown-item-border-radius: var(--kern-metric-border-radius-none);
+$dropdown-open-background-color: var(--kern-color-layout-background-default-contextual);
+$dropdown-open-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default-contextual);
+$dropdown-panel-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default-contextual);
+$dropdown-panel-shadow: var(--kern-shadow-elevation-low);
+$dropdown-filter-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+
+$listbox-background-color: var(--kern-color-layout-layer-surface-contextual);
+$listbox-border-radius: var(--kern-metric-border-radius-small);
+$listbox-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$listbox-focus-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$listbox-focus-shadow: none;
+$listbox-filter-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+
+$menu-background-color: var(--kern-color-layout-background-default-contextual);
+$menu-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$menu-border-radius: var(--kern-metric-border-radius-default);
+$menu-item-padding-block:  var(--kern-metric-space-small);
+$menu-item-padding-inline: var(--kern-metric-space-default);
+$menu-item-color: var(--kern-color-action-default-contextual);
+$menu-item-hover-color: var(--kern-color-action-default-contextual);
+$menu-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$menu-item-focus-outline: var(--rz-outline-focus);
+$menu-item-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+$menu-item-selected-color: var(--kern-color-action-default-contextual);
+$menu-item-selected-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$menu-item-icon-margin-inline: 0 var(--kern-metric-space-small);
+$menu-item-disabled-opacity: var(--kern-color-action-state-opacity-disabled);
+$menu-top-item-padding-block:  var(--kern-metric-space-small);
+$menu-top-item-padding-inline: var(--kern-metric-space-default);
+$menu-top-item-hover-color: var(--kern-color-action-default-contextual);
+$menu-top-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$menu-top-item-selected-color: var(--kern-color-action-default-contextual);
+$menu-top-item-selected-background-color: transparent;
+
+$tree-background-color: var(--kern-color-layout-background-default-contextual);
+$tree-node-padding-block:  var(--kern-metric-space-x-small);
+$tree-node-padding-inline: var(--kern-metric-space-x-small);
+$tree-node-selected-background-color: var(--kern-color-action-default-contextual);
+$tree-node-selected-color: var(--kern-color-action-on-default-contextual);
+$tree-node-selected-border-radius: var(--kern-metric-border-radius-small);
+$tree-node-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$tree-node-hover-color: var(--kern-color-layout-text-default-contextual);
+$tree-node-focus-outline: var(--rz-outline-focus);
+$tree-node-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+$tree-node-toggle-width: var(--kern-metric-dimension-default);
+$tree-node-toggle-color: var(--kern-color-action-default-contextual);
+$tree-node-toggle-hover-color: var(--kern-color-action-default-contextual);
+$tree-transition: var(--rz-transition-all), width 0, height 0;
+
+// ---------------------------------------------------------------------------
+// Dialog — KERN: Radius 8px, 1px layout-border, Backdrop schwarz 72 %
+// ---------------------------------------------------------------------------
+
+$dialog-background-color: var(--kern-color-layout-background-default-contextual);
+$dialog-shadow: var(--kern-shadow-elevation-high);
+$dialog-border-radius: var(--kern-metric-border-radius-large);
+$dialog-title-background-color: var(--kern-color-layout-background-default-contextual);
+$dialog-title-border: none;
+$dialog-title-padding-block:  var(--kern-metric-space-small) var(--kern-metric-space-none);
+$dialog-title-padding-inline: var(--kern-metric-space-x-large) var(--kern-metric-space-small);
+$dialog-title-font-size:   var(--kern-typography-font-size-medium-adaptive);
+$dialog-title-line-height: var(--kern-typography-line-height-medium-adaptive);
+$dialog-title-font-weight: var(--kern-typography-font-weight-title-default);
+$dialog-title-letter-spacing: var(--kern-metric-space-none);
+$dialog-title-color: var(--kern-color-layout-text-default-contextual);
+$dialog-close-font-size: var(--kern-metric-dimension-default);
+$dialog-close-color: var(--kern-color-action-default-contextual);
+$dialog-close-hover-color: var(--kern-color-action-default-contextual);
+$dialog-content-padding: var(--kern-metric-space-small) var(--kern-metric-space-x-large) var(--kern-metric-space-large);
+$dialog-mask-background-color: var(--kern-color-black);
+$dialog-transition: 0s linear;
+
+// ---------------------------------------------------------------------------
+// Alert / Notification / Tooltip / Badge / Chip
+// ---------------------------------------------------------------------------
+// KERN zeichnet Alerts als 2px-Outline in der Feedbackfarbe auf getoenter
+// Flaeche — kein Schatten, kein Rahmen im Boxmodell.
+
+$alert-margin: var(--kern-metric-space-small) var(--kern-metric-space-none);
+$alert-padding: var(--kern-metric-space-default);
+$alert-gap: var(--kern-metric-space-small);
+$alert-color: var(--kern-color-layout-text-default-contextual);
+$alert-background-color: var(--kern-color-feedback-default-background-contextual);
+$alert-box-shadow: none;
+$alert-border-radius: var(--kern-metric-border-radius-default);
+$alert-message-margin: var(--kern-metric-space-none);
+$alert-title-color: var(--kern-color-layout-text-default-contextual);
+$alert-icon-size: var(--kern-metric-dimension-large);   // KERN: 32px im Header
+
+$notification-padding: var(--kern-metric-space-default);
+$notification-gap: var(--kern-metric-space-small);
+$notification-container-background-color: transparent;
+$notification-shadow: var(--kern-shadow-elevation-default);
+$notification-border-radius: var(--kern-metric-border-radius-default);
+$notification-success-background-color: var(--kern-color-feedback-success-background-contextual);
+$notification-success-color: var(--kern-color-layout-text-default-contextual);
+$notification-success-icon-color: var(--kern-color-feedback-success-contextual);
+$notification-warning-background-color: var(--kern-color-feedback-warning-background-contextual);
+$notification-warning-color: var(--kern-color-layout-text-default-contextual);
+$notification-warning-icon-color: var(--kern-color-feedback-warning-contextual);
+$notification-error-background-color: var(--kern-color-feedback-danger-background-contextual);
+$notification-error-color: var(--kern-color-layout-text-default-contextual);
+$notification-error-icon-color: var(--kern-color-feedback-danger-contextual);
+$notification-info-background-color: var(--kern-color-feedback-info-background-contextual);
+$notification-info-color: var(--kern-color-layout-text-default-contextual);
+$notification-info-icon-color: var(--kern-color-feedback-info-contextual);
+
+$tooltip-background-color: var(--kern-color-layout-text-default-contextual);
+$tooltip-color: var(--kern-color-layout-text-inverse-contextual);
+$tooltip-shadow: var(--kern-shadow-elevation-low);
+$tooltip-padding: var(--kern-metric-space-x-small) var(--kern-metric-space-small);
+$tooltip-border-radius: var(--kern-metric-border-radius-default);
+$tooltip-font-size: var(--kern-typography-font-size-small-static);
+
+$badge-border-radius: var(--kern-metric-border-radius-default);
+$badge-pill-border-radius: var(--kern-metric-border-radius-large);
+$badge-padding: var(--kern-metric-space-2x-small) var(--kern-metric-space-default)
+                var(--kern-metric-space-2x-small) var(--kern-component-badge-space-left);
+$badge-pill-padding: var(--kern-metric-space-2x-small) var(--kern-metric-space-default);
+$badge-font-size: var(--kern-typography-font-size-small-static);
+$badge-font-weight: var(--kern-typography-font-weight-label-default);
+$badge-line-height: var(--kern-typography-line-height-medium-static);
+$badge-text-transform: none;
+$badge-letter-spacing: var(--kern-metric-space-none);
+
+$chip-background-color: var(--kern-color-layout-layer-surface-contextual);
+$chip-color: var(--kern-color-layout-text-default-contextual);
+$chip-padding-block:  var(--kern-metric-space-2x-small);
+$chip-padding-inline: var(--kern-metric-space-default);
+$chip-gap: var(--kern-metric-space-x-small);
+$chip-border-radius: var(--kern-metric-border-radius-default);
+$chip-font-size: var(--kern-typography-font-size-small-static);
+$chip-icon-size: var(--kern-metric-dimension-default);
+$chip-font-weight: var(--kern-typography-font-weight-label-default);
+$chip-border-width: var(--kern-metric-border-width-light);
+$chip-selected-outline: var(--rz-outline-focus);
+$chip-selected-outline-offset: var(--rz-outline-offset);
+$chip-disabled-opacity: var(--kern-color-action-state-opacity-disabled);
+
+// ---------------------------------------------------------------------------
+// Progress / Skeleton / Rating / Slider
+// ---------------------------------------------------------------------------
+
+$progressbar-background-color: var(--kern-color-feedback-default-background-contextual);
+$progressbar-color: var(--kern-color-layout-text-default-contextual);
+$progressbar-font-size: var(--kern-typography-font-size-small-static);
+$progressbar-height: var(--kern-metric-dimension-2x-small);   // KERN: 8px
+$progressbar-border-radius: var(--kern-metric-border-radius-small);
+$progressbar-value-background-color: var(--kern-color-feedback-default-contextual);
+$progressbar-value-transition: var(--rz-transition-all);
+
+$skeleton-background-color: var(--kern-color-layout-layer-surface-contextual);
+$skeleton-animation-color: var(--kern-color-decorative-border-contextual);
+$skeleton-border-radius: var(--kern-metric-border-radius-small);
+
+$rating-color: var(--kern-color-layout-text-muted-contextual);
+$rating-font-size: var(--kern-metric-dimension-default);
+$rating-selected-color: var(--kern-color-action-default-contextual);
+$rating-focus-color: var(--kern-color-action-default-contextual);
+$rating-disabled-color: var(--kern-color-layout-text-muted-contextual);
+$rating-disabled-opacity: var(--kern-color-action-state-opacity-disabled);
+
+$slider-background-color: var(--kern-color-feedback-default-background-contextual);
+$slider-border: none;
+$slider-border-radius: var(--kern-metric-border-radius-small);
+$slider-horizontal-height: var(--kern-metric-dimension-2x-small);
+$slider-range-background-color: var(--kern-color-action-default-contextual);
+$slider-range-border: none;
+$slider-handle-color: var(--kern-color-action-on-default-contextual);
+$slider-handle-background-color: var(--kern-color-action-default-contextual);
+$slider-handle-border: none;
+$slider-handle-border-radius: var(--kern-metric-border-radius-small);
+$slider-handle-shadow: none;
+$slider-handle-hover-background-color: var(--kern-color-action-state-indicator-shade-hover);
+$slider-handle-hover-shadow: none;
+$slider-handle-focus-outline: var(--rz-outline-focus);
+$slider-handle-focus-outline-offset: var(--rz-outline-offset);
+$slider-handle-transition: none;
+$slider-disabled-background-color: var(--kern-color-feedback-default-background-contextual);
+$slider-disabled-handle-background-color: var(--kern-color-layout-border-contextual);
+
+// ---------------------------------------------------------------------------
+// Layout: Header / Footer / Sidebar / Body / Splitter / Timeline
+// ---------------------------------------------------------------------------
+
+$header-background-color: var(--kern-color-layout-background-default-contextual);
+$header-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$header-color: var(--kern-color-layout-text-default-contextual);
+$header-shadow: none;
+$header-padding: var(--kern-metric-space-default);
+
+$footer-padding: var(--kern-metric-space-default);
+$footer-background-color: var(--kern-color-layout-background-default-contextual);
+$footer-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$footer-color: var(--kern-color-layout-text-default-contextual);
+
+$sidebar-background-color: var(--kern-color-layout-layer-surface-contextual);
+$sidebar-color: var(--kern-color-layout-text-default-contextual);
+$sidebar-border-inline-end: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+
+$sidebar-toggle-border: none;
+$sidebar-toggle-color: var(--kern-color-action-default-contextual);
+$sidebar-toggle-background-color: transparent;
+$sidebar-toggle-hover-color: var(--kern-color-action-default-contextual);
+$sidebar-toggle-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$sidebar-toggle-focus-outline: var(--rz-outline-focus);
+$sidebar-toggle-focus-outline-offset: calc(-1 * var(--rz-outline-offset));
+$sidebar-toggle-icon-width:  var(--kern-metric-dimension-default);
+$sidebar-toggle-icon-height: var(--kern-metric-dimension-default);
+
+$layout-body-padding: var(--kern-metric-space-default);
+$layout-body-background-color: transparent;
+
+$splitter-bar-background-color: var(--kern-color-layout-layer-surface-contextual);
+$splitter-bar-color: var(--kern-color-layout-text-muted-contextual);
+$splitter-bar-background-color-active: var(--kern-color-action-default-contextual);
+$splitter-bar-color-active: var(--kern-color-action-on-default-contextual);
+
+$rz-timeline-point-background-color: var(--kern-color-action-default-contextual);
+$rz-timeline-point-color: var(--kern-color-action-on-default-contextual);
+$rz-timeline-point-border: var(--kern-metric-border-width-default) solid var(--kern-color-layout-background-default-contextual);
+$rz-timeline-line-color: var(--kern-color-decorative-border-contextual);
+
+// ---------------------------------------------------------------------------
+// Panel-Menu / Profile-Menu / Steps / SelectBar / Toc
+// ---------------------------------------------------------------------------
+
+$panel-menu-font-size: var(--kern-typography-font-size-medium-static);
+$panel-menu-font-weight: var(--kern-typography-font-weight-label-default);
+$panel-menu-focus-outline: var(--rz-outline-focus);
+$panel-menu-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+$panel-menu-item-line-height: var(--kern-typography-line-height-medium-static);
+$panel-menu-item-padding-block:  var(--kern-metric-space-small);
+$panel-menu-item-padding-inline: var(--kern-metric-space-default);
+$panel-menu-item-border: none;
+$panel-menu-item-color: var(--kern-color-action-default-contextual);
+$panel-menu-item-background-color: transparent;
+$panel-menu-item-hover-color: var(--kern-color-action-default-contextual);
+$panel-menu-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$panel-menu-item-active-color: var(--kern-color-action-default-contextual);
+$panel-menu-item-active-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$panel-menu-item-active-indicator: var(--kern-color-action-default-contextual);
+$panel-menu-item-transition: none;
+$panel-menu-item-2nd-level-font-size: var(--kern-typography-font-size-medium-static);
+$panel-menu-item-2nd-level-font-weight: var(--kern-typography-font-weight-body-default);
+$panel-menu-item-2nd-level-background-color: transparent;
+$panel-menu-item-2nd-level-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$panel-menu-item-3rd-level-background-color: transparent;
+$panel-menu-item-3rd-level-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$panel-menu-icon-width: var(--kern-metric-dimension-default);
+$panel-menu-icon-height: var(--kern-metric-dimension-default);
+$panel-menu-icon-font-size: var(--kern-metric-dimension-default);
+$panel-menu-toggle-icon-font-size: var(--kern-metric-dimension-default);
+
+$profile-menu-background-color: var(--kern-color-layout-background-default-contextual);
+$profile-menu-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$profile-menu-border-radius: var(--kern-metric-border-radius-default);
+$profile-menu-toggle-button-color: var(--kern-color-action-default-contextual);
+$profile-menu-item-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$profile-menu-item-focus-outline: var(--rz-outline-focus);
+$profile-menu-item-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+$profile-menu-item-icon-width:  var(--kern-metric-dimension-default);
+$profile-menu-item-icon-height: var(--kern-metric-dimension-default);
+
+$steps-color: var(--kern-color-layout-text-default-contextual);
+$steps-number-width:  var(--kern-metric-dimension-large);
+$steps-number-height: var(--kern-metric-dimension-large);
+$steps-number-line-height: var(--kern-typography-line-height-medium-static);
+$steps-number-color: var(--kern-color-layout-text-default-contextual);
+$steps-number-background-color: var(--kern-color-layout-layer-surface-contextual);
+$steps-number-selected-color: var(--kern-color-action-on-default-contextual);
+$steps-number-selected-background: var(--kern-color-action-default-contextual);
+$steps-number-focus-outline: var(--rz-outline-focus);
+$steps-number-focus-outline-offset: var(--rz-outline-offset);
+$steps-title-selected-color: var(--kern-color-action-default-contextual);
+$steps-button-color: var(--kern-color-action-default-contextual);
+
+$selectbar-background-color: var(--kern-color-layout-background-default-contextual);
+$selectbar-color: var(--kern-color-action-default-contextual);
+$selectbar-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default-contextual);
+$selectbar-selected-background-color: var(--kern-color-action-default-contextual);
+$selectbar-selected-color: var(--kern-color-action-on-default-contextual);
+$selectbar-selected-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default-contextual);
+$selectbar-border-radius: var(--kern-metric-border-radius-default);
+$selectbar-focus-outline: var(--rz-outline-focus);
+$selectbar-focus-outline-offset: var(--rz-outline-offset);
+$selectbar-button-focus-outline: var(--rz-outline-focus);
+$selectbar-button-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+
+$rz-toc-link-font-size: var(--kern-typography-font-size-medium-static);
+$rz-toc-link-color: var(--kern-color-action-default-contextual);
+$rz-toc-link-hover-color: var(--kern-color-action-default-contextual);
+$rz-toc-link-selected-color: var(--kern-color-action-default-contextual);
+$rz-toc-link-selected-indicator-color: var(--kern-color-action-default-contextual);
+$rz-toc-link-border-radius: var(--kern-metric-border-radius-default);
+$rz-toc-horizontal-shadow: var(--kern-shadow-elevation-low);
+$rz-toc-horizontal-background-color: var(--kern-color-layout-background-default-contextual);
+$rz-toc-horizontal-link-selected-color: var(--kern-color-action-default-contextual);
+
+// ---------------------------------------------------------------------------
+// Overlay / Popup / Datepicker / Numeric / Upload / Login / Formular
+// ---------------------------------------------------------------------------
+
+$overlay-shadow: var(--kern-shadow-elevation-default);
+$overlay-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$overlay-background-color: var(--kern-color-layout-background-default-contextual);
+
+$datepicker-trigger-icon-size: var(--kern-metric-dimension-default);
+$datepicker-trigger-icon-color: var(--kern-color-action-default-contextual);
+$datepicker-trigger-icon-hover-color: var(--kern-color-action-default-contextual);
+$datepicker-line-height: var(--kern-typography-line-height-medium-static);
+$datepicker-panel-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$datepicker-panel-background-color: var(--kern-color-layout-background-default-contextual);
+$datepicker-panel-shadow: var(--kern-shadow-elevation-default);
+$datepicker-header-color: var(--kern-color-layout-text-default-contextual);
+$datepicker-header-background-color: var(--kern-color-layout-background-default-contextual);
+$datepicker-header-padding-block:  var(--kern-metric-space-small);
+$datepicker-header-padding-inline: var(--kern-metric-space-small);
+$datepicker-prev-next-icon-size: var(--kern-metric-dimension-default);
+$datepicker-prev-next-button-border-radius: var(--kern-metric-border-radius-default);
+$datepicker-calendar-item-padding: var(--kern-metric-space-small);
+$datepicker-calendar-header-font-size: var(--kern-typography-font-size-small-static);
+$datepicker-calendar-header-text-transform: none;
+$datepicker-calendar-header-color: var(--kern-color-layout-text-muted-contextual);
+$datepicker-calendar-font-size: var(--kern-typography-font-size-medium-static);
+$datepicker-calendar-color: var(--kern-color-layout-text-default-contextual);
+$datepicker-calendar-hover-background-color: var(--kern-color-action-state-indicator-tint-hover-opacity);
+$datepicker-calendar-hover-color: var(--kern-color-layout-text-default-contextual);
+$datepicker-calendar-selected-background-color: var(--kern-color-action-default-contextual);
+$datepicker-calendar-selected-color: var(--kern-color-action-on-default-contextual);
+$datepicker-calendar-selected-hover-background-color: var(--kern-color-action-default-contextual);
+$datepicker-calendar-selected-hover-color: var(--kern-color-action-on-default-contextual);
+$datepicker-calendar-border: none;
+$datepicker-calendar-border-radius: var(--kern-metric-border-radius-small);
+$datepicker-calendar-today-color: var(--kern-color-action-default-contextual);
+$datepicker-calendar-transition: none;
+$datepicker-focus-outline: var(--rz-outline-focus);
+$datepicker-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+$timepicker-color: var(--kern-color-layout-text-default-contextual);
+$timepicker-background-color: var(--kern-color-layout-layer-surface-contextual);
+$timepicker-button-color: var(--kern-color-action-on-default-contextual);
+$timepicker-button-background-color: var(--kern-color-action-default-contextual);
+$timepicker-separator-color: var(--kern-color-layout-text-default-contextual);
+
+$numeric-line-height: var(--kern-typography-line-height-medium-static);
+$numeric-input-padding-inline: var(--kern-metric-space-default) var(--kern-metric-space-x-large);
+$numeric-button-border-radius: var(--kern-metric-border-radius-small);
+$numeric-button-background-color: var(--kern-color-action-default-contextual);
+$numeric-button-color: var(--kern-color-action-on-default-contextual);
+$numeric-button-disabled-background-color: var(--kern-color-layout-border-contextual);
+$numeric-button-disabled-color: var(--kern-color-layout-text-inverse-contextual);
+
+$upload-button-bar-background-color: transparent;
+$upload-button-bar-padding: var(--kern-metric-space-none);
+$upload-files-background-color: transparent;
+$upload-files-remove-background-color: transparent;
+$upload-files-remove-color: var(--kern-color-action-default-contextual);
+$upload-choose-background-color: var(--kern-color-action-default-contextual);
+$upload-choose-color: var(--kern-color-action-on-default-contextual);
+$upload-choose-hover-background-color: var(--kern-color-action-state-indicator-shade-hover);
+$upload-choose-hover-color: var(--kern-color-action-on-default-contextual);
+$upload-choose-active-background-color: var(--kern-color-action-state-indicator-shade-active);
+$upload-choose-active-color: var(--kern-color-action-on-default-contextual);
+$upload-cancel-background-color: transparent;
+$upload-cancel-color: var(--kern-color-action-default-contextual);
+$upload-button-background-color: var(--kern-color-action-default-contextual);
+
+$login-register-background-color: var(--kern-color-layout-layer-surface-contextual);
+
+$form-error-color: var(--kern-color-feedback-danger-contextual);
+$form-error-font-size: var(--kern-typography-font-size-small-static);
+$validator-background-color: var(--kern-color-feedback-danger-contextual);
+$validator-color: var(--kern-color-layout-text-inverse-contextual);
+// Muss ueberschrieben werden: Radzens Vorgabe ruft `rgba($rz-danger, .3)` auf,
+// und $rz-danger ist hier eine CSS-Variable, keine Sass-Farbe.
+$validator-shadow: var(--kern-shadow-elevation-low);
+$validator-padding: var(--kern-metric-space-x-small) var(--kern-metric-space-small);
+
+$form-field-label-color: var(--kern-color-layout-text-default-contextual);
+$form-field-label-focus-color: var(--kern-color-action-default-contextual);
+$form-field-filled-background-color: var(--kern-color-layout-layer-surface-contextual);
+$form-field-filled-hover-background-color: var(--kern-color-layout-layer-surface-contextual);
+$form-field-filled-border-radius: var(--kern-metric-border-radius-small);
+$form-field-label-floating-background-color: transparent;
+$form-field-shadow: none;
+$form-field-hover-shadow: none;
+$form-field-focus-shadow: none;
+
+// ---------------------------------------------------------------------------
+// Diagramme / Gauge / Scheduler / Editor / Splitbutton / Sonstiges
+// ---------------------------------------------------------------------------
+
+$chart-axis-color: var(--kern-color-layout-border-contextual);
+$chart-axis-label-color: var(--kern-color-layout-text-default-contextual);
+$chart-axis-font-size: var(--kern-typography-font-size-small-static);
+$chart-legend-font-size: var(--kern-typography-font-size-small-static);
+$chart-legend-focus-outline: var(--rz-outline-focus);
+$chart-legend-focus-outline-offset: var(--rz-outline-offset);
+$chart-tooltip-background: var(--kern-color-layout-text-default-contextual);
+$chart-tooltip-color: var(--kern-color-layout-text-inverse-contextual);
+$chart-marker-stroke: var(--kern-color-layout-background-default-contextual);
+
+$gauge-scale-color: var(--kern-color-layout-border-contextual);
+$gauge-scale-label-color: var(--kern-color-layout-text-default-contextual);
+$gauge-pointer-color: var(--kern-color-layout-text-default-contextual);
+$gauge-arc-scale-color: var(--kern-color-feedback-default-background-contextual);
+$gauge-arc-scale-label-color: var(--kern-color-layout-text-default-contextual);
+$gauge-arc-value-color: var(--kern-color-action-default-contextual);
+
+$scheduler-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+$scheduler-border-color: var(--kern-color-layout-border-contextual);
+$scheduler-minor-border-color: var(--kern-color-decorative-border-contextual);
+$scheduler-shadow: none;
+$scheduler-background-color: var(--kern-color-layout-background-default-contextual);
+$scheduler-color: var(--kern-color-layout-text-default-contextual);
+$scheduler-toolbar-background-color: var(--kern-color-layout-background-default-contextual);
+$scheduler-toolbar-color: var(--kern-color-action-on-default-contextual);
+$scheduler-toolbar-button-background-color: var(--kern-color-action-default-contextual);
+$scheduler-toolbar-title-color: var(--kern-color-layout-text-default-contextual);
+$scheduler-toolbar-title-font-size: var(--kern-typography-font-size-medium-adaptive);
+$scheduler-toolbar-title-font-weight: var(--kern-typography-font-weight-title-default);
+$scheduler-today-button-text-transform: none;
+$scheduler-today-button-font-size: var(--kern-typography-font-size-small-static);
+$scheduler-view-button-border: var(--kern-metric-border-width-light) solid var(--kern-color-action-default-contextual);
+$scheduler-view-button-color: var(--kern-color-action-default-contextual);
+$scheduler-view-button-background-color: transparent;
+$scheduler-view-selected-color: var(--kern-color-action-on-default-contextual);
+$scheduler-view-selected-background-color: var(--kern-color-action-default-contextual);
+$scheduler-header-background-color: var(--kern-color-layout-background-default-contextual);
+$scheduler-header-font-size: var(--kern-typography-font-size-small-static);
+$scheduler-header-text-transform: none;
+$scheduler-header-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+$scheduler-event-background-color: var(--kern-color-action-default-contextual);
+$scheduler-event-color: var(--kern-color-action-on-default-contextual);
+$scheduler-event-font-size: var(--kern-typography-font-size-small-static);
+$scheduler-event-line-height: var(--kern-typography-line-height-medium-static);
+$scheduler-weekend-background-color: var(--kern-color-layout-layer-surface-contextual);
+$scheduler-weekend-color: var(--kern-color-layout-text-muted-contextual);
+$scheduler-other-month-background-color: var(--kern-color-layout-layer-surface-contextual);
+$scheduler-focus-outline: var(--rz-outline-focus);
+$scheduler-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+
+$editor-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$editor-border-radius: var(--kern-metric-border-radius-small);
+$editor-toolbar-background-color: var(--kern-color-layout-layer-surface-contextual);
+$editor-content-background-color: var(--kern-color-layout-background-default-contextual);
+$editor-focus-outline: var(--rz-outline-focus);
+$editor-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+
+$splitbutton-background-color: var(--kern-color-action-default-contextual);
+$splitbutton-border-radius: var(--kern-metric-border-radius-default);
+$splitbutton-menu-shadow: var(--kern-shadow-elevation-default);
+
+$colorpicker-panel-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$colorpicker-panel-background-color: var(--kern-color-layout-background-default-contextual);
+$colorpicker-panel-shadow: var(--kern-shadow-elevation-default);
+$colorpicker-focus-outline: var(--rz-outline-focus);
+$colorpicker-focus-outline-offset: var(--rz-outline-offset);
+$colorpicker-value-border-radius: var(--kern-metric-border-radius-small);
+$colorpicker-input-labels-color: var(--kern-color-layout-text-muted-contextual);
+
+$datalist-background-color: var(--kern-color-layout-background-default-contextual);
+$datalist-shadow: none;
+$datalist-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$datalist-border-radius: var(--kern-metric-border-radius-default);
+$datalist-item-shadow: none;
+$datalist-item-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$datalist-item-background-color: var(--kern-color-layout-background-default-contextual);
+
+$scrollbar-color: var(--kern-color-layout-border-contextual);
+$scrollbar-border-radius: var(--kern-metric-border-radius-small);
+
+$tile-background-color: var(--kern-color-layout-background-default-contextual);
+$tile-header-background-color: var(--kern-color-layout-layer-surface-contextual);
+$tile-overlay-background-color: color-mix(in oklch, var(--kern-color-action-default-contextual) 12%, transparent);
+
+$rz-chat-background-color: var(--kern-color-layout-background-default-contextual);
+$rz-chat-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$rz-chat-border-radius: var(--kern-metric-border-radius-default);
+$rz-chat-message-user-background-color: color-mix(in oklch, var(--kern-color-action-default-contextual) 12%, transparent);
+$rz-chat-message-user-color: var(--kern-color-layout-text-default-contextual);
+$rz-chat-message-assistant-background-color: var(--kern-color-layout-layer-surface-contextual);
+$rz-chat-message-assistant-color: var(--kern-color-layout-text-default-contextual);
+$rz-chat-avatar-border-radius: var(--kern-metric-border-radius-default);
+
+$rz-signature-pad-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$rz-signature-pad-background-color: var(--kern-color-layout-layer-surface-contextual);
+$rz-signature-pad-placeholder-color: var(--kern-color-layout-text-muted-contextual);
+$rz-signature-pad-clear-color: var(--kern-color-action-default-contextual);
+$rz-signature-pad-clear-hover-color: var(--kern-color-action-default-contextual);
+
+$gantt-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+$gantt-background-color: var(--kern-color-layout-background-default-contextual);
+
+$spreadsheet-cell-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$spreadsheet-header-background-color: var(--kern-color-layout-layer-surface-contextual);
+$spreadsheet-header-active-background-color: color-mix(in oklch, var(--kern-color-action-default-contextual) 12%, transparent);
+$spreadsheet-splitter-background-color: var(--kern-color-layout-layer-surface-contextual);
+
+$fab-shadow: var(--kern-shadow-elevation-default);
+$fab-hover-shadow: var(--kern-shadow-elevation-high);
+$fab-active-shadow: var(--kern-shadow-elevation-high);
+$fab-border-radius: var(--kern-metric-border-radius-default);
+
+$range-nav-border: var(--kern-metric-border-width-light) solid var(--kern-color-layout-border-contextual);
+$range-nav-compact-window-background-color: color-mix(in oklch, var(--kern-color-action-default-contextual) 12%, transparent);
+$range-nav-handle-background-color: var(--kern-color-action-default-contextual);
+$range-nav-handle-hover-background-color: var(--kern-color-action-state-indicator-shade-hover);
+
+$rz-security-code-input-font-size: var(--kern-typography-font-size-medium-static);
+$rz-security-code-input-font-weight: var(--kern-typography-font-weight-body-default);
+
+$rz-sankey-label-color: var(--kern-color-layout-text-default-contextual);
+$rz-sankey-label-stroke: var(--kern-color-layout-background-default-contextual);
+
+$rz-carousel-pager-button-background-color: var(--kern-color-layout-border-contextual);
+$rz-carousel-pager-button-border: var(--kern-metric-border-width-default) solid var(--kern-color-layout-border-contextual);
+$rz-carousel-pager-button-active-background-color: var(--kern-color-action-default-contextual);
+$rz-carousel-pager-button-active-border: var(--kern-metric-border-width-default) solid var(--kern-color-action-default-contextual);
+
+$map-background-color: var(--kern-color-layout-background-default-contextual);
+$map-shadow: none;
+$lookup-panel-background-color: var(--kern-color-layout-background-default-contextual);
+$timespanpicker-popup-border: var(--kern-metric-border-width-light) solid var(--kern-color-decorative-border-contextual);
+$timespanpicker-popup-shadow: var(--kern-shadow-elevation-default);
+$timespanpicker-panel-background-color: var(--kern-color-layout-background-default-contextual);
+$timespanpicker-unit-label-color: var(--kern-color-layout-text-muted-contextual);
+$timespanpicker-focus-outline: var(--rz-outline-focus);
+$timespanpicker-focus-outline-offset: calc(-1 * var(--rz-outline-width));
+$timespanpicker-line-height: var(--kern-typography-line-height-medium-static);
+$timespanpicker-trigger-icon-size: var(--kern-metric-dimension-default);
+$timespanpicker-trigger-icon-color: var(--kern-color-action-default-contextual);
+$timespanpicker-trigger-icon-hover-color: var(--kern-color-action-default-contextual);
+
+$gravatar-border-radius: var(--kern-metric-border-radius-circle);
+$rz-gap: var(--kern-metric-space-default);

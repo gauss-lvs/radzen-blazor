@@ -1,0 +1,8 @@
+// ---------------------------------------------------------------------------
+// KERN UX-Standard — globaler Reset (nur Vollversion, nicht `-base`)
+// ---------------------------------------------------------------------------
+// Unveraendert aus dem Paket. Enthaelt den Reset auf html/body/img/svg sowie
+// .kern-sr-only, .kern-error und .kern-number.
+// ---------------------------------------------------------------------------
+
+@use '../../node_modules/@kern-ux/native/src/scss/core/global';

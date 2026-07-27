@@ -1,0 +1,42 @@
+// ---------------------------------------------------------------------------
+// Schriften
+// ---------------------------------------------------------------------------
+// KERN schreibt Fira Sans vor (--kern-typography-font-family-fira-sans) und
+// nutzt die Schnitte 400 / 500 / 600 nebst Kursiven. Die Dateien stammen
+// unveraendert aus @kern-ux/native/dist/fonts/fira-sans/.
+//
+// Material Symbols bleibt zusaetzlich geladen: Radzen setzt seine Icons als
+// Ligaturen dieser Schrift. KERN zeichnet seine Icons zwar als SVG-Masken,
+// verwendet dafuer aber dieselbe Material-Symbols-Geometrie — die beiden
+// Icon-Wege sehen deshalb gleich aus.
+// ---------------------------------------------------------------------------
+
+$fonts-path: '../fonts';
+
+@font-face {
+  font-family: 'Material Symbols';
+  src: url('#{$fonts-path}/MaterialSymbolsOutlined.woff2') format('woff2 supports variations'),
+       url('#{$fonts-path}/MaterialSymbolsOutlined.woff2') format('woff2-variations');
+  font-style: normal;
+  font-weight: 100 700;
+}
+
+@each $weight, $file in (400: 'Regular', 500: 'Medium', 600: 'SemiBold', 700: 'Bold') {
+  @font-face {
+    font-family: 'Fira Sans';
+    src: url('#{$fonts-path}/FiraSans-#{$file}.woff2') format('woff2');
+    font-weight: $weight;
+    font-style: normal;
+    font-display: swap;
+  }
+}
+
+@each $weight, $file in (400: 'Italic', 500: 'MediumItalic', 600: 'SemiBoldItalic', 700: 'BoldItalic') {
+  @font-face {
+    font-family: 'Fira Sans';
+    src: url('#{$fonts-path}/FiraSans-#{$file}.woff2') format('woff2');
+    font-weight: $weight;
+    font-style: italic;
+    font-display: swap;
+  }
+}

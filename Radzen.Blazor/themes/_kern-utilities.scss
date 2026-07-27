@@ -1,0 +1,56 @@
+// ---------------------------------------------------------------------------
+// Klassengebundene KERN-Utilities fuer beide Theme-Varianten
+// ---------------------------------------------------------------------------
+// KERNs `global.scss` mischt zwei Dinge: den Seiten-Reset auf html/body/img/svg
+// und drei rein klassengebundene Utilities. Der Reset gehoert nur in die
+// Vollversion (er wuerde die Wirtsseite umgestalten und kollidiert ausserdem
+// mit Radzen — siehe _kern-components.scss), die Utilities dagegen in beide
+// Varianten: KERNs eigene Komponenten bauen darauf auf. Ein Icon-Button ist
+// dort `.kern-btn:has(.kern-sr-only)`, und `.kern-form-input`/`.kern-form-check`
+// ueberschreiben `.kern-error` nur kontextuell.
+//
+// Alle Werte stammen aus KERNs Mixins und Tokens, nicht aus Kopien.
+// Quelle: @kern-ux/native/src/scss/core/global.scss
+// ---------------------------------------------------------------------------
+
+@use 'sass:map';
+@use '../../node_modules/@kern-ux/native/src/scss/core/utilities/mixins';
+@use '../../node_modules/@kern-ux/native/src/scss/core/utilities/maps';
+
+.kern-sr-only {
+  @include mixins.kern-sr-only;
+
+  &-mobile {
+    display: inline;
+
+    @media (max-width: calc(map.get(maps.$grid-breakpoints, sm) - 1px)) {
+      @include mixins.kern-sr-only;
+    }
+  }
+}
+
+.kern-error {
+  @include mixins.normalize;
+  display: flex;
+  gap: var(--kern-metric-space-small, 8px);
+  align-items: flex-start;
+  align-self: stretch;
+
+  .kern-icon {
+    background-color: var(--kern-color-feedback-danger-contextual, #BD0F09);
+    margin: var(--kern-metric-baseline-body-default-padding-top, 6px) var(--kern-metric-space-none, 0px) var(--kern-metric-baseline-body-default-padding-bottom, 2px) var(--kern-metric-space-none, 0px);
+  }
+}
+
+.kern-number {
+  display: flex;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 2px 0px;
+  justify-content: center;
+  align-items: center;
+  border-radius: var(--kern-metric-border-radius-circle, 50%);
+  border: var(--kern-metric-border-width-default, 2px) solid var(--kern-color-layout-text-default-contextual, #131525);
+  color: var(--kern-color-layout-text-default-contextual, #131525);
+}

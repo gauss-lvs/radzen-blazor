@@ -1,0 +1,15 @@
+// ===========================================================================
+// KERN — Dark Mode, WCAG-Verschaerfung
+// ===========================================================================
+// Gleiche Anhebung wie kern-wcag.scss; die Tokens drehen im Dark Mode selbst.
+// ===========================================================================
+
+:root {
+  --kern-color-decorative-border-contextual: var(--kern-color-layout-border);
+  --kern-color-decorative-border-default: var(--kern-color-layout-border);
+  --kern-color-decorative-border-level-1: var(--kern-color-layout-border);
+  --kern-color-decorative-border-level-2: var(--kern-color-layout-border);
+
+  --kern-color-layout-text-muted-contextual: var(--kern-color-layout-text-default);
+  --kern-color-layout-text-muted: var(--kern-color-layout-text-default);
+}
