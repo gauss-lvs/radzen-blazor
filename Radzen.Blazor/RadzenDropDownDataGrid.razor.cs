@@ -189,10 +189,13 @@ namespace Radzen.Blazor
         [Parameter]
         public string OpenPopupKey { get; set; } = "Enter";
 
+        bool openedOnFocus;
+
         private async Task OnFocus()
         {
             if (OpenOnFocus)
             {
+                openedOnFocus = true;
                 await OpenPopup(OpenPopupKey, false);
             }
         }
@@ -208,6 +211,23 @@ namespace Radzen.Blazor
             if (Disabled)
             {
                 return;
+            }
+
+            if (OpenOnFocus && isFromClick)
+            {
+                var fromFocus = openedOnFocus;
+                openedOnFocus = false;
+
+                if (isPopupOpen)
+                {
+                    if (fromFocus)
+                    {
+                        return;
+                    }
+
+                    await ClosePopup(key);
+                    return;
+                }
             }
 
             if (IsVirtualizationAllowed() && grid != null)
@@ -257,6 +277,7 @@ namespace Radzen.Blazor
         public Task OnClose()
         {
             isPopupOpen = false;
+            openedOnFocus = false;
             return Task.CompletedTask;
         }
 
@@ -1162,6 +1183,12 @@ namespace Radzen.Blazor
                     Debounce(DebounceFilter, FilterDelay);
                 }
             }
+            else if (args.CtrlKey && (key == "KeyA" || key == "a" || key == "A") && Multiple && AllowSelectAll)
+            {
+                preventKeydown = true;
+
+                await SelectAll();
+            }
             else if (AllowFiltering && isFilter && FilterAsYouType)
             {
                 preventKeydown = true;
@@ -1178,6 +1205,7 @@ namespace Radzen.Blazor
             if (JSRuntime != null)
             {
                 searchText = await JSRuntime.InvokeAsync<string>("Radzen.getInputValue", search) ?? string.Empty;
+                await InvokeAsync(() => SearchTextChanged.InvokeAsync(SearchText));
             }
 
             if (searchText != previousSearch)
@@ -1186,8 +1214,6 @@ namespace Radzen.Blazor
                 _view = null;
                 await InvokeAsync(RefreshAfterFilter);
             }
-
-            await InvokeAsync(() => SearchTextChanged.InvokeAsync(SearchText));
         }
 
         async Task CloseOnEscape(KeyboardEventArgs args)

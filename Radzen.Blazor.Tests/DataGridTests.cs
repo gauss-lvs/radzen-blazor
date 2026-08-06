@@ -422,6 +422,31 @@ namespace Radzen.Blazor.Tests
         }
 
         [Fact]
+        public void DataGrid_Renders_PagerInputSizeParameter()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDataGrid<dynamic>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<dynamic>>(p => p.Data, Enumerable.Range(0, 100).Select(i => new { Id = i }));
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<dynamic>));
+                    builder.AddAttribute(1, "Property", "Id");
+                    builder.AddAttribute(2, "Title", "Id");
+                    builder.CloseComponent();
+                });
+                parameterBuilder.Add<bool>(p => p.AllowPaging, true);
+                parameterBuilder.Add<IEnumerable<int>>(p => p.PageSizeOptions, new int[] { 10, 20, 50 });
+                parameterBuilder.Add<InputSize>(p => p.PagerInputSize, InputSize.ExtraSmall);
+            });
+
+            Assert.Contains(@$"rz-input-xs", component.Markup);
+        }
+
+        [Fact]
         public void DataGrid_Renders_PagerPositionTopParameter()
         {
             using var ctx = new TestContext();
@@ -4137,6 +4162,52 @@ namespace Radzen.Blazor.Tests
             input.KeyDown(new KeyboardEventArgs { Key = "a", Code = "KeyA" });
 
             Assert.Equal(renderCount, component.RenderCount);
+        }
+
+        [Fact]
+        public async Task DataGrid_AppliesCustomFilterExpression_WhenNoOtherFilterIsActive()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var data = new[]
+            {
+                new AutoApplyItem { Name = "A", Code = 1 },
+                new AutoApplyItem { Name = "B", Code = 2 },
+                new AutoApplyItem { Name = "C", Code = 1 },
+            };
+
+            var component = ctx.RenderComponent<RadzenDataGrid<AutoApplyItem>>(parameterBuilder =>
+            {
+                parameterBuilder.Add<IEnumerable<AutoApplyItem>>(p => p.Data, data);
+                parameterBuilder.Add<bool>(p => p.AllowFiltering, true);
+                parameterBuilder.Add<RenderFragment>(p => p.Columns, builder =>
+                {
+                    builder.OpenComponent(0, typeof(RadzenDataGridColumn<AutoApplyItem>));
+                    builder.AddAttribute(1, "Property", nameof(AutoApplyItem.Code));
+                    builder.AddAttribute(2, "FilterOperator", FilterOperator.Custom);
+                    builder.CloseComponent();
+                });
+            });
+
+            var grid = component.Instance;
+            var column = grid.ColumnsCollection.Single();
+
+            await component.InvokeAsync(() => column.SetCustomFilterExpressionAsync("it.Code == 1"));
+
+            component.WaitForAssertion(() =>
+            {
+                var names = grid.View.Select(x => x.Name).ToArray();
+                Assert.Equal(new[] { "A", "C" }, names);
+            }, TimeSpan.FromSeconds(3));
+
+            await component.InvokeAsync(() => column.SetCustomFilterExpressionAsync(null));
+
+            component.WaitForAssertion(() =>
+            {
+                Assert.Equal(3, grid.View.Count());
+            }, TimeSpan.FromSeconds(3));
         }
     }
 

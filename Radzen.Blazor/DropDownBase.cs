@@ -971,6 +971,12 @@ namespace Radzen
                     Debounce(DebounceFilter, FilterDelay);
                 }
             }
+            else if (args.CtrlKey && (key == "KeyA" || key == "a" || key == "A") && Multiple && AllowSelectAll)
+            {
+                preventKeydown = true;
+
+                await SelectAll();
+            }
             else if (AllowFiltering && isFilter && FilterAsYouType && !(Multiple && key == "Space" && selectedIndex >= 0))
             {
                 preventKeydown = true;
@@ -1087,6 +1093,7 @@ namespace Radzen
                 if (JSRuntime != null)
                 {
                     searchText = await JSRuntime.InvokeAsync<string>("Radzen.getInputValue", search) ?? string.Empty;
+                    await InvokeAsync(() => SearchTextChanged.InvokeAsync(SearchText));
                 }
 
                 if (!LoadData.HasDelegate)
@@ -1135,7 +1142,6 @@ namespace Radzen
                 await JSRuntime.InvokeVoidAsync("Radzen.updateActiveDescendant", list, null, -1);
                 await JSRuntime.InvokeAsync<string>("Radzen.repositionPopup", Element, PopupID);
             }
-            await InvokeAsync(() => SearchTextChanged.InvokeAsync(SearchText));
         }
 
         /// <summary>

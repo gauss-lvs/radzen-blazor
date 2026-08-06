@@ -99,17 +99,7 @@ namespace Radzen.Blazor
                 newValue = value;
             }
 
-            // When ValueChanged is wired, leave _value alone — parameter re-flow handles
-            // both accepted updates (Value setter overwrites _value) and parent rejection
-            // (parameter unchanged → Blazor skips SetParametersAsync → _value stays at the
-            // bound value → @bind:get force-syncs the DOM back to it). When ValueChanged
-            // is NOT wired, no re-flow occurs, so _value must be updated locally or
-            // @bind:get would re-evaluate to the stale initial value and the framework
-            // would wipe the DOM on every blur.
-            if (!IsBound)
-            {
-                Value = newValue;
-            }
+            Value = newValue;
 
             await ValueChanged.InvokeAsync(newValue);
             NotifyFieldChanged(newValue);
@@ -155,6 +145,7 @@ namespace Radzen.Blazor
         }
 
         IJSObjectReference? _jsRef;
+        int _jsRefVersion;
         bool _jsParamsChanged;
 
         /// <inheritdoc />
@@ -180,11 +171,19 @@ namespace Radzen.Blazor
             {
                 _jsParamsChanged = false;
 
-                if (_jsRef != null)
+                var version = ++_jsRefVersion;
+                var jsRef = _jsRef;
+                _jsRef = null;
+
+                if (jsRef != null)
                 {
-                    await _jsRef.InvokeVoidAsync("dispose");
-                    await _jsRef.DisposeAsync();
-                    _jsRef = null;
+                    await jsRef.InvokeVoidAsync("dispose");
+                    await jsRef.DisposeAsync();
+                }
+
+                if (version != _jsRefVersion)
+                {
+                    return;
                 }
 
                 if (Visible)
@@ -192,8 +191,18 @@ namespace Radzen.Blazor
                     await JSRuntime.InvokeVoidAsync("Radzen.mask", GetId(), Mask, Pattern, CharacterPattern);
                     if (!Immediate)
                     {
-                        _jsRef = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                        var created = await JSRuntime.InvokeAsync<IJSObjectReference>(
                             "Radzen.createMask", Element, GetId(), Mask, Pattern, CharacterPattern);
+
+                        if (version == _jsRefVersion)
+                        {
+                            _jsRef = created;
+                        }
+                        else if (created != null)
+                        {
+                            await created.InvokeVoidAsync("dispose");
+                            await created.DisposeAsync();
+                        }
                     }
                 }
             }
@@ -203,8 +212,11 @@ namespace Radzen.Blazor
         public override void Dispose()
         {
             base.Dispose();
-            _jsRef?.InvokeVoidAsync("dispose");
-            _jsRef?.DisposeAsync();
+            _jsRefVersion++;
+            var jsRef = _jsRef;
+            _jsRef = null;
+            jsRef?.InvokeVoidAsync("dispose");
+            jsRef?.DisposeAsync();
             GC.SuppressFinalize(this);
         }
     }

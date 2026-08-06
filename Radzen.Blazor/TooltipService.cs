@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -88,6 +89,21 @@ namespace Radzen
         /// </summary>
         internal event Action<ElementReference, double, double, ChartTooltipOptions>? OnOpenChartTooltip;
 
+        private bool chartTooltipHostWarningShown;
+
+        /// <summary>
+        /// Logs a console warning the first time a chart tooltip is about to open while no RadzenChartTooltip component is subscribed to display it.
+        /// </summary>
+        /// <param name="jsRuntime">The JS runtime used to log the warning.</param>
+        internal async Task WarnIfChartTooltipHostMissing(IJSRuntime? jsRuntime)
+        {
+            if (!chartTooltipHostWarningShown && OnOpenChartTooltip == null && jsRuntime != null)
+            {
+                chartTooltipHostWarningShown = true;
+                await jsRuntime.InvokeVoidAsync("console.warn", "Chart tooltips require a RadzenChartTooltip component. Add <RadzenChartTooltip /> or <RadzenComponents /> to your application layout (typically MainLayout.razor). See https://blazor.radzen.com/get-started for details.");
+            }
+        }
+
         /// <summary>
         /// Opens a tooltip with custom HTML content near the specified element.
         /// The tooltip will be positioned according to the options and can contain any Blazor markup.
@@ -97,7 +113,7 @@ namespace Radzen
         /// <param name="options">Optional tooltip configuration including position, duration, delay, and styling. If null, default options are used.</param>
         public void Open(ElementReference element, RenderFragment<TooltipService> childContent, TooltipOptions? options = null)
         {
-            var tooltipOptions = options ?? new TooltipOptions();
+            var tooltipOptions = CloneOptions(options);
 
             tooltipOptions.ChildContent = childContent;
 
@@ -113,7 +129,7 @@ namespace Radzen
         /// <param name="options">Optional tooltip configuration including position, duration, delay, and styling. If null, default options are used.</param>
         public void Open(ElementReference element, string text, TooltipOptions? options = null)
         {
-            var tooltipOptions = options ?? new TooltipOptions();
+            var tooltipOptions = CloneOptions(options);
 
             tooltipOptions.Text = text;
 
@@ -129,7 +145,7 @@ namespace Radzen
         /// <param name="options">Optional additional tooltip configuration. The Position will be set to Top regardless of the value in options.</param>
         public void OpenOnTheTop(ElementReference element, string text, TooltipOptions? options = null)
         {
-            var tooltipOptions = options ?? new TooltipOptions();
+            var tooltipOptions = CloneOptions(options);
 
             tooltipOptions.Text = text;
             tooltipOptions.Position = TooltipPosition.Top;
@@ -145,7 +161,7 @@ namespace Radzen
         /// <param name="o">The o.</param>
         public void OpenOnTheBottom(ElementReference element, string text, TooltipOptions? o = null)
         {
-            var options = o ?? new TooltipOptions();
+            var options = CloneOptions(o);
 
             options.Text = text;
             options.Position = TooltipPosition.Bottom;
@@ -161,7 +177,7 @@ namespace Radzen
         /// <param name="o">The o.</param>
         public void OpenOnTheLeft(ElementReference element, string text, TooltipOptions? o = null)
         {
-            var options = o ?? new TooltipOptions();
+            var options = CloneOptions(o);
 
             options.Text = text;
             options.Position = TooltipPosition.Left;
@@ -177,7 +193,7 @@ namespace Radzen
         /// <param name="o">The o.</param>
         public void OpenOnTheRight(ElementReference element, string text, TooltipOptions? o = null)
         {
-            var options = o ?? new TooltipOptions();
+            var options = CloneOptions(o);
 
             options.Text = text;
             options.Position = TooltipPosition.Right;
@@ -200,6 +216,33 @@ namespace Radzen
             options.ChildContent = childContent;
 
             OnOpenChartTooltip?.Invoke(element, x, y, options);
+        }
+
+        /// <summary>
+        /// Creates a copy of the specified options so the caller's instance is never modified by the service or by tooltip repositioning.
+        /// </summary>
+        /// <param name="options">The options to copy. If null, default options are returned.</param>
+        /// <returns>A new <see cref="TooltipOptions"/> instance with the same values.</returns>
+        private static TooltipOptions CloneOptions(TooltipOptions? options)
+        {
+            if (options == null)
+            {
+                return new TooltipOptions();
+            }
+
+            return new TooltipOptions
+            {
+                Position = options.Position,
+                Duration = options.Duration,
+                Delay = options.Delay,
+                CloseTooltipOnDocumentClick = options.CloseTooltipOnDocumentClick,
+                Style = options.Style,
+                CssClass = options.CssClass,
+                Text = options.Text,
+                ChildContent = options.ChildContent,
+                ClientX = options.ClientX,
+                ClientY = options.ClientY
+            };
         }
 
         /// <summary>

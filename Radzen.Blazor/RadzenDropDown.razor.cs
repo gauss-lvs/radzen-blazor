@@ -36,6 +36,7 @@ namespace Radzen.Blazor
     public partial class RadzenDropDown<TValue> : DropDownBase<TValue>
     {
         IJSObjectReference? _jsRef;
+        int _jsRefVersion;
 
         bool isOpen;
 
@@ -160,10 +161,13 @@ namespace Radzen.Blazor
         [Parameter]
         public string OpenPopupKey { get; set; } = "Enter";
 
+        bool openedOnFocus;
+
         private async Task OnFocus()
         {
             if (OpenOnFocus)
             {
+                openedOnFocus = true;
                 await OpenPopup(OpenPopupKey, false);
             }
         }
@@ -204,10 +208,28 @@ namespace Radzen.Blazor
                 return;
             }
 
+
             if (LoadDataOnOpenPopup && LoadData.HasDelegate)
             {
                 await LoadData.InvokeAsync(await GetLoadDataArgs());
                 StateHasChanged();
+            }
+
+            if (OpenOnFocus && isFromClick)
+            {
+                var fromFocus = openedOnFocus;
+                openedOnFocus = false;
+
+                if (isOpen)
+                {
+                    if (fromFocus)
+                    {
+                        return;
+                    }
+
+                    await ClosePopup(key);
+                    return;
+                }
             }
 
             if (!isOpen)
@@ -420,8 +442,31 @@ namespace Radzen.Blazor
 
                     if (JSRuntime != null)
                     {
-                        _jsRef = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                            "Radzen.createDropDown", Element);
+                        var version = ++_jsRefVersion;
+                        var jsRef = _jsRef;
+                        _jsRef = null;
+
+                        if (jsRef != null)
+                        {
+                            await jsRef.InvokeVoidAsync("dispose");
+                            await jsRef.DisposeAsync();
+                        }
+
+                        if (version == _jsRefVersion)
+                        {
+                            var created = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                                "Radzen.createDropDown", Element);
+
+                            if (version == _jsRefVersion)
+                            {
+                                _jsRef = created;
+                            }
+                            else if (created != null)
+                            {
+                                await created.InvokeVoidAsync("dispose");
+                                await created.DisposeAsync();
+                            }
+                        }
                     }
 
                     if (reload)
@@ -536,8 +581,11 @@ namespace Radzen.Blazor
                 JSRuntime.InvokeVoid("Radzen.destroyPopup", PopupID);
             }
 
-            _jsRef?.InvokeVoidAsync("dispose");
-            _jsRef?.DisposeAsync();
+            _jsRefVersion++;
+            var jsRef = _jsRef;
+            _jsRef = null;
+            jsRef?.InvokeVoidAsync("dispose");
+            jsRef?.DisposeAsync();
 
             GC.SuppressFinalize(this);
         }
@@ -550,6 +598,7 @@ namespace Radzen.Blazor
         {
             isOpen = false;
             isPopupOpen = false;
+            openedOnFocus = false;
             await Close.InvokeAsync();
         }
 

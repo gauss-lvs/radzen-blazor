@@ -2167,9 +2167,14 @@ namespace Radzen.Blazor
 
             var viewListQueryable = viewList.AsQueryable();
 
+            var filteredItems = new HashSet<TItem>(viewListQueryable.Where<TItem>(allColumns));
+
+            var parentsWithMatchingChildren = new HashSet<TItem>(childData
+                .Where(c => (c.Value.Data ?? Enumerable.Empty<TItem>()).AsQueryable().Where<TItem>(allColumns).Any())
+                .Select(c => c.Key));
+
             view = viewListQueryable
-                .Where(i => childData.ContainsKey(i) && (childData[i].Data ?? Enumerable.Empty<TItem>()).AsQueryable().Where<TItem>(allColumns).Any()
-                    || viewListQueryable.Where<TItem>(allColumns).Contains(i));
+                .Where(i => parentsWithMatchingChildren.Contains(i) || filteredItems.Contains(i));
 
             return view;
         }
@@ -2856,6 +2861,7 @@ namespace Radzen.Blazor
         bool settingsChanged;
         bool visibleChanged;
         IJSObjectReference? _jsRef;
+        int _jsRefVersion;
         internal bool firstRender = true;
 
         /// <inheritdoc />
@@ -3002,8 +3008,33 @@ namespace Radzen.Blazor
 
                 if (Visible && JSRuntime != null)
                 {
-                    _jsRef = await JSRuntime.InvokeAsync<IJSObjectReference>(
+                    var version = ++_jsRefVersion;
+                    var jsRef = _jsRef;
+                    _jsRef = null;
+
+                    if (jsRef != null)
+                    {
+                        await jsRef.InvokeVoidAsync("dispose");
+                        await jsRef.DisposeAsync();
+                    }
+
+                    if (version != _jsRefVersion)
+                    {
+                        return;
+                    }
+
+                    var created = await JSRuntime.InvokeAsync<IJSObjectReference>(
                         "Radzen.createDataGrid", Element);
+
+                    if (version == _jsRefVersion)
+                    {
+                        _jsRef = created;
+                    }
+                    else if (created != null)
+                    {
+                        await created.InvokeVoidAsync("dispose");
+                        await created.DisposeAsync();
+                    }
                 }
             }
         }
@@ -3954,8 +3985,11 @@ namespace Radzen.Blazor
         {
             base.Dispose();
 
-            _jsRef?.InvokeVoidAsync("dispose");
-            _jsRef?.DisposeAsync();
+            _jsRefVersion++;
+            var jsRef = _jsRef;
+            _jsRef = null;
+            jsRef?.InvokeVoidAsync("dispose");
+            jsRef?.DisposeAsync();
 
             if (groups != null)
             {
