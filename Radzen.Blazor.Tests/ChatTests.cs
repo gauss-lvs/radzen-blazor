@@ -949,6 +949,414 @@ namespace Radzen.Blazor.Tests
             });
         }
 
+        [Fact]
+        public async Task RadzenChat_ShouldTriggerMentionSearchForSingleWordFilter()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            MentionSearchArgs capturedArgs = null;
+            var searchCount = 0;
+
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, new List<ChatUser>())
+                .Add(p => p.Messages, new List<ChatMessage>())
+                .Add(p => p.MentionCharacter, '@')
+                .Add(p => p.MentionSearch, EventCallback.Factory.Create<MentionSearchArgs>(this, args =>
+                {
+                    capturedArgs = args;
+                    searchCount++;
+                    return Task.CompletedTask;
+                }))
+            );
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@joh");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@joh");
+
+            Assert.NotNull(capturedArgs);
+            Assert.Equal("joh", capturedArgs!.Filter);
+            Assert.Equal(1, searchCount);
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true },
+                    new MentionUserContext { UserId = "user-2", UserName = "John Smith", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 2)
+            );
+
+            Assert.Equal(2, component.FindAll(".rz-chat-mention-item").Count);
+        }
+
+        [Fact]
+        public async Task RadzenChat_ShouldKeepMentionPopupOpenWhenSearchTextContainsSpace()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            MentionSearchArgs capturedArgs = null;
+
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, new List<ChatUser>())
+                .Add(p => p.Messages, new List<ChatMessage>())
+                .Add(p => p.MentionCharacter, '@')
+                .Add(p => p.MentionSearch, EventCallback.Factory.Create<MentionSearchArgs>(this, args =>
+                {
+                    capturedArgs = args;
+                    return Task.CompletedTask;
+                }))
+            );
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john");
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true },
+                    new MentionUserContext { UserId = "user-2", UserName = "John Smith", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 2)
+            );
+
+            Assert.Equal(2, component.FindAll(".rz-chat-mention-item").Count);
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john do");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john do");
+
+            Assert.NotNull(capturedArgs);
+            Assert.Equal("john do", capturedArgs!.Filter);
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 1)
+            );
+
+            Assert.Equal(1, component.FindAll(".rz-chat-mention-item").Count);
+            Assert.Contains("John Doe", component.Markup);
+        }
+
+        [Fact]
+        public async Task RadzenChat_ShouldCloseMentionPopupWhenMultiWordSearchHasNoResults()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            MentionSearchArgs capturedArgs = null;
+            var searchCount = 0;
+
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, new List<ChatUser>())
+                .Add(p => p.Messages, new List<ChatMessage>())
+                .Add(p => p.MentionCharacter, '@')
+                .Add(p => p.MentionSearch, EventCallback.Factory.Create<MentionSearchArgs>(this, args =>
+                {
+                    capturedArgs = args;
+                    searchCount++;
+                    return Task.CompletedTask;
+                }))
+            );
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john");
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 1)
+            );
+
+            Assert.Single(component.FindAll(".rz-chat-mention-item"));
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john x");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john x");
+
+            Assert.Equal("john x", capturedArgs!.Filter);
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>())
+                .Add(p => p.MentionUsersCount, 0)
+            );
+
+            Assert.Empty(component.FindAll(".rz-chat-mention-item"));
+
+            var searchCountAfterClose = searchCount;
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john xy");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john xy");
+
+            Assert.Equal(searchCountAfterClose, searchCount);
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john xy @al");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john xy @al");
+
+            Assert.Equal(searchCountAfterClose + 1, searchCount);
+            Assert.Equal("al", capturedArgs.Filter);
+        }
+
+        [Fact]
+        public async Task RadzenChat_ShouldContinueMentionSearchBeforeResultsArrive()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            MentionSearchArgs capturedArgs = null;
+            var searchCount = 0;
+
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, new List<ChatUser>())
+                .Add(p => p.Messages, new List<ChatMessage>())
+                .Add(p => p.MentionCharacter, '@')
+                .Add(p => p.MentionSearch, EventCallback.Factory.Create<MentionSearchArgs>(this, args =>
+                {
+                    capturedArgs = args;
+                    searchCount++;
+                    return Task.CompletedTask;
+                }))
+            );
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john");
+
+            Assert.Equal("john", capturedArgs!.Filter);
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john do");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john do");
+
+            Assert.Equal("john do", capturedArgs.Filter);
+            Assert.Equal(2, searchCount);
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 1)
+            );
+
+            Assert.Single(component.FindAll(".rz-chat-mention-item"));
+            Assert.Contains("John Doe", component.Markup);
+        }
+
+        [Fact]
+        public async Task RadzenChat_ShouldNotReopenMentionPopupFromStaleResultsAfterClose()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, new List<ChatUser>())
+                .Add(p => p.Messages, new List<ChatMessage>())
+                .Add(p => p.MentionCharacter, '@')
+                .Add(p => p.MentionSearch, EventCallback.Factory.Create<MentionSearchArgs>(this, args => Task.CompletedTask))
+            );
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john");
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 1)
+            );
+
+            Assert.Single(component.FindAll(".rz-chat-mention-item"));
+
+            var textarea = component.Find(".rz-chat-textarea");
+            textarea.KeyDown(new KeyboardEventArgs { Key = "Escape" });
+
+            component.WaitForAssertion(() => Assert.Empty(component.FindAll(".rz-chat-mention-item")));
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 1)
+            );
+
+            Assert.Empty(component.FindAll(".rz-chat-mention-item"));
+
+            await InvokePrivateAsync(component.Instance, "InsertMention", new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true });
+
+            component.WaitForAssertion(() =>
+            {
+                var updatedTextarea = component.Find(".rz-chat-textarea");
+                Assert.Equal("@john", updatedTextarea.GetAttribute("value"));
+            });
+        }
+
+        [Fact]
+        public async Task RadzenChat_ShouldInsertMentionAfterMultiWordSearch()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, new List<ChatUser>())
+                .Add(p => p.Messages, new List<ChatMessage>())
+                .Add(p => p.MentionCharacter, '@')
+                .Add(p => p.MentionSearch, EventCallback.Factory.Create<MentionSearchArgs>(this, args => Task.CompletedTask))
+            );
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john");
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true },
+                    new MentionUserContext { UserId = "user-2", UserName = "John Smith", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 2)
+            );
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john do");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john do");
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 1)
+            );
+
+            var item = component.Find(".rz-chat-mention-item");
+            item.Click();
+
+            component.WaitForAssertion(() =>
+            {
+                var updatedTextarea = component.Find(".rz-chat-textarea");
+                Assert.Equal("@John Doe", updatedTextarea.GetAttribute("value"));
+            });
+        }
+
+        [Fact]
+        public async Task RadzenChat_ShouldNotReopenMentionPopupWhenTypingAfterEscape()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var searchCount = 0;
+
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, new List<ChatUser>())
+                .Add(p => p.Messages, new List<ChatMessage>())
+                .Add(p => p.MentionCharacter, '@')
+                .Add(p => p.MentionSearch, EventCallback.Factory.Create<MentionSearchArgs>(this, args =>
+                {
+                    searchCount++;
+                    return Task.CompletedTask;
+                }))
+            );
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john");
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 1)
+            );
+
+            Assert.Single(component.FindAll(".rz-chat-mention-item"));
+
+            var textarea = component.Find(".rz-chat-textarea");
+            textarea.KeyDown(new KeyboardEventArgs { Key = "Escape" });
+
+            component.WaitForAssertion(() => Assert.Empty(component.FindAll(".rz-chat-mention-item")));
+
+            var searchCountAfterClose = searchCount;
+            SetPrivateProperty(component.Instance, "CurrentInput", "@johns");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@johns");
+
+            Assert.Equal(searchCountAfterClose, searchCount);
+            Assert.Empty(component.FindAll(".rz-chat-mention-item"));
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john ");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john ");
+
+            Assert.Equal(searchCountAfterClose, searchCount);
+            Assert.Empty(component.FindAll(".rz-chat-mention-item"));
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@jo");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@jo");
+
+            Assert.Equal(searchCountAfterClose + 1, searchCount);
+        }
+
+        [Fact]
+        public async Task RadzenChat_ShouldKeepMentionSelectionWhenSameUsersReapplied()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, new List<ChatUser>())
+                .Add(p => p.Messages, new List<ChatMessage>())
+                .Add(p => p.MentionCharacter, '@')
+                .Add(p => p.MentionSearch, EventCallback.Factory.Create<MentionSearchArgs>(this, args => Task.CompletedTask))
+            );
+
+            SetPrivateProperty(component.Instance, "CurrentInput", "@john");
+            await InvokePrivateAsync(component.Instance, "DetectMentionTrigger", "@john");
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true },
+                    new MentionUserContext { UserId = "user-2", UserName = "John Smith", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 2)
+            );
+
+            var textarea = component.Find(".rz-chat-textarea");
+            textarea.KeyDown(new KeyboardEventArgs { Key = "ArrowDown" });
+
+            component.WaitForAssertion(() =>
+                Assert.Contains("rz-chat-mention-item-selected", component.FindAll(".rz-chat-mention-item")[1].ClassName));
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-1", UserName = "John Doe", IsInChat = true },
+                    new MentionUserContext { UserId = "user-2", UserName = "John Smith", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 2)
+            );
+
+            Assert.Contains("rz-chat-mention-item-selected", component.FindAll(".rz-chat-mention-item")[1].ClassName);
+
+            component.SetParametersAndRender(parameters => parameters
+                .Add(p => p.MentionUsers, new List<MentionUserContext>
+                {
+                    new MentionUserContext { UserId = "user-3", UserName = "Jane Doe", IsInChat = true },
+                    new MentionUserContext { UserId = "user-4", UserName = "Jane Smith", IsInChat = true }
+                })
+                .Add(p => p.MentionUsersCount, 2)
+            );
+
+            Assert.Contains("rz-chat-mention-item-selected", component.FindAll(".rz-chat-mention-item")[0].ClassName);
+        }
+
         static void SetPrivateField(object instance, string fieldName, object value)
         {
             var field = instance.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
