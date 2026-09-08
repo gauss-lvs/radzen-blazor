@@ -15,9 +15,6 @@ concurrency:
   group: publish-nuget-${{ github.ref }}
   cancel-in-progress: false
 
-permissions:
-  contents: read
-
 env:
   PROJECT: Radzen.Blazor/Radzen.Blazor.csproj
   TEST_PROJECT: Radzen.Blazor.Tests/Radzen.Blazor.Tests.csproj
