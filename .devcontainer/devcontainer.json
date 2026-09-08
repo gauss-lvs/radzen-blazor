@@ -67,7 +67,7 @@
     "POWERSHELL_TELEMETRY_OPTOUT": "1",
     "POWERSHELL_UPDATECHECK": "Off"
   },
-  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && dotnet tool update -g dotnet-version-cli-gauss && dotnet restore",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && bash /usr/local/bin/install-user-nuget-repo.sh && bash /usr/local/bin/install-user-dotnet-tools.sh && dotnet restore Radzen.sln",
   "postStartCommand": "bash /usr/local/bin/setup-git.sh",
   "remoteUser": "vscode"
 }
