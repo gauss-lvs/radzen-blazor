@@ -178,6 +178,79 @@ namespace Radzen.Blazor.Tests
         }
 
         [Fact]
+        public void AutoComplete_RendersItemText_ViaTextProperty()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var data = new[] { new { Name = "Apple" }, new { Name = "Banana" } };
+
+            var component = ctx.RenderComponent<RadzenAutoComplete>(parameters =>
+            {
+                parameters
+                    .Add(p => p.Data, data)
+                    .Add(p => p.TextProperty, "Name")
+                    .Add(p => p.OpenOnFocus, true);
+            });
+
+            var items = component.FindAll(".rz-autocomplete-list-item");
+            Assert.Contains(items, i => i.TextContent.Trim() == "Apple");
+            Assert.Contains(items, i => i.TextContent.Trim() == "Banana");
+        }
+
+        [Fact]
+        public void AutoComplete_PrimitiveItems_WithTextPropertyNamingRealMember_RendersItemItself()
+        {
+            // Regression: the cached-getter path must keep GetItemOrValueFromProperty's primitive contract -
+            // for a List<string> a non-empty TextProperty that happens to name a real member of string
+            // ("Length") must still render the string itself, not string.Length.
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var data = new List<string> { "alpha", "beta" };
+
+            var component = ctx.RenderComponent<RadzenAutoComplete>(parameters =>
+            {
+                parameters
+                    .Add(p => p.Data, data)
+                    .Add(p => p.TextProperty, "Length")
+                    .Add(p => p.OpenOnFocus, true);
+            });
+
+            var items = component.FindAll(".rz-autocomplete-list-item");
+            Assert.Contains(items, i => i.TextContent.Trim() == "alpha");
+            Assert.Contains(items, i => i.TextContent.Trim() == "beta");
+            Assert.DoesNotContain(items, i => i.TextContent.Trim() == "5");
+        }
+
+        private class NestedLeaf { public int Id { get; set; } }
+        private class NestedRoot { public NestedLeaf Child { get; set; } }
+
+        [Fact]
+        public void AutoComplete_NestedTextProperty_NullIntermediate_RendersBlankNotLeafDefault()
+        {
+            // "Child.Id" with a null Child must render blank (matching reflection), not the int leaf's default "0"
+            // that a compiled getter would box.
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var data = new List<NestedRoot>
+            {
+                new NestedRoot { Child = new NestedLeaf { Id = 1 } },
+                new NestedRoot { Child = null },
+            };
+
+            var component = ctx.RenderComponent<RadzenAutoComplete>(parameters =>
+            {
+                parameters
+                    .Add(p => p.Data, data)
+                    .Add(p => p.TextProperty, "Child.Id")
+                    .Add(p => p.OpenOnFocus, true);
+            });
+
+            var items = component.FindAll(".rz-autocomplete-list-item");
+            Assert.Contains(items, i => i.TextContent.Trim() == "1");
+            Assert.DoesNotContain(items, i => i.TextContent.Trim() == "0"); // null Child -> blank, not "0"
+        }
+
+        [Fact]
         public void AutoComplete_Renders_LoadingTemplate_WhenIsLoading()
         {
             using var ctx = new TestContext();
@@ -519,6 +592,54 @@ namespace Radzen.Blazor.Tests
                 builder.AddAttribute(1, nameof(RadzenAutoComplete.Value), HeldValue);
                 builder.AddAttribute(2, nameof(RadzenAutoComplete.ValueChanged),
                     Microsoft.AspNetCore.Components.EventCallback.Factory.Create<string>(this, v => { HeldValue = v.ToUpperInvariant(); StateHasChanged(); }));
+                builder.CloseComponent();
+            }
+        }
+
+        [Fact]
+        public void AutoComplete_ChangingSelectedItemAtRuntime_DoesNotReadExpiredParameterView()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var host = ctx.RenderComponent<RadzenAutoCompleteSelectedItemHost>();
+            var autoComplete = host.FindComponent<RadzenAutoComplete>();
+
+            host.InvokeAsync(() =>
+            {
+                host.Instance.SelectedItem = "Beta";
+                host.Instance.Refresh();
+            });
+
+            host.Instance.ChangeCompletion.SetResult(true);
+
+            host.WaitForAssertion(() =>
+            {
+                Assert.Equal("Beta", autoComplete.Instance.SelectedItem);
+                Assert.Equal("Beta", autoComplete.Instance.Value);
+            });
+            Assert.False(ctx.Renderer.UnhandledException.IsCompleted);
+        }
+
+        private sealed class RadzenAutoCompleteSelectedItemHost : Microsoft.AspNetCore.Components.ComponentBase
+        {
+            private readonly string[] data = { "Alpha", "Beta" };
+
+            public object SelectedItem { get; set; }
+
+            public TaskCompletionSource<bool> ChangeCompletion { get; } = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            public void Refresh() => StateHasChanged();
+
+            protected override void BuildRenderTree(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder)
+            {
+                var completion = ChangeCompletion;
+
+                builder.OpenComponent<RadzenAutoComplete>(0);
+                builder.AddAttribute(1, nameof(RadzenAutoComplete.Data), data);
+                builder.AddAttribute(2, nameof(RadzenAutoComplete.SelectedItem), SelectedItem);
+                builder.AddAttribute(3, nameof(RadzenAutoComplete.Change),
+                    new Microsoft.AspNetCore.Components.EventCallback<object>(null, (System.Func<object, Task>)(_ => completion.Task)));
                 builder.CloseComponent();
             }
         }

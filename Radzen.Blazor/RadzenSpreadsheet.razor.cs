@@ -264,6 +264,14 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     public EventCallback<SpreadsheetCommandEventArgs> CommandExecuting { get; set; }
 
     /// <summary>
+    /// Fires after the workbook has been mutated: a command executed, undone, or redone,
+    /// or a sheet added, removed, renamed, or moved. Loading a different workbook raises
+    /// <see cref="WorkbookChanged"/> instead.
+    /// </summary>
+    [Parameter]
+    public EventCallback<SpreadsheetChangeEventArgs> Change { get; set; }
+
+    /// <summary>
     /// Replaces the built-in toolsets. When set, the supplied content sits inside the
     /// toolbar's <see cref="RadzenTabs.Tabs"/> slot — each child should be a
     /// <see cref="RadzenTabsItem"/>. Add
@@ -438,10 +446,15 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         {
             clipboard.Clear();
         }
-        
+
+        if (executed)
+        {
+            await Change.InvokeAsync(new SpreadsheetChangeEventArgs(SpreadsheetChangeReason.Command, ActiveView?.Worksheet, command));
+        }
+
         return executed;
     }
-    
+
     /// <inheritdoc/>
     public void Undo()
     {
@@ -450,7 +463,16 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             return;
         }
 
-        ActiveView?.Commands.Undo();
+        var view = ActiveView;
+
+        if (view?.Commands.CanUndo != true)
+        {
+            return;
+        }
+
+        view.Commands.Undo();
+
+        _ = Change.InvokeAsync(new SpreadsheetChangeEventArgs(SpreadsheetChangeReason.Undo, view.Worksheet));
     }
 
     /// <inheritdoc/>
@@ -461,7 +483,16 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             return;
         }
 
-        ActiveView?.Commands.Redo();
+        var view = ActiveView;
+
+        if (view?.Commands.CanRedo != true)
+        {
+            return;
+        }
+
+        view.Commands.Redo();
+
+        _ = Change.InvokeAsync(new SpreadsheetChangeEventArgs(SpreadsheetChangeReason.Redo, view.Worksheet));
     }
 
     /// <inheritdoc/>
@@ -501,7 +532,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
         if (Worksheet?.Selection.Cell == CellRef.Invalid)
         {
-            Worksheet.Selection.Select(new CellRef(0, 0));
+            Worksheet.Selection.Select(Worksheet.FirstVisibleCell());
         }
     }
 
@@ -554,6 +585,8 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         var name = GenerateSheetName();
         workbook.AddSheet(name, 100, 26);
         await SelectSheetAsync(workbook.Sheets.Count - 1);
+
+        await Change.InvokeAsync(new SpreadsheetChangeEventArgs(SpreadsheetChangeReason.SheetAdded, workbook.Sheets[^1]));
     }
 
     private async Task OnSheetAction(RadzenSplitButtonItem? item, Worksheet sheet)
@@ -599,6 +632,8 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             sheetIndex >= workbook.Sheets.Count ? workbook.Sheets.Count - 1 :
             removedIndex < sheetIndex ? sheetIndex - 1 :
             sheetIndex);
+
+        await Change.InvokeAsync(new SpreadsheetChangeEventArgs(SpreadsheetChangeReason.SheetRemoved, sheet));
     }
 
     private async Task OnRenameSheetAsync(Worksheet sheet)
@@ -617,9 +652,11 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             new Dictionary<string, object?> { { "Name", sheet.Name }, { "ExistingNames", existingNames } },
             new DialogOptions { Width = "300px" });
 
-        if (name is string newName && !string.IsNullOrWhiteSpace(newName))
+        if (name is string newName && !string.IsNullOrWhiteSpace(newName) && newName != sheet.Name)
         {
             sheet.Name = newName;
+
+            await Change.InvokeAsync(new SpreadsheetChangeEventArgs(SpreadsheetChangeReason.SheetRenamed, sheet));
         }
     }
 
@@ -647,6 +684,8 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             }
 
             await NotifySelectedSheetIndexChangedAsync(previous);
+
+            await Change.InvokeAsync(new SpreadsheetChangeEventArgs(SpreadsheetChangeReason.SheetMoved, sheet));
         }
     }
 
@@ -674,6 +713,8 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
             }
 
             await NotifySelectedSheetIndexChangedAsync(previous);
+
+            await Change.InvokeAsync(new SpreadsheetChangeEventArgs(SpreadsheetChangeReason.SheetMoved, sheet));
         }
     }
 
@@ -1165,6 +1206,9 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
                     maxColumn = cell.Address.Column;
                 }
             }
+
+            maxRow = Worksheet.Rows.NextVisible(maxRow, -1, maxRow);
+            maxColumn = Worksheet.Columns.NextVisible(maxColumn, -1, maxColumn);
         }
 
         return new CellRef(maxRow, maxColumn);
@@ -1215,6 +1259,9 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
                 }
             }
         }
+
+        r = Worksheet.Rows.NextVisible(r, dRow, from.Row);
+        c = Worksheet.Columns.NextVisible(c, dColumn, from.Column);
 
         return new CellRef(r, c);
     }
@@ -1580,14 +1627,14 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         Bind("Shift+ArrowDown", _ => ExtendSelectionAsync(1, 0));
         Bind("Shift+ArrowLeft", _ => ExtendSelectionAsync(0, -1));
         Bind("Shift+ArrowRight", _ => ExtendSelectionAsync(0, 1));
-        Bind("Home", _ => MoveToAsync(c => new CellRef(c.Row, 0)));
+        Bind("Home", _ => MoveToAsync(c => new CellRef(c.Row, Worksheet!.Columns.NextVisible(0, 1, 0))));
         Bind("End", _ => MoveToAsync(c => new CellRef(c.Row, GetUsedEnd().Column)));
-        Bind("Ctrl+Home", _ => MoveToAsync(_ => new CellRef(0, 0)));
+        Bind("Ctrl+Home", _ => MoveToAsync(_ => Worksheet!.FirstVisibleCell()));
         Bind("Ctrl+End", _ => MoveToAsync(_ => GetUsedEnd()));
         Bind("Ctrl+A", _ => SelectUsedRangeAsync());
-        Bind("Shift+Home", _ => ExtendToAsync(c => new CellRef(c.Row, 0)));
+        Bind("Shift+Home", _ => ExtendToAsync(c => new CellRef(c.Row, Worksheet!.Columns.NextVisible(0, 1, 0))));
         Bind("Shift+End", _ => ExtendToAsync(c => new CellRef(c.Row, GetUsedEnd().Column)));
-        Bind("Ctrl+Shift+Home", _ => ExtendToAsync(_ => new CellRef(0, 0)));
+        Bind("Ctrl+Shift+Home", _ => ExtendToAsync(_ => Worksheet!.FirstVisibleCell()));
         Bind("Ctrl+Shift+End", _ => ExtendToAsync(_ => GetUsedEnd()));
         Bind("Ctrl+ArrowUp", _ => MoveToAsync(c => FindEdge(c, -1, 0)));
         Bind("Ctrl+ArrowDown", _ => MoveToAsync(c => FindEdge(c, 1, 0)));

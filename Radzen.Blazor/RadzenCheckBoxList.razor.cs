@@ -42,7 +42,6 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    [CascadingTypeParameter(nameof(TValue))]
     public partial class RadzenCheckBoxList<TValue> : FormComponent<IEnumerable<TValue>>, IRadzenCheckBoxList
     {
         string ItemClass(IRadzenCheckBoxListItem item) => ClassList.Create("rz-chkbox-box")
@@ -116,8 +115,8 @@ namespace Radzen.Blazor
             allItems = items.Concat((Data != null ? Data.Cast<object>() : Enumerable.Empty<object>()).Select(i =>
             {
                 var item = new RadzenCheckBoxListItem<TValue>();
-                item.SetText((string?)PropertyAccess.GetItemOrValueFromProperty(i, TextProperty ?? string.Empty) ?? string.Empty);
-                item.SetValue((TValue)PropertyAccess.GetItemOrValueFromProperty(i, ValueProperty ?? string.Empty)!);
+                item.SetText((string?)PropertyAccess.GetItemProperty(i, TextProperty) ?? string.Empty);
+                item.SetValue((TValue)PropertyAccess.GetItemProperty(i, ValueProperty)!);
 
                 if (DisabledProperty != null && PropertyAccess.TryGetItemOrValueFromProperty<bool>(i, DisabledProperty, out var disabledResult))
                 {
@@ -138,7 +137,18 @@ namespace Radzen.Blazor
         {
             base.OnParametersSet();
 
+            // ShouldRender is skipped for the first render.
+            selection.Invalidate();
+
             UpdateAllItems();
+        }
+
+        /// <inheritdoc />
+        protected override bool ShouldRender()
+        {
+            // Bound collections may mutate in place between renders.
+            selection.Invalidate();
+            return base.ShouldRender();
         }
 
         List<IRadzenCheckBoxListItem> allItems = new();
@@ -181,18 +191,22 @@ namespace Radzen.Blazor
 
         bool? IsAllSelected()
         {
-            Func<IRadzenCheckBoxListItem, bool> predicate = IsSelected;
-            var all = allItems.All(predicate);
-            var any = allItems.Any(predicate);
+            // Determine both states in one pass.
+            var all = true;
+            var any = false;
+            foreach (var item in allItems)
+            {
+                if (IsSelected(item))
+                {
+                    any = true;
+                }
+                else
+                {
+                    all = false;
+                }
+            }
 
-            if (all)
-            {
-                return true;
-            }
-            else
-            {
-                return any ? null : (bool?)false;
-            }
+            return all ? true : (any ? (bool?)null : false);
         }
 
         private IEnumerable? data;
@@ -307,6 +321,8 @@ namespace Radzen.Blazor
             }
         }
 
+        readonly SelectionMembership selection = new();
+
         /// <summary>
         /// Determines whether the specified item is selected.
         /// </summary>
@@ -315,7 +331,13 @@ namespace Radzen.Blazor
         protected bool IsSelected(IRadzenCheckBoxListItem item)
         {
             ArgumentNullException.ThrowIfNull(item);
-            return Value != null && Value.Cast<object?>().Contains(item.Value);
+
+            if (Value == null)
+            {
+                return false;
+            }
+
+            return selection.Contains(Value, item.Value);
         }
 
         /// <summary>

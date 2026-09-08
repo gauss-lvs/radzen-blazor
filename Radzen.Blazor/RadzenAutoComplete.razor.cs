@@ -320,6 +320,43 @@ namespace Radzen.Blazor
             }
         }
 
+        Func<object, object?>? textPropertyGetter;
+        Type? textPropertyGetterType;
+        string? textPropertyGetterProperty;
+
+        /// <summary>
+        /// Reads an item's TextProperty through a getter compiled once per (item type, TextProperty) and cached, falling back to reflection for anything it cannot compile.
+        /// </summary>
+        internal object? GetItemText(object? item)
+        {
+            // A primitive/string item or empty TextProperty yields the item itself, matching
+            // GetItemOrValueFromProperty (so List<string> with TextProperty="Length" shows the string, not its length).
+            // A nested path also stays on reflection: the compiled getter would render a null intermediate as the
+            // leaf type's default (e.g. "0") instead of blank, so only single-member paths are compiled.
+            if (item == null || string.IsNullOrEmpty(TextProperty) || TextProperty.Contains('.', StringComparison.Ordinal)
+                || Convert.GetTypeCode(item) != TypeCode.Object)
+            {
+                return PropertyAccess.GetItemOrValueFromProperty(item, TextProperty ?? string.Empty);
+            }
+
+            var type = item.GetType();
+            if (textPropertyGetterType != type || textPropertyGetterProperty != TextProperty)
+            {
+                textPropertyGetterType = type;
+                textPropertyGetterProperty = TextProperty;
+                try
+                {
+                    textPropertyGetter = PropertyAccess.Getter<object, object?>(TextProperty, type);
+                }
+                catch
+                {
+                    textPropertyGetter = null;
+                }
+            }
+
+            return textPropertyGetter != null ? textPropertyGetter(item) : PropertyAccess.GetItemOrValueFromProperty(item, TextProperty);
+        }
+
         /// <summary>
         /// Handles the @bind:set binding of the underlying input element.
         /// </summary>
@@ -340,7 +377,7 @@ namespace Radzen.Blazor
         {
             if (!string.IsNullOrEmpty(TextProperty))
             {
-                Value = PropertyAccess.GetItemOrValueFromProperty(item, TextProperty)?.ToString();
+                Value = GetItemText(item)?.ToString();
             }
             else
             {
@@ -474,20 +511,13 @@ namespace Radzen.Blazor
                 _jsParamsChanged = true;
             }
 
-            if (parameters.DidParameterChange(nameof(SelectedItem), SelectedItem))
-            {
-                var item = parameters.GetValueOrDefault<object>(nameof(SelectedItem));
-                if (item != null)
-                {
-                    await SelectItem(item);
-                }
-            }
+            var selectedItemChanged = parameters.DidParameterChange(nameof(SelectedItem), SelectedItem);
 
             await base.SetParametersAsync(parameters);
 
-            if (parameters.DidParameterChange(nameof(Value), Value))
+            if (selectedItemChanged && SelectedItem != null)
             {
-                Value = parameters.GetValueOrDefault<string>(nameof(Value));
+                await SelectItem(SelectedItem);
             }
 
             if (shouldClose && !firstRender && JSRuntime != null)

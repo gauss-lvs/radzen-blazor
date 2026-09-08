@@ -170,18 +170,9 @@ namespace Radzen
             //
         }
 
-        HashSet<object> keys = new HashSet<object>();
-
         internal object? GetKey(object item)
         {
-            var value = GetItemOrValueFromProperty(item, ValueProperty ?? string.Empty);
-
-            if (value != null)
-            {
-                keys.Add(value);
-            }
-
-            return value;
+            return GetItemOrValueFromProperty(item, ValueProperty ?? string.Empty);
         }
 
         /// <summary>
@@ -427,6 +418,7 @@ namespace Radzen
             }
 
             internalValue = collectionAssignment.GetCleared();
+            selection.Invalidate();
             selectedItem = null;
 
             selectedItems.Clear();
@@ -498,6 +490,9 @@ namespace Radzen
         protected override void OnParametersSet()
         {
             base.OnParametersSet();
+
+            // ShouldRender is skipped for the first render.
+            selection.Invalidate();
 
             if (_data != null)
             {
@@ -1634,17 +1629,16 @@ namespace Radzen
                     {
                         if (!string.IsNullOrEmpty(ValueProperty))
                         {
-                            foreach (object v in values.Cast<dynamic>().ToList())
+                            if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || SelectItemFromValueForceObjectEquals)
                             {
-                                dynamic item;
-
-                                if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()) || SelectItemFromValueForceObjectEquals)
+                                AddSelectedItemsByValue(view, values);
+                            }
+                            else
+                            {
+                                // Non-in-memory (e.g. EF): keep the per-value query so the lookup stays server-side.
+                                foreach (object v in values.Cast<dynamic>().ToList())
                                 {
-                                    item = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), v)).FirstOrDefault()!;
-                                }
-                                else
-                                {
-                                    item = view.AsQueryable().Where(new FilterDescriptor[]
+                                    dynamic item = view.AsQueryable().Where(new FilterDescriptor[]
                                     {
                                         new FilterDescriptor()
                                         {
@@ -1654,11 +1648,11 @@ namespace Radzen
                                     },
                                     LogicalFilterOperator.And,
                                     FilterCaseSensitivity.Default).FirstOrDefault()!;
-                                }
 
-                                if (!object.Equals(item, null) && !selectedItems.AsQueryable().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), v)).Any())
-                                {
-                                    selectedItems.Add(item);
+                                    if (!object.Equals(item, null) && !selectedItems.AsQueryable().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), v)).Any())
+                                    {
+                                        selectedItems.Add(item);
+                                    }
                                 }
                             }
                         }
@@ -1687,6 +1681,98 @@ namespace Radzen
         /// </summary>
         [Parameter] public IEqualityComparer<object>? ItemComparer { get; set; }
 
+        /// <summary>
+        /// Resolves each bound value against the in-memory <paramref name="source"/> and adds any not already selected, using a value-&gt;item lookup so a multiselect binding is O(items + selected) rather than O(items x selected). A value whose type differs from the item value type (e.g. an integer bound against an enum property) is coerced like the FilterDescriptor-based path does, and a null value selects the first item whose value is null. The non-in-memory (e.g. EF) path stays at each call site so its lookup remains server-side.
+        /// </summary>
+        private protected void AddSelectedItemsByValue(IEnumerable source, IEnumerable values)
+        {
+            var itemsByValue = new Dictionary<object, object>();
+            object? itemWithNullValue = null;
+            Type? itemValueType = null;
+            foreach (var i in source.OfType<object>())
+            {
+                var iv = GetItemOrValueFromProperty(i, ValueProperty!);
+                if (iv != null)
+                {
+                    itemsByValue.TryAdd(iv, i);
+                    itemValueType ??= iv.GetType();
+                }
+                else
+                {
+                    itemWithNullValue ??= i;
+                }
+            }
+
+            var existingValues = new HashSet<object>();
+            var nullValueSelected = false;
+            foreach (var si in selectedItems)
+            {
+                var sv = GetItemOrValueFromProperty(si, ValueProperty!);
+                if (sv != null)
+                {
+                    existingValues.Add(sv);
+                }
+                else
+                {
+                    nullValueSelected = true;
+                }
+            }
+
+            foreach (var v in values.Cast<object?>())
+            {
+                if (v == null)
+                {
+                    if (itemWithNullValue != null && !nullValueSelected)
+                    {
+                        nullValueSelected = true;
+                        selectedItems.Add(itemWithNullValue);
+                    }
+
+                    continue;
+                }
+
+                var key = itemsByValue.ContainsKey(v) ? v : CoerceValue(v, itemValueType);
+
+                if (key != null && itemsByValue.TryGetValue(key, out var item) && existingValues.Add(key))
+                {
+                    selectedItems.Add(item);
+                }
+            }
+        }
+
+        static object? CoerceValue(object value, Type? targetType)
+        {
+            if (targetType == null || targetType == value.GetType())
+            {
+                return null;
+            }
+
+            try
+            {
+                return targetType.IsEnum ? Enum.ToObject(targetType, value) :
+                    Convert.ChangeType(value, targetType, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+            catch (InvalidCastException)
+            {
+                return null;
+            }
+            catch (FormatException)
+            {
+                return null;
+            }
+            catch (OverflowException)
+            {
+                return null;
+            }
+        }
+
+        // Shared for repeated membership checks within one render.
+        readonly SelectionMembership selection = new();
+
         internal bool IsItemSelectedByValue(object v)
         {
             switch (internalValue)
@@ -1694,7 +1780,7 @@ namespace Radzen
                 case string s:
                     return object.Equals(s, v);
                 case IEnumerable enumerable:
-                    return enumerable.Cast<object>().Contains(v);
+                    return selection.Contains(enumerable, v);
                 case null:
                     return false;
                 default:
@@ -1703,15 +1789,21 @@ namespace Radzen
         }
 
         /// <inheritdoc />
+        protected override bool ShouldRender()
+        {
+            // Bound collections may mutate in place between renders.
+            selection.Invalidate();
+
+            return base.ShouldRender();
+        }
+
+        /// <inheritdoc />
         public override void Dispose()
         {
             base.Dispose();
 
-            keys.Clear();
-
             GC.SuppressFinalize(this);
         }
-
 
         private class DefaultCollectionAssignment
         {

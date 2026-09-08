@@ -11,6 +11,7 @@ using RadzenBlazorDemos.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddControllers();
 builder.Services.AddRazorPages();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents().AddHubOptions(o =>
@@ -81,7 +82,7 @@ var baseCsp = string.Join("; ",
     "script-src 'self' http://localhost:* cdnjs.cloudflare.com cdn.syndication.twimg.com platform.linkedin.com www.linkedin.com analytics.radzen.com maps.googleapis.com unpkg.com",
     "style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maps.googleapis.com fonts.googleapis.com fonts.gstatic.com",
     "font-src 'self' data: cdnjs.cloudflare.com maps.googleapis.com fonts.googleapis.com fonts.gstatic.com",
-    "frame-src www.youtube.com platform.twitter.com platform.linkedin.com www.linkedin.com",
+    "frame-src blocks.radzen.com www.youtube.com platform.twitter.com platform.linkedin.com www.linkedin.com",
     "worker-src 'self' blob:",
     "upgrade-insecure-requests");
 
@@ -94,7 +95,7 @@ var relaxedCsp = string.Join("; ",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* cdnjs.cloudflare.com cdn.syndication.twimg.com platform.linkedin.com www.linkedin.com analytics.radzen.com maps.googleapis.com unpkg.com",
     "style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maps.googleapis.com fonts.googleapis.com fonts.gstatic.com",
     "font-src 'self' data: cdnjs.cloudflare.com maps.googleapis.com fonts.googleapis.com fonts.gstatic.com",
-    "frame-src www.youtube.com platform.twitter.com platform.linkedin.com www.linkedin.com",
+    "frame-src blocks.radzen.com www.youtube.com platform.twitter.com platform.linkedin.com www.linkedin.com",
     "worker-src 'self' blob:",
     "upgrade-insecure-requests");
 
@@ -121,7 +122,7 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedUICultures = supportedCultures
 });
 */
-app.UseStatusCodePagesWithReExecute("/not-found");
+app.UseWhen(context => !context.Request.Path.StartsWithSegments("/api"), branch => branch.UseStatusCodePagesWithReExecute("/not-found"));
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();

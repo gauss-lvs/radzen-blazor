@@ -123,6 +123,52 @@ namespace Radzen.Blazor.Tests
             Assert.Equal(150, result[1].Value);
         }
 
+        [Theory]
+        [InlineData("")]
+        [InlineData(" asc")]
+        [InlineData(" desc")]
+        public void OrderBy_PreservesRepeatedSpacesInADynamicKey(string direction)
+        {
+            var data = new List<IDictionary<string, object>>
+            {
+                new Dictionary<string, object> { ["Employee  ID"] = 2 },
+                new Dictionary<string, object> { ["Employee  ID"] = 1 },
+            }.AsQueryable();
+
+            var selector = PropertyAccess.GetDynamicPropertyExpression("Employee  ID", typeof(int)) + direction;
+
+            var result = data.OrderBy(selector).ToList();
+
+            Assert.Equal(direction == " desc" ? 2 : 1, result[0]["Employee  ID"]);
+            Assert.Equal(direction == " desc" ? 1 : 2, result[1]["Employee  ID"]);
+        }
+
+        [Theory]
+        [InlineData("Value \tasc")]
+        [InlineData("Value \nasc")]
+        public void OrderBy_TreatsAWhitespaceWrappedAscAsDescending(string selector)
+        {
+            var data = GetTestData().AsQueryable();
+
+            var result = data.OrderBy(selector).ToList();
+            var descending = data.OrderBy("Value desc").ToList();
+
+            Assert.Equal(descending.Select(d => d.Value), result.Select(r => r.Value));
+        }
+
+        [Theory]
+        [InlineData("Value asc")]
+        [InlineData("Value")]
+        [InlineData("Value asc\t")]
+        public void OrderBy_TreatsAPlainAscAsAscending(string selector)
+        {
+            var data = GetTestData().AsQueryable();
+
+            var result = data.OrderBy(selector).ToList();
+
+            Assert.Equal(data.Select(d => d.Value).OrderBy(v => v), result.Select(r => r.Value));
+        }
+
         // Where tests with FilterDescriptor
         [Fact]
         public void Where_FiltersWithEquals()
@@ -1580,6 +1626,189 @@ namespace Radzen.Blazor.Tests
         }
 
         [Fact]
+        public void Where_FiltersArrayValuedProperty_WithEquals()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Codes = new[] { 10, 20 } },
+                new { Id = 2, Codes = new[] { 30 } },
+                new { Id = 3, Codes = new[] { 20, 40 } }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor
+                {
+                    Property = "Codes",
+                    FilterValue = 20,
+                    FilterOperator = FilterOperator.Equals
+                }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_FiltersCollectionItemProperty_WhenCollectionIsArray()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Tags = new[] { new { Name = "tag1", Value = 10 } } },
+                new { Id = 2, Tags = new[] { new { Name = "tag3", Value = 30 } } },
+                new { Id = 3, Tags = new[] { new { Name = "tag1", Value = 50 } } }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor
+                {
+                    Property = "Tags",
+                    FilterProperty = "Name",
+                    FilterValue = "tag1",
+                    FilterOperator = FilterOperator.Equals
+                }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_FiltersArrayValuedProperty_SkipsNullCollections()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Codes = new[] { 10, 20 } },
+                new { Id = 2, Codes = (int[])null },
+                new { Id = 3, Codes = new[] { 20, 40 } }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "Codes", FilterValue = 20, FilterOperator = FilterOperator.Equals }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.DoesNotContain(result, r => r.Id == 2);
+        }
+
+        [Fact]
+        public void Where_FiltersCollectionItemProperty_SkipsNullCollections_AnyAndAll()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Tags = new List<TestTag> { new TestTag { Name = "tag1" }, new TestTag { Name = "tag1" } } },
+                new { Id = 2, Tags = (List<TestTag>)null },
+                new { Id = 3, Tags = new List<TestTag> { new TestTag { Name = "tag1" }, new TestTag { Name = "tag2" } } }
+            }.AsQueryable();
+
+            var any = testData.Where(new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "Tags", FilterProperty = "Name", FilterValue = "tag1", FilterOperator = FilterOperator.Equals, CollectionFilterMode = CollectionFilterMode.Any }
+            }, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            var all = testData.Where(new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "Tags", FilterProperty = "Name", FilterValue = "tag1", FilterOperator = FilterOperator.Equals, CollectionFilterMode = CollectionFilterMode.All }
+            }, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(new[] { 1, 3 }, any.Select(r => r.Id));
+            Assert.Equal(new[] { 1 }, all.Select(r => r.Id));
+        }
+
+        [Theory]
+        [InlineData(FilterOperator.IsNull, new[] { 2 })]
+        [InlineData(FilterOperator.IsNotNull, new[] { 1, 3, 4 })]
+        [InlineData(FilterOperator.IsEmpty, new[] { 2, 3 })]
+        [InlineData(FilterOperator.IsNotEmpty, new[] { 1, 4 })]
+        public void Where_FiltersArrayValuedProperty_NullAndEmptyOperatorsTestTheCollection(FilterOperator filterOperator, int[] expected)
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Codes = new[] { 10, 20 } },
+                new { Id = 2, Codes = (int[])null },
+                new { Id = 3, Codes = new int[0] },
+                new { Id = 4, Codes = new[] { 30 } }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "Codes", FilterOperator = filterOperator }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(expected, result.Select(r => r.Id));
+        }
+
+        [Theory]
+        [InlineData(FilterOperator.IsNull, new[] { 2 })]
+        [InlineData(FilterOperator.IsNotNull, new[] { 1, 3, 4 })]
+        [InlineData(FilterOperator.IsEmpty, new[] { 2, 3 })]
+        [InlineData(FilterOperator.IsNotEmpty, new[] { 1, 4 })]
+        public void Where_FiltersListValuedProperty_NullAndEmptyOperatorsTestTheCollection(FilterOperator filterOperator, int[] expected)
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Tags = new List<TestTag> { new TestTag { Name = "tag1" } } },
+                new { Id = 2, Tags = (List<TestTag>)null },
+                new { Id = 3, Tags = new List<TestTag>() },
+                new { Id = 4, Tags = new List<TestTag> { new TestTag { Name = null } } }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "Tags", FilterOperator = filterOperator }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(expected, result.Select(r => r.Id));
+        }
+
+        [Fact]
+        public void Where_FiltersCollectionItemProperty_WithIsNull_AsSecondFilter_SkipsNullCollections()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Tags = new List<TestTag> { new TestTag { Name = "tag1" }, new TestTag { Name = null } } },
+                new { Id = 2, Tags = (List<TestTag>)null },
+                new { Id = 3, Tags = new List<TestTag> { new TestTag { Name = "tag3" } } }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor
+                {
+                    Property = "Tags",
+                    FilterProperty = "Name",
+                    FilterValue = "tag3",
+                    FilterOperator = FilterOperator.Equals,
+                    SecondFilterOperator = FilterOperator.IsNull,
+                    LogicalFilterOperator = LogicalFilterOperator.Or
+                }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(new[] { 1, 3 }, result.Select(r => r.Id));
+        }
+
+        public class TestTag
+        {
+            public string Name { get; set; }
+        }
+
+        [Fact]
         public void Where_FiltersNestedCollectionItemProperty()
         {
             var testData = new[]
@@ -2658,6 +2887,353 @@ namespace Radzen.Blazor.Tests
             var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
             
             // Should return items where all tags have non-empty Name
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_FiltersNullableScalarProperty_WithIn()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = (long?)200 },
+                new { Id = 3, ClientNr = (long?)300 },
+                new { Id = 4, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor
+                {
+                    Property = "ClientNr",
+                    FilterValue = new long[] { 100, 300 },
+                    FilterOperator = FilterOperator.In
+                }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_FiltersNullableScalarProperty_WithNotIn()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = (long?)200 },
+                new { Id = 3, ClientNr = (long?)300 },
+                new { Id = 4, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor
+                {
+                    Property = "ClientNr",
+                    FilterValue = new long[] { 100, 300 },
+                    FilterOperator = FilterOperator.NotIn
+                }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 2);
+            Assert.Contains(result, r => r.Id == 4);
+        }
+
+        [Fact]
+        public void Where_FiltersNullableScalarProperty_WithSecondFilterValue_In()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = (long?)200 },
+                new { Id = 3, ClientNr = (long?)300 },
+                new { Id = 4, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor
+                {
+                    Property = "ClientNr",
+                    FilterValue = 100L,
+                    FilterOperator = FilterOperator.Equals,
+                    SecondFilterValue = new long[] { 200, 300 },
+                    SecondFilterOperator = FilterOperator.In,
+                    LogicalFilterOperator = LogicalFilterOperator.Or
+                }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(3, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 2);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_InWithNullFilterValue_DoesNotFilter()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "ClientNr", FilterValue = null, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public void Where_NotInWithNullFilterValue_DoesNotFilter()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "ClientNr", FilterValue = null, FilterOperator = FilterOperator.NotIn }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public void Where_InWithScalarFilterValue_DoesNotFilter()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = (long?)200 }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "ClientNr", FilterValue = 100L, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public void Where_InWithScalarEnumFilterValue_DoesNotFilter()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Day = DayOfWeek.Monday },
+                new { Id = 2, Day = DayOfWeek.Friday }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "Day", FilterValue = DayOfWeek.Monday, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+        }
+
+        [Fact]
+        public void Where_FiltersNullableScalarProperty_WithIn_NullableElementList()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = (long?)200 },
+                new { Id = 3, ClientNr = (long?)300 },
+                new { Id = 4, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "ClientNr", FilterValue = new List<long?> { 100, 300 }, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_FiltersNullableScalarProperty_WithIn_NullableElementArray()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = (long?)200 },
+                new { Id = 3, ClientNr = (long?)300 },
+                new { Id = 4, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "ClientNr", FilterValue = new long?[] { 100, 300 }, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_FiltersNullableScalarProperty_WithIn_ObjectList()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = (long?)200 },
+                new { Id = 3, ClientNr = (long?)300 },
+                new { Id = 4, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "ClientNr", FilterValue = new List<object> { 100L, 300L }, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_FiltersNullableScalarProperty_WithIn_DifferentNumericElementType()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = (long?)200 },
+                new { Id = 3, ClientNr = (long?)300 },
+                new { Id = 4, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "ClientNr", FilterValue = new int[] { 100, 300 }, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_FiltersNullableScalarProperty_WithNotIn_NullableElementList()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, ClientNr = (long?)100 },
+                new { Id = 2, ClientNr = (long?)200 },
+                new { Id = 3, ClientNr = (long?)300 },
+                new { Id = 4, ClientNr = default(long?) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "ClientNr", FilterValue = new List<long?> { 100, 300 }, FilterOperator = FilterOperator.NotIn }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 2);
+            Assert.Contains(result, r => r.Id == 4);
+        }
+
+        [Fact]
+        public void Where_FiltersEnumProperty_WithIn()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Day = DayOfWeek.Monday },
+                new { Id = 2, Day = DayOfWeek.Tuesday },
+                new { Id = 3, Day = DayOfWeek.Friday }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "Day", FilterValue = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Friday }, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 3);
+        }
+
+        [Fact]
+        public void Where_FiltersNullableEnumProperty_WithIn()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Day = (DayOfWeek?)DayOfWeek.Monday },
+                new { Id = 2, Day = (DayOfWeek?)DayOfWeek.Tuesday },
+                new { Id = 3, Day = default(DayOfWeek?) },
+                new { Id = 4, Day = (DayOfWeek?)DayOfWeek.Friday }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "Day", FilterValue = new List<DayOfWeek> { DayOfWeek.Monday, DayOfWeek.Friday }, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
+            Assert.Equal(2, result.Count);
+            Assert.Contains(result, r => r.Id == 1);
+            Assert.Contains(result, r => r.Id == 4);
+        }
+
+        [Fact]
+        public void Where_FiltersStringProperty_WithIn()
+        {
+            var testData = new[]
+            {
+                new { Id = 1, Name = "a" },
+                new { Id = 2, Name = "b" },
+                new { Id = 3, Name = "c" },
+                new { Id = 4, Name = default(string) }
+            }.AsQueryable();
+
+            var filters = new List<FilterDescriptor>
+            {
+                new FilterDescriptor { Property = "Name", FilterValue = new List<string> { "a", "c" }, FilterOperator = FilterOperator.In }
+            };
+
+            var result = testData.Where(filters, LogicalFilterOperator.And, FilterCaseSensitivity.Default).ToList();
+
             Assert.Equal(2, result.Count);
             Assert.Contains(result, r => r.Id == 1);
             Assert.Contains(result, r => r.Id == 3);

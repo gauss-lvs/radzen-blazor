@@ -37,7 +37,6 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    [CascadingTypeParameter(nameof(TValue))]
     public partial class RadzenRadioButtonList<TValue> : FormComponent<TValue>, IRadzenRadioButtonList
     {
         string ItemClass(IRadzenRadioButtonListItem item) => ClassList.Create("rz-radiobutton-box")
@@ -117,8 +116,8 @@ namespace Radzen.Blazor
             allItems = items.Concat((Data != null ? Data.Cast<object>() : Enumerable.Empty<object>()).Select(i =>
             {
                 var item = new RadzenRadioButtonListItem<TValue>();
-                item.SetText((string?)PropertyAccess.GetItemOrValueFromProperty(i, TextProperty ?? string.Empty) ?? string.Empty);
-                item.SetValue((TValue)PropertyAccess.GetItemOrValueFromProperty(i, ValueProperty ?? string.Empty)!);
+                item.SetText((string?)PropertyAccess.GetItemProperty(i, TextProperty) ?? string.Empty);
+                item.SetValue((TValue)PropertyAccess.GetItemProperty(i, ValueProperty)!);
 
                 if (DisabledProperty != null && PropertyAccess.TryGetItemOrValueFromProperty<bool>(i, DisabledProperty, out var disabledResult))
                 {

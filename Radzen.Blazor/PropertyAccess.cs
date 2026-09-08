@@ -6,6 +6,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
 
 namespace Radzen;
 
@@ -15,6 +17,8 @@ namespace Radzen;
 public static class PropertyAccess
 {
     private static readonly ConcurrentDictionary<(Type ItemType, Type ValueType, string PropertyName, Type? TargetType), Delegate> getterCache = new();
+
+    private static readonly ConcurrentDictionary<(Type ItemType, string PropertyName, Type? TargetType), Delegate> nullSafeGetterCache = new();
 
     /// <summary>
     /// Creates a function that will return the specified property. The compiled function is cached so repeated calls with the same arguments do not recompile it.
@@ -33,8 +37,24 @@ public static class PropertyAccess
             _ => CreateGetter<TItem, TValue>(propertyName, type));
     }
 
+    /// <summary>
+    /// Like <see cref="Getter{TItem, TValue}"/> for an <see cref="object"/> value, but a null intermediate along a dotted path yields null rather than the leaf type's default. The compiled function is cached.
+    /// </summary>
+    /// <typeparam name="TItem">The owner type.</typeparam>
+    /// <param name="propertyName">Name of the property to return.</param>
+    /// <param name="type">Type of the object.</param>
+    /// <returns>A function which returns the specified property, or null if an intermediate member is null.</returns>
     [RequiresUnreferencedCode(TrimMessages.ExpressionTreeReflection)]
-    private static Func<TItem, TValue> CreateGetter<TItem, TValue>(string propertyName, Type? type)
+    public static Func<TItem, object> NullSafeGetter<TItem>(string propertyName, Type? type = null)
+    {
+        ArgumentNullException.ThrowIfNull(propertyName);
+
+        return (Func<TItem, object>)nullSafeGetterCache.GetOrAdd((typeof(TItem), propertyName, type),
+            _ => CreateGetter<TItem, object>(propertyName, type, nullToNull: true));
+    }
+
+    [RequiresUnreferencedCode(TrimMessages.ExpressionTreeReflection)]
+    private static Func<TItem, TValue> CreateGetter<TItem, TValue>(string propertyName, Type? type, bool nullToNull = false)
     {
         if (propertyName.Contains('[', StringComparison.Ordinal))
         {
@@ -116,13 +136,49 @@ public static class PropertyAccess
             return AccessNoInterface(instance, memberName);
         }
 
+        // When nullToNull is set, a null intermediate makes the whole result null rather than the leaf type's
+        // default. Each step is stored in a local so a computed or side-effecting member is read exactly once.
+        var locals = new List<ParameterExpression>();
+        var steps = new List<Expression>();
+        Expression? nullGuard = null;
+
         foreach (var member in propertyName.Split('.'))
         {
-            body = AccessWithNullPropagation(body, member);
+            var instance = Expression.Variable(body.Type);
+            locals.Add(instance);
+            steps.Add(Expression.Assign(instance, body));
+
+            if (nullToNull && !instance.Type.IsValueType)
+            {
+                var isNull = Expression.Equal(instance, Expression.Constant(null, instance.Type));
+                nullGuard = nullGuard == null ? isNull : Expression.OrElse(nullGuard, isNull);
+                var accessed = AccessNoInterface(instance, member);
+                body = Expression.Condition(isNull, Expression.Default(accessed.Type), accessed);
+            }
+            else if (nullToNull && Nullable.GetUnderlyingType(instance.Type) != null && member != "HasValue")
+            {
+                // A null Nullable<T> yields null. This also guards an explicit ".Value" in the path (which would
+                // otherwise throw); ".HasValue" keeps its boolean semantics and falls through unguarded below.
+                var hasValue = Expression.Property(instance, "HasValue");
+                nullGuard = nullGuard == null ? Expression.Not(hasValue) : Expression.OrElse(nullGuard, Expression.Not(hasValue));
+                var value = Expression.Property(instance, "Value");
+                var accessed = member == "Value" ? (Expression)value : AccessNoInterface(value, member);
+                body = Expression.Condition(hasValue, accessed, Expression.Default(accessed.Type));
+            }
+            else
+            {
+                body = AccessWithNullPropagation(instance, member);
+            }
         }
 
         body = Expression.Convert(body, typeof(TValue));
-        return Expression.Lambda<Func<TItem, TValue>>(body, arg).Compile();
+        if (nullGuard != null)
+        {
+            body = Expression.Condition(nullGuard, Expression.Default(typeof(TValue)), body);
+        }
+
+        steps.Add(body);
+        return Expression.Lambda<Func<TItem, TValue>>(Expression.Block(locals, steps), arg).Compile();
     }
 
     /// <summary>
@@ -273,6 +329,79 @@ public static class PropertyAccess
         var body = Expression.Convert(Expression.Property(Expression.Convert(arg, type), propertyName), typeof(T));
 
         return Expression.Lambda<Func<object, T>>(body, arg).Compile();
+    }
+
+    static readonly ConditionalWeakTable<Type, ItemGetterCache> itemGetterCaches = new();
+
+    sealed class ItemGetter
+    {
+        internal ItemGetter(Func<object, object?>? get) => Get = get;
+
+        internal Func<object, object?>? Get { get; }
+    }
+
+    sealed class ItemGetterCache
+    {
+        const int MaxEntries = 64;
+
+        readonly ConcurrentDictionary<string, ItemGetter> getters = new();
+        int count;
+
+        internal ItemGetter GetOrCreate(object item, string property)
+        {
+            if (getters.TryGetValue(property, out var getter))
+            {
+                return getter;
+            }
+
+            var created = Create(item, property);
+
+            if (Interlocked.Increment(ref count) > MaxEntries)
+            {
+                Interlocked.Decrement(ref count);
+                return created;
+            }
+
+            var result = getters.GetOrAdd(property, created);
+
+            if (!ReferenceEquals(result, created))
+            {
+                Interlocked.Decrement(ref count);
+            }
+
+            return result;
+        }
+
+        static ItemGetter Create(object item, string property)
+        {
+            try
+            {
+                return new ItemGetter(Getter<object?>(item, property));
+            }
+            catch
+            {
+                return new ItemGetter(null);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads a simple property through a getter cached by runtime item type and property name.
+    /// </summary>
+    /// <remarks>Each runtime type owns up to 64 entries and is held weakly. Unsupported inputs use reflection.</remarks>
+    [RequiresUnreferencedCode(TrimMessages.PropertyAccessReflection)]
+    internal static object? GetItemProperty(object? item, string? property)
+    {
+        if (item == null || string.IsNullOrEmpty(property) || property.Contains('.', StringComparison.Ordinal)
+            || Convert.GetTypeCode(item) != TypeCode.Object)
+        {
+            return GetItemOrValueFromProperty(item, property ?? string.Empty);
+        }
+
+        var getter = itemGetterCaches.GetValue(item.GetType(), static _ => new ItemGetterCache())
+            .GetOrCreate(item, property).Get;
+
+        return getter != null ? getter(item) : GetItemOrValueFromProperty(item, property);
     }
 
     /// <summary>
