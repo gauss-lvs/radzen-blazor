@@ -1,5 +1,5 @@
-dotnet version -f .\Radzen.Blazor\Radzen.Blazor.csproj build `
+dotnet version -f ./Radzen.Blazor/Radzen.Blazor.csproj build `
   && git push
-  # && dotnet pack .\Radzen.Blazor\Radzen.Blazor.csproj -o ".nupkgs" -c Release `
-  # && dotnet nuget push ".nupkgs\*.nupkg" --source gauss --api-key $env:GAUSS_NUGET_API_KEY --skip-duplicate --no-symbols `
+  # && dotnet pack ./Radzen.Blazor/Radzen.Blazor.csproj -o ".nupkgs" -c Release `
+  # && dotnet nuget push ".nupkgs/*.nupkg" --source gauss --api-key $env:GAUSS_NUGET_API_KEY --skip-duplicate --no-symbols `
   # && Remove-Item ".nupkgs" -Recurse `
