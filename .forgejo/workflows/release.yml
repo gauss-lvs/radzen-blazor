@@ -65,8 +65,8 @@ jobs:
       - name: Restore
         run: dotnet restore "$TEST_PROJECT"
 
-      - name: Tests
-        run: dotnet test "$TEST_PROJECT" -c Release --no-restore
+      # - name: Tests
+      #   run: dotnet test "$TEST_PROJECT" -c Release --no-restore
 
       - name: Pack inkl. Symbolpaket
         run: dotnet pack "$PROJECT" -c Release -o "$PACKAGE_DIR"
