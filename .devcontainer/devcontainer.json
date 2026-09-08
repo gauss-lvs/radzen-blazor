@@ -1,0 +1,65 @@
+{
+  "name": "Radzen.Server",
+  "image": "docker.sopart.de/gauss/devcontainers-dotnet:10.0",
+  "features": {
+    "ghcr.io/devcontainers/features/powershell:2": {},
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
+  "mounts": [
+    "source=claude-code-config,target=/home/vscode/.claude,type=volume"
+  ],
+  "containerEnv": {
+    "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "DEV_GIT_TOKEN": "${localEnv:GAUSS_GIT_API_KEY_AI}",
+    "ASPNETCORE_Kestrel__Certificates__Default__Path": "/etc/ssl/localcerts/devlocal.pfx"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "anthropic.claude-code",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "ms-vscode.powershell",
+        "patcx.vscode-nuget-gallery",
+        "alefragnani.bookmarks",
+        "gruntfuggly.triggertaskonsave",
+        "redhat.vscode-xml",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "dotnet.defaultSolution": "Radzen.sln",
+        "files.exclude": {
+          "**/.git": true,
+          "**/.svn": true,
+          "**/.hg": true,
+          "**/.DS_Store": true,
+          "**/Thumbs.db": true,
+          "**/bin": true,
+          "**/obj": true
+        }
+      }
+    }
+  },
+  "forwardPorts": [
+    5000,
+    5001
+  ],
+  "portsAttributes": {
+    "5001": {
+      "label": "HTTPS",
+      "protocol": "https"
+    }
+  },
+  "remoteEnv": {
+    "SSH_AUTH_SOCK": null,
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_INTERACTIVE_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_UPGRADEASSISTANT_TELEMETRY_OPTOUT": "1",
+    "POWERSHELL_TELEMETRY_OPTOUT": "1",
+    "POWERSHELL_UPDATECHECK": "Off"
+  },
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && dotnet restore Radzen.sln",
+  "postStartCommand": "bash /usr/local/bin/setup-git.sh",
+  "remoteUser": "vscode"
+}
