@@ -1,0 +1,89 @@
+# Baut Radzen.Blazor.GAUSS, sobald ein Version-Tag (v*) nach git.gauss-lvs.de gepusht wird,
+# und veroeffentlicht Paket + Symbolpaket auf nuget.gauss-lvs.de.
+# Einrichtung (Secret, Runner-Label): siehe .forgejo/workflows/README.md
+name: Publish NuGet
+
+on:
+  push:
+    tags:
+      - "v*"
+  # Manueller Nachlauf, falls ein Tag-Build fehlgeschlagen ist. Der Versionsabgleich
+  # wird dabei uebersprungen, --skip-duplicate verhindert doppelte Veroeffentlichungen.
+  workflow_dispatch:
+
+concurrency:
+  group: publish-nuget-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  PROJECT: Radzen.Blazor/Radzen.Blazor.csproj
+  TEST_PROJECT: Radzen.Blazor.Tests/Radzen.Blazor.Tests.csproj
+  PACKAGE_DIR: .nupkgs
+  NUGET_SOURCE: https://nuget.gauss-lvs.de/v3/index.json
+  CI: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_NOLOGO: "1"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+
+jobs:
+  publish:
+    name: Build, Test und NuGet-Push
+    # "docker" ist das Standard-Label des Forgejo-Runners. Meldet euer Runner ein anderes
+    # Label (z. B. ubuntu-latest oder self-hosted), hier anpassen - das Image kommt ohnehin
+    # aus dem container-Block darunter.
+    runs-on: virtual-runner
+    container:
+      image: docker.sopart.de/gauss/runner-image:gauss-latest
+      credentials:
+        username: ${{ secrets.DOCKER_IMAGE_USER }}
+        password: ${{ secrets.DOCKER_IMAGE_PWD }}
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: API-Key pruefen
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "::error::Secret NUGET_API_KEY ist nicht gesetzt (Repo- oder Org-Secret anlegen)."
+            exit 1
+          fi
+
+      - name: Tag gegen Projektversion pruefen
+        if: github.ref_type == 'tag'
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version="$(dotnet msbuild "$PROJECT" -getProperty:Version -nologo | tr -d '[:space:]')"
+          echo "Tag: $tag / <Version>: $version"
+          if [ "$tag" != "$version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME passt nicht zu <Version>$version</Version> in $PROJECT."
+            exit 1
+          fi
+
+      - name: Restore
+        run: dotnet restore "$TEST_PROJECT"
+
+      - name: Tests
+        run: dotnet test "$TEST_PROJECT" -c Release --no-restore
+
+      - name: Pack inkl. Symbolpaket
+        run: dotnet pack "$PROJECT" -c Release -o "$PACKAGE_DIR"
+
+      - name: Paketinhalt auflisten
+        run: ls -l "$PACKAGE_DIR"
+
+      - name: Push nach nuget.gauss-lvs.de
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: |
+          dotnet nuget push "$PACKAGE_DIR/*.nupkg" \
+            --source "$NUGET_SOURCE" \
+            --api-key "$NUGET_API_KEY" \
+            --symbol-source "$NUGET_SOURCE" \
+            --symbol-api-key "$NUGET_API_KEY" \
+            --skip-duplicate
