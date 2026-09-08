@@ -1,8 +1,16 @@
 {
   "name": "Radzen.Server",
-  "image": "docker.sopart.de/gauss/devcontainers-dotnet:10.0",
+  "image": "docker.sopart.de/gauss/devcontainers-base:latest",
   "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "configureZshAsDefaultShell": true
+    },
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "10.0",
+      "additionalVersions": "9.0,8.0"
+    },
     "ghcr.io/devcontainers/features/powershell:2": {},
+    "ghcr.io/devcontainers/features/node:2": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
   "mounts": [
@@ -59,7 +67,7 @@
     "POWERSHELL_TELEMETRY_OPTOUT": "1",
     "POWERSHELL_UPDATECHECK": "Off"
   },
-  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && dotnet restore Radzen.sln",
+  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && dotnet tool update -g dotnet-version-cli-gauss && dotnet restore",
   "postStartCommand": "bash /usr/local/bin/setup-git.sh",
   "remoteUser": "vscode"
 }
