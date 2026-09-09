@@ -1,16 +1,7 @@
 {
   "name": "Radzen.Server",
-  "image": "docker.sopart.de/gauss/devcontainers-base:latest",
+  "image": "docker.sopart.de/gauss/devcontainers-gauss:latest",
   "features": {
-    "ghcr.io/devcontainers/features/common-utils:2": {
-      "configureZshAsDefaultShell": true
-    },
-    "ghcr.io/devcontainers/features/dotnet:2": {
-      "version": "10.0",
-      "additionalVersions": "9.0,8.0"
-    },
-    "ghcr.io/devcontainers/features/powershell:2": {},
-    "ghcr.io/devcontainers/features/node:2": {},
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
   "mounts": [
@@ -59,16 +50,14 @@
     }
   },
   "remoteEnv": {
-    "SSH_AUTH_SOCK": null,
-    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
-    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
-    "DOTNET_INTERACTIVE_CLI_TELEMETRY_OPTOUT": "1",
-    "DOTNET_UPGRADEASSISTANT_TELEMETRY_OPTOUT": "1",
-    "POWERSHELL_TELEMETRY_OPTOUT": "1",
-    "POWERSHELL_UPDATECHECK": "Off",
-    "PATH": "${containerEnv:PATH}:/home/vscode/.dotnet/tools"
+    "SSH_AUTH_SOCK": null
   },
-  "postCreateCommand": "sudo chown -R vscode:vscode /home/vscode/.claude && bash /usr/local/bin/install-user-nuget-repo.sh && bash /usr/local/bin/install-user-dotnet-tools.sh && dotnet restore Radzen.sln",
-  "postStartCommand": "bash /usr/local/bin/setup-git.sh",
+  "postCreateCommand": {
+    "claude-ownership": "sudo chown -R vscode:vscode /home/vscode/.claude",
+    "dotnet-restore": "dotnet restore"
+  },
+  "postStartCommand": {
+    "setup-git": "bash /usr/local/bin/setup-git.sh"
+  },
   "remoteUser": "vscode"
 }
