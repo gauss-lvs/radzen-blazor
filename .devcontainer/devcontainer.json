@@ -54,7 +54,7 @@
   },
   "postCreateCommand": {
     "claude-ownership": "sudo chown -R vscode:vscode /home/vscode/.claude",
-    "dotnet-restore": "dotnet restore"
+    "dotnet-restore": "dotnet restore Radzen.sln"
   },
   "postStartCommand": {
     "setup-git": "bash /usr/local/bin/setup-git.sh"
