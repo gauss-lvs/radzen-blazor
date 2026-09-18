@@ -21,7 +21,14 @@
             {
                 @if (IsBusy)
                 {
-                    <RadzenIcon Icon="refresh" Style="animation: rotation 700ms linear infinite" />
+                    @if(GBusyIcon != null)
+                    {
+                      <RadzenIcon GIcon="@GBusyIcon" Style="animation: rotation 700ms linear infinite" />
+                    }
+                    else
+                    {
+                      <RadzenIcon Icon="refresh" Style="animation: rotation 700ms linear infinite" />
+                    }
                     @if (!string.IsNullOrEmpty(BusyText))
                     {
                         <span class="rz-button-text">@BusyText</span>

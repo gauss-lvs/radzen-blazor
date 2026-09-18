@@ -17,7 +17,7 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         protected override string GetComponentCssClass()
         {
-            return $"rz-navigation-item{(Disabled ? " rz-state-disabled" : "")}{(Parent?.IsFocused(this) == true ? " rz-state-focused" : "")}";
+            return $"rz-navigation-item{(Disabled ? " rz-state-disabled" : "")}{(Parent?.IsFocused(this) == true ? " rz-state-focused" : "")} {GIcon?.IconSetCssClass()}";
         }
 
         /// <summary>
@@ -75,6 +75,24 @@ namespace Radzen.Blazor
         /// <value>The image.</value>
         [Parameter]
         public string? Image { get; set; }
+
+        /// <summary>
+        /// Get or sets GAUSS specific icon for the button.
+        /// </summary>
+        /// <remarks>
+        /// GIcon overwrites the value of <see cref="Icon"/>.
+        /// </remarks>
+        [Parameter]
+        public GRadzenBase.Icons.IRadzenFontIcon? GIcon
+        {
+            get => _GIcon;
+            set
+            {
+                _GIcon = value;
+                Icon = value?.CodePoint;
+            }
+        }
+        private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
 
         /// <summary>
         /// Gets or sets the image style.

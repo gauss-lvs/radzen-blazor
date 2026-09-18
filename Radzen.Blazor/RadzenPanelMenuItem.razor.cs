@@ -94,6 +94,24 @@ namespace Radzen.Blazor
         public string? Image { get; set; }
 
         /// <summary>
+        /// Get or sets GAUSS specific icon for the button.
+        /// </summary>
+        /// <remarks>
+        /// GIcon overwrites the value of <see cref="Icon"/>.
+        /// </remarks>
+        [Parameter]
+        public GRadzenBase.Icons.IRadzenFontIcon? GIcon
+        {
+            get => _GIcon;
+            set
+            {
+                _GIcon = value;
+                Icon = value?.CodePoint;
+            }
+        }
+        private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
+
+        /// <summary>
         /// Gets or sets the template.
         /// </summary>
         /// <value>The template.</value>
@@ -191,6 +209,12 @@ namespace Radzen.Blazor
         {
             return $"{(Parent?.DisplayStyle == MenuItemDisplayStyle.Icon ? "margin-inline-end:0px;" : "")}{(!string.IsNullOrEmpty(IconColor) ? $"color:{IconColor}" : "")}";
         }
+
+        string getIconCssClass() => ClassList.Create("notranslate")
+            .Add("rzi")
+            .Add("rz-navigation-item-icon")
+            .Add(GIcon?.IconSetCssClass())
+            .ToString();
 
         void Expand()
         {
