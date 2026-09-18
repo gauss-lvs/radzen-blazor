@@ -3,11 +3,12 @@
 
 name: .NET
 
+# Im GAUSS-Fork deaktiviert: gebaut und veroeffentlicht wird ueber
+# .forgejo/workflows/release.yml auf git.gauss-lvs.de. Die push- und
+# pull_request-Trigger sind entfernt, damit hier nichts automatisch startet;
+# die Datei bleibt liegen, damit upstream-Merges sie nicht immer wieder
+# zurueckbringen.
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
