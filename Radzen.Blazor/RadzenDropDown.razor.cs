@@ -103,6 +103,39 @@ namespace Radzen.Blazor
         public bool OpenOnFocus { get; set; }
 
         /// <summary>
+        /// Gets or sets whether the initial <see cref="DataBoundFormComponent{T}.LoadData"/> invocation is deferred until the popup is opened
+        /// for the first time instead of happening while the page is rendered.
+        /// Use this to avoid loading data for dropdowns the user never opens.
+        /// Note that until the data is loaded there is no item to resolve the text of an already selected
+        /// <see cref="FormComponent{T}.Value"/> from, so the input shows the <see cref="DataBoundFormComponent{T}.Placeholder"/>
+        /// unless <c>Data</c> is pre-populated with at least the selected item.
+        /// </summary>
+        /// <value><c>true</c> to invoke <c>LoadData</c> when the popup is opened; otherwise, <c>false</c>. Default is <c>false</c>.</value>
+        [Parameter]
+        public bool LoadDataOnOpen { get; set; }
+
+        /// <summary>
+        /// Invokes <see cref="DataBoundFormComponent{T}.LoadData"/> when the initial load was deferred by <see cref="LoadDataOnOpen"/>.
+        /// </summary>
+        /// <returns><c>true</c> if data was requested; otherwise, <c>false</c>.</returns>
+        async Task<bool> LoadDeferredData()
+        {
+            if (!LoadDataOnOpen || !LoadData.HasDelegate || Data != null)
+            {
+                return false;
+            }
+
+            await LoadData.InvokeAsync(await GetLoadDataArgs());
+
+            // The items are rendered inside the popup, so it has to be repositioned once they are there.
+            shouldReposition = true;
+
+            StateHasChanged();
+
+            return true;
+        }
+
+        /// <summary>
         /// Gets or sets whether the filter search text should be cleared after an item is selected.
         /// When true, selecting an item will reset the filter, showing all items again on the next open.
         /// </summary>
@@ -235,6 +268,8 @@ namespace Radzen.Blazor
             {
                 await Open.InvokeAsync(null);
             }
+
+            await LoadDeferredData();
 
             isOpen = true;
             isPopupOpen = true;
@@ -427,7 +462,7 @@ namespace Radzen.Blazor
                 if (Visible)
                 {
                     bool reload = false;
-                    if (LoadData.HasDelegate && Data == null)
+                    if (LoadData.HasDelegate && Data == null && !LoadDataOnOpen)
                     {
                         await LoadData.InvokeAsync(await GetLoadDataArgs());
                         reload = true;
@@ -493,10 +528,17 @@ namespace Radzen.Blazor
             if (!ReadOnly)
             {
                 var wasOpen = isOpen;
+                var key = args.Code ?? args.Key;
+
+                // The base implementation bails out while Data is null, so a deferred load has to happen
+                // before keys that would open the popup are handled.
+                if (!wasOpen && key != "Escape" && key != "Tab")
+                {
+                    await LoadDeferredData();
+                }
 
                 await base.HandleKeyPress(args, isFilter, shouldSelectOnChange);
 
-                var key = args.Code ?? args.Key;
                 if (key == "Tab" && isFilter && wasOpen && JSRuntime != null)
                 {
                     await JSRuntime.InvokeVoidAsync("Radzen.focusNext", Element, args.ShiftKey);

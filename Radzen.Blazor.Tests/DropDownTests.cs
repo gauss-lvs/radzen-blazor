@@ -1791,5 +1791,109 @@ namespace Radzen.Blazor.Tests
             Assert.NotEmpty(buttons);
             Assert.All(buttons, b => Assert.Equal(component.Instance.RemoveChipTitle, b.GetAttribute("aria-label")));
         }
+
+        [Fact]
+        public void DropDown_InvokesLoadDataOnRenderByDefault()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var loadDataCalls = 0;
+
+            ctx.RenderComponent<RadzenDropDown<int>>(parameters =>
+            {
+                parameters.Add(p => p.TextProperty, nameof(DataItem.Text));
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.LoadData, args => loadDataCalls++);
+            });
+
+            Assert.Equal(1, loadDataCalls);
+        }
+
+        [Fact]
+        public void DropDown_LoadDataOnOpen_InvokesLoadDataOnPopupOpen()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var loadDataCalls = 0;
+
+            var component = ctx.RenderComponent<RadzenDropDown<int>>(parameters =>
+            {
+                parameters.Add(p => p.TextProperty, nameof(DataItem.Text));
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.LoadDataOnOpen, true);
+                parameters.Add(p => p.LoadData, args => loadDataCalls++);
+            });
+
+            Assert.Equal(0, loadDataCalls);
+            Assert.Empty(component.FindAll(".rz-dropdown-item"));
+
+            component.Find("[role='combobox']").Click();
+
+            Assert.Equal(1, loadDataCalls);
+        }
+
+        [Fact]
+        public void DropDown_LoadDataOnOpen_InvokesLoadDataOnKeyDown()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var loadDataCalls = 0;
+
+            var component = ctx.RenderComponent<RadzenDropDown<int>>(parameters =>
+            {
+                parameters.Add(p => p.TextProperty, nameof(DataItem.Text));
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.LoadDataOnOpen, true);
+                parameters.Add(p => p.LoadData, args => loadDataCalls++);
+            });
+
+            Assert.Equal(0, loadDataCalls);
+
+            component.Find("[role='combobox']").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "ArrowDown" });
+
+            Assert.Equal(1, loadDataCalls);
+        }
+
+        [Fact]
+        public void DropDown_LoadDataOnOpen_RendersItemsAfterOpen()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var data = new[]
+            {
+                new DataItem { Text = "Item 1", Id = 1 },
+                new DataItem { Text = "Item 2", Id = 2 },
+            };
+
+            var loadDataCalls = 0;
+
+            IRenderedComponent<RadzenDropDown<int>> component = null;
+
+            component = ctx.RenderComponent<RadzenDropDown<int>>(parameters =>
+            {
+                parameters.Add(p => p.TextProperty, nameof(DataItem.Text));
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.LoadDataOnOpen, true);
+                parameters.Add(p => p.LoadData, args =>
+                {
+                    loadDataCalls++;
+                    component.SetParametersAndRender(builder => builder.Add(x => x.Data, data));
+                });
+            });
+
+            component.Find("[role='combobox']").Click();
+
+            Assert.Equal(1, loadDataCalls);
+            Assert.Equal(2, component.FindAll(".rz-dropdown-item").Count);
+
+            // Data is there now, so opening the popup again does not load again.
+            component.Find("[role='combobox']").Click();
+
+            Assert.Equal(1, loadDataCalls);
+        }
     }
 }
