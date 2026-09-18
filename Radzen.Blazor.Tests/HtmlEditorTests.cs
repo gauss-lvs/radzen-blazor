@@ -78,6 +78,41 @@ namespace Radzen.Blazor.Tests
         }
 
         [Fact]
+        public void HtmlEditor_Disabled_Ignores_OnChange()
+        {
+            using var ctx = CreateContext();
+            var raised = 0;
+            var component = ctx.RenderComponent<RadzenHtmlEditor>(parameters =>
+            {
+                parameters.Add(p => p.Value, "<p>initial</p>");
+                parameters.Add(p => p.Disabled, true);
+                parameters.Add(p => p.Input, args => raised++);
+            });
+
+            component.Instance.OnChange("<p>edited</p>");
+
+            Assert.Equal(0, raised);
+        }
+
+        [Fact]
+        public void HtmlEditor_Enabled_Raises_Input_OnChange()
+        {
+            using var ctx = CreateContext();
+            var raised = 0;
+            var html = string.Empty;
+            var component = ctx.RenderComponent<RadzenHtmlEditor>(parameters =>
+            {
+                parameters.Add(p => p.Value, "<p>initial</p>");
+                parameters.Add(p => p.Input, args => { raised++; html = args; });
+            });
+
+            component.Instance.OnChange("<p>edited</p>");
+
+            Assert.Equal(1, raised);
+            Assert.Equal("<p>edited</p>", html);
+        }
+
+        [Fact]
         public void HtmlEditor_Renders_Disabled_Attribute()
         {
             using var ctx = CreateContext();
@@ -108,6 +143,19 @@ namespace Radzen.Blazor.Tests
             Assert.Contains("table_chart", component.Markup);
             Assert.Contains("merge_type", component.Markup);
             Assert.Contains("call_split", component.Markup);
+        }
+
+        [Fact]
+        public void HtmlEditor_DropDownTriggerIcons_AreHiddenFromAssistiveTechnology()
+        {
+            using var ctx = CreateContext();
+
+            var component = ctx.RenderComponent<RadzenHtmlEditor>();
+
+            var icons = component.FindAll(".rz-dropdown-trigger-icon");
+
+            Assert.NotEmpty(icons);
+            Assert.All(icons, icon => Assert.Equal("true", icon.GetAttribute("aria-hidden")));
         }
 
         [Fact]

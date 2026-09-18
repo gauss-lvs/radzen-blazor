@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Text;
 using System.Xml.Linq;
 
 using CellXf = (int FontId, int FillId, int BorderId, Radzen.TextAlign? TextAlign,
@@ -29,15 +30,48 @@ static class XlsxReader
         var sharedStrings = ParseSharedStrings(archive);
         var sheetInfos = ParseSheetDefinitions(archive);
 
+        ParseDefinedNames(archive, workbook);
+
         foreach (var sheetInfo in sheetInfos)
         {
             var sheet = LoadSheet(archive, sheetInfo, styleInfo, sharedStrings);
             workbook.AddSheet(sheet);
         }
 
+        foreach (var sheet in workbook.Sheets)
+        {
+            sheet.EndUpdate();
+        }
+
         ParseWorkbookProtection(archive, workbook);
 
         return workbook;
+    }
+
+    // ECMA-376 part 1, 18.2.5 (definedName)
+    private static void ParseDefinedNames(ZipArchive archive, Workbook workbook)
+    {
+        var entry = archive.GetEntry("xl/workbook.xml");
+        if (entry is null)
+        {
+            return;
+        }
+
+        using var stream = entry.Open();
+        var doc = XDocument.Load(stream);
+        var ns = doc.Root!.Name.Namespace;
+
+        foreach (var element in doc.Descendants(ns + "definedName"))
+        {
+            var name = element.Attribute("name")?.Value;
+
+            if (string.IsNullOrEmpty(name) || name.StartsWith("_xlnm.", StringComparison.Ordinal) || element.Attribute("localSheetId") is not null)
+            {
+                continue;
+            }
+
+            workbook.DefinedNames[name] = element.Value;
+        }
     }
 
     private static StyleInfo ParseStyles(ZipArchive archive)
@@ -355,10 +389,62 @@ static class XlsxReader
         {
             using var s = sharedEntry.Open();
             var doc = XDocument.Load(s);
-            sharedStrings = doc.Descendants().Where(e => e.Name.LocalName == "t").Select(e => e.Value).ToList();
+            var ns = doc.Root!.Name.Namespace;
+
+            sharedStrings = doc.Root.Elements(ns + "si").Select(si => RstText(si, ns)).ToList();
         }
 
         return sharedStrings;
+    }
+
+    private static string RstText(XElement element, XNamespace ns)
+    {
+        var textName = ns + "t";
+        var runName = ns + "r";
+
+        string? first = null;
+        StringBuilder? builder = null;
+
+        for (var node = element.FirstNode; node is not null; node = node.NextNode)
+        {
+            if (node is not XElement child)
+            {
+                continue;
+            }
+
+            if (child.Name == textName)
+            {
+                Collect(child.Value, ref first, ref builder);
+            }
+            else if (child.Name == runName)
+            {
+                for (var runNode = child.FirstNode; runNode is not null; runNode = runNode.NextNode)
+                {
+                    if (runNode is XElement text && text.Name == textName)
+                    {
+                        Collect(text.Value, ref first, ref builder);
+                    }
+                }
+            }
+        }
+
+        return builder?.ToString() ?? first ?? string.Empty;
+    }
+
+    private static void Collect(string value, ref string? first, ref StringBuilder? builder)
+    {
+        if (builder is not null)
+        {
+            builder.Append(value);
+        }
+        else if (first is null)
+        {
+            first = value;
+        }
+        else
+        {
+            builder = new StringBuilder(first).Append(value);
+        }
     }
 
     private static List<WorksheetInfo> ParseSheetDefinitions(ZipArchive archive)
@@ -410,6 +496,7 @@ static class XlsxReader
 
         var (rows, columns) = ComputeSheetSize(sheetDoc, sNs);
         var sheet = new Worksheet(rows, columns);
+        sheet.BeginUpdate();
 
         var defaultRowHeight = ParseDefaultRowHeight(sheetDoc, sNs);
 
@@ -638,15 +725,25 @@ static class XlsxReader
 
         var valueElem = cellElem.Element(sNs + "v");
         var formulaElem = cellElem.Element(sNs + "f");
+        var inlineElem = cellElem.Element(sNs + "is");
 
-        if (valueElem is null && formulaElem is null)
+        var style = ResolveStyle(cellElem, styleInfo);
+
+        if (valueElem is null && formulaElem is null && inlineElem is null)
         {
+            ApplyCellStyle(sheet, address, styleInfo, style);
+
             return;
         }
 
         var cellType = (string?)cellElem.Attribute("t") ?? "n";
 
-        var style = ResolveStyle(cellElem, styleInfo);
+        if (valueElem is null && inlineElem is not null)
+        {
+            valueElem = new XElement(sNs + "v", RstText(inlineElem, sNs));
+
+            cellType = "inlineStr";
+        }
 
         var formulaValue = formulaElem?.Value;
 
@@ -688,10 +785,10 @@ static class XlsxReader
                     _ => valueElem!.Value
                 };
 
-                // ECMA-376 part 1, 18.8.45 (quotePrefix)
-                if (style is { QuotePrefix: true } && cellType is "s" or "str" or "inlineStr")
+                // ECMA-376 part 1, 18.18.11 (ST_CellType) and 18.8.45 (quotePrefix)
+                if (cellType is "s" or "str" or "inlineStr")
                 {
-                    sheet.Cells[address.Row, address.Column].SetText(value);
+                    sheet.Cells[address.Row, address.Column].SetText(value, style is { QuotePrefix: true });
                 }
                 else
                 {
