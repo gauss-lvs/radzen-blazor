@@ -1895,5 +1895,83 @@ namespace Radzen.Blazor.Tests
 
             Assert.Equal(1, loadDataCalls);
         }
+
+        [Fact]
+        public void DropDown_LoadDataOnOpenSelectedItem_RendersTextBeforeDataIsLoaded()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var selected = new DataItem { Text = "Item 2", Id = 2 };
+
+            var component = ctx.RenderComponent<RadzenDropDown<int>>(parameters =>
+            {
+                parameters.Add(p => p.TextProperty, nameof(DataItem.Text));
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.Placeholder, "Select an option");
+                parameters.Add(p => p.LoadDataOnOpen, true);
+                parameters.Add(p => p.LoadData, args => { });
+                parameters.Add(p => p.LoadDataOnOpenSelectedItem, selected);
+                parameters.Add(p => p.Value, 2);
+            });
+
+            Assert.Equal("Item 2", component.Find(".rz-dropdown-label").TextContent.Trim());
+            Assert.DoesNotContain("rz-placeholder", component.Markup);
+        }
+
+        [Fact]
+        public void DropDown_LoadDataOnOpenSelectedItem_IsReplacedByTheLoadedItem()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var data = new[]
+            {
+                new DataItem { Text = "Item 1", Id = 1 },
+                new DataItem { Text = "Item 2", Id = 2 },
+            };
+
+            IRenderedComponent<RadzenDropDown<int>> component = null;
+
+            component = ctx.RenderComponent<RadzenDropDown<int>>(parameters =>
+            {
+                parameters.Add(p => p.TextProperty, nameof(DataItem.Text));
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.LoadDataOnOpen, true);
+                parameters.Add(p => p.LoadData, args =>
+                {
+                    component.SetParametersAndRender(builder => builder.Add(x => x.Data, data));
+                });
+                parameters.Add(p => p.LoadDataOnOpenSelectedItem, new DataItem { Text = "Placeholder item", Id = 2 });
+                parameters.Add(p => p.Value, 2);
+            });
+
+            Assert.Equal("Placeholder item", component.Find(".rz-dropdown-label").TextContent.Trim());
+
+            component.Find("[role='combobox']").Click();
+
+            Assert.Equal("Item 2", component.Find(".rz-dropdown-label").TextContent.Trim());
+            Assert.Same(data[1], component.Instance.SelectedItem);
+        }
+
+        [Fact]
+        public void DropDown_LoadDataOnOpenSelectedItem_IsIgnoredWithoutValue()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenDropDown<int?>>(parameters =>
+            {
+                parameters.Add(p => p.TextProperty, nameof(DataItem.Text));
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.Placeholder, "Select an option");
+                parameters.Add(p => p.LoadDataOnOpen, true);
+                parameters.Add(p => p.LoadData, args => { });
+                parameters.Add(p => p.LoadDataOnOpenSelectedItem, new DataItem { Text = "Item 2", Id = 2 });
+            });
+
+            Assert.Contains("rz-placeholder", component.Markup);
+            Assert.Null(component.Instance.SelectedItem);
+        }
     }
 }
