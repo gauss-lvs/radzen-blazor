@@ -60,7 +60,6 @@
     "install-opencode": "sudo npm install -g --allow-scripts=opencode-ai opencode-ai",
     "claude-code-ownership": "sudo chown -R vscode:vscode /home/vscode/.claude",
     "open-code-ownership": "sudo chown -R vscode:vscode /home/vscode/.config/opencode",
-    "install-playwright": "sudo npx playwright install --with-deps",
     "dotnet-restore": "dotnet restore Radzen.sln"
   },
   "postStartCommand": {
