@@ -103,63 +103,6 @@ namespace Radzen.Blazor
         public bool OpenOnFocus { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the initial <see cref="DataBoundFormComponent{T}.LoadData"/> invocation is deferred until the popup is opened
-        /// for the first time instead of happening while the page is rendered.
-        /// Use this to avoid loading data for dropdowns the user never opens.
-        /// Note that until the data is loaded there is no item to resolve the text of an already selected
-        /// <see cref="FormComponent{T}.Value"/> from, so the input shows the <see cref="DataBoundFormComponent{T}.Placeholder"/>
-        /// unless <c>Data</c> is pre-populated with at least the selected item.
-        /// </summary>
-        /// <value><c>true</c> to invoke <c>LoadData</c> when the popup is opened; otherwise, <c>false</c>. Default is <c>false</c>.</value>
-        [Parameter]
-        public bool LoadDataOnOpen { get; set; }
-
-        /// <summary>
-        /// Invokes <see cref="DataBoundFormComponent{T}.LoadData"/> when the initial load was deferred by <see cref="LoadDataOnOpen"/>.
-        /// </summary>
-        /// <returns><c>true</c> if data was requested; otherwise, <c>false</c>.</returns>
-        async Task<bool> LoadDeferredData()
-        {
-            if (!LoadDataOnOpen || !LoadData.HasDelegate || Data != null)
-            {
-                return false;
-            }
-
-            await LoadData.InvokeAsync(await GetLoadDataArgs());
-
-            // The items are rendered inside the popup, so it has to be repositioned once they are there.
-            shouldReposition = true;
-
-            StateHasChanged();
-
-            return true;
-        }
-
-        /// <summary>
-        /// Gets or sets the item that represents the current <see cref="FormComponent{T}.Value" /> for as long as
-        /// <see cref="LoadDataOnOpen" /> defers the initial load, so there is no data yet to resolve that value from.
-        /// Set it to the item you already know (typically loaded together with the value) and the closed dropdown shows its
-        /// <see cref="DataBoundFormComponent{T}.TextProperty" /> instead of the <see cref="DataBoundFormComponent{T}.Placeholder" />.
-        /// Once the data is loaded the item is resolved from it as usual and this one is no longer used.
-        /// </summary>
-        /// <remarks>Applies to single selection only and only while <see cref="FormComponent{T}.Value" /> is not <c>null</c>.</remarks>
-        /// <value>The item to display for the current value, or <c>null</c> to keep the default behavior.</value>
-        [Parameter]
-        public object? LoadDataOnOpenSelectedItem { get; set; }
-
-        /// <inheritdoc />
-        protected override void SelectItemFromValue(object? value)
-        {
-            base.SelectItemFromValue(value);
-
-            // While the deferred load has not happened there is no item to resolve the value from, so the base left selectedItem null.
-            if (selectedItem == null && !Multiple && value != null && LoadDataOnOpen && Data == null)
-            {
-                selectedItem = LoadDataOnOpenSelectedItem;
-            }
-        }
-
-        /// <summary>
         /// Gets or sets whether the filter search text should be cleared after an item is selected.
         /// When true, selecting an item will reset the filter, showing all items again on the next open.
         /// </summary>
@@ -674,5 +617,67 @@ namespace Radzen.Blazor
                 await JSRuntime.InvokeVoidAsync("Radzen.closePopup", PopupID, Reference, nameof(OnClose));
             }
         }
+
+        #region GAUSS-spezifische Änderungen
+
+        /// <summary>
+        /// Gets or sets whether the initial <see cref="DataBoundFormComponent{T}.LoadData"/> invocation is deferred until the popup is opened
+        /// for the first time instead of happening while the page is rendered.
+        /// Use this to avoid loading data for dropdowns the user never opens.
+        /// Note that until the data is loaded there is no item to resolve the text of an already selected
+        /// <see cref="FormComponent{T}.Value"/> from, so the input shows the <see cref="DataBoundFormComponent{T}.Placeholder"/>
+        /// unless <c>Data</c> is pre-populated or <see cref="LoadDataOnOpenSelectedItem"/> is set.
+        /// </summary>
+        /// <value><c>true</c> to invoke <c>LoadData</c> when the popup is opened; otherwise, <c>false</c>. Default is <c>false</c>.</value>
+        [Parameter]
+        public bool LoadDataOnOpen { get; set; }
+
+        /// <summary>
+        /// Gets or sets the item that represents the current <see cref="FormComponent{T}.Value" /> for as long as
+        /// <see cref="LoadDataOnOpen" /> defers the initial load, so there is no data yet to resolve that value from.
+        /// Set it to the item you already know (typically loaded together with the value) and the closed dropdown shows its
+        /// <see cref="DataBoundFormComponent{T}.TextProperty" /> instead of the <see cref="DataBoundFormComponent{T}.Placeholder" />.
+        /// Once the data is loaded the item is resolved from it as usual and this one is no longer used.
+        /// </summary>
+        /// <remarks>Applies to single selection only and only while <see cref="FormComponent{T}.Value" /> is not <c>null</c>.</remarks>
+        /// <value>The item to display for the current value, or <c>null</c> to keep the default behavior.</value>
+        [Parameter]
+        public object? LoadDataOnOpenSelectedItem { get; set; }
+
+        /// <summary>
+        /// Invokes <see cref="DataBoundFormComponent{T}.LoadData"/> when the initial load was deferred by <see cref="LoadDataOnOpen"/>.
+        /// Called from <c>OpenPopup</c> and <c>HandleKeyPress</c>.
+        /// </summary>
+        /// <returns><c>true</c> if data was requested; otherwise, <c>false</c>.</returns>
+        async Task<bool> LoadDeferredData()
+        {
+            if (!LoadDataOnOpen || !LoadData.HasDelegate || Data != null)
+            {
+                return false;
+            }
+
+            await LoadData.InvokeAsync(await GetLoadDataArgs());
+
+            // The items are rendered inside the popup, so it has to be repositioned once they are there.
+            shouldReposition = true;
+
+            StateHasChanged();
+
+            return true;
+        }
+
+        /// <inheritdoc />
+        protected override void SelectItemFromValue(object? value)
+        {
+            base.SelectItemFromValue(value);
+
+            // While the deferred load has not happened there is no item to resolve the value from, so the base left selectedItem null.
+            if (selectedItem == null && !Multiple && value != null && LoadDataOnOpen && Data == null)
+            {
+                selectedItem = LoadDataOnOpenSelectedItem;
+            }
+        }
+
+        #endregion
     }
 }
