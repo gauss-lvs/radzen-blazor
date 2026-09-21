@@ -77,24 +77,6 @@ namespace Radzen.Blazor
         public string? Image { get; set; }
 
         /// <summary>
-        /// Get or sets GAUSS specific icon for the button.
-        /// </summary>
-        /// <remarks>
-        /// GIcon overwrites the value of <see cref="Icon"/>.
-        /// </remarks>
-        [Parameter]
-        public GRadzenBase.Icons.IRadzenFontIcon? GIcon
-        {
-            get => _GIcon;
-            set
-            {
-                _GIcon = value;
-                Icon = value?.CodePoint;
-            }
-        }
-        private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
-
-        /// <summary>
         /// Gets or sets the image style.
         /// </summary>
         /// <value>The image style.</value>
@@ -305,5 +287,27 @@ namespace Radzen.Blazor
                 await JSRuntime.InvokeVoidAsync("Radzen.toggleMenuItem", Element, "event", true);
             }
         }
+
+        #region GAUSS-spezifische Änderungen
+
+        /// <summary>
+        /// Get or sets GAUSS specific icon for the button.
+        /// </summary>
+        /// <remarks>
+        /// GIcon overwrites the value of <see cref="Icon"/>.
+        /// </remarks>
+        [Parameter]
+        public GRadzenBase.Icons.IRadzenFontIcon? GIcon
+        {
+            get => _GIcon;
+            set
+            {
+                _GIcon = value;
+                Icon = value?.CodePoint;
+            }
+        }
+        private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
+
+        #endregion
     }
 }

@@ -54,6 +54,24 @@ namespace Radzen.Blazor
         [Parameter]
         public IconStyle? IconStyle { get; set; }
 
+        /// <inheritdoc />
+        protected override string GetComponentCssClass()
+        {
+            return $"notranslate rzi{(IconStyle.HasValue ? $" rzi-{IconStyle.Value.ToString().ToLowerInvariant()}" : "")} {GIcon?.IconSetCssClass()}";
+        }
+
+        string getStyle()
+        {
+            return $"{(!string.IsNullOrEmpty(IconColor) ? $"color:{IconColor};" : null)}{(!string.IsNullOrEmpty(Style) ? Style : null)}";
+        }
+
+        string? getAriaHidden()
+        {
+            return Attributes != null && (Attributes.ContainsKey("aria-label") || Attributes.ContainsKey("role")) ? null : "true";
+        }
+
+        #region GAUSS-spezifische Änderungen
+
         /// <summary>
         /// Get or sets GAUSS specific icon for the button.
         /// </summary>
@@ -72,20 +90,6 @@ namespace Radzen.Blazor
         }
         private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
 
-        /// <inheritdoc />
-        protected override string GetComponentCssClass()
-        {
-            return $"notranslate rzi{(IconStyle.HasValue ? $" rzi-{IconStyle.Value.ToString().ToLowerInvariant()}" : "")} {GIcon?.IconSetCssClass()}";
-        }
-
-        string getStyle()
-        {
-            return $"{(!string.IsNullOrEmpty(IconColor) ? $"color:{IconColor};" : null)}{(!string.IsNullOrEmpty(Style) ? Style : null)}";
-        }
-
-        string? getAriaHidden()
-        {
-            return Attributes != null && (Attributes.ContainsKey("aria-label") || Attributes.ContainsKey("role")) ? null : "true";
-        }
+        #endregion
     }
 }

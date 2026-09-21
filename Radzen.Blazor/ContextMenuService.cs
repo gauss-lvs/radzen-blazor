@@ -214,6 +214,18 @@ namespace Radzen
         /// </summary>
         /// <value>The image.</value>
         public string? Image { get; set; }
+        /// <summary>
+        /// Gets or sets the image style.
+        /// </summary>
+        /// <value>The image style.</value>
+        public string? ImageStyle { get; set; }
+        /// <summary>
+        /// Gets a value indicating whether this instance is disabled.
+        /// </summary>
+        /// <value><c>true</c> if this instance is disabled; otherwise, <c>false</c>.</value>
+        public bool Disabled { get; set; }
+
+        #region GAUSS-spezifische Änderungen
 
         /// <summary>
         /// Get or sets GAUSS specific icon for the button.
@@ -232,16 +244,6 @@ namespace Radzen
         }
         private GRadzenBase.Icons.IRadzenFontIcon? _GIcon;
 
-        /// <summary>
-        /// Gets or sets the image style.
-        /// </summary>
-        /// <value>The image style.</value>
-        public string? ImageStyle { get; set; }
-        /// <summary>
-        /// Gets a value indicating whether this instance is disabled.
-        /// </summary>
-        /// <value><c>true</c> if this instance is disabled; otherwise, <c>false</c>.</value>
-        public bool Disabled { get; set; }
         /// <summary>
         /// Gets or sets additional css classes.
         /// </summary>
@@ -267,5 +269,7 @@ namespace Radzen
             set => _CssClass = value;
         }
         private string? _CssClass;
+
+        #endregion
     }
 }
