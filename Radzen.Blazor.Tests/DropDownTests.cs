@@ -1973,5 +1973,25 @@ namespace Radzen.Blazor.Tests
             Assert.Contains("rz-placeholder", component.Markup);
             Assert.Null(component.Instance.SelectedItem);
         }
+
+        [Fact]
+        public void DropDown_LoadDataOnOpenSelectedItem_IsIgnoredWithoutLoadDataOnOpen()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenDropDown<int>>(parameters =>
+            {
+                parameters.Add(p => p.TextProperty, nameof(DataItem.Text));
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.Placeholder, "Select an option");
+                parameters.Add(p => p.LoadData, args => { });
+                parameters.Add(p => p.LoadDataOnOpenSelectedItem, new DataItem { Text = "Item 2", Id = 2 });
+                parameters.Add(p => p.Value, 2);
+            });
+
+            Assert.Contains("rz-placeholder", component.Markup);
+            Assert.Null(component.Instance.SelectedItem);
+        }
     }
 }

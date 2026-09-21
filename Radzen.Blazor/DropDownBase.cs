@@ -1669,8 +1669,7 @@ namespace Radzen
             }
             else
             {
-                // GAUSS: LoadDataOnOpenSelectedItem is null unless the developer sets it, so the default behavior is unchanged.
-                selectedItem = !Multiple && value != null ? LoadDataOnOpenSelectedItem : null;
+                selectedItem = null;
             }
         }
 
@@ -1802,26 +1801,6 @@ namespace Radzen
 
             GC.SuppressFinalize(this);
         }
-
-        #region GAUSS-spezifische Änderungen
-
-        /// <summary>
-        /// Gets or sets the item that represents the current <see cref="FormComponent{T}.Value"/> as long as that value cannot be
-        /// resolved from the data - most notably while <see cref="RadzenDropDown{TValue}.LoadDataOnOpen" /> defers the initial
-        /// <see cref="DataBoundFormComponent{T}.LoadData" /> invocation until the popup is opened for the first time.
-        /// Set it to the already known item (loaded together with the value) so the closed dropdown shows its
-        /// <see cref="DataBoundFormComponent{T}.TextProperty" /> instead of the <see cref="DataBoundFormComponent{T}.Placeholder" />.
-        /// As soon as the data is loaded the item is resolved from it as usual and this value is no longer used.
-        /// </summary>
-        /// <remarks>
-        /// Only applies to single selection and only while <see cref="FormComponent{T}.Value"/> is not <c>null</c>.
-        /// <see cref="RadzenDropDownDataGrid{TValue}" /> resolves the value on its own and ignores this parameter.
-        /// </remarks>
-        /// <value>The item to display for the current value, or <c>null</c> to keep the default behavior.</value>
-        [Parameter]
-        public object? LoadDataOnOpenSelectedItem { get; set; }
-
-        #endregion
 
         private class DefaultCollectionAssignment
         {
