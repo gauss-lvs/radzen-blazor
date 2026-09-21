@@ -5,10 +5,12 @@
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
   "mounts": [
-    "source=claude-code-config,target=/home/vscode/.claude,type=volume"
+    "source=claude-code-config,target=/home/vscode/.claude,type=volume",
+    "source=open-code-config,target=/home/vscode/.config/opencode,type=volume"
   ],
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
+    "OPENCODE_CONFIG_DIR": "/home/vscode/.config/opencode",
     "DEV_GIT_TOKEN": "${localEnv:GAUSS_GIT_API_KEY_AI}",
     "ASPNETCORE_Kestrel__Certificates__Default__Path": "/etc/ssl/localcerts/devlocal.pfx"
   },
@@ -35,7 +37,9 @@
           "**/Thumbs.db": true,
           "**/bin": true,
           "**/obj": true
-        }
+        },
+        "git.terminalAuthentication": false,
+        "git.useIntegratedAskPass": false
       }
     }
   },
@@ -53,7 +57,10 @@
     "SSH_AUTH_SOCK": null
   },
   "postCreateCommand": {
-    "claude-ownership": "sudo chown -R vscode:vscode /home/vscode/.claude",
+    "install-opencode": "sudo npm install -g --allow-scripts=opencode-ai opencode-ai",
+    "claude-code-ownership": "sudo chown -R vscode:vscode /home/vscode/.claude",
+    "open-code-ownership": "sudo chown -R vscode:vscode /home/vscode/.config/opencode",
+    "install-playwright": "sudo npx playwright install --with-deps",
     "dotnet-restore": "dotnet restore Radzen.sln"
   },
   "postStartCommand": {
