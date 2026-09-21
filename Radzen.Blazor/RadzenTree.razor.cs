@@ -99,9 +99,9 @@ namespace Radzen.Blazor
         ///     &lt;/RadzenTreeItem&gt;
         /// &lt;/RadzenTree&gt;
         /// @code {
-        ///   void OnChange(TreeEventArgs args) 
+        ///   void OnChange(TreeEventArgs args)
         ///   {
-        /// 
+        ///
         ///   }
         /// }
         /// </code>
@@ -129,9 +129,9 @@ namespace Radzen.Blazor
         ///     &lt;/RadzenTreeItem&gt;
         /// &lt;/RadzenTree&gt;
         /// @code {
-        ///   void OnExpand(TreeExpandEventArgs args) 
+        ///   void OnExpand(TreeExpandEventArgs args)
         ///   {
-        /// 
+        ///
         ///   }
         /// }
         /// </code>
@@ -363,6 +363,12 @@ namespace Radzen.Blazor
 
             if (selectedItem != item)
             {
+                if (await IsChangeCancelled(item))
+                {
+                    item.Unselect();
+                    return;
+                }
+
                 SelectedItem = item;
 
                 selectedItem?.Unselect();
@@ -802,6 +808,31 @@ namespace Radzen.Blazor
             }
 
             base.OnInitialized();
+        }
+
+        /// <summary>
+        /// A callback that will be invoked when the user selects an item, before the selection is made.
+        /// </summary>
+        [Parameter]
+        public EventCallback<TreeCancelEventArgs> BeforeChange { get; set; }
+
+        /// <summary>
+        /// Raises <see cref="BeforeChange" /> for the specified item and reports whether a
+        /// subscriber cancelled the selection.
+        /// </summary>
+        /// <param name="item">The item the user is about to select.</param>
+        /// <returns><c>true</c> if the selection was cancelled; otherwise <c>false</c>.</returns>
+        private async Task<bool> IsChangeCancelled(RadzenTreeItem item)
+        {
+            var args = new TreeCancelEventArgs()
+            {
+                Text = item.Text,
+                Value = item.Value
+            };
+
+            await BeforeChange.InvokeAsync(args);
+
+            return args.Cancelled;
         }
     }
 }
