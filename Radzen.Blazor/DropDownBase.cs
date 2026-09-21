@@ -1601,9 +1601,9 @@ namespace Radzen
                 {
                     if (!string.IsNullOrEmpty(ValueProperty))
                     {
-                        if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()))
+                        if (IsInMemorySource(view))
                         {
-                            SelectedItem = view.OfType<object>().Where(i => object.Equals(GetItemOrValueFromProperty(i, ValueProperty), value)).FirstOrDefault();
+                            SelectedItem = FindItemByValue(view, value);
                         }
                         else
                         {
@@ -1633,7 +1633,7 @@ namespace Radzen
                     {
                         if (!string.IsNullOrEmpty(ValueProperty))
                         {
-                            if (typeof(EnumerableQuery).IsAssignableFrom(view.GetType()))
+                            if (IsInMemorySource(view))
                             {
                                 AddSelectedItemsByValue(view, values);
                             }
@@ -1801,6 +1801,68 @@ namespace Radzen
 
             GC.SuppressFinalize(this);
         }
+
+        #region GAUSS-spezifische Änderungen
+
+        /// <summary>
+        /// Determines whether <paramref name="source"/> is already in memory and can therefore be searched with
+        /// <see cref="object.Equals(object?, object?)" /> instead of a query expression.
+        /// A plain collection - for example the list a <see cref="DataBoundFormComponent{T}.LoadData" /> handler assigns to
+        /// <see cref="DataBoundFormComponent{T}.Data" /> - is in memory even though it is not an <see cref="EnumerableQuery" />.
+        /// Only a real <see cref="IQueryable" /> (e.g. Entity Framework) keeps the query so its lookup stays server-side.
+        /// </summary>
+        /// <remarks>
+        /// A query expression compares with <c>Expression.Equal</c>, which requires the bound value to match the declared
+        /// property type exactly and ignores <see cref="object.Equals(object?)" /> overrides. That throws for a mismatching
+        /// value type and silently finds nothing for a reference-typed or <c>object</c>-typed value property.
+        /// </remarks>
+        private protected static bool IsInMemorySource(IEnumerable source)
+        {
+            return source is EnumerableQuery || source is not IQueryable;
+        }
+
+        /// <summary>
+        /// Finds the item of the in-memory <paramref name="source"/> whose <see cref="ValueProperty" />
+        /// equals <paramref name="value"/>. A value whose type differs from the item value type (e.g. an integer bound against an
+        /// enum property) is coerced the same way <see cref="AddSelectedItemsByValue" /> does it for multiple selection.
+        /// </summary>
+        /// <returns>The matching item, or <c>null</c> if there is none.</returns>
+        [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
+        private protected object? FindItemByValue(IEnumerable source, object value)
+        {
+            object? coercedValue = null;
+            var coerced = false;
+
+            foreach (var item in source.OfType<object>())
+            {
+                var itemValue = GetItemOrValueFromProperty(item, ValueProperty!);
+
+                if (object.Equals(itemValue, value))
+                {
+                    return item;
+                }
+
+                if (itemValue == null)
+                {
+                    continue;
+                }
+
+                if (!coerced)
+                {
+                    coercedValue = CoerceValue(value, itemValue.GetType());
+                    coerced = true;
+                }
+
+                if (coercedValue != null && object.Equals(itemValue, coercedValue))
+                {
+                    return item;
+                }
+            }
+
+            return null;
+        }
+
+        #endregion
 
         private class DefaultCollectionAssignment
         {
