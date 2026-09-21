@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Radzen.Blazor.Rendering;
 using System;
 using System.Collections.Generic;
 
 namespace Radzen
 {
     /// <summary>
-    /// Class ContextMenuService. Contains various methods with options to open and close context menus. 
+    /// Class ContextMenuService. Contains various methods with options to open and close context menus.
     /// Should be added as scoped service in the application services and RadzenContextMenu should be added in application main layout.
     /// Implements the <see cref="IDisposable" />
     /// </summary>
@@ -27,7 +28,7 @@ namespace Radzen
     ///             &lt;/RadzenMenuItem&gt;
     ///         &lt;/RadzenMenuItem&gt;
     ///       &lt;/RadzenMenu&gt;);
-    /// 
+    ///
     ///     void OnMenuItemClick(MenuItemEventArgs args)
     ///     {
     ///       Console.WriteLine($"Menu item with Value={args.Value} clicked");
@@ -220,7 +221,6 @@ namespace Radzen
         /// <remarks>
         /// GIcon overwrites the value of <see cref="Icon"/>.
         /// </remarks>
-        [Parameter]
         public GRadzenBase.Icons.IRadzenFontIcon? GIcon
         {
             get => _GIcon;
@@ -242,5 +242,30 @@ namespace Radzen
         /// </summary>
         /// <value><c>true</c> if this instance is disabled; otherwise, <c>false</c>.</value>
         public bool Disabled { get; set; }
+        /// <summary>
+        /// Gets or sets additional css classes.
+        /// </summary>
+        public string? CssClass
+        {
+            get
+            {
+                if (_CssClass != null)
+                {
+                    return ClassList.Create(_CssClass)
+                                    .Add(GIcon?.IconSetCssClass())
+                                    .ToString();
+                }
+                else if (GIcon != null)
+                {
+                    return GIcon.IconSetCssClass();
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            set => _CssClass = value;
+        }
+        private string? _CssClass;
     }
 }
