@@ -25,7 +25,7 @@ namespace Radzen.Blazor
     /// </code>
     /// Dropdown with filtering and placeholder:
     /// <code>
-    /// &lt;RadzenDropDown @bind-Value=@selectedId TValue="int" Data=@items TextProperty="Name" ValueProperty="Id" 
+    /// &lt;RadzenDropDown @bind-Value=@selectedId TValue="int" Data=@items TextProperty="Name" ValueProperty="Id"
     ///                  AllowFiltering="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" Placeholder="Select an item..." /&gt;
     /// </code>
     /// Multiple selection dropdown:
@@ -576,6 +576,7 @@ namespace Radzen.Blazor
 
         string PopupCssClass => ClassList.Create(Multiple ? "rz-multiselect-panel" : "rz-dropdown-panel")
                                          .AddInputSize(InputSize)
+                                         .Add(PopupCssClass) // GAUSS-spezifisch
                                          .ToString();
 
         /// <inheritdoc />
@@ -619,6 +620,13 @@ namespace Radzen.Blazor
         }
 
         #region GAUSS-spezifische Änderungen
+
+        /// <summary>
+        /// Gets or sets additional CSS classes for the popup container. They are appended to the classes Radzen renders itself.
+        /// </summary>
+        /// <value>The additional class names separated by spaces, or <c>null</c> to add none.</value>
+        [Parameter]
+        public string? PopupClasses { get; set; }
 
         /// <summary>
         /// Gets or sets whether the initial <see cref="DataBoundFormComponent{T}.LoadData"/> invocation is deferred until the popup is opened
