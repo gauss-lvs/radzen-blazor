@@ -57,7 +57,10 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         protected override string GetComponentCssClass()
         {
-            return $"notranslate rzi{(IconStyle.HasValue ? $" rzi-{IconStyle.Value.ToString().ToLowerInvariant()}" : "")} {GIcon?.IconSetCssClass()}";
+            return Rendering.ClassList.Create("notranslate rzi")
+                            .Add($"rzi-{IconStyle?.ToString().ToLowerInvariant()}", IconStyle.HasValue)
+                            .Add(GIcon?.IconSetCssClass()) // GAUSS-spezifisch
+                            .ToString();
         }
 
         string getStyle()

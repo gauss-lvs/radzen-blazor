@@ -17,7 +17,11 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         protected override string GetComponentCssClass()
         {
-            return $"rz-navigation-item{(Disabled ? " rz-state-disabled" : "")}{(Parent?.IsFocused(this) == true ? " rz-state-focused" : "")} {GIcon?.IconSetCssClass()}";
+            return Rendering.ClassList.Create("rz-navigation-item")
+                            .Add("rz-state-disabled", Disabled)
+                            .Add("rz-state-focused", Parent?.IsFocused(this) == true)
+                            .Add(GIcon?.IconSetCssClass()) // GAUSS-spezifisch
+                            .ToString();
         }
 
         /// <summary>

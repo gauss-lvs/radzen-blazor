@@ -6,35 +6,33 @@ bei jedem Upstream-Merge erhalten bleiben muss.
 | | |
 | --- | --- |
 | Branch | `gauss-next` |
-| Stand | 22.09.2026, Commit `1a663826` |
-| Upstream-Basis | `8d114b70` ("Version updated", Radzen 11.4.1) |
-| Umfang | 25 Commits, 25 Dateien, +1085 / −52 Zeilen |
+| Stand | 22.09.2026 |
+| Upstream-Basis | `5dc34d34b` ("Version updated", Radzen 11.4.2) |
+| Paketversion | `11.4.2.1-next.0` |
+| Umfang | 26 Dateien, +1582 / −52 Zeilen |
 
 ## Wie dieser Delta ermittelt wurde
 
 Ein naheliegendes `git diff master..gauss-next` ist **irreführend**: `master` ist im Fork nur ein
-Spiegel des Radzen-Upstream und hinkt hinterher. Von den 99 Commits, die `gauss-next` vor
-`master` liegt, sind 74 reiner Radzen-Fortschritt und nur 25 von GAUSS.
+Spiegel des Radzen-Upstream und hinkt hinterher. Der weitaus größte Teil dieser Differenz ist
+reiner Radzen-Fortschritt und keine GAUSS-Abweichung.
 
 Die Historie ist aber günstig gebaut: die GAUSS-Commits sitzen als **geschlossener Block** auf
-einer reinen Upstream-Linie. Der letzte Upstream-Commit ist `8d114b70`, darüber kommt
-ausschließlich GAUSS. Damit ist der Delta exakt und ohne Heuristik bestimmbar:
+einer reinen Upstream-Linie. Den Schnittpunkt — den jüngsten Commit, der nicht von GAUSS stammt —
+findet man so:
 
 ```bash
-# Verifikation der Schnittstelle — beide Ausgaben müssen leer bzw. "pb" sein:
-git log origin/master..8d114b70 --author=pb --oneline     # leer
-git log 8d114b70..gauss-next --format="%an" | sort -u     # nur "pb"
+BASE=$(git log gauss-next --format="%H %an" | grep -vm1 " pb$" | cut -d' ' -f1)
+
+# Gegenprobe, muss "pb" und nur "pb" ausgeben:
+git log $BASE..gauss-next --format="%an" | sort -u
 
 # Der GAUSS-Delta:
-git diff 8d114b70..gauss-next
+git diff $BASE..gauss-next
 ```
 
-Bei künftigen Merges verschiebt sich diese Basis. Der jeweils aktuelle Schnitt lässt sich so
-finden:
-
-```bash
-git log gauss-next --format="%H %an" | grep -vm1 " pb$"
-```
+Zum Stand dieses Dokuments ist `$BASE` = `5dc34d34b`. Nach jedem Upstream-Merge verschiebt sich
+der Wert; das Kommando oben ermittelt ihn neu.
 
 Im Code sind die Abweichungen zusätzlich durch `#region GAUSS-spezifische Änderungen` markiert
 (`grep -rn "GAUSS-spezifisch" Radzen.Blazor/`), das deckt aber nur einen Teil ab — siehe
@@ -56,14 +54,14 @@ Im Code sind die Abweichungen zusätzlich durch `#region GAUSS-spezifische Ände
 
 ## Testlage
 
-`dotnet test` auf `gauss-next` (net10.0): **5334 Tests, 4873 grün, 461 rot.**
+`dotnet test` auf `gauss-next` (net10.0): **5369 Tests, 4909 grün, 460 rot.**
 
-| Kategorie | Anzahl | Bewertung |
-| --- | --- | --- |
-| `Radzen.Documents.Markdown.Tests.*` | 460 | **Nicht GAUSS.** Die CommonMark-Tests erwarten CRLF und scheitern unter Linux. Am Upstream-Stand `8d114b70` schlagen dieselben Tests fehl — verifiziert. |
-| `Radzen.Blazor.Tests.IconTests.Icon_Renders_IconParameter` | 1 | **GAUSS-verursacht.** Am Upstream-Stand grün. Siehe [Befund 1](#1-radzenicon-rendert-eine-überzählige-css-klasse). |
+Alle 460 Fehler liegen in `Radzen.Documents.Markdown.Tests.*` und sind **nicht GAUSS-verursacht**:
+die CommonMark-Tests erwarten CRLF und scheitern unter Linux. Am reinen Upstream-Stand schlagen
+dieselben Tests fehl — verifiziert.
 
-Die 17 GAUSS-eigenen Tests (Abschnitt I) sind grün.
+Außerhalb der Markdown-Tests ist der Baum grün, einschließlich der 17 GAUSS-eigenen Tests
+(Abschnitt I).
 
 ---
 
@@ -75,7 +73,7 @@ Die 17 GAUSS-eigenen Tests (Abschnitt I) sind grün.
 
 ```xml
 <PackageId>Radzen.Blazor.GAUSS</PackageId>
-<Version>11.4.1.2-next.5</Version>
+<Version>11.4.2.1-next.0</Version>
 <Authors>Radzen Ltd. and GAUSS-LVS mbH</Authors>
 ```
 
@@ -361,41 +359,40 @@ dieselbe `PopupCssClass`-Struktur, aber keine entsprechende Property.
 | `Radzen.Blazor.Tests/DropDownTests.cs` (+202 Zeilen) | Tests zu Abschnitt F: `LoadData`-Aufruf beim Öffnen und bei Tastendruck, Rendern der Items nach dem Öffnen, Anzeige und Ablösung von `LoadDataOnOpenSelectedItem`, Verhalten ohne `Value` bzw. ohne `LoadDataOnOpen`. |
 | `Radzen.Blazor.Tests/DropDownValueResolutionTests.cs` (neu, 182 Zeilen) | Tests zu Abschnitt G: passender Werttyp, `Nullable` gegen nicht-nullable Property, `int` gegen `long` und gegen Enum, Referenztypen über `Equals`, `object`-Property mit geboxtem Wert, unbekannte und nicht konvertierbare Werte, Mehrfachauswahl, unveränderter Query-Pfad für echte `IQueryable`. |
 
-Zu den Abschnitten D, E und H gibt es **keine** Tests. Die Befunde 1, 2 und 4 unten betreffen genau
-diese Abschnitte.
+Zu den Abschnitten D, E und H gibt es **keine** eigenen Tests. Die Befunde unten betreffen genau
+diese Abschnitte — Befund 1 fiel nur auf, weil er einen bestehenden Upstream-Test brach.
 
 ---
 
 ## Befunde
 
-Alle vier sind reproduziert, nicht nur vermutet.
+Alle vier waren reproduziert, nicht nur vermutet. Befund 1 ist inzwischen behoben.
 
-### 1. `RadzenIcon` rendert eine überzählige CSS-Klasse
+### 1. Überzählige CSS-Klasse in `RadzenIcon` und `RadzenMenuItem` — behoben
 
-`Radzen.Blazor/RadzenIcon.razor.cs`
+Beide Komponenten hängten die GAUSS-Icon-Set-Klasse per String-Interpolation an:
 
 ```csharp
 return $"notranslate rzi{(IconStyle.HasValue ? ... : "")} {GIcon?.IconSetCssClass()}";
 ```
 
-Das Leerzeichen vor `{GIcon?...}` ist literal und bleibt auch dann stehen, wenn `GIcon` null ist.
-Gerendert wird `class="notranslate rzi "` statt `class="notranslate rzi"`.
+Das Leerzeichen vor `{GIcon?...}` ist literal und blieb auch stehen, wenn `GIcon` null war.
+Gerendert wurde `class="notranslate rzi "` statt `class="notranslate rzi"` — was
+`Radzen.Blazor.Tests.IconTests.Icon_Renders_IconParameter` brach (am Upstream-Stand war der Test
+grün). `RadzenMenuItem.GetComponentCssClass()` hatte dasselbe Muster; dort fiel es mangels Test
+nur nicht auf.
 
-Das bricht `Radzen.Blazor.Tests.IconTests.Icon_Renders_IconParameter`:
+Beide Methoden verwenden jetzt `ClassList`, analog zu `RadzenLink` und `RadzenPanelMenuItem`:
 
+```csharp
+return ClassList.Create("notranslate rzi")
+                .Add($"rzi-{IconStyle?.ToString().ToLowerInvariant()}", IconStyle.HasValue)
+                .Add(GIcon?.IconSetCssClass()) // GAUSS-spezifisch
+                .ToString();
 ```
-Assert.Contains() Failure
-Not found: class="notranslate rzi"
-In value:  <i ... class="notranslate rzi " ...>account_circle</i>
-```
 
-Am Upstream-Stand `8d114b70` ist der Test grün — verifiziert. Funktional ist der Effekt harmlos
-(HTML-Klassenlisten tolerieren Leerraum), es ist aber der einzige GAUSS-verursachte Testfehler im
-Repository. `RadzenMenuItem.GetComponentCssClass()` hat dasselbe Muster, dort fällt es mangels
-Test nur nicht auf.
-
-Behebbar durch `ClassList` statt String-Interpolation, analog zu `RadzenLink` und
-`RadzenPanelMenuItem`, wo es bereits so gelöst ist.
+`ClassList.Add` überspringt null und Leerstrings, das Leerzeichen entsteht also nur zwischen
+tatsächlich vorhandenen Klassen. Klassenreihenfolge und -inhalt bleiben ansonsten unverändert.
 
 ### 2. `GIcon` überschreibt `Icon` nur abhängig von der Attributreihenfolge
 
@@ -487,7 +484,7 @@ Diese Stellen nach jedem Upstream-Merge gezielt prüfen:
 Ein schneller Selbsttest nach dem Merge:
 
 ```bash
-grep -rn "GAUSS-spezifisch" Radzen.Blazor/            # 11 Treffer erwartet
+grep -rn "GAUSS-spezifisch" Radzen.Blazor/            # 13 Treffer erwartet
 grep -rn "GIcon\|GBusyIcon" Radzen.Blazor/*.razor     # 7 Treffer erwartet
 grep -n "IsInMemorySource" Radzen.Blazor/DropDownBase.cs   # 3 Treffer erwartet
 ```
