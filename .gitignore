@@ -352,3 +352,10 @@ RadzenBlazorDemos/wwwroot/demos
 llms.txt
 RadzenBlazorDemos.Host/wwwroot/sitemap.xml
 RadzenBlazorDemos.Host/wwwroot/robots.txt
+
+# GAUSS-spezifisch: Markdown-Dateien im Hauptverzeichnis wieder zulassen.
+# Die Upstream-Regel *.md darueber haelt sonst auch Dokumente wie GAUSS-Abweichungen.md
+# aus dem Repository heraus, ohne dass sie in 'git status' auftauchen.
+!/*.md
+# Von der Ausnahme ausgenommen, damit die Upstream-Regel dafuer erhalten bleibt:
+/SANKEY_PATTERN_COMPARISON.md
