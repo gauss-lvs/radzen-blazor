@@ -576,7 +576,7 @@ namespace Radzen.Blazor
 
         string PopupCssClass => ClassList.Create(Multiple ? "rz-multiselect-panel" : "rz-dropdown-panel")
                                          .AddInputSize(InputSize)
-                                         .Add(PopupCssClass) // GAUSS-spezifisch
+                                         .Add(PopupClasses) // GAUSS-spezifisch
                                          .ToString();
 
         /// <inheritdoc />
