@@ -1,11 +1,9 @@
 name: Premium themes
 
+# Im GAUSS-Fork deaktiviert: der push-Trigger wuerde bei jeder Theme-Aenderung
+# einen Build in radzenhq/radzen-next anstossen. Die Datei bleibt liegen, damit
+# upstream-Merges sie nicht immer wieder zurueckbringen.
 on:
-  push:
-    branches: [ "master" ]
-    paths:
-      - Radzen.Blazor/themes/**
-
   workflow_dispatch:
 
 jobs:

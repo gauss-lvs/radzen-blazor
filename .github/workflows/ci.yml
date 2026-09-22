@@ -3,11 +3,13 @@
 
 name: .NET
 
+# Im GAUSS-Fork deaktiviert: die GitHub-Workflows laufen auf
+# git.gauss-lvs.de nicht. Gebaut und veroeffentlicht wird ueber
+# .forgejo/workflows/release.yml auf gauss-next. Die push- und
+# pull_request-Trigger sind entfernt, damit hier nichts automatisch startet;
+# die Datei bleibt liegen, damit upstream-Merges sie nicht immer wieder
+# zurueckbringen.
 on:
-  push:
-    branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
   workflow_dispatch:
 
 jobs:
