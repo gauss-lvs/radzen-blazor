@@ -43,16 +43,6 @@
       }
     }
   },
-  "forwardPorts": [
-    5000,
-    5001
-  ],
-  "portsAttributes": {
-    "5001": {
-      "label": "HTTPS",
-      "protocol": "https"
-    }
-  },
   "remoteEnv": {
     "SSH_AUTH_SOCK": null
   },
