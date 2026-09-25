@@ -3,5 +3,6 @@
 # .forgejo/workflows/publish-nuget.yml, der baut, testet und Paket samt Symbolen
 # nach nuget.gauss-lvs.de veroeffentlicht.
 # --follow-tags ist noetig: ohne die Option bleibt der annotierte Tag lokal und es baut nichts.
-dotnet version -f ./Radzen.Blazor/Radzen.Blazor.csproj build `
+git pull `
+  && dotnet version -f ./Radzen.Blazor/Radzen.Blazor.csproj build `
   && git push --follow-tags
