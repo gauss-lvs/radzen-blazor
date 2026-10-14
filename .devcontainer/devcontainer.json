@@ -47,7 +47,7 @@
     "SSH_AUTH_SOCK": null
   },
   "postCreateCommand": {
-    "install-opencode": "sudo npm install -g --allow-scripts=opencode-ai opencode-ai",
+    "install-opencode": "sudo npm install -g --allow-scripts=@opencode/cli @opencode/cli",
     "claude-code-ownership": "sudo chown -R vscode:vscode /home/vscode/.claude",
     "open-code-ownership": "sudo chown -R vscode:vscode /home/vscode/.config/opencode",
     "dotnet-restore": "dotnet restore Radzen.sln"
