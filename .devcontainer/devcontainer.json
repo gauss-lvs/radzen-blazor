@@ -1,6 +1,6 @@
 {
   "name": "Radzen.Server",
-  "image": "docker.sopart.de/gauss/devcontainers-gauss:latest",
+  "image": "docker-repo.gauss-lvs.de/gauss/devcontainers-gauss:latest",
   "features": {
     "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
   },
