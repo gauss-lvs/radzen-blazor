@@ -50,7 +50,8 @@
     "install-opencode": "sudo npm install -g --allow-scripts=opencode-ai opencode-ai",
     "claude-code-ownership": "sudo chown -R vscode:vscode /home/vscode/.claude",
     "open-code-ownership": "sudo chown -R vscode:vscode /home/vscode/.config/opencode",
-    "dotnet-restore": "dotnet restore Radzen.sln"
+    "dotnet-restore": "dotnet restore Radzen.sln",
+    "gauss-extensions": "bash /usr/local/bin/install-vscode-extensions.sh GAUSS/ggit-vscode 2>/dev/null || true"
   },
   "postStartCommand": {
     "setup-git": "bash /usr/local/bin/setup-git.sh"
