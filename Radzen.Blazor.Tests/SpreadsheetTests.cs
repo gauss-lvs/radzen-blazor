@@ -149,6 +149,103 @@ public class SpreadsheetTests
         Assert.DoesNotContain("rz-spreadsheet-sheet-tabs", c.Markup);
     }
 
+    [Fact]
+    public void Headers_ByDefault_AreRendered()
+    {
+        using var ctx = CreateContext();
+        var c = ctx.RenderComponent<RadzenSpreadsheet>(p => p.Add(x => x.Workbook, NewWorkbook()));
+
+        Assert.Contains("rz-spreadsheet-column-header", c.Markup);
+        Assert.Contains("rz-spreadsheet-row-header", c.Markup);
+        Assert.Contains("rz-spreadsheet-corner-header", c.Markup);
+    }
+
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    public void Headers_RenderOnlyWhenEnabled(bool showColumnHeaders, bool showRowHeaders)
+    {
+        using var ctx = CreateContext();
+        var c = ctx.RenderComponent<RadzenSpreadsheet>(p =>
+        {
+            p.Add(x => x.Workbook, NewWorkbook());
+            p.Add(x => x.ShowColumnHeaders, showColumnHeaders);
+            p.Add(x => x.ShowRowHeaders, showRowHeaders);
+        });
+
+        Assert.Equal(showColumnHeaders, c.Markup.Contains("rz-spreadsheet-column-header"));
+        Assert.Equal(showRowHeaders, c.Markup.Contains("rz-spreadsheet-row-header"));
+        Assert.Equal(showColumnHeaders && showRowHeaders, c.Markup.Contains("rz-spreadsheet-corner-header"));
+        Assert.Contains("rz-spreadsheet-cell", c.Markup);
+    }
+
+    [Fact]
+    public void Headers_CanBeToggledAtRuntime()
+    {
+        using var ctx = CreateContext();
+        var wb = NewWorkbook();
+        var c = ctx.RenderComponent<RadzenSpreadsheet>(p => p.Add(x => x.Workbook, wb));
+        Assert.Contains("rz-spreadsheet-column-header", c.Markup);
+
+        c.SetParametersAndRender(p => p.Add(x => x.ShowColumnHeaders, false).Add(x => x.ShowRowHeaders, false));
+        Assert.DoesNotContain("rz-spreadsheet-column-header", c.Markup);
+        Assert.DoesNotContain("rz-spreadsheet-row-header", c.Markup);
+
+        c.SetParametersAndRender(p => p.Add(x => x.ShowColumnHeaders, true).Add(x => x.ShowRowHeaders, true));
+        Assert.Contains("rz-spreadsheet-column-header", c.Markup);
+        Assert.Contains("rz-spreadsheet-row-header", c.Markup);
+    }
+
+    [Fact]
+    public void Headers_Hidden_StayHiddenAfterSwitchingSheets()
+    {
+        using var ctx = CreateContext();
+        var wb = NewWorkbook();
+        wb.AddSheet("Sheet2", 10, 10);
+        var c = ctx.RenderComponent<RadzenSpreadsheet>(p =>
+        {
+            p.Add(x => x.Workbook, wb);
+            p.Add(x => x.ShowColumnHeaders, false);
+            p.Add(x => x.ShowRowHeaders, false);
+        });
+
+        c.SetParametersAndRender(p => p.Add(x => x.SelectedSheetIndex, 1));
+
+        Assert.Equal(1, c.Instance.SelectedSheetIndex);
+        Assert.DoesNotContain("rz-spreadsheet-column-header", c.Markup);
+        Assert.DoesNotContain("rz-spreadsheet-row-header", c.Markup);
+        Assert.Contains("rz-spreadsheet-cell", c.Markup);
+
+        c.SetParametersAndRender(p => p.Add(x => x.ShowColumnHeaders, true).Add(x => x.ShowRowHeaders, true));
+        Assert.Contains("rz-spreadsheet-column-header", c.Markup);
+        Assert.Contains("rz-spreadsheet-row-header", c.Markup);
+
+        c.SetParametersAndRender(p => p.Add(x => x.SelectedSheetIndex, 0));
+        Assert.Contains("rz-spreadsheet-column-header", c.Markup);
+        Assert.Contains("rz-spreadsheet-row-header", c.Markup);
+    }
+
+    [Fact]
+    public void FrozenPanes_WithHeadersHidden_StillRenderSplitters()
+    {
+        using var ctx = CreateContext();
+        var wb = NewWorkbook();
+        var sheet = wb.Sheets[0];
+        sheet.Rows.Frozen = 1;
+        sheet.Columns.Frozen = 1;
+
+        var c = ctx.RenderComponent<RadzenSpreadsheet>(p =>
+        {
+            p.Add(x => x.Workbook, wb);
+            p.Add(x => x.ShowColumnHeaders, false);
+            p.Add(x => x.ShowRowHeaders, false);
+        });
+
+        Assert.Contains("rz-spreadsheet-vertical-splitter", c.Markup);
+        Assert.Contains("rz-spreadsheet-horizontal-splitter", c.Markup);
+    }
+
     // ── ChildContent (custom toolbar) ──
 
     [Fact]

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+using System.Diagnostics.CodeAnalysis;
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System;
 using System.Collections.Generic;
@@ -55,6 +56,13 @@ namespace Radzen.Blazor
         /// <value>The marker click callback.</value>
         [Parameter]
         public EventCallback<RadzenGoogleMapMarker> MarkerClick { get; set; }
+
+        /// <summary>
+        /// Gets or sets the callback raised when the visible map area changes. It fires once the map is loaded and each time the map becomes idle after panning or zooming.
+        /// </summary>
+        /// <value>The bounds changed callback.</value>
+        [Parameter]
+        public EventCallback<GoogleMapBoundsChangedEventArgs> BoundsChanged { get; set; }
 
         /// <summary>
         /// Gets or sets the Google API key.
@@ -196,6 +204,16 @@ namespace Radzen.Blazor
             await MarkerClick.InvokeAsync(marker);
         }
 
+        /// <summary>
+        /// Handles the BoundsChanged event.
+        /// </summary>
+        /// <param name="args">The <see cref="GoogleMapBoundsChangedEventArgs"/> instance containing the event data.</param>
+        [JSInvokable("RadzenGoogleMap.OnBoundsChanged")]
+        public async System.Threading.Tasks.Task OnBoundsChanged(GoogleMapBoundsChangedEventArgs args)
+        {
+            await BoundsChanged.InvokeAsync(args);
+        }
+
         bool firstRender = true;
         bool _visibleChanged;
 
@@ -211,6 +229,10 @@ namespace Radzen.Blazor
         }
 
         /// <inheritdoc />
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(GoogleMapMarkerData))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(GoogleMapPosition))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(GoogleMapClickEventArgs))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(GoogleMapBoundsChangedEventArgs))]
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);

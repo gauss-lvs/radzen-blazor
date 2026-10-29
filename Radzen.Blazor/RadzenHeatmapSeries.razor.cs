@@ -30,7 +30,7 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenHeatmapSeries<TItem> : CartesianSeries<TItem>
+    public partial class RadzenHeatmapSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>
     {
         /// <summary>
         /// The name of the numeric property of <typeparamref name="TItem"/> that provides the cell intensity
@@ -247,6 +247,7 @@ namespace Radzen.Blazor
                     builder.AddAttribute(seq++, nameof(Rendering.LegendItem.MarkerSize), MarkerSize);
                     builder.AddAttribute(seq++, nameof(Rendering.LegendItem.Text), FormatRangeLabel(range));
                     builder.AddAttribute(seq++, nameof(Rendering.LegendItem.Clickable), false);
+                    builder.AddAttribute(seq++, nameof(Rendering.LegendItem.ChildContent), RenderLegendItemContent(clickable, FormatRangeLabel(range), range, range.Color));
                     builder.CloseComponent();
                 }
             };

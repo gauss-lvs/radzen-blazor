@@ -27,13 +27,15 @@ namespace Radzen.Blazor
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2080, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2087, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2091, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenGantt<TItem> where TItem : notnull
+    public partial class RadzenGantt<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> where TItem : notnull
     {
         private RadzenScheduler<TItem>? scheduler;
         private RadzenGanttDayView<TItem>? dayView;
         private RadzenGanttWeekView<TItem>? weekView;
         private RadzenGanttMonthView<TItem>? monthView;
         private RadzenGanttYearView<TItem>? yearView;
+        private RadzenGanttYearsView<TItem>? yearsView;
         private GanttZoomLevel? pendingZoomLevel;
         private bool scrollToFirstEvent = true;
 
@@ -123,6 +125,11 @@ namespace Radzen.Blazor
             if (progressGetter == null && !string.IsNullOrEmpty(ProgressProperty))
             {
                 progressGetter = PropertyAccess.Getter<TItem, object>(ProgressProperty);
+            }
+
+            if (IsResourceMode)
+            {
+                InitResourceGetters();
             }
         }
         /// <inheritdoc />
@@ -255,10 +262,19 @@ namespace Radzen.Blazor
         public int WeeksInView { get; set; } = 4;
 
         /// <summary>
-        /// Date format for header cells.
+        /// Number of years to render in the multi-year Years view when <see cref="ViewStart"/> and
+        /// <see cref="ViewEnd"/> are not set. Default is <c>3</c>.
         /// </summary>
         [Parameter]
-        public string HeaderDateFormat { get; set; } = "dd MMM";
+        public int YearsInView { get; set; } = 3;
+
+        /// <summary>
+        /// Date format for the day labels of the Day zoom and the week range labels of the Month zoom.
+        /// When not set, the short date pattern of <see cref="RadzenComponent.Culture"/> without its year part is used,
+        /// for example <c>M/d</c> for en-US and <c>dd/MM</c> for en-GB.
+        /// </summary>
+        [Parameter]
+        public string? HeaderDateFormat { get; set; }
 
         /// <summary>
         /// Raised when a task bar is clicked.
@@ -973,7 +989,14 @@ namespace Radzen.Blazor
         /// </summary>
         public async System.Threading.Tasks.Task Reload()
         {
-            if (grid != null)
+            if (IsResourceMode)
+            {
+                if (resourceGrid != null)
+                {
+                    await resourceGrid.Reload();
+                }
+            }
+            else if (grid != null)
             {
                 await grid.Reload();
             }
@@ -1041,11 +1064,22 @@ namespace Radzen.Blazor
             return cachedEndGetter;
         }
 
+        internal IEnumerable<TItem>? SchedulerDataSource => IsResourceMode ? GetResourceModeTasks() : grid?.View;
+
         internal IReadOnlyList<DateTime> TimelineDays => cachedTimelineDays ??= BuildTimelineDays();
 
         internal int TimelineWidthPx => TimelineDays.Count * DayWidthPx;
 
-        internal int TimelineRowCount => cachedTimelineRowCount ??= (TimelineRowIndexByItem.Count > 0 ? TimelineRowIndexByItem.Count : (grid?.View?.Count() ?? gridCount));
+        internal int TimelineRowCount => cachedTimelineRowCount ??= ComputeTimelineRowCount();
+
+        private int ComputeTimelineRowCount()
+        {
+            if (IsResourceMode)
+            {
+                return ComputeResourceModeRowCount();
+            }
+            return TimelineRowIndexByItem.Count > 0 ? TimelineRowIndexByItem.Count : (grid?.View?.Count() ?? gridCount);
+        }
 
         internal IReadOnlyDictionary<object, int> TimelineRowIndexByItem => cachedTimelineRowIndex ??= BuildTimelineRowIndex();
 
@@ -1093,7 +1127,9 @@ namespace Radzen.Blazor
 
         private IReadOnlyList<DateTime> BuildTimelineDays()
         {
-            var data = pagedData?.ToList() ?? new List<TItem>();
+            var data = IsResourceMode
+                ? (resourceModeTasks?.ToList() ?? new List<TItem>())
+                : (pagedData?.ToList() ?? new List<TItem>());
             var sg = GetStartGetter();
             var eg = GetEndGetter();
             if (data.Count == 0 || sg == null || eg == null)
@@ -1139,6 +1175,7 @@ namespace Radzen.Blazor
                 GanttZoomLevel.Week => 7,
                 GanttZoomLevel.Month => 14,
                 GanttZoomLevel.Year => 30,
+                GanttZoomLevel.Years => 60,
                 _ => 14
             };
             start = start.AddDays(-pad);
@@ -1154,6 +1191,11 @@ namespace Radzen.Blazor
 
         private IReadOnlyDictionary<object, int> BuildTimelineRowIndex()
         {
+            if (IsResourceMode)
+            {
+                return BuildResourceModeRowIndex();
+            }
+
             var map = new Dictionary<object, int>();
             var index = 0;
             foreach (var item in grid?.View ?? Enumerable.Empty<TItem>())
@@ -1200,6 +1242,7 @@ namespace Radzen.Blazor
                 GanttZoomLevel.Day => dayView,
                 GanttZoomLevel.Month => monthView,
                 GanttZoomLevel.Year => yearView,
+                GanttZoomLevel.Years => yearsView,
                 _ => weekView
             };
         }
@@ -1604,6 +1647,11 @@ namespace Radzen.Blazor
                 {
                     yield return yearView;
                 }
+
+                if (yearsView != null)
+                {
+                    yield return yearsView;
+                }
             }
         }
 
@@ -1616,7 +1664,21 @@ namespace Radzen.Blazor
         internal string GetViewButtonCssClass(ISchedulerView view)
         {
             var isActive = scheduler?.SelectedView == view;
-            return isActive ? " rz-state-active" : string.Empty;
+            var zoomClass = GetZoomForView(view) is GanttZoomLevel zoom ? $"rz-gantt-view-{zoom.ToString().ToLowerInvariant()}" : string.Empty;
+            return isActive ? $"{zoomClass} rz-state-active".Trim() : zoomClass;
+        }
+
+        private GanttZoomLevel? GetZoomForView(ISchedulerView view)
+        {
+            return view switch
+            {
+                _ when view == dayView => GanttZoomLevel.Day,
+                _ when view == weekView => GanttZoomLevel.Week,
+                _ when view == monthView => GanttZoomLevel.Month,
+                _ when view == yearView => GanttZoomLevel.Year,
+                _ when view == yearsView => GanttZoomLevel.Years,
+                _ => null
+            };
         }
 
         internal async Task OnGanttChangeView(ISchedulerView view)
@@ -1725,9 +1787,13 @@ namespace Radzen.Blazor
             {
                 bestZoom = GanttZoomLevel.Month;
             }
-            else
+            else if (span.TotalDays <= 730)
             {
                 bestZoom = GanttZoomLevel.Year;
+            }
+            else
+            {
+                bestZoom = GanttZoomLevel.Years;
             }
 
             var pad = bestZoom switch
@@ -1736,6 +1802,7 @@ namespace Radzen.Blazor
                 GanttZoomLevel.Week => 3,
                 GanttZoomLevel.Month => 7,
                 GanttZoomLevel.Year => 14,
+                GanttZoomLevel.Years => 30,
                 _ => 3
             };
 
@@ -1800,20 +1867,21 @@ namespace Radzen.Blazor
 
         private void OnGridRowRender(RowRenderEventArgs<TItem> args)
         {
-            if (!string.IsNullOrWhiteSpace(IdProperty) && !string.IsNullOrWhiteSpace(ParentIdProperty))
+            if (!string.IsNullOrWhiteSpace(IdProperty) && !string.IsNullOrWhiteSpace(ParentIdProperty) && idGetter != null)
             {
-                if (idGetter != null)
+                var query = (Data ?? Enumerable.Empty<TItem>()).AsQueryable()
+                    .Where($"it => it.{ParentIdProperty} == @0", new object[] { idGetter(args.Data!) });
+
+                if (visibleIds != null)
                 {
-                    var query = (Data ?? Enumerable.Empty<TItem>()).AsQueryable()
-                        .Where($"it => it.{ParentIdProperty} == @0", new object[] { idGetter(args.Data!) });
-
-                    if (visibleIds != null)
-                    {
-                        query = query.Where(item => visibleIds.Contains(idGetter(item)));
-                    }
-
-                    args.Expandable = query.Any();
+                    query = query.Where(item => visibleIds.Contains(idGetter(item)));
                 }
+
+                args.Expandable = query.Any();
+            }
+            else
+            {
+                args.Expandable = false;
             }
 
             // Set row height
@@ -1972,13 +2040,18 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
-        /// Expands a range of rows.
+        /// Expands a range of rows. In resource view mode the resources the items are assigned to
+        /// (including their ancestors) are expanded instead.
         /// </summary>
         /// <param name="items">The range of rows.</param>
         public async Task ExpandRows(IEnumerable<TItem> items)
         {
             ArgumentNullException.ThrowIfNull(items);
-            if (grid != null)
+            if (IsResourceMode)
+            {
+                await ExpandResourceRowsForItems(items);
+            }
+            else if (grid != null)
             {
                 await grid.ExpandRows(items);
             }

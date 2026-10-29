@@ -28,6 +28,11 @@ class MatchFunction : FormulaFunction
             return lookup;
         }
 
+        if (lookup.IsEmpty)
+        {
+            lookup = CellData.FromNumber(0);
+        }
+
         if (!TryGetInteger(arguments, "match_type", isRequired: false, defaultValue: 1, out var matchType, out var error))
         {
             return error!;
@@ -42,7 +47,7 @@ class MatchFunction : FormulaFunction
             _ => 0
         };
 
-        var index = RangeSearch.Find(array, lookup, matchMode, wildcards: matchType == 0, out var searchError);
+        var index = RangeSearch.Find(array, lookup, matchMode, wildcards: matchType == 0, acrossTypes: false, out var searchError);
 
         if (searchError is not null)
         {

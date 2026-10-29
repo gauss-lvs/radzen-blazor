@@ -50,7 +50,8 @@ namespace Radzen.Blazor
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2072, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2087, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2091, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenDropDownDataGrid<TValue> : DropDownBase<TValue>
+    public partial class RadzenDropDownDataGrid<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TValue> : DropDownBase<TValue>
     {
         bool stopKeydownPropagation = true;
         void OnGuardKeyDown(KeyboardEventArgs args)
@@ -1179,7 +1180,7 @@ namespace Radzen.Blazor
 
                 if (JSRuntime != null)
                 {
-                    await JSRuntime.InvokeVoidAsync("Radzen.focusNext", Element, args.ShiftKey);
+                    await JSRuntime.InvokeVoidAsync("Radzen.focusNext", Element, args.ShiftKey, PopupID);
                 }
             }
             else if (key == "Delete" && AllowClear)
@@ -1220,9 +1221,19 @@ namespace Radzen.Blazor
             }
         }
 
-        async Task DebounceFilter()
+        Task DebounceFilter()
         {
-            if (JSRuntime != null)
+            return DebounceFilter(null);
+        }
+
+        async Task DebounceFilter(string? value)
+        {
+            if (value != null)
+            {
+                searchText = value;
+                await InvokeAsync(() => SearchTextChanged.InvokeAsync(SearchText));
+            }
+            else if (JSRuntime != null)
             {
                 searchText = await JSRuntime.InvokeAsync<string>("Radzen.getInputValue", search) ?? string.Empty;
                 await InvokeAsync(() => SearchTextChanged.InvokeAsync(SearchText));
@@ -1234,6 +1245,14 @@ namespace Radzen.Blazor
                 _view = null;
                 await InvokeAsync(RefreshAfterFilter);
             }
+        }
+
+        /// <inheritdoc />
+        protected override async Task OnSearchTextChanged()
+        {
+            previousSearch = searchText;
+            _view = null;
+            await RefreshAfterFilter();
         }
 
         async Task CloseOnEscape(KeyboardEventArgs args)
@@ -1317,7 +1336,7 @@ namespace Radzen.Blazor
         /// <param name="args">The <see cref="ChangeEventArgs"/> instance containing the event data.</param>
         protected override async Task OnFilter(ChangeEventArgs args)
         {
-            await DebounceFilter();
+            await DebounceFilter(args?.Value?.ToString());
         }
 
         async Task ClearSearchText()

@@ -19,7 +19,6 @@ enum FormulaAdjustment
 /// </summary>
 public partial class Worksheet
 {
-    private readonly CellDependencyGraph graph = new();
     private readonly HashSet<int> invalidReferenceRows = [];
     private readonly HashSet<int> invalidReferenceColumns = [];
 
@@ -27,7 +26,9 @@ public partial class Worksheet
 
     internal bool IsUpdating => updateDepth > 0;
 
-    private bool isEvaluating;
+    internal const int MaxRows = 1_048_576;
+
+    internal const int MaxColumns = 16_384;
 
     /// <summary>
     /// Gets the number of rows in the sheet.
@@ -82,9 +83,29 @@ public partial class Worksheet
     /// </summary>
     public SheetProtection Protection { get; set; } = new();
     /// <summary>
+    /// Gets or sets whether the sheet is displayed right to left, with column A on the right. Saved as the <c>rightToLeft</c> attribute of the xlsx sheet view.
+    /// </summary>
+    public bool RightToLeft { get; set; }
+    /// <summary>
     /// Gets the name of the sheet.
     /// </summary>
-    public string Name { get; set; } = "Worksheet1";
+    public string Name
+    {
+        get => name;
+        set
+        {
+            if (string.Equals(name, value, StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            var oldName = name;
+            name = value;
+            workbook?.OnSheetRenamed(this, oldName);
+        }
+    }
+
+    private string name = "Worksheet1";
     private readonly List<Table> tables = [];
 
     /// <summary>
@@ -223,8 +244,19 @@ public partial class Worksheet
     /// Gets the registry of formula functions available in the sheet.
     /// </summary>
     public FunctionStore FunctionRegistry { get; } = new();
-   
+
+    /// <summary>
+    /// Gets the defined names scoped to this sheet. The key is the name and the value is the reference or
+    /// expression it refers to, written as a formula without the leading equals sign. Formulas in this sheet
+    /// resolve a name here before <see cref="Spreadsheet.Workbook.DefinedNames"/>; formulas in other sheets do not see it.
+    /// </summary>
+    public IDictionary<string, string> DefinedNames { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+    internal HashSet<string> HiddenDefinedNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+
     private Workbook? workbook;
+
+    internal Workbook? CreatedWorkbook => workbook;
 
     /// <summary>
     /// Gets the workbook that contains this sheet.
@@ -289,6 +321,268 @@ public partial class Worksheet
         return removed;
     }
 
+    private void ShiftStructures(int index, int count, bool isRow)
+    {
+        ShiftTables(table => count > 0
+            ? (isRow ? table.InsertRows(index, count) : table.InsertColumns(index, count))
+            : (isRow ? table.DeleteRow(index) : table.DeleteColumn(index)));
+
+        RangeRef? MapRange(RangeRef range) => ShiftRange(range, index, count, isRow);
+
+        AutoFilter.Range = ShiftRange(AutoFilter.Range, index, count, isRow);
+
+        ShiftFilters(index, count, isRow);
+
+        if (ConditionalFormats.Shift(MapRange))
+        {
+            OnChromeChanged();
+        }
+
+        Validation.Shift(MapRange);
+
+        int MapIndex(int value) => count > 0
+            ? (value >= index ? value + count : value)
+            : (value > index ? value + count : value);
+
+        CellRef Adjust(FormulaToken token, bool isRangeEnd)
+        {
+            var address = token.Address;
+            var value = isRow ? address.Row : address.Column;
+            var moved = count < 0 && isRangeEnd && value == index ? value + count : MapIndex(value);
+
+            if (moved < 0 || moved == value)
+            {
+                return address;
+            }
+
+            return isRow
+                ? new CellRef(moved, address.Column) { Worksheet = address.Worksheet }
+                : new CellRef(address.Row, moved) { Worksheet = address.Worksheet };
+        }
+
+        foreach (var rule in Validation.Ranges.SelectMany(Validation.GetValidators).OfType<DataValidationRule>().Distinct())
+        {
+            rule.Formula1 = Workbook.AdjustReference(rule.Formula1, this, this, Adjust);
+            rule.Formula2 = Workbook.AdjustReference(rule.Formula2, this, this, Adjust);
+        }
+
+        void ShiftAnchor(CellAnchor? anchor)
+        {
+            if (anchor is null)
+            {
+                return;
+            }
+
+            if (isRow)
+            {
+                anchor.Row = Math.Max(0, MapIndex(anchor.Row));
+            }
+            else
+            {
+                anchor.Column = Math.Max(0, MapIndex(anchor.Column));
+            }
+        }
+
+        foreach (var image in images)
+        {
+            ShiftAnchor(image.From);
+            ShiftAnchor(image.To);
+        }
+
+        if (images.Count > 0)
+        {
+            ImagesChanged?.Invoke();
+        }
+
+        foreach (var chart in charts)
+        {
+            ShiftAnchor(chart.From);
+            ShiftAnchor(chart.To);
+        }
+
+        foreach (var sheet in Workbook.Sheets)
+        {
+            var seriesChanged = false;
+
+            foreach (var series in sheet.Charts.SelectMany(chart => chart.Series))
+            {
+                var categories = Workbook.AdjustReference(series.Categories, sheet, this, Adjust);
+                var values = Workbook.AdjustReference(series.Values, sheet, this, Adjust);
+                var name = Workbook.AdjustReference(series.Name, sheet, this, Adjust);
+
+                seriesChanged |= !ReferenceEquals(categories, series.Categories) || !ReferenceEquals(values, series.Values) || !ReferenceEquals(name, series.Name);
+
+                series.Categories = categories;
+                series.Values = values;
+                series.Name = name;
+            }
+
+            if (seriesChanged && sheet != this)
+            {
+                sheet.ChartsChanged?.Invoke();
+            }
+        }
+
+        if (charts.Count > 0)
+        {
+            ChartsChanged?.Invoke();
+        }
+    }
+
+    private void ShiftFilters(int index, int count, bool isRow)
+    {
+        if (filters.Count == 0)
+        {
+            return;
+        }
+
+        var shifter = isRow ? null : new FilterColumnShifter(index, count);
+
+        for (var i = filters.Count - 1; i >= 0; i--)
+        {
+            var filter = filters[i];
+            var moved = ShiftRange(filter.Range, index, count, isRow);
+
+            if (moved is null)
+            {
+                filters.RemoveAt(i);
+                continue;
+            }
+
+            if (shifter is not null)
+            {
+                shifter.Removed = false;
+                filter.Criterion.Accept(shifter);
+
+                if (shifter.Removed)
+                {
+                    filters.RemoveAt(i);
+                    continue;
+                }
+            }
+
+            filter.Range = moved.Value;
+        }
+    }
+
+    private sealed class FilterColumnShifter(int index, int count) : FilterCriterionVisitorBase
+    {
+        public bool Removed { get; set; }
+
+        private int Map(int column)
+        {
+            if (count > 0)
+            {
+                return column >= index ? column + count : column;
+            }
+
+            if (column == index)
+            {
+                Removed = true;
+                return column;
+            }
+
+            return column > index ? column + count : column;
+        }
+
+        protected override void DefaultVisit(FilterCriterion criterion)
+        {
+            if (criterion is FilterCriterionLeaf leaf)
+            {
+                leaf.Column = Map(leaf.Column);
+            }
+        }
+
+        public override void Visit(TopFilterCriterion criterion)
+        {
+            ArgumentNullException.ThrowIfNull(criterion);
+            criterion.Column = Map(criterion.Column);
+        }
+
+        public override void Visit(DynamicFilterCriterion criterion)
+        {
+            ArgumentNullException.ThrowIfNull(criterion);
+            criterion.Column = Map(criterion.Column);
+        }
+
+        public override void Visit(CellColorFilterCriterion criterion)
+        {
+            ArgumentNullException.ThrowIfNull(criterion);
+            criterion.Column = Map(criterion.Column);
+        }
+    }
+
+    internal void RestoreTable(Table table)
+    {
+        if (tables.Contains(table))
+        {
+            return;
+        }
+
+        tables.Add(table);
+        OnChromeChanged();
+    }
+
+    private void ShiftTables(Func<Table, TableShift> shift)
+    {
+        var changed = false;
+
+        for (var i = tables.Count - 1; i >= 0; i--)
+        {
+            var result = shift(tables[i]);
+
+            if (result == TableShift.Removed)
+            {
+                tables.RemoveAt(i);
+            }
+
+            changed |= result != TableShift.None;
+        }
+
+        if (changed)
+        {
+            OnChromeChanged();
+        }
+    }
+
+    private static RangeRef? ShiftRange(RangeRef? value, int index, int count, bool isRow)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        var range = value.Value;
+        var start = isRow ? range.Start.Row : range.Start.Column;
+        var end = isRow ? range.End.Row : range.End.Column;
+
+        if (count < 0 && start <= index && end >= index)
+        {
+            if (start == end)
+            {
+                return null;
+            }
+
+            return isRow
+                ? new RangeRef(range.Start, new CellRef(range.End.Row + count, range.End.Column))
+                : new RangeRef(range.Start, new CellRef(range.End.Row, range.End.Column + count));
+        }
+
+        if (start >= index && (count > 0 || start > index))
+        {
+            return isRow ? range.Offset(count, 0) : range.Offset(0, count);
+        }
+
+        if (count > 0 && end >= index)
+        {
+            return isRow
+                ? new RangeRef(range.Start, new CellRef(range.End.Row + count, range.End.Column))
+                : new RangeRef(range.Start, new CellRef(range.End.Row, range.End.Column + count));
+        }
+
+        return range;
+    }
+
     /// <summary>
     /// Raised when sheet chrome (table styling, custom cell types, validation, auto filter)
     /// changes and dependent cell views must refresh.
@@ -344,23 +638,13 @@ public partial class Worksheet
         return new CellRef(Rows.NextVisible(0, 1, 0), Columns.NextVisible(0, 1, 0));
     }
 
-    private void EvaluateFormulas(IEnumerable<Cell> cells)
-    {
-        var evaluated = new Dictionary<Cell, CellData>();
-
-        foreach (var cell in cells)
-        {
-            EvaluateFormula(cell, evaluated);
-        }
-    }
-
-    private void EvaluateFormula(Cell cell, Dictionary<Cell, CellData> evaluated)
+    internal IReadOnlyList<Cell> EvaluateFormula(Cell cell, Recalculation recalculation)
     {
         var tree = cell.FormulaSyntaxTree;
 
         if (tree is null)
         {
-            return;
+            return [];
         }
 
         if (tree.Errors.Count > 0)
@@ -369,11 +653,16 @@ public partial class Worksheet
         }
         else
         {
-            isEvaluating = true;
+            Workbook.IsEvaluating = true;
             try
             {
-                var visitor = new FormulaEvaluator(this, cell, evaluated);
+                var visitor = new FormulaEvaluator(this, cell, recalculation);
                 var eval = visitor.Evaluate(tree.Root);
+
+                if (visitor.Missing.Count > 0)
+                {
+                    return visitor.Missing;
+                }
 
                 if (eval.IsEmpty)
                 {
@@ -381,15 +670,16 @@ public partial class Worksheet
                 }
 
                 cell.Data = eval;
-                evaluated[cell] = eval;
             }
             finally
             {
-                isEvaluating = false;
+                Workbook.IsEvaluating = false;
             }
         }
 
         cell.OnChanged();
+
+        return [];
     }
 
     internal CellData EvaluateExpression(string expression)
@@ -408,29 +698,19 @@ public partial class Worksheet
 
     internal void OnCellValueChanged(Cell cell)
     {
-        if (isEvaluating)
+        if (Workbook.IsEvaluating)
         {
             return;
         }
 
-        // During a batch, EndUpdate recalculates dependent formulas once. The changed cell
-        // itself is not a formula node, so it would never be notified - fire its event here.
-        if (!IsUpdating && graph.HasDependents(cell))
-        {
-            EvaluateFormulas(graph.GetTopologicallySortedDependencies(cell));
-        }
+        Workbook.OnCellValueChanged(cell);
 
         cell.OnChanged();
     }
 
     internal void OnCellFormulaChanged(Cell cell)
     {
-        graph.Add(cell);
-
-        if (!IsUpdating)
-        {
-            EvaluateFormulas([cell, .. graph.GetTopologicallySortedDependencies(cell)]);
-        }
+        Workbook.OnCellFormulaChanged(cell);
     }
 
     internal void RefreshCells(RangeRef range, bool validate = false)
@@ -478,7 +758,7 @@ public partial class Worksheet
             return;
         }
 
-        EvaluateFormulas(graph.GetTopologicallySortedDependencies());
+        Workbook.OnUpdateEnded(this);
 
         Selection.TriggerPendingChange();
     }
@@ -609,6 +889,8 @@ public partial class Worksheet
 
     private void DeleteColumnCore(int columnIndex)
     {
+        RemoveFormulaCells(cell => cell.Address.Column == columnIndex);
+
         // Sparse shift - O(populated cells) instead of O(rows x columns)
         Cells.ShiftColumnsLeft(columnIndex);
 
@@ -616,9 +898,11 @@ public partial class Worksheet
 
         MergedCells.ShiftColumnsLeft(columnIndex);
 
+        ShiftStructures(columnIndex, -1, isRow: false);
+
         invalidReferenceColumns.Add(columnIndex);
 
-        InvalidateFormulasReferencing(cellRef => cellRef.Column == columnIndex);
+        Workbook.InvalidateFormulasReferencing(this, RangeKind.Columns, columnIndex);
 
         ColumnCount--;
 
@@ -647,6 +931,8 @@ public partial class Worksheet
 
     private void DeleteRowCore(int rowIndex)
     {
+        RemoveFormulaCells(cell => cell.Address.Row == rowIndex);
+
         // Sparse shift - O(populated cells) instead of O(rows x columns)
         Cells.ShiftRowsUp(rowIndex);
 
@@ -654,9 +940,11 @@ public partial class Worksheet
 
         MergedCells.ShiftRowsUp(rowIndex);
 
+        ShiftStructures(rowIndex, -1, isRow: true);
+
         invalidReferenceRows.Add(rowIndex);
 
-        InvalidateFormulasReferencing(cellRef => cellRef.Row == rowIndex);
+        Workbook.InvalidateFormulasReferencing(this, RangeKind.Rows, rowIndex);
 
         RowCount--;
 
@@ -669,21 +957,13 @@ public partial class Worksheet
         }
     }
 
-    private void AdjustFormulas(Func<FormulaToken, CellRef> adjust)
+    private void RemoveFormulaCells(Predicate<Cell> isRemoved)
     {
-        // Snapshot to avoid collection-modified errors when setting Formula triggers graph updates
-        foreach (var cell in graph.FormulaCells.ToList())
+        foreach (var cell in Cells.GetPopulatedCells())
         {
-            if (cell.FormulaSyntaxTree is null || string.IsNullOrEmpty(cell.Formula))
+            if (cell.Formula is not null && isRemoved(cell))
             {
-                continue;
-            }
-
-            var newFormula = FormulaRewriter.Rewrite(cell.Formula!, cell.FormulaSyntaxTree!, adjust);
-
-            if (!string.Equals(newFormula, cell.Formula, StringComparison.Ordinal))
-            {
-                cell.Formula = newFormula;
+                Workbook.OnFormulaCellRemoved(cell);
             }
         }
     }
@@ -691,8 +971,11 @@ public partial class Worksheet
 
     internal static string AdjustFormulaForCopy(string formula, int rowDelta, int colDelta)
     {
-        var tree = FormulaParser.Parse(formula);
+        return AdjustParsedFormulaForCopy(formula, FormulaParser.Parse(formula), rowDelta, colDelta);
+    }
 
+    internal static string AdjustParsedFormulaForCopy(string formula, FormulaSyntaxTree tree, int rowDelta, int colDelta)
+    {
         if (tree.Errors.Count > 0)
         {
             return formula;
@@ -775,70 +1058,6 @@ public partial class Worksheet
         return cells;
     }
 
-    internal void InvalidateFormulasReferencing(Predicate<CellRef> isInvalidated)
-    {
-        // Snapshot to avoid collection-modified errors when setting Formula triggers graph updates
-        foreach (var cell in graph.FormulaCells.ToList())
-        {
-            var tree = cell.FormulaSyntaxTree;
-            if (tree is null)
-            {
-                continue;
-            }
-
-            var hasRef = tree.Find(node => node switch
-            {
-                CellSyntaxNode c => isInvalidated(c.Token.Address),
-                RangeSyntaxNode r => RangeContainsInvalidated(r, isInvalidated),
-                _ => false,
-            }).Count > 0;
-
-            if (!hasRef)
-            {
-                continue;
-            }
-
-            var tokens = FormulaLexer.Scan(cell.Formula!, false);
-            for (var i = 0; i < tokens.Count; i++)
-            {
-                var t = tokens[i];
-                if (t.Type == FormulaTokenType.CellIdentifier && isInvalidated(t.Address))
-                {
-                    tokens[i] = new FormulaToken(FormulaTokenType.ErrorLiteral, "#REF!") { ErrorValue = CellError.Ref };
-                }
-            }
-
-            var rebuilt = StringBuilderCache.Acquire();
-            foreach (var t in tokens)
-            {
-                if (t.Type == FormulaTokenType.None)
-                {
-                    break;
-                }
-
-                rebuilt.Append(t.Value);
-            }
-            cell.Formula = StringBuilderCache.GetStringAndRelease(rebuilt);
-        }
-    }
-
-    private static bool RangeContainsInvalidated(RangeSyntaxNode range, Predicate<CellRef> isInvalidated)
-    {
-        var start = range.Start.Token.Address;
-        var end = range.End.Token.Address;
-        for (var r = start.Row; r <= end.Row; r++)
-        {
-            for (var c = start.Column; c <= end.Column; c++)
-            {
-                if (isInvalidated(new CellRef(r, c)))
-                {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
     /// <summary>
     /// Inserts one or more rows at the specified index and shifts existing cells down. Updates formulas and increases row count.
     /// </summary>
@@ -871,11 +1090,13 @@ public partial class Worksheet
 
         MergedCells.ShiftRowsDown(rowIndex, count);
 
-        AdjustFormulas((cellToken) =>
+        ShiftStructures(rowIndex, count, isRow: true);
+
+        Workbook.AdjustFormulas(this, (cellToken) =>
         {
             var a = cellToken.Address;
             var newRow = a.Row >= rowIndex ? a.Row + count : a.Row;
-            return new CellRef(newRow, a.Column);
+            return new CellRef(newRow, a.Column) { Worksheet = a.Worksheet };
         });
 
         // Increase the row count last so the axis change event fires after every shift
@@ -923,11 +1144,13 @@ public partial class Worksheet
 
         MergedCells.ShiftColumnsRight(columnIndex, count);
 
-        AdjustFormulas((cellToken) =>
+        ShiftStructures(columnIndex, count, isRow: false);
+
+        Workbook.AdjustFormulas(this, (cellToken) =>
         {
             var a = cellToken.Address;
             var newCol = a.Column >= columnIndex ? a.Column + count : a.Column;
-            return new CellRef(a.Row, newCol);
+            return new CellRef(a.Row, newCol) { Worksheet = a.Worksheet };
         });
 
         // Increase the column count last so the axis change event fires after every shift
@@ -942,234 +1165,6 @@ public partial class Worksheet
             Selection.NotifyContentChanged();
         }
     }
-    class FormulaRewriter : FormulaSyntaxNodeVisitorBase
-    {
-        private readonly Func<FormulaToken, CellRef> adjust;
-        private readonly StringBuilder builder = new();
-
-        private FormulaRewriter(Func<FormulaToken, CellRef> adjust)
-        {
-            this.adjust = adjust;
-        }
-
-        public static string Rewrite(string original, FormulaSyntaxTree tree, Func<FormulaToken, CellRef> adjust)
-        {
-            var rewriter = new FormulaRewriter(adjust);
-            rewriter.builder.Append('=');
-            tree.Root.Accept(rewriter);
-            return rewriter.builder.ToString();
-        }
-
-        public override void VisitNumberLiteral(NumberLiteralSyntaxNode numberLiteralSyntaxNode)
-        {
-            builder.Append(numberLiteralSyntaxNode.Token.Value);
-        }
-
-        public override void VisitStringLiteral(StringLiteralSyntaxNode stringLiteralSyntaxNode)
-        {
-            builder.Append('"');
-            builder.Append(stringLiteralSyntaxNode.Token.Value);
-            builder.Append('"');
-        }
-
-        public override void VisitBooleanLiteral(BooleanLiteralSyntaxNode booleanLiteralSyntaxNode)
-        {
-            builder.Append(booleanLiteralSyntaxNode.Token.Value);
-        }
-
-        public override void VisitErrorLiteral(ErrorLiteralSyntaxNode errorLiteralSyntaxNode)
-        {
-            builder.Append(errorLiteralSyntaxNode.Token.Value);
-        }
-
-        public override void VisitName(NameSyntaxNode nameSyntaxNode)
-        {
-            builder.Append(nameSyntaxNode.Name);
-        }
-
-        public override void VisitUnaryExpression(UnaryExpressionSyntaxNode unaryExpressionSyntaxNode)
-        {
-            builder.Append(unaryExpressionSyntaxNode.Operator == UnaryOperator.Negate ? '-' : '+');
-            AppendOperand(unaryExpressionSyntaxNode.Operand, Precedence(unaryExpressionSyntaxNode), wrapEqual: false);
-        }
-
-        public override void VisitBinaryExpression(BinaryExpressionSyntaxNode binaryExpressionSyntaxNode)
-        {
-            var precedence = Precedence(binaryExpressionSyntaxNode);
-            AppendOperand(binaryExpressionSyntaxNode.Left, precedence, wrapEqual: false);
-            builder.Append(TokenToOperator(binaryExpressionSyntaxNode.Token));
-            AppendOperand(binaryExpressionSyntaxNode.Right, precedence, wrapEqual: true);
-        }
-
-        private void AppendOperand(FormulaSyntaxNode operand, int parentPrecedence, bool wrapEqual)
-        {
-            var precedence = Precedence(operand);
-            var wrap = precedence < parentPrecedence || (wrapEqual && precedence == parentPrecedence);
-
-            if (wrap)
-            {
-                builder.Append('(');
-            }
-
-            operand.Accept(this);
-
-            if (wrap)
-            {
-                builder.Append(')');
-            }
-        }
-
-        private static int Precedence(FormulaSyntaxNode node)
-        {
-            return node switch
-            {
-                BinaryExpressionSyntaxNode { Operator: BinaryOperator.Multiply or BinaryOperator.Divide } => 4,
-                BinaryExpressionSyntaxNode { Operator: BinaryOperator.Plus or BinaryOperator.Minus } => 3,
-                BinaryExpressionSyntaxNode { Operator: BinaryOperator.Concat } => 2,
-                BinaryExpressionSyntaxNode => 1,
-                UnaryExpressionSyntaxNode => 5,
-                _ => 6
-            };
-        }
-
-        public override void VisitCell(CellSyntaxNode cellSyntaxNode)
-        {
-            var token = cellSyntaxNode.Token;
-            var adjusted = adjust(token);
-
-            AppendWorksheetPrefix(token.Address.Worksheet);
-
-            if (token.Address.IsColumnAbsolute)
-            {
-                builder.Append('$');
-            }
-            builder.Append(ColumnRef.ToString(adjusted.Column));
-            if (token.Address.IsRowAbsolute)
-            {
-                builder.Append('$');
-            }
-            builder.Append(adjusted.Row + 1);
-        }
-
-        public override void VisitFunction(FunctionSyntaxNode functionSyntaxNode)
-        {
-            builder.Append(functionSyntaxNode.Name);
-            builder.Append('(');
-            for (int i = 0; i < functionSyntaxNode.Arguments.Count; i++)
-            {
-                if (i > 0)
-                {
-                    builder.Append(',');
-                }
-                functionSyntaxNode.Arguments[i].Accept(this);
-            }
-            builder.Append(')');
-        }
-
-        public override void VisitRange(RangeSyntaxNode rangeSyntaxNode)
-        {
-            var startToken = rangeSyntaxNode.Start.Token;
-            var endToken = rangeSyntaxNode.End.Token;
-
-            var startAdjusted = adjust(startToken);
-            var endAdjusted = adjust(endToken);
-
-            // Ensure start <= end after adjustments
-            var startCell = startAdjusted;
-            var endCell = endAdjusted;
-
-            if (startCell.Row > endCell.Row || (startCell.Row == endCell.Row && startCell.Column > endCell.Column))
-            {
-                (startCell, endCell) = CellRef.Swap(startCell, endCell);
-            }
-
-            AppendWorksheetPrefix(startToken.Address.Worksheet);
-
-            if (startToken.Address.IsColumnAbsolute)
-            {
-                builder.Append('$');
-            }
-            builder.Append(ColumnRef.ToString(startCell.Column));
-            if (startToken.Address.IsRowAbsolute)
-            {
-                builder.Append('$');
-            }
-            builder.Append(startCell.Row + 1);
-
-            builder.Append(':');
-
-            if (endToken.Address.IsColumnAbsolute)
-            {
-                builder.Append('$');
-            }
-            builder.Append(ColumnRef.ToString(endCell.Column));
-            if (endToken.Address.IsRowAbsolute)
-            {
-                builder.Append('$');
-            }
-            builder.Append(endCell.Row + 1);
-        }
-
-        private void AppendWorksheetPrefix(string? worksheet)
-        {
-            if (string.IsNullOrEmpty(worksheet))
-            {
-                return;
-            }
-
-            if (NeedsQuoting(worksheet))
-            {
-                builder.Append('\'');
-                builder.Append(worksheet.Replace("'", "''", StringComparison.Ordinal));
-                builder.Append('\'');
-            }
-            else
-            {
-                builder.Append(worksheet);
-            }
-
-            builder.Append('!');
-        }
-
-        private static bool NeedsQuoting(string name)
-        {
-            if (char.IsDigit(name[0]))
-            {
-                return true;
-            }
-
-            foreach (var ch in name)
-            {
-                if (ch == ' ' || ch == '\'')
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private static string TokenToOperator(FormulaToken token)
-        {
-            return token.Type switch
-            {
-                FormulaTokenType.Plus => "+",
-                FormulaTokenType.Minus => "-",
-                FormulaTokenType.Star => "*",
-                FormulaTokenType.Slash => "/",
-                FormulaTokenType.Ampersand => "&",
-                FormulaTokenType.Equals => "=",
-                FormulaTokenType.GreaterThan => ">",
-                FormulaTokenType.GreaterThanOrEqual => ">=",
-                FormulaTokenType.LessThan => "<",
-                FormulaTokenType.LessThanOrEqual => "<=",
-                FormulaTokenType.EqualsGreaterThan => ">=",
-                FormulaTokenType.LessThanGreaterThan => "<>",
-                _ => throw new InvalidOperationException($"Unsupported operator token: {token.Type}")
-            };
-        }
-    }
-
     /// <summary>
     /// Checks if all cells in the specified range are editable.
     /// </summary>

@@ -11,6 +11,9 @@
        aria-selected="@(IsSelected ? "true" : "false")"
        aria-controls="@($"{Tabs?.Id ?? ""}-tabpanel-{Index}")"
        aria-disabled="@(Disabled ? "true" : "false")"
+       aria-setsize="@Tabs?.GetAriaSetSize()"
+       aria-posinset="@Tabs?.GetAriaPosInSet(this)"
+       aria-keyshortcuts="@(Closable ? "Delete" : null)"
        tabindex="-1"
        @onkeydown:stopPropagation>
         @if (!string.IsNullOrEmpty(Icon))
@@ -24,6 +27,10 @@
         else
         {
             <span class="rz-tabview-title">@Text</span>
+        }
+        @if (Closable)
+        {
+            <span class="notranslate rzi rz-tabview-close" aria-hidden="true" title="@Tabs?.CloseTitle" @onclick="OnCloseClick" @onclick:stopPropagation>close</span>
         }
         </button>
     </li>

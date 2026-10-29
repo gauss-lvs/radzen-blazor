@@ -24,7 +24,8 @@ namespace Radzen
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2067, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2070, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2072, Justification = TrimMessages.DataTypePreserved)]
-    public class DataBoundFormComponent<T> : RadzenComponent, IRadzenFormComponent
+    public class DataBoundFormComponent<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] T> : RadzenComponent, IRadzenFormComponent
     {
         /// <summary>
         /// Gets or sets the index of the tab.
@@ -228,6 +229,17 @@ namespace Radzen
         }
 
         /// <summary>
+        /// Called when the <see cref="SearchText"/> parameter is changed by the parent component.
+        /// </summary>
+        protected virtual Task OnSearchTextChanged()
+        {
+            _view = null;
+            return Task.CompletedTask;
+        }
+
+        bool parametersSet;
+
+        /// <summary>
         /// Gets the query.
         /// </summary>
         /// <value>The query.</value>
@@ -333,15 +345,23 @@ namespace Radzen
             // check for changes before setting the properties through the base call
             var dataChanged = parameters.DidParameterChange(nameof(Data), Data);
             var disabledChanged = parameters.DidParameterChange(nameof(Disabled), Disabled);
+            var searchTextChanged = parametersSet && parameters.DidParameterChange(nameof(SearchText), SearchText);
 
             // allow the base class to process parameters and set the properties
             // after this call the parameters object should be considered stale
             await base.SetParametersAsync(parameters);
 
+            parametersSet = true;
+
             // handle changes
             if (dataChanged)
             {
                 await OnDataChanged();
+            }
+
+            if (searchTextChanged)
+            {
+                await OnSearchTextChanged();
             }
 
             if (EditContext != null && (ValueExpression != null || ValueChanged.HasDelegate) &&

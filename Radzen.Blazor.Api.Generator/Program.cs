@@ -355,7 +355,13 @@ static class AssemblyInspector
             var aspNetDir = Path.Combine(dotnetRoot, "Microsoft.AspNetCore.App");
             if (Directory.Exists(aspNetDir))
             {
-                var latest = Directory.GetDirectories(aspNetDir).OrderDescending().FirstOrDefault();
+                var latest = Directory.GetDirectories(aspNetDir)
+                    .Select(d => (Path: d, Version: ParseVersion(Path.GetFileName(d))))
+                    .Where(d => d.Version != null)
+                    .OrderByDescending(d => d.Version!.Major == Environment.Version.Major)
+                    .ThenByDescending(d => d.Version)
+                    .Select(d => d.Path)
+                    .FirstOrDefault();
                 if (latest != null)
                 {
                     foreach (var dll in Directory.GetFiles(latest, "*.dll"))
@@ -368,8 +374,253 @@ static class AssemblyInspector
         foreach (var dll in Directory.GetFiles(assemblyDir, "*.dll"))
             paths.Add(dll);
 
+        AddPackageAssemblies(Path.ChangeExtension(assemblyPath, ".deps.json"), paths);
+        AddNuspecDependencies(assemblyPath, paths);
+
         paths.Add(assemblyPath);
         return paths.ToList();
+    }
+
+    static void AddPackageAssemblies(string depsPath, HashSet<string> paths)
+    {
+        if (!File.Exists(depsPath))
+            return;
+
+        var packagesRoot = Environment.GetEnvironmentVariable("NUGET_PACKAGES");
+
+        if (string.IsNullOrEmpty(packagesRoot))
+            packagesRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages");
+
+        if (!Directory.Exists(packagesRoot))
+            return;
+
+        using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(depsPath));
+        var root = document.RootElement;
+
+        if (!root.TryGetProperty("targets", out var targets) || !root.TryGetProperty("libraries", out var libraries))
+            return;
+
+        foreach (var target in targets.EnumerateObject())
+        {
+            foreach (var library in target.Value.EnumerateObject())
+            {
+                if (!library.Value.TryGetProperty("runtime", out var runtime))
+                    continue;
+
+                if (!libraries.TryGetProperty(library.Name, out var libraryInfo) || !libraryInfo.TryGetProperty("path", out var libraryPath))
+                    continue;
+
+                var packageDir = Path.Combine(packagesRoot, libraryPath.GetString()!.Replace('/', Path.DirectorySeparatorChar));
+
+                foreach (var file in runtime.EnumerateObject())
+                {
+                    var dll = Path.Combine(packageDir, file.Name.Replace('/', Path.DirectorySeparatorChar));
+
+                    if (File.Exists(dll))
+                        AddPackageAssembly(paths, dll);
+                }
+            }
+        }
+    }
+
+    static void AddNuspecDependencies(string assemblyPath, HashSet<string> paths)
+    {
+        var tfmDir = Path.GetDirectoryName(assemblyPath);
+        var libDir = Path.GetDirectoryName(tfmDir);
+        var packageDir = Path.GetDirectoryName(libDir);
+
+        if (tfmDir == null || libDir == null || packageDir == null)
+            return;
+
+        if (!string.Equals(Path.GetFileName(libDir), "lib", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        var nuspec = Directory.GetFiles(packageDir, "*.nuspec").FirstOrDefault();
+
+        if (nuspec == null)
+            return;
+
+        var packagesRoot = Path.GetDirectoryName(Path.GetDirectoryName(packageDir));
+
+        if (packagesRoot == null || !Directory.Exists(packagesRoot))
+            return;
+
+        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { Path.GetFileNameWithoutExtension(nuspec) };
+
+        AddNuspecDependencies(nuspec, Path.GetFileName(tfmDir), packagesRoot, paths, visited);
+    }
+
+    static void AddNuspecDependencies(string nuspecPath, string tfm, string packagesRoot, HashSet<string> paths, HashSet<string> visited)
+    {
+        XDocument document;
+
+        try
+        {
+            document = XDocument.Load(nuspecPath);
+        }
+        catch (Exception ex) when (ex is System.Xml.XmlException or IOException or UnauthorizedAccessException)
+        {
+            return;
+        }
+
+        var dependencies = document.Descendants().FirstOrDefault(e => e.Name.LocalName == "dependencies");
+
+        if (dependencies == null)
+            return;
+
+        var groups = dependencies.Elements().Where(e => e.Name.LocalName == "group").ToList();
+
+        IEnumerable<XElement> items;
+
+        if (groups.Count == 0)
+        {
+            items = dependencies.Elements().Where(e => e.Name.LocalName == "dependency");
+        }
+        else
+        {
+            var group = PickByTargetFramework(groups, tfm, g => NormalizeTargetFramework((string?)g.Attribute("targetFramework")));
+
+            items = group?.Elements().Where(e => e.Name.LocalName == "dependency") ?? Enumerable.Empty<XElement>();
+        }
+
+        foreach (var item in items)
+        {
+            var id = (string?)item.Attribute("id");
+
+            if (string.IsNullOrEmpty(id) || !visited.Add(id))
+                continue;
+
+            var packageDir = FindPackageDirectory(packagesRoot, id, (string?)item.Attribute("version"));
+
+            if (packageDir == null)
+                continue;
+
+            var libDir = Path.Combine(packageDir, "lib");
+
+            if (Directory.Exists(libDir))
+            {
+                var tfmDir = PickByTargetFramework(Directory.GetDirectories(libDir), tfm, d => NormalizeTargetFramework(Path.GetFileName(d)));
+
+                if (tfmDir != null)
+                {
+                    foreach (var dll in Directory.GetFiles(tfmDir, "*.dll"))
+                        AddPackageAssembly(paths, dll);
+                }
+            }
+
+            var nuspec = Directory.GetFiles(packageDir, "*.nuspec").FirstOrDefault();
+
+            if (nuspec != null)
+                AddNuspecDependencies(nuspec, tfm, packagesRoot, paths, visited);
+        }
+    }
+
+    static void AddPackageAssembly(HashSet<string> paths, string dll)
+    {
+        var name = Path.GetFileName(dll);
+
+        if (paths.Any(p => string.Equals(Path.GetFileName(p), name, StringComparison.OrdinalIgnoreCase)))
+            return;
+
+        paths.Add(dll);
+    }
+
+    static string? FindPackageDirectory(string packagesRoot, string id, string? version)
+    {
+        var idDir = Directory.EnumerateDirectories(packagesRoot).FirstOrDefault(d => string.Equals(Path.GetFileName(d), id, StringComparison.OrdinalIgnoreCase));
+
+        if (idDir == null)
+            return null;
+
+        if (!string.IsNullOrEmpty(version))
+        {
+            var exact = Path.Combine(idDir, version.Trim('[', ']', '(', ')', ' ').Split(',')[0]);
+
+            if (Directory.Exists(exact))
+                return exact;
+        }
+
+        return Directory.GetDirectories(idDir)
+            .Select(d => (Path: d, Version: ParseVersion(Path.GetFileName(d))))
+            .Where(d => d.Version != null)
+            .OrderByDescending(d => d.Version)
+            .Select(d => d.Path)
+            .FirstOrDefault();
+    }
+
+    static Version? ParseVersion(string text)
+    {
+        var dash = text.IndexOf('-', StringComparison.Ordinal);
+
+        if (dash >= 0)
+            text = text[..dash];
+
+        return Version.TryParse(text, out var version) ? version : null;
+    }
+
+    static string NormalizeTargetFramework(string? tfm)
+    {
+        if (string.IsNullOrEmpty(tfm))
+            return "";
+
+        tfm = tfm.ToUpperInvariant();
+
+        if (tfm.StartsWith(".NETSTANDARD", StringComparison.Ordinal))
+            return "NETSTANDARD" + tfm[".NETSTANDARD".Length..];
+
+        if (tfm.StartsWith(".NETCOREAPP", StringComparison.Ordinal))
+            return "NETCOREAPP" + tfm[".NETCOREAPP".Length..];
+
+        return tfm;
+    }
+
+    static T? PickByTargetFramework<T>(IEnumerable<T> candidates, string tfm, Func<T, string> getTargetFramework) where T : class
+    {
+        var list = candidates.Select(c => (Candidate: c, Tfm: getTargetFramework(c))).ToList();
+
+        var target = NormalizeTargetFramework(tfm);
+        var targetVersion = ParseNetVersion(target);
+
+        var exact = list.FirstOrDefault(c => c.Tfm == target).Candidate;
+
+        if (exact != null)
+            return exact;
+
+        if (targetVersion != null)
+        {
+            var net = list
+                .Select(c => (c.Candidate, Version: ParseNetVersion(c.Tfm)))
+                .Where(c => c.Version != null && c.Version <= targetVersion)
+                .OrderByDescending(c => c.Version)
+                .Select(c => c.Candidate)
+                .FirstOrDefault();
+
+            if (net != null)
+                return net;
+        }
+
+        foreach (var fallback in new[] { "NETSTANDARD2.1", "NETSTANDARD2.0", "" })
+        {
+            var match = list.FirstOrDefault(c => c.Tfm == fallback).Candidate;
+
+            if (match != null)
+                return match;
+        }
+
+        return null;
+    }
+
+    static Version? ParseNetVersion(string tfm)
+    {
+        if (!tfm.StartsWith("NET", StringComparison.Ordinal) || tfm.StartsWith("NETSTANDARD", StringComparison.Ordinal) || tfm.StartsWith("NETCOREAPP", StringComparison.Ordinal))
+            return null;
+
+        var text = tfm["NET".Length..];
+
+        if (text.Length == 0 || !char.IsDigit(text[0]) || text.Contains('-', StringComparison.Ordinal))
+            return null;
+
+        return text.Contains('.', StringComparison.Ordinal) ? ParseVersion(text) : null;
     }
 
     static bool IsCompilerGenerated(Type t)
@@ -985,12 +1236,48 @@ sealed class RazorPageGenerator
         return sb.ToString();
     }
 
+    static void AppendMetaDescription(StringBuilder sb, string description)
+    {
+        sb.AppendLine("<HeadContent>");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"    <meta name=\"description\" content=\"{EscapeHtml(description)}\">");
+        sb.AppendLine("</HeadContent>");
+    }
+
+    static string DescribeType(ApiTypeInfo type)
+    {
+        var summary = PlainSummary(type.Summary);
+
+        if (string.IsNullOrEmpty(summary))
+        {
+            return $"API reference for the {type.Name} {type.Kind} in Radzen Blazor Components, with its members, syntax and code examples.";
+        }
+
+        return Truncate($"{type.Name} {type.Kind}: {summary}", 160);
+    }
+
+    static string PlainSummary(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return "";
+
+        var plain = Regex.Replace(text, "\x01TYPEREF:[^\x02]*\x02(.*?)\x01/TYPEREF\x02", "$1");
+        return Regex.Replace(plain, "\\s+", " ").Trim();
+    }
+
+    static string Truncate(string text, int maxLength)
+    {
+        if (text.Length <= maxLength) return text;
+
+        var cut = text.LastIndexOf(' ', maxLength - 3);
+        return (cut > 0 ? text[..cut] : text[..(maxLength - 3)]).TrimEnd(',', ';', ':', '.') + "...";
+    }
+
     void GenerateIndexPage()
     {
         var sb = new StringBuilder();
         sb.AppendLine("@page \"/docs/api\"");
         sb.AppendLine();
         sb.AppendLine("<PageTitle>API Reference - Radzen Blazor Components</PageTitle>");
+        AppendMetaDescription(sb, "API reference for Radzen Blazor Components: every component, class, interface and enum with its properties, methods, events and code examples.");
         sb.AppendLine();
         sb.AppendLine("<RadzenStack Gap=\"1rem\" class=\"rz-pt-4\">");
         sb.AppendLine("  <RadzenText TextStyle=\"TextStyle.H3\" TagName=\"TagName.H1\">API Reference</RadzenText>");
@@ -1032,7 +1319,8 @@ sealed class RazorPageGenerator
             var sb = new StringBuilder();
             sb.AppendLine(CultureInfo.InvariantCulture, $"@page \"/docs/api/{ns}\"");
             sb.AppendLine();
-            sb.AppendLine(CultureInfo.InvariantCulture, $"<PageTitle>{ns} Namespace - Radzen Blazor Components</PageTitle>");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"<PageTitle>{ns} Namespace - Radzen Blazor API Reference</PageTitle>");
+            AppendMetaDescription(sb, $"All types in the {ns} namespace of Radzen Blazor Components, with their properties, methods, events and code examples.");
             sb.AppendLine();
             sb.AppendLine("<RadzenStack Gap=\"1rem\" class=\"rz-pt-4\">");
             sb.AppendLine(CultureInfo.InvariantCulture, $"  <RadzenText TextStyle=\"TextStyle.H3\" TagName=\"TagName.H1\" class=\"text-break\">{EscapeHtml(ns)} Namespace</RadzenText>");
@@ -1091,7 +1379,8 @@ sealed class RazorPageGenerator
             var routeName = GetRouteTypeName(type);
             sb.AppendLine(CultureInfo.InvariantCulture, $"@page \"/docs/api/{routeName}\"");
             sb.AppendLine();
-            sb.AppendLine(CultureInfo.InvariantCulture, $"<PageTitle>{EscapeHtml(type.Name)} {type.Kind} - Radzen Blazor Components</PageTitle>");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"<PageTitle>{EscapeHtml(type.Name)} {type.Kind} - Radzen Blazor API Reference</PageTitle>");
+            AppendMetaDescription(sb, DescribeType(type));
             sb.AppendLine();
 
             var tocItems = new List<(string Id, string Text, int Level)>();

@@ -85,18 +85,16 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [CascadingTypeParameter(nameof(TItem))]
-    [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2046, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2055, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2060, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2067, Justification = TrimMessages.DataTypePreserved)]
-    [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2070, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2072, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2075, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2080, Justification = TrimMessages.DataTypePreserved)]
-    [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2087, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2091, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenDataGrid<TItem> : PagedDataBoundComponent<TItem> where TItem : notnull
+    public partial class RadzenDataGrid<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : PagedDataBoundComponent<TItem> where TItem : notnull
     {
         private static readonly string[] DefaultGroupProperty = new string[] { "it" };
 
@@ -210,7 +208,10 @@ namespace Radzen.Blazor
         }
 
         string? lastLoadDataArgs;
+        int lastLoadDataStart;
+        int lastLoadDataTop;
         Task lastLoadDataTask = Task.CompletedTask;
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
         private async ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TItem>> LoadItems(Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
         {
             var view = AllowPaging ? PagedView : View;
@@ -241,6 +242,7 @@ namespace Radzen.Blazor
             return new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<TItem>(virtualDataItems, totalItemsCount);
         }
 
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
         private async ValueTask<Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderResult<GroupResult>> LoadGroups(Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderRequest request)
         {
             var top = request.Count;
@@ -396,6 +398,53 @@ namespace Radzen.Blazor
         [Parameter]
         public EventCallback<Radzen.DataGridLoadChildDataEventArgs<TItem>> LoadChildData { get; set; }
 
+        /// <summary>
+        /// Gets or sets the accessible name of the grid, exposed via the <c>aria-label</c> attribute on the <c>role="grid"</c> or <c>role="treegrid"</c> element.
+        /// When not set, an <c>aria-label</c> attribute supplied through <see cref="RadzenComponent.Attributes"/> is used.
+        /// </summary>
+        [Parameter]
+        public string? AriaLabel { get; set; }
+
+        /// <summary>
+        /// Gets or sets the id of the element that labels the grid, exposed via the <c>aria-labelledby</c> attribute on the <c>role="grid"</c> or <c>role="treegrid"</c> element.
+        /// When not set, an <c>aria-labelledby</c> attribute supplied through <see cref="RadzenComponent.Attributes"/> is used.
+        /// </summary>
+        [Parameter]
+        public string? AriaLabelledBy { get; set; }
+
+        static readonly string[] gridNameAttributes = { "aria-label", "aria-labelledby" };
+
+        internal string? GridAriaLabel => AriaLabel ?? GetAttributeString("aria-label");
+
+        internal string? GridAriaLabelledBy => AriaLabelledBy ?? GetAttributeString("aria-labelledby");
+
+        string? GetAttributeString(string name)
+        {
+            return Attributes != null && Attributes.TryGetValue(name, out var value) ? Convert.ToString(value, Culture) : null;
+        }
+
+        IReadOnlyDictionary<string, object>? wrapperAttributesSource;
+        IReadOnlyDictionary<string, object>? wrapperAttributes;
+
+        internal IReadOnlyDictionary<string, object>? WrapperAttributes
+        {
+            get
+            {
+                if (Attributes == null || !gridNameAttributes.Any(Attributes.ContainsKey))
+                {
+                    return Attributes;
+                }
+
+                if (!ReferenceEquals(wrapperAttributesSource, Attributes))
+                {
+                    wrapperAttributesSource = Attributes;
+                    wrapperAttributes = Attributes.Where(a => !gridNameAttributes.Contains(a.Key)).ToDictionary(a => a.Key, a => a.Value);
+                }
+
+                return wrapperAttributes;
+            }
+        }
+
         private string? expandChildItemAriaLabel;
 
         /// <summary>
@@ -465,6 +514,7 @@ namespace Radzen.Blazor
         /// Gets the view grouped and paged.
         /// </summary>
         /// <value>The grouped paged view.</value>
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
         public IEnumerable<GroupResult> GroupedPagedView
         {
             get
@@ -775,7 +825,7 @@ namespace Radzen.Blazor
                 return false;
             }
 
-            return base.ShouldRender();
+            return !exporting && base.ShouldRender();
         }
 
         /// <summary>
@@ -2186,6 +2236,7 @@ namespace Radzen.Blazor
         [Parameter]
         public EventCallback<DataGridColumnReorderedEventArgs<TItem>> ColumnReordered { get; set; }
 
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
         internal IQueryable<TItem> GetSelfRefView(IQueryable<TItem> view, string orderBy)
         {
             if (!string.IsNullOrEmpty(orderBy))
@@ -2211,7 +2262,7 @@ namespace Radzen.Blazor
             {
                 var item = viewList.ElementAtOrDefault(i);
 
-                if (item != null && childData.TryGetValue(item, out var childDataValue))
+                if (item != null && TryGetChildData(item, out var childDataValue))
                 {
                     var level = 1;
                     var parentChildData = childDataValue.ParentChildData;
@@ -2257,6 +2308,7 @@ namespace Radzen.Blazor
         /// Gets the view - Data with sorting, filtering and paging applied.
         /// </summary>
         /// <value>The view.</value>
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
         public override IQueryable<TItem> View
         {
             get
@@ -2346,6 +2398,7 @@ namespace Radzen.Blazor
         static IComparer<object?> ToObjectComparer(IComparer? comparer) =>
             comparer == null ? Comparer<object?>.Default : Comparer<object?>.Create((a, b) => comparer.Compare(a, b));
 
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
         IQueryable<TItem> OrderByComparers(IQueryable<TItem> source)
         {
             IOrderedEnumerable<TItem>? ordered = null;
@@ -2562,12 +2615,17 @@ namespace Radzen.Blazor
         /// <summary>
         /// Called when data is changed.
         /// </summary>
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
         protected override void OnDataChanged()
         {
-            if (!string.IsNullOrEmpty(KeyProperty) && keyPropertyGetter == null)
+            if (exporting)
             {
-                keyPropertyGetter = PropertyAccess.Getter<TItem, object>(KeyProperty);
+                _view = null;
+                _groupedPagedView = null;
+                return;
             }
+
+            EnsureKeyPropertyGetter();
 
             Reset(!IsOData() && !LoadData.HasDelegate && !AllowColumnPicking && !AllowColumnReorder && !AllowColumnResize);
 
@@ -2594,10 +2652,10 @@ namespace Radzen.Blazor
         {
             _groupedPagedView = null;
             _view = null;
-            _value = new List<TItem>();
 
             if (resetRowState)
             {
+                _value = new List<TItem>();
                 selectedItems.Clear();
                 expandedItems.Clear();
                 collapsedGroupItems.Clear();
@@ -2706,8 +2764,20 @@ namespace Radzen.Blazor
 
         IEnumerable<FilterDescriptor> filters = Enumerable.Empty<FilterDescriptor>();
 
-        internal async Task InvokeLoadData(int start, int top)
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
+        internal async Task InvokeLoadData(int start, int top, bool fromExport = false)
         {
+            if (exporting && !fromExport)
+            {
+                return;
+            }
+
+            if (!exporting)
+            {
+                lastLoadDataStart = start;
+                lastLoadDataTop = top;
+            }
+
             var orderBy = GetOrderBy();
 
             Query.Skip = skip;
@@ -2806,6 +2876,15 @@ namespace Radzen.Blazor
         public string? KeyProperty { get; set; }
 
         internal Func<TItem, object>? keyPropertyGetter;
+
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
+        void EnsureKeyPropertyGetter()
+        {
+            if (!string.IsNullOrEmpty(KeyProperty) && keyPropertyGetter == null)
+            {
+                keyPropertyGetter = PropertyAccess.Getter<TItem, object>(KeyProperty);
+            }
+        }
         /// <summary>
         /// Compares two items for equality. When <see cref="KeyProperty"/> is set the comparison uses the key value
         /// (null-safe — both-null keys are equal, one-null is not), otherwise falls back to <see cref="object.Equals(object)"/>.
@@ -3009,9 +3088,17 @@ namespace Radzen.Blazor
             }
 
             IReadOnlyDictionary<string, object> attributes;
+            Dictionary<string, object>? dict = null;
+
+            if (args.HasAttributes && args.Attributes.TryGetValue("class", out var rowClass))
+            {
+                dict = new Dictionary<string, object>(args.Attributes);
+                dict["class"] = string.Concat(RowStyle(item, index), " ", rowClass);
+            }
+
             if (RowClickActive)
             {
-                var dict = args.HasAttributes ? new Dictionary<string, object>(args.Attributes) : new Dictionary<string, object>();
+                dict ??= args.HasAttributes ? new Dictionary<string, object>(args.Attributes) : new Dictionary<string, object>();
                 // A chainable consumer onclick runs after the built-in row click; anything else (e.g. a string
                 // HTML handler) is kept as-is rather than wrapped and dropped.
                 dict["onclick"] = dict.TryGetValue("onclick", out var existing) && existing != null
@@ -3021,9 +3108,9 @@ namespace Radzen.Blazor
             }
             else
             {
-                attributes = args.HasAttributes
+                attributes = dict ?? (args.HasAttributes
                     ? new System.Collections.ObjectModel.ReadOnlyDictionary<string, object>(args.Attributes)
-                    : EmptyAttributes;
+                    : EmptyAttributes);
             }
 
             return new Tuple<Radzen.RowRenderEventArgs<TItem>, IReadOnlyDictionary<string, object>>(args, attributes);
@@ -3087,10 +3174,18 @@ namespace Radzen.Blazor
 
                     case nameof(Value):
                         valueChanged = HasChanged(parameter.Value, Value); break;
+                    case nameof(KeyProperty):
+                        if (HasChanged(parameter.Value, KeyProperty))
+                        {
+                            keyPropertyGetter = null;
+                        }
+                        break;
                 }
             }
 
             await base.SetParametersAsync(parameters);
+
+            EnsureKeyPropertyGetter();
 
             if (groupsChanged || hideGroupedColumnChanged)
             {
@@ -3327,13 +3422,56 @@ namespace Radzen.Blazor
 
         private async Task CollapseItem(TItem item)
         {
-            expandedItems.Remove(item);
+            expandedItems.Remove(FindItemKey(expandedItems.Keys, item));
             await RowCollapse.InvokeAsync(item);
 
-            if (childData.Remove(item))
+            if (childData.Remove(FindItemKey(childData.Keys, item)))
             {
                 _view = null;
             }
+        }
+
+        bool TryGetChildData(TItem item, [NotNullWhen(true)] out DataGridChildData<TItem>? value)
+        {
+            if (childData.TryGetValue(item, out value))
+            {
+                return true;
+            }
+
+            if (keyPropertyGetter == null)
+            {
+                return false;
+            }
+
+            var key = FindItemKey(childData.Keys, item);
+
+            if (!childData.TryGetValue(key, out value))
+            {
+                return false;
+            }
+
+            childData.Remove(key);
+            childData[item] = value;
+
+            return true;
+        }
+
+        TItem FindItemKey(IEnumerable<TItem> keys, TItem item)
+        {
+            if (keyPropertyGetter == null)
+            {
+                return item;
+            }
+
+            foreach (var key in keys)
+            {
+                if (ItemEquals(key, item))
+                {
+                    return key;
+                }
+            }
+
+            return item;
         }
 
         internal async System.Threading.Tasks.Task ExpandItem(TItem item)
@@ -3346,7 +3484,7 @@ namespace Radzen.Blazor
                     expandedItems.Remove(itemToCollapse);
                     await RowCollapse.InvokeAsync(itemToCollapse);
 
-                    if (object.Equals(item, itemToCollapse))
+                    if (ItemEquals(item, itemToCollapse))
                     {
                         return;
                     }
@@ -3725,6 +3863,7 @@ namespace Radzen.Blazor
         /// Cancels the edited row.
         /// </summary>
         /// <param name="item">The item.</param>
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
         public void CancelEditRow(TItem item)
         {
             if (itemsToInsert.Contains(item))
@@ -3817,6 +3956,7 @@ namespace Radzen.Blazor
             await InsertRowAtIndex(itemToInsert, index + 1);
         }
 
+        [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
         private async System.Threading.Tasks.Task InsertRowAtIndex(TItem item, int insertIndex = 0)
         {
             itemsToInsert.Add(item);
@@ -4381,7 +4521,7 @@ namespace Radzen.Blazor
             var secondValue = GetFilterValue(isFirst ? columnSettings.FilterValue : columnSettings.SecondFilterValue, filterPropertyType);
             if (filterPropertyType != null && !AreObjectsEqual(firstValue, secondValue))
             {
-                gridColumn.SetFilterValue(GetFilterValue(isFirst ? columnSettings.FilterValue : columnSettings.SecondFilterValue, filterPropertyType), isFirst);
+                gridColumn.SetFilterValueFromSettings(GetFilterValue(isFirst ? columnSettings.FilterValue : columnSettings.SecondFilterValue, filterPropertyType), isFirst);
                 return true;
             }
 

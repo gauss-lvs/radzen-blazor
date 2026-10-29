@@ -12,7 +12,7 @@
 {
     var visibleColumns = columns.Where(c => c.GetVisible()).ToList();
 
-    <div @ref=@Element style="@Style" @attributes="Attributes" class="rz-data-grid @GetCssClass()" id="@GetId()"
+    <div @ref=@Element style="@Style" @attributes="WrapperAttributes" class="rz-data-grid @GetCssClass()" id="@GetId()"
         @oncontextmenu=OnContextMenu @oncontextmenu:preventDefault="@this.ContextMenu.HasDelegate" @oncontextmenu:stopPropagation="@this.ContextMenu.HasDelegate">
         @if (AllowGrouping || AllowColumnPicking)
         {
@@ -114,6 +114,7 @@
 
         <div class="rz-data-grid-data" tabindex="@TabIndex" id="@($"{GetId()}-data")"
             role="@(LoadChildData.HasDelegate ? "treegrid" : "grid")"
+            aria-label="@GridAriaLabel" aria-labelledby="@GridAriaLabelledBy"
             aria-multiselectable="@(SelectionMode == DataGridSelectionMode.Multiple ? "true" : null)"
             aria-rowcount="@GridAriaRowCount()"
             aria-activedescendant="@GetActiveDescendantId()"
@@ -524,7 +525,7 @@
                                         {
                                             <RadzenDropDown Style="width:100%" AllowClear="true" AllowFiltering="false" TValue="@object"
                                                             Value=@column.GetFilterValue() Multiple="false" Placeholder="@EnumFilterSelectText" TextProperty="Text" ValueProperty="Value"
-                                                            Data=@((PropertyAccess.IsNullableEnum(column.FilterPropertyType) ? new object[]{ new { Value = Convert.ChangeType(-1, Enum.GetUnderlyingType(Nullable.GetUnderlyingType(column.FilterPropertyType) ?? column.FilterPropertyType)), Text = EnumNullFilterText}} : Enumerable.Empty<object>()).Concat(EnumExtensions.EnumAsKeyValuePair(Nullable.GetUnderlyingType(column.FilterPropertyType) ?? column.FilterPropertyType, EnumFilterTranslationFunc)))
+                                                            Data=@((PropertyAccess.IsNullableEnum(column.FilterPropertyType) ? new object[]{ new DropDownItem<object> { Value = Convert.ChangeType(-1, Enum.GetUnderlyingType(Nullable.GetUnderlyingType(column.FilterPropertyType) ?? column.FilterPropertyType), System.Globalization.CultureInfo.InvariantCulture), Text = EnumNullFilterText }} : Enumerable.Empty<object>()).Concat(EnumExtensions.EnumAsKeyValuePair(Nullable.GetUnderlyingType(column.FilterPropertyType) ?? column.FilterPropertyType, EnumFilterTranslationFunc)))
                                                             Change="@(args => {column.SetFilterValue(args);column.SetFilterOperator(object.Equals(args, -1) ? FilterOperator.IsNull : FilterOperator.Equals);InvokeAsync(() => ApplyFilter(column, true));})" />
                                         }
                                     }
@@ -886,6 +887,7 @@
 
     bool clicking;
     bool rowClicking;
+    bool rowClickPrevented;
 
     internal bool RowClickActive => CellClick.HasDelegate || RowClick.HasDelegate
         || RowSelect.HasDelegate || RowDeselect.HasDelegate || ValueChanged.HasDelegate;
@@ -900,7 +902,7 @@
         try
         {
             clicking = true;
-            await OnCellClick(new DataGridCellMouseEventArgs<TItem>
+            var cellArgs = new DataGridCellMouseEventArgs<TItem>
             {
                 Data = Item,
                 AltKey = args.AltKey,
@@ -918,7 +920,10 @@
                 ShiftKey = args.ShiftKey,
                 Type = args.Type,
                 Column = Column
-            });
+            };
+            var cellClick = OnCellClick(cellArgs);
+            rowClickPrevented = cellArgs.IsDefaultPrevented;
+            await cellClick;
         }
         finally
         {
@@ -928,6 +933,12 @@
 
     internal async Task OnRowClickHandler(TItem Item, MouseEventArgs args)
     {
+        if (rowClickPrevented)
+        {
+            rowClickPrevented = false;
+            return;
+        }
+
         if (rowClicking)
         {
             return;
@@ -962,7 +973,7 @@
 
     async Task OnDblClick(RadzenDataGridColumn<TItem> Column, TItem Item, MouseEventArgs args)
     {
-        await OnCellDblClick(new DataGridCellMouseEventArgs<TItem>
+        var cellArgs = new DataGridCellMouseEventArgs<TItem>
         {
             Data = Item,
             AltKey = args.AltKey,
@@ -980,7 +991,14 @@
             ShiftKey = args.ShiftKey,
             Type = args.Type,
             Column = Column
-        });
+        };
+
+        await OnCellDblClick(cellArgs);
+
+        if (cellArgs.IsDefaultPrevented)
+        {
+            return;
+        }
 
         await OnRowDblClick(new DataGridRowMouseEventArgs<TItem>
         {

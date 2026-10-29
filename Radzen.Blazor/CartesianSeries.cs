@@ -16,7 +16,8 @@ namespace Radzen.Blazor
     /// <typeparam name="TItem">The type of the series data.</typeparam>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2087, Justification = TrimMessages.DataTypePreserved)]
-    public abstract class CartesianSeries<TItem> : RadzenChartComponentBase, IChartSeries, IChartValueAxisSeries, IDisposable
+    public abstract class CartesianSeries<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : RadzenChartComponentBase, IChartSeries, IChartValueAxisSeries, IDisposable
     {
         /// <summary>
         /// Cache for the value returned by <see cref="Category"/> when that value is only dependent on
@@ -53,7 +54,7 @@ namespace Radzen.Blazor
 
             if (IsDate(CategoryProperty))
             {
-                var category = PropertyAccess.Getter<TItem, DateTime>(CategoryProperty!);
+                var category = PropertyAccess.DateGetter<TItem>(CategoryProperty!);
                 categoryPropertyCache = (item) => category(item).Ticks;
                 return categoryPropertyCache;
             }
@@ -91,6 +92,153 @@ namespace Radzen.Blazor
             ArgumentNullException.ThrowIfNull(scale);
 
             return scale.Compose(Value);
+        }
+
+        /// <summary>
+        /// Returns the plot-relative pixel range a scale maps to: <see cref="ScaleBase.Scale(double, bool)"/> yields
+        /// coordinates from 0 to <see cref="ScaleBase.OutputSize"/> regardless of the direction of the scale.
+        /// Returns <c>false</c> when the scale has not been laid out yet and has no pixel extent.
+        /// </summary>
+        /// <param name="scale">The scale to read.</param>
+        /// <param name="start">The smaller pixel coordinate, always 0.</param>
+        /// <param name="end">The larger pixel coordinate.</param>
+        protected static bool TryGetPlotRange(ScaleBase scale, out double start, out double end)
+        {
+            ArgumentNullException.ThrowIfNull(scale);
+
+            start = 0;
+            end = scale.OutputSize;
+
+            return !double.IsNaN(end) && end > 0;
+        }
+
+        /// <summary>
+        /// Returns <c>true</c> when the band <c>[position, position + size]</c> (plus the stroke width on both sides)
+        /// overlaps the pixel range <c>[start, end]</c>, so a column or bar outside the zoomed view can be skipped.
+        /// </summary>
+        protected static bool BandIntersects(double position, double size, double strokeWidth, double start, double end)
+        {
+            var low = Math.Min(position, position + size) - strokeWidth;
+            var high = Math.Max(position, position + size) + strokeWidth;
+
+            return !double.IsNaN(low) && !double.IsNaN(high) && high >= start && low <= end;
+        }
+
+        /// <summary>
+        /// Returns the points a line needs in order to draw the part of it that falls inside the pixel range of
+        /// <paramref name="scale"/>: every point whose segment to its neighbor reaches the range, plus
+        /// <paramref name="neighbors"/> additional points on each side so the curve tangents at the edges do not change.
+        /// Returns the original list when every point is needed.
+        /// </summary>
+        /// <param name="points">The points in series order.</param>
+        /// <param name="scale">The category scale whose <see cref="ScaleBase.Output"/> is the visible pixel range.</param>
+        /// <param name="neighbors">How many extra points to keep beyond the last point whose segment is visible.</param>
+        protected static IList<Point<TItem>> ClipToPlotRange(IList<Point<TItem>> points, ScaleBase scale, int neighbors)
+        {
+            ArgumentNullException.ThrowIfNull(points);
+
+            var count = points.Count;
+
+            if (count == 0 || !TryGetPlotRange(scale, out var start, out var end))
+            {
+                return points;
+            }
+
+            var keep = new bool[count];
+            var kept = 0;
+
+            for (var i = 0; i < count; i++)
+            {
+                var x = points[i].X;
+
+                if (x >= start && x <= end)
+                {
+                    if (!keep[i])
+                    {
+                        keep[i] = true;
+                        kept++;
+                    }
+                }
+
+                if (i > 0)
+                {
+                    var previous = points[i - 1].X;
+
+                    if (Math.Max(previous, x) >= start && Math.Min(previous, x) <= end)
+                    {
+                        if (!keep[i - 1])
+                        {
+                            keep[i - 1] = true;
+                            kept++;
+                        }
+
+                        if (!keep[i])
+                        {
+                            keep[i] = true;
+                            kept++;
+                        }
+                    }
+                }
+            }
+
+            if (neighbors > 0 && kept > 0 && kept < count)
+            {
+                var expanded = new bool[count];
+                var lastKept = int.MinValue;
+
+                for (var i = 0; i < count; i++)
+                {
+                    if (keep[i])
+                    {
+                        lastKept = i;
+                    }
+
+                    expanded[i] = lastKept != int.MinValue && i - lastKept <= neighbors;
+                }
+
+                lastKept = int.MaxValue;
+
+                for (var i = count - 1; i >= 0; i--)
+                {
+                    if (keep[i])
+                    {
+                        lastKept = i;
+                    }
+
+                    if (!expanded[i] && lastKept != int.MaxValue && lastKept - i <= neighbors)
+                    {
+                        expanded[i] = true;
+                    }
+                }
+
+                keep = expanded;
+                kept = 0;
+
+                for (var i = 0; i < count; i++)
+                {
+                    if (keep[i])
+                    {
+                        kept++;
+                    }
+                }
+            }
+
+            if (kept == count)
+            {
+                return points;
+            }
+
+            var result = new List<Point<TItem>>(kept);
+
+            for (var i = 0; i < count; i++)
+            {
+                if (keep[i])
+                {
+                    result.Add(points[i]);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -136,11 +284,12 @@ namespace Radzen.Blazor
                 throw new ArgumentException($"Property {propertyName} does not exist");
             }
 
-            if(PropertyAccess.IsDateOnly(property))
-            {
-                return false;
-            }
             return PropertyAccess.IsDate(property);
+        }
+
+        private bool IsDateOnly(string? propertyName)
+        {
+            return !String.IsNullOrEmpty(propertyName) && PropertyAccess.IsDateOnly(PropertyAccess.GetPropertyType(typeof(TItem), propertyName));
         }
 
         /// <summary>
@@ -347,7 +496,8 @@ namespace Radzen.Blazor
                 return new DateScale
                 {
                     Input = scale.Input,
-                    Output = scale.Output
+                    Output = scale.Output,
+                    WholeDays = IsDateOnly(CategoryProperty) && (scale is not DateScale existing || existing.WholeDays)
                 };
             }
 
@@ -401,7 +551,36 @@ namespace Radzen.Blazor
                 }
             }
 
+            IncludeZeroInValueScale(scale, false);
+
             return scale;
+        }
+
+        /// <summary>
+        /// Extends the specified value scale to zero when this series or another series on the same scale requires it: when the
+        /// <see cref="RadzenValueAxis.Range" /> of the value axis is <see cref="ValueAxisRange.IncludeZero" />, or when it is <see cref="ValueAxisRange.Auto" />
+        /// and a series is zero based outside a <see cref="RadzenSparkline" />. Call it after merging the values of this series into the scale. A scale whose values are all equal is not extended
+        /// because its ticks already extend from zero. Logarithmic scales and scales without data are left unchanged.
+        /// </summary>
+        /// <param name="scale">The value scale.</param>
+        /// <param name="zeroBased">Whether this series is filled from a zero baseline, as column, bar and area series are.</param>
+        protected void IncludeZeroInValueScale(ScaleBase scale, bool zeroBased)
+        {
+            ArgumentNullException.ThrowIfNull(scale);
+
+            var range = Chart?.GetValueAxis(ValueAxisName).Range ?? ValueAxisRange.Auto;
+
+            if (range == ValueAxisRange.IncludeZero || (range == ValueAxisRange.Auto && zeroBased && Chart?.IncludesZeroForBaselineSeries != false))
+            {
+                scale.IncludeZero = true;
+            }
+
+            if (!scale.IncludeZero || scale.IsLogarithmic || !double.IsFinite(scale.Input.Start) || !double.IsFinite(scale.Input.End) || scale.Input.Start == scale.Input.End)
+            {
+                return;
+            }
+
+            scale.Input.MergeWidth(new ScaleRange { Start = 0, End = 0 });
         }
 
         /// <inheritdoc />
@@ -709,8 +888,20 @@ namespace Radzen.Blazor
                 builder.AddAttribute(7, nameof(LegendItem.Click), EventCallback.Factory.Create(this, OnLegendItemClick));
                 builder.AddAttribute(8, nameof(LegendItem.Clickable), clickable);
                 builder.AddAttribute(9, nameof(LegendItem.ShowLine), ShowLineInLegend);
+                builder.AddAttribute(10, nameof(LegendItem.ChildContent), RenderLegendItemContent(clickable, GetTitle(), Data, Color));
                 builder.CloseComponent();
             };
+        }
+
+        /// <summary>
+        /// Renders the content of a legend item via <see cref="RadzenLegend.ItemTemplate" />.
+        /// Returns <c>null</c> when there is no template or the item is not rendered in the legend (e.g. in a shared tooltip).
+        /// </summary>
+        internal RenderFragment? RenderLegendItemContent(bool inLegend, string text, object? data, string? color)
+        {
+            var template = inLegend ? Chart?.Legend?.ItemTemplate : null;
+
+            return template?.Invoke(new LegendItemContext { Text = text, Data = data, Series = this, Color = color });
         }
 
         /// <summary>
@@ -953,16 +1144,36 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public virtual (object, Point) DataAt(double x, double y)
         {
-            if (Items.Any())
-            {
-                var retObject = Items.Select(item =>
-                {
-                    var distance = Math.Abs(TooltipX(item) - x);
-                    return new { Item = item, Distance = distance };
-                }).Aggregate((a, b) => a.Distance < b.Distance ? a : b).Item;
+            var chart = RequireChart();
+            var zoomed = chart.CategoryScale.IsZoomed;
+            var plotWidth = chart.CategoryScale.OutputSize;
 
-                return (retObject!,
-                    new Point() { X = TooltipX(retObject), Y = TooltipY(retObject)});
+            TItem closest = default!;
+            var found = false;
+            var closestDistance = double.MaxValue;
+
+            foreach (var item in Items)
+            {
+                var itemX = TooltipX(item);
+
+                if (zoomed && (itemX < 0 || itemX > plotWidth))
+                {
+                    continue;
+                }
+
+                var distance = Math.Abs(itemX - x);
+
+                if (distance <= closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = item;
+                    found = true;
+                }
+            }
+
+            if (found)
+            {
+                return (closest!, new Point() { X = TooltipX(closest), Y = TooltipY(closest) });
             }
 
             return (default!, new Point());

@@ -9,6 +9,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.*-*" />
+    <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.*" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="10.*-*" />
     <PackageReference Include="bunit.web" Version="1.36.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
@@ -22,12 +24,20 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Radzen.Blazor\Radzen.Blazor.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Update="RadzenStrings.en-GB.resx"
                       LogicalName="Radzen.Blazor.RadzenStrings.en-GB.resources" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Markdown\commonmark-spec.json" LogicalName="commonmark-spec.json" />
   </ItemGroup>
 
 </Project>

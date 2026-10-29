@@ -1,5 +1,6 @@
 #nullable enable
 
+using System;
 using System.Collections.Generic;
 
 namespace Radzen.Documents.Spreadsheet;
@@ -9,7 +10,7 @@ abstract class LookupFunctionBase : FormulaFunction
     public override FunctionParameter[] Parameters =>
     [
         new("search_key", ParameterType.Single, isRequired: true),
-        new("range", ParameterType.Collection, isRequired: true),
+        new("range", ParameterType.Collection, isRequired: true) { IsReference = true },
         new("index", ParameterType.Single, isRequired: true),
         new("is_sorted", ParameterType.Single, isRequired: false)
     ];
@@ -25,11 +26,12 @@ abstract class LookupFunctionBase : FormulaFunction
     public override CellData Evaluate(FunctionArguments arguments)
     {
         var searchKey = arguments.GetSingle("search_key");
-        var rangeArg = arguments.GetRange("range");
+        var reference = arguments.GetReference("range");
+        var rangeArg = reference is null ? arguments.GetRange("range") : null;
         var indexArg = arguments.GetSingle("index");
         var isSortedArg = arguments.GetSingle("is_sorted");
 
-        if (searchKey is null || rangeArg is null || indexArg is null)
+        if (searchKey is null || (reference is null && rangeArg is null) || indexArg is null)
         {
             return CellData.FromError(CellError.Value);
         }
@@ -38,6 +40,11 @@ abstract class LookupFunctionBase : FormulaFunction
         {
             return searchKey;
         }
+
+        if (searchKey.IsEmpty)
+        {
+            searchKey = CellData.FromNumber(0);
+        }
         if (indexArg.IsError)
         {
             return indexArg;
@@ -45,20 +52,27 @@ abstract class LookupFunctionBase : FormulaFunction
 
         int rows;
         int columns;
-        if (rangeArg is RangeList rl)
+        if (reference is not null)
+        {
+            rows = reference.Rows;
+            columns = reference.Columns;
+        }
+        else if (rangeArg is RangeList rl)
         {
             rows = rl.Rows;
             columns = rl.Columns;
         }
         else
         {
-            (rows, columns) = GetFallbackDimensions(rangeArg.Count);
+            (rows, columns) = GetFallbackDimensions(rangeArg!.Count);
         }
 
         if (rows <= 0 || columns <= 0)
         {
             return CellData.FromError(CellError.Value);
         }
+
+        Func<int, CellData> cellAt = reference is not null ? index => reference[index] : index => rangeArg![index];
 
         var (searchCount, resultCount) = GetSearchAndResultCounts(rows, columns);
 
@@ -90,12 +104,12 @@ abstract class LookupFunctionBase : FormulaFunction
         {
             for (int i = 0; i < searchCount; i++)
             {
-                var cell = rangeArg[GetSearchCellIndex(i, columns)];
+                var cell = cellAt(GetSearchCellIndex(i, columns));
                 if (cell.IsError)
                 {
                     return cell;
                 }
-                if (cell.IsEqualTo(searchKey))
+                if (!cell.IsEmpty && cell.IsEqualTo(searchKey))
                 {
                     matchPosition = i;
                     break;
@@ -113,13 +127,18 @@ abstract class LookupFunctionBase : FormulaFunction
 
             for (int i = 0; i < searchCount; i++)
             {
-                var cell = rangeArg[GetSearchCellIndex(i, columns)];
+                var cell = cellAt(GetSearchCellIndex(i, columns));
                 if (cell.IsError)
                 {
                     return cell;
                 }
 
-                if (cell.IsLessThanOrEqualTo(searchKey))
+                if (!RangeSearch.IsSameKind(cell, searchKey))
+                {
+                    continue;
+                }
+
+                if (cell.CompareTo(searchKey) <= 0)
                 {
                     lastCandidate = i;
                 }
@@ -137,6 +156,6 @@ abstract class LookupFunctionBase : FormulaFunction
             matchPosition = lastCandidate;
         }
 
-        return rangeArg[GetResultCellIndex(matchPosition, index.Value, columns)];
+        return cellAt(GetResultCellIndex(matchPosition, index.Value, columns));
     }
 }

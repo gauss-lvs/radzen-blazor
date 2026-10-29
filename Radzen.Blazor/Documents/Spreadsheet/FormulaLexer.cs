@@ -52,6 +52,8 @@ internal enum FormulaTokenType
     StringLiteral,
     BooleanLiteral,
     CellIdentifier,
+    ColumnIdentifier,
+    RowIdentifier,
     ErrorLiteral,
     Whitespace,
 }
@@ -87,8 +89,11 @@ internal class FormulaToken(FormulaTokenType type, string  value)
     public CellError ErrorValue { get; set; }
 
 
-    public List<FormulaTokenTrivia> LeadingTrivia { get; } = new();
-    public List<FormulaTokenTrivia> TrailingTrivia { get; } = new();
+    private List<FormulaTokenTrivia>? leadingTrivia;
+    private List<FormulaTokenTrivia>? trailingTrivia;
+
+    public List<FormulaTokenTrivia> LeadingTrivia => leadingTrivia ??= [];
+    public List<FormulaTokenTrivia> TrailingTrivia => trailingTrivia ??= [];
 
     // The inclusive start index and exclusive end index of the token
     // including its leading and trailing trivia within the original expression.
@@ -123,7 +128,160 @@ internal class FormulaLexer(string expression, bool strict = true)
     {
         var lexer = new FormulaLexer(expression, strict);
 
-        return [.. lexer.Scan()];
+        List<FormulaToken> tokens = [.. lexer.Scan()];
+
+        MarkWholeColumnAndRowReferences(expression, tokens);
+
+        return tokens;
+    }
+
+    private static void MarkWholeColumnAndRowReferences(string expression, List<FormulaToken> tokens)
+    {
+        for (var i = 0; i + 2 < tokens.Count; i++)
+        {
+            var start = tokens[i];
+            var colon = tokens[i + 1];
+            var end = tokens[i + 2];
+
+            if (colon.Type != FormulaTokenType.Colon
+                || start.TrailingTrivia.Count > 0 || colon.LeadingTrivia.Count > 0
+                || colon.TrailingTrivia.Count > 0 || end.LeadingTrivia.Count > 0
+                || !CanBeColumnOrRow(start) || !CanBeColumnOrRow(end))
+            {
+                continue;
+            }
+
+            var startText = GetText(expression, start);
+            var endText = GetText(expression, end);
+
+            if (!TryParseColumnOrRow(startText, out var startType, out var startAddress)
+                || !TryParseColumnOrRow(endText, out var endType, out var endAddress)
+                || startType != endType)
+            {
+                continue;
+            }
+
+            tokens[i] = CopyTrivia(start, new FormulaToken(startType, startText) { Address = startAddress });
+            tokens[i + 2] = CopyTrivia(end, new FormulaToken(endType, endText) { Address = endAddress });
+            i += 2;
+        }
+    }
+
+    private static bool CanBeColumnOrRow(FormulaToken token) =>
+        token.Type is FormulaTokenType.Identifier or FormulaTokenType.NumericLiteral or FormulaTokenType.Unknown;
+
+    private static string GetText(string expression, FormulaToken token)
+    {
+        var start = token.Start;
+        foreach (var trivia in token.LeadingTrivia)
+        {
+            start += trivia.Text.Length;
+        }
+
+        var end = token.End;
+        foreach (var trivia in token.TrailingTrivia)
+        {
+            end -= trivia.Text.Length;
+        }
+
+        return expression[start..end];
+    }
+
+    private static FormulaToken CopyTrivia(FormulaToken source, FormulaToken target)
+    {
+        target.LeadingTrivia.AddRange(source.LeadingTrivia);
+        target.TrailingTrivia.AddRange(source.TrailingTrivia);
+        target.Start = source.Start;
+        target.End = source.End;
+        return target;
+    }
+
+    internal static bool TryParseColumnOrRow(string text, out FormulaTokenType type, out CellRef address)
+    {
+        type = FormulaTokenType.None;
+        address = default;
+
+        string? worksheet = null;
+        var bang = text.LastIndexOf('!');
+
+        if (bang >= 0)
+        {
+            worksheet = text[..bang];
+
+            if (worksheet.Length >= 2 && worksheet[0] == '\'' && worksheet[^1] == '\'')
+            {
+                worksheet = worksheet[1..^1].Replace("''", "'", StringComparison.Ordinal);
+            }
+
+            if (worksheet.Length == 0)
+            {
+                return false;
+            }
+
+            text = text[(bang + 1)..];
+        }
+
+        var isAbsolute = text.StartsWith('$');
+        var body = isAbsolute ? text[1..] : text;
+
+        if (body.Length == 0)
+        {
+            return false;
+        }
+
+        if (body.Length <= 3 && IsAsciiLetters(body))
+        {
+            var column = 0;
+            foreach (var ch in body)
+            {
+                column = column * 26 + (char.ToUpperInvariant(ch) - 'A' + 1);
+            }
+
+            if (column > Worksheet.MaxColumns)
+            {
+                return false;
+            }
+
+            type = FormulaTokenType.ColumnIdentifier;
+            address = new CellRef(0, column - 1) { IsColumnAbsolute = isAbsolute, Worksheet = worksheet };
+            return true;
+        }
+
+        if (body.Length <= 7 && IsAsciiDigits(body) && int.TryParse(body, NumberStyles.None, CultureInfo.InvariantCulture, out var row)
+            && row >= 1 && row <= Worksheet.MaxRows)
+        {
+            type = FormulaTokenType.RowIdentifier;
+            address = new CellRef(row - 1, 0) { IsRowAbsolute = isAbsolute, Worksheet = worksheet };
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsAsciiLetters(string text)
+    {
+        foreach (var ch in text)
+        {
+            if (ch is not ((>= 'A' and <= 'Z') or (>= 'a' and <= 'z')))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsAsciiDigits(string text)
+    {
+        foreach (var ch in text)
+        {
+            if (ch is not (>= '0' and <= '9'))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public IEnumerable<FormulaToken> Scan()
@@ -149,10 +307,17 @@ internal class FormulaLexer(string expression, bool strict = true)
                 break;
             }
 
-            token.LeadingTrivia.AddRange(leadingTrivia);
+            if (leadingTrivia.Count > 0)
+            {
+                token.LeadingTrivia.AddRange(leadingTrivia);
+            }
 
             var trailingTrivia = ScanTrivia();
-            token.TrailingTrivia.AddRange(trailingTrivia);
+
+            if (trailingTrivia.Count > 0)
+            {
+                token.TrailingTrivia.AddRange(trailingTrivia);
+            }
 
             token.Start = tokenStart;
             token.End = position;
@@ -168,8 +333,15 @@ internal class FormulaLexer(string expression, bool strict = true)
         yield return endToken;
     }
 
+    private static readonly List<FormulaTokenTrivia> NoTrivia = [];
+
     private List<FormulaTokenTrivia> ScanTrivia()
     {
+        if (!char.IsWhiteSpace(Peek()))
+        {
+            return NoTrivia;
+        }
+
         var trivia = new List<FormulaTokenTrivia>();
         var whitespaceBuffer = new StringBuilder();
 
@@ -316,6 +488,11 @@ internal class FormulaLexer(string expression, bool strict = true)
                 // Quoted sheet name reference like 'Q1 Sales'!A1
                 return ScanQuotedSheetReference();
 
+        }
+
+        if (position < expression.Length && Rune.TryGetRuneAt(expression, position, out var rune) && Rune.IsLetter(rune))
+        {
+            return ScanIdentifier();
         }
 
         // Emit unknown token for any unrecognized character to preserve it in the token stream
@@ -819,6 +996,13 @@ internal class FormulaLexer(string expression, bool strict = true)
                     continue;
 
                 default:
+                    if (Rune.TryGetRuneAt(expression, position, out var rune) && Rune.IsLetterOrDigit(rune))
+                    {
+                        hasLetters = true;
+                        Advance(rune.Utf16SequenceLength);
+                        continue;
+                    }
+
                     throw new InvalidOperationException($"Unexpected character '{Peek()}' at position {position}.");
             }
         }
@@ -830,16 +1014,22 @@ internal class FormulaLexer(string expression, bool strict = true)
 
         Advance(1);
 
-        var sheetNameStart = position;
-        while (position < expression.Length && Peek() != '\'')
-        {
-            Advance(1);
-        }
+        var sheetName = new StringBuilder();
 
-        var sheetName = expression[sheetNameStart..position];
-
-        if (position < expression.Length && Peek() == '\'')
+        while (position < expression.Length)
         {
+            if (Peek() == '\'')
+            {
+                if (Peek(1) != '\'')
+                {
+                    Advance(1);
+                    break;
+                }
+
+                Advance(1);
+            }
+
+            sheetName.Append(Peek());
             Advance(1);
         }
 
@@ -866,7 +1056,7 @@ internal class FormulaLexer(string expression, bool strict = true)
             if (CellRef.TryParse(cellRefText, out var cellRef))
             {
                 var fullValue = expression[startOffset..position];
-                cellRef = cellRef with { Worksheet = sheetName };
+                cellRef = cellRef with { Worksheet = sheetName.ToString() };
 
                 return new FormulaToken(FormulaTokenType.CellIdentifier, fullValue)
                 {

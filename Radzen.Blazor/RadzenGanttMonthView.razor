@@ -9,9 +9,10 @@
 
     public override string Icon => "calendar_view_month";
 
-    [Parameter]
-    public override string Text { get => text ?? Localize(nameof(RadzenStrings.GanttMonthView_Text)); set => text = value; }
     private string? text;
+
+    [Parameter]
+    public override string Text { get => text ?? Localize(nameof(RadzenStrings.Gantt_MonthViewText)); set => text = value; }
 
     public override string Title
     {
@@ -46,7 +47,8 @@
     {
         var appointments = Scheduler?.GetAppointmentsInRange(StartDate, EndDate).ToList() ?? new List<AppointmentData>();
         var culture = Scheduler?.Culture ?? CultureInfo.CurrentCulture;
-        var columns = BuildWeekColumns(GridStart, GridEnd, Gantt?.DayWidthPx ?? 32, culture);
+        var dateFormat = GanttHeaderDateFormat.Resolve(Gantt?.HeaderDateFormat, culture);
+        var columns = BuildWeekColumns(GridStart, GridEnd, Gantt?.DayWidthPx ?? 32, culture, dateFormat);
         var timelineWidth = columns.Sum(c => c.WidthPx);
 
         Gantt?.ComputeCriticalPath(appointments, Gantt?.TimelineRowIndexByItem);
@@ -69,11 +71,13 @@
                                NonWorkingDays=@(Gantt?.TimelineNonWorkingDays)
                                Markers=@(Gantt?.TimelineMarkers)
                                TaskRender=@(Gantt?.TimelineTaskRender)
+                               LaneByItem=@(Gantt?.LaneByItem)
+                               LaneCountByRow=@(Gantt?.LaneCountByRow)
                                AppointmentMove=OnAppointmentMove />
         </CascadingValue>;
     }
 
-    private static IReadOnlyList<GanttTimelineView<TItem>.GanttTimelineColumn> BuildWeekColumns(DateTime start, DateTime end, int dayWidth, CultureInfo culture)
+    internal static IReadOnlyList<GanttTimelineView<TItem>.GanttTimelineColumn> BuildWeekColumns(DateTime start, DateTime end, int dayWidth, CultureInfo culture, string dateFormat)
     {
         var columns = new List<GanttTimelineView<TItem>.GanttTimelineColumn>();
         for (var d = start.Date; d < end.Date; d = d.AddDays(7))
@@ -90,7 +94,7 @@
             {
                 Start = weekStart,
                 End = weekEnd,
-                Label = $"{weekStart.ToString("M/d", culture)} – {weekEnd.AddDays(-1).ToString("M/d", culture)}",
+                Label = $"{weekStart.ToString(dateFormat, culture)} – {weekEnd.AddDays(-1).ToString(dateFormat, culture)}",
                 GroupLabel = weekStart.ToString("MMMM yyyy", culture),
                 WidthPx = dayWidth * Math.Max(1, daysInWeek)
             });

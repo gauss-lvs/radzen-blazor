@@ -33,7 +33,8 @@ namespace Radzen.Blazor
     /// &lt;RadzenDropDown @bind-Value=@selectedIds TValue="IEnumerable&lt;int&gt;" Data=@items Multiple="true" Chips="true" /&gt;
     /// </code>
     /// </example>
-    public partial class RadzenDropDown<TValue> : DropDownBase<TValue>
+    public partial class RadzenDropDown<
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicFields)] TValue> : DropDownBase<TValue>
     {
         IJSObjectReference? _jsRef;
         int _jsRefVersion;
@@ -508,7 +509,7 @@ namespace Radzen.Blazor
 
                 if (key == "Tab" && isFilter && wasOpen && JSRuntime != null)
                 {
-                    await JSRuntime.InvokeVoidAsync("Radzen.focusNext", Element, args.ShiftKey);
+                    await JSRuntime.InvokeVoidAsync("Radzen.focusNext", Element, args.ShiftKey, PopupID);
                 }
             }
         }

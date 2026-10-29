@@ -37,13 +37,14 @@ builder.Services.AddScoped<CompilerService>();
 builder.Services.AddScoped<ExampleService>();
 
 builder.Services.AddDbContextFactory<NorthwindContext>();
+builder.Services.AddDbContextFactory<RadzenBlazorDemos.Data.ConversationContext>();
 
-builder.Services.AddScoped<NorthwindService>();
 builder.Services.AddScoped<NorthwindODataService>();
 builder.Services.AddSingleton<GitHubService>();
 
 builder.Services.AddAIChatService(options =>
     builder.Configuration.GetSection("AIChatService").Bind(options));
+builder.Services.AddConversationStore<RadzenBlazorDemos.Services.EfConversationStore>();
 
 
 builder.Services.AddLocalization();
@@ -77,7 +78,7 @@ var baseCsp = string.Join("; ",
     "base-uri 'self'",
     "default-src 'self' http://localhost:* ws://localhost:*",
     "connect-src 'self' https: wss: http://localhost:* ws://localhost:*",
-    "img-src data: https:",
+    "img-src data: blob: https:",
     "object-src 'none'",
     "script-src 'self' http://localhost:* cdnjs.cloudflare.com cdn.syndication.twimg.com platform.linkedin.com www.linkedin.com analytics.radzen.com maps.googleapis.com unpkg.com",
     "style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maps.googleapis.com fonts.googleapis.com fonts.gstatic.com",
@@ -90,7 +91,7 @@ var relaxedCsp = string.Join("; ",
     "base-uri 'self'",
     "default-src 'self' http://localhost:* ws://localhost:*",
     "connect-src 'self' https: wss: http://localhost:* ws://localhost:*",
-    "img-src data: https:",
+    "img-src data: blob: https:",
     "object-src 'none'",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:* cdnjs.cloudflare.com cdn.syndication.twimg.com platform.linkedin.com www.linkedin.com analytics.radzen.com maps.googleapis.com unpkg.com",
     "style-src 'self' 'unsafe-inline' cdnjs.cloudflare.com maps.googleapis.com fonts.googleapis.com fonts.gstatic.com",

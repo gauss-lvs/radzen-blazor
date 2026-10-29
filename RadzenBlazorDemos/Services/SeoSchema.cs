@@ -62,12 +62,19 @@ namespace RadzenBlazorDemos
             // Charts gallery hub: CollectionPage + ItemList of every chart page.
             if (path == "charts")
             {
-                return Serialize(new List<object>
+                var hub = new List<object>
                 {
                     CollectionPage(example, url),
                     ItemList(exampleService.GetChartPages()),
                     Breadcrumb(new[] { ("Home", BaseUrl + "/"), ("Charts", url) })
-                });
+                };
+
+                if (example.Faq != null && example.Faq.Any())
+                {
+                    hub.Add(FaqPage(example));
+                }
+
+                return Serialize(hub);
             }
 
             if (InCluster(exampleService.GetChartPages().Concat(exampleService.GetChartConfigPages()), path))
@@ -88,6 +95,11 @@ namespace RadzenBlazorDemos
             if (InCluster(exampleService.GetSpreadsheetPages(), path))
             {
                 return ArticleGraph(example, url, exampleService, "Spreadsheet", "spreadsheet");
+            }
+
+            if (InCluster(exampleService.GetAIPages(), path))
+            {
+                return ArticleGraph(example, url, exampleService, "AI", "ai");
             }
 
             // Forms has no single hub; each component is its own breadcrumb root.

@@ -35,8 +35,17 @@ namespace Radzen
     /// <summary>
     /// Theme definition.
     /// </summary>
+    [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)]
     public class Theme
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Theme"/> class.
+        /// </summary>
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Theme))]
+        public Theme()
+        {
+        }
+
         /// <summary>
         /// Specifies the user-friendly theme name e.g. Material3.
         /// </summary>
@@ -183,6 +192,42 @@ namespace Radzen
                 SeriesA = "#5c3db8",
                 SeriesB = "#b83db7",
                 SeriesC = "#b83d5b"
+            },
+            new Theme {
+                Text = "Zen",
+                Value = "zen",
+                Premium = true,
+                Primary = "#1a1a1a",
+                Secondary = "#6b6b6b",
+                Base = "#f5f5f5",
+                Selection = "rgba(107, 107, 107, 0.12)",
+                SelectionText = "#262626",
+                Content = "#ffffff",
+                TitleText = "#1a1a1a",
+                ContentText = "#666666",
+                ButtonRadius = "3",
+                CardRadius = "8",
+                SeriesA = "#5b8ff0",
+                SeriesB = "#56c1ea",
+                SeriesC = "#a97bf0"
+            },
+            new Theme {
+                Text = "Zen Dark",
+                Value = "zen-dark",
+                Premium = true,
+                Primary = "#f2f2f2",
+                Secondary = "#9e9e9e",
+                Base = "#181818",
+                Selection = "rgba(158, 158, 158, 0.24)",
+                SelectionText = "#e6e6e6",
+                Content = "#242424",
+                TitleText = "#e6e6e6",
+                ContentText = "#c4c4c4",
+                ButtonRadius = "3",
+                CardRadius = "8",
+                SeriesA = "#5b8ff0",
+                SeriesB = "#3cc4e8",
+                SeriesC = "#b07cf2"
             },
             new Theme {
                 Text = "Fluent",
@@ -406,6 +451,7 @@ namespace Radzen
     /// <summary>
     /// Service for theme registration and management.
     /// </summary>
+    [method: DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Blazor.RadzenTheme))]
     public class ThemeService(IJSRuntime jsRuntime, IServiceProvider serviceProvider)
     {
 

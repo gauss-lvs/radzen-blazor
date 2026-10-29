@@ -22,7 +22,7 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenRangeColumnSeries<TItem> : CartesianSeries<TItem>, IChartColumnSeries
+    public partial class RadzenRangeColumnSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>, IChartColumnSeries
     {
         /// <summary>
         /// Gets or sets the name of the property that provides the minimum (bottom) value.
@@ -152,38 +152,12 @@ namespace Radzen.Blazor
                 scale.Input.MergeWidth(new ScaleRange { Start = minValue, End = maxValue });
             }
 
+            IncludeZeroInValueScale(scale, false);
+
             return scale;
         }
 
-        private IList<IChartSeries> ColumnSeries =>
-            RequireChart().Series.Where(s => s is IChartColumnSeries).Cast<IChartSeries>().ToList();
-
-        private IList<IChartSeries> VisibleColumnSeries =>
-            ColumnSeries.Where(s => s.Visible).ToList();
-
-        private double BandWidth
-        {
-            get
-            {
-                var columnSeries = VisibleColumnSeries;
-                var chart = RequireChart();
-
-                if (chart.ColumnOptions.Width.HasValue)
-                {
-                    return chart.ColumnOptions.Width.Value * columnSeries.Count + chart.ColumnOptions.Margin * (columnSeries.Count - 1);
-                }
-
-                if (chart.ColumnOptions.CategoryGap is double gap)
-                {
-                    var step = System.Math.Abs(chart.CategoryScale.Scale(1, true) - chart.CategoryScale.Scale(0, true));
-                    return step * (1 - gap);
-                }
-
-                var availableWidth = chart.CategoryScale.OutputSize - (chart.CategoryAxis.Padding * 2);
-                var bands = columnSeries.Cast<IChartColumnSeries>().Max(s => s.Count) + 2;
-                return availableWidth / bands;
-            }
-        }
+        private BandSlot Slot => CategoryBands.Columns(RequireChart(), this);
 
         /// <inheritdoc />
         protected override string TooltipStyle(TItem item)
@@ -216,15 +190,9 @@ namespace Radzen.Blazor
         internal override double TooltipX(TItem item)
         {
             var chart = RequireChart();
-            var columnSeries = VisibleColumnSeries;
-            var index = columnSeries.IndexOf(this);
-            var padding = chart.ColumnOptions.Margin;
-            var bandWidth = BandWidth;
-            var (width, groupWidth) = Rendering.BandLayout.Resolve(bandWidth, columnSeries.Count, padding, chart.ColumnOptions.EffectiveMaxWidth);
             var category = ComposeCategory(chart.CategoryScale);
-            var x = category(item) - groupWidth / 2 + index * (width + padding);
 
-            return x + width / 2;
+            return Slot.Center(category(item));
         }
 
         /// <inheritdoc />
@@ -250,15 +218,12 @@ namespace Radzen.Blazor
             }
 
             var category = ComposeCategory(chart.CategoryScale);
-            var columnSeries = VisibleColumnSeries;
-            var index = columnSeries.IndexOf(this);
-            var padding = chart.ColumnOptions.Margin;
-            var bandWidth = BandWidth;
-            var (width, groupWidth) = Rendering.BandLayout.Resolve(bandWidth, columnSeries.Count, padding, chart.ColumnOptions.EffectiveMaxWidth);
+            var slot = Slot;
+            var width = slot.Size;
 
             foreach (var data in Items)
             {
-                var startX = category(data) - groupWidth / 2 + index * (width + padding);
+                var startX = slot.Start(category(data));
                 var endX = startX + width;
                 var minY = chart.ValueScale.Scale(Max(data), true);
                 var maxY = chart.ValueScale.Scale(Min(data), true);

@@ -581,6 +581,21 @@ public class WorkbookStreamedRowsTests
     }
 
     [Fact]
+    public async Task Inline_text_carries_no_layout_whitespace()
+    {
+        var stream = await Save(Framed(), Rows([CellData.FromString("Lavender"), null, null]), useInlineStrings: true);
+        stream.Position = 0;
+
+        using var zip = new ZipArchive(stream, ZipArchiveMode.Read, leaveOpen: true);
+        using var content = zip.GetEntry("xl/worksheets/sheet1.xml")!.Open();
+        var sheet = XDocument.Load(content, LoadOptions.PreserveWhitespace);
+
+        var inline = sheet.Descendants(Main + "is").Single();
+
+        Assert.Equal("Lavender", inline.Value);
+    }
+
+    [Fact]
     public async Task Keeps_streamed_text_of_only_spaces()
     {
         var stream = await Save(Framed(), Rows([CellData.FromString("   "), null, null]));

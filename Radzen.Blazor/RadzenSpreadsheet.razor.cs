@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -188,6 +189,22 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     /// </summary>
     [Parameter]
     public bool ShowSheetTabs { get; set; } = true;
+
+    /// <summary>
+    /// When <c>true</c> (the default) the column headers (A, B, C, ...) are rendered above the grid.
+    /// Set to <c>false</c> to hide them together with their resize handles and the whole-column
+    /// selection they provide. The space they occupy is released as well.
+    /// </summary>
+    [Parameter]
+    public bool ShowColumnHeaders { get; set; } = true;
+
+    /// <summary>
+    /// When <c>true</c> (the default) the row headers (1, 2, 3, ...) are rendered to the left of the grid.
+    /// Set to <c>false</c> to hide them together with their resize handles and the whole-row
+    /// selection they provide. The space they occupy is released as well.
+    /// </summary>
+    [Parameter]
+    public bool ShowRowHeaders { get; set; } = true;
 
     /// <summary>
     /// The zero-based index of the active sheet. Supports two-way binding via
@@ -393,9 +410,29 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
     private WorkbookView? workbookView;
 
-    private SheetView? ActiveView => Worksheet != null ? (workbookView ??= new WorkbookView(workbook!)).GetView(Worksheet) : null;
+    private SheetView? ActiveView => Worksheet != null ? (workbookView ??= CreateWorkbookView()).GetView(Worksheet) : null;
+
+    private WorkbookView CreateWorkbookView() => new(workbook!)
+    {
+        ShowColumnHeaders = ShowColumnHeaders,
+        ShowRowHeaders = ShowRowHeaders
+    };
+
+    /// <inheritdoc/>
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (workbookView is not null)
+        {
+            workbookView.ShowColumnHeaders = ShowColumnHeaders;
+            workbookView.ShowRowHeaders = ShowRowHeaders;
+        }
+    }
 
     private Editor? Editor => ActiveView?.Editor;
+
+    private bool IsEditing => Editor is { Mode: not EditMode.None };
 
     /// <inheritdoc/>
     public async Task<bool> ExecuteAsync(ICommand command)
@@ -1117,10 +1154,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
     private async Task CycleSelectionAsync(int rowOffset, int columnOffset)
     {
-        // The formula bar is a persistent editor, so after Tab/Enter commits there focus stays in it
-        // unless we move it back to the grid (Excel/Sheets parity). The in-cell editor closes on
-        // commit, so it doesn't need this. AcceptAsync resets the mode, so capture it first.
-        var fromFormulaBar = Editor?.Mode == EditMode.Formula;
+        var wasEditing = IsEditing;
 
         if (await AcceptAsync())
         {
@@ -1130,7 +1164,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
 
                 await ScrollToAsync(address);
 
-                if (fromFormulaBar)
+                if (wasEditing)
                 {
                     await Element.FocusAsync();
                 }
@@ -1580,16 +1614,16 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
         return -1;
     }
 
-    private Task CancelEditAsync()
+    private async Task CancelEditAsync()
     {
-        if (Editor?.Mode != EditMode.None)
+        if (IsEditing)
         {
-            Editor?.Cancel();
-            return Task.CompletedTask;
+            Editor!.Cancel();
+            await Element.FocusAsync();
+            return;
         }
+
         clipboard.Clear();
-        
-        return Task.CompletedTask;
     }
 
     // A keyboard shortcut: the action to run, and whether it acts regardless of focus context. Global
@@ -1843,7 +1877,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     /// </summary>
     /// <returns></returns>
     [JSInvokable]
-    public Task OnCopyAsync() => CopySelectionAsync();
+    public Task OnCopyAsync() => IsEditing ? Task.CompletedTask : CopySelectionAsync();
 
     /// <summary>
     /// Invoked by JS interop to paste text from the clipboard into the current selection.
@@ -1851,7 +1885,7 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     [JSInvokable]
     public async Task OnPasteAsync(string text)
     {
-        if (!IsFeatureAllowed(SpreadsheetFeature.Clipboard) || !IsFeatureAllowed(SpreadsheetFeature.Editing))
+        if (IsEditing || !IsFeatureAllowed(SpreadsheetFeature.Clipboard) || !IsFeatureAllowed(SpreadsheetFeature.Editing))
         {
             return;
         }
@@ -2194,6 +2228,8 @@ public partial class RadzenSpreadsheet : RadzenComponent, IAsyncDisposable, ISpr
     private DotNetObjectReference<RadzenSpreadsheet>? dotNetRef;
 
     /// <inheritdoc/>
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(CellEventArgs))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(ImageResizeEventArgs))]
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender && JSRuntime != null)

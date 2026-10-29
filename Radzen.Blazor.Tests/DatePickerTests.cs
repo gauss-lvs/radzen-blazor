@@ -891,6 +891,272 @@ namespace Radzen.Blazor.Tests
         }
 
         [Fact]
+        public void DatePicker_Renders_Single_Month_With_Other_Month_Days()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DropDown);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 1, 1));
+            });
+
+            Assert.Single(component.FindAll("table[role=grid]"));
+            Assert.Empty(component.FindAll(".rz-calendar-month-title"));
+            Assert.Single(component.FindAll(".rz-calendar-month-dropdown"));
+            Assert.Single(component.FindAll(".rz-calendar-year-dropdown"));
+            Assert.Equal(42, component.FindAll("td[id] span").Count);
+        }
+
+        [Fact]
+        public void DatePicker_DrillDown_Renders_Title_Button_Instead_Of_DropDowns()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DrillDown);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 1, 1));
+            });
+
+            Assert.Single(component.FindAll(".rz-calendar-title-button"));
+            Assert.Empty(component.FindAll(".rz-calendar-month-dropdown"));
+            Assert.Empty(component.FindAll(".rz-calendar-year-dropdown"));
+        }
+
+        [Fact]
+        public void DatePicker_DrillDown_Navigates_Between_Views()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DrillDown);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 5, 1));
+            });
+
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+            var monthCells = component.FindAll(".rz-calendar-month-cell");
+            Assert.Equal(12, monthCells.Count);
+            Assert.Empty(component.FindAll("table[role=grid]"));
+            Assert.Contains("rz-state-active", monthCells[4].ClassName);
+
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+            var yearCells = component.FindAll(".rz-calendar-year-cell");
+            Assert.Equal(12, yearCells.Count);
+            Assert.Contains(yearCells, c => c.ClassName.Contains("rz-state-active") && c.TextContent == "2024");
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-year-cell").First(c => c.TextContent == "2025").Click());
+            Assert.Equal(12, component.FindAll(".rz-calendar-month-cell").Count);
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-month-cell")[2].Click());
+            Assert.Single(component.FindAll("table[role=grid]"));
+            Assert.Contains("2025", component.Find(".rz-calendar-title-button").TextContent);
+        }
+
+        [Fact]
+        public void DatePicker_DrillDown_MonthGrid_Supports_Keyboard_Navigation()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DrillDown);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 5, 1));
+            });
+
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+
+            var cells = component.FindAll(".rz-calendar-month-cell");
+            Assert.Equal("0", cells[4].GetAttribute("tabindex"));
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-month-cell")[4].KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "ArrowRight" }));
+            cells = component.FindAll(".rz-calendar-month-cell");
+            Assert.Equal("0", cells[5].GetAttribute("tabindex"));
+            Assert.Equal("-1", cells[4].GetAttribute("tabindex"));
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-month-cell")[5].KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "ArrowDown" }));
+            Assert.Equal("0", component.FindAll(".rz-calendar-month-cell")[8].GetAttribute("tabindex"));
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-month-cell")[8].KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "PageDown" }));
+            Assert.Contains("2025", component.Find(".rz-calendar-title-button").TextContent);
+            Assert.Equal("0", component.FindAll(".rz-calendar-month-cell")[8].GetAttribute("tabindex"));
+        }
+
+        [Fact]
+        public void DatePicker_DrillDown_YearGrid_Supports_Keyboard_Navigation()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DrillDown);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 5, 1));
+            });
+
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+
+            var focused = component.FindAll(".rz-calendar-year-cell").Single(c => c.GetAttribute("tabindex") == "0");
+            Assert.Equal("2024", focused.TextContent);
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-year-cell").Single(c => c.GetAttribute("tabindex") == "0").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "ArrowRight" }));
+            Assert.Equal("2025", component.FindAll(".rz-calendar-year-cell").Single(c => c.GetAttribute("tabindex") == "0").TextContent);
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-year-cell").Single(c => c.GetAttribute("tabindex") == "0").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "PageDown" }));
+            Assert.Equal("2037", component.FindAll(".rz-calendar-year-cell").Single(c => c.GetAttribute("tabindex") == "0").TextContent);
+            Assert.Contains(component.FindAll(".rz-calendar-year-cell"), c => c.TextContent == "2034");
+        }
+
+        [Fact]
+        public void DatePicker_DrillDown_Cells_DoNotRenderPreventDefault()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DrillDown);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 5, 1));
+            });
+
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+
+            var monthCell = component.FindAll(".rz-calendar-month-cell")[4];
+            Assert.DoesNotContain(monthCell.Attributes, attr => attr.Name.Contains("preventdefault", System.StringComparison.OrdinalIgnoreCase));
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-month-cell")[4].KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "ArrowRight" }));
+            monthCell = component.FindAll(".rz-calendar-month-cell")[5];
+            Assert.Equal("0", monthCell.GetAttribute("tabindex"));
+            Assert.DoesNotContain(monthCell.Attributes, attr => attr.Name.Contains("preventdefault", System.StringComparison.OrdinalIgnoreCase));
+
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+
+            var yearCell = component.FindAll(".rz-calendar-year-cell").Single(c => c.GetAttribute("tabindex") == "0");
+            Assert.DoesNotContain(yearCell.Attributes, attr => attr.Name.Contains("preventdefault", System.StringComparison.OrdinalIgnoreCase));
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-year-cell").Single(c => c.GetAttribute("tabindex") == "0").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "ArrowRight" }));
+            yearCell = component.FindAll(".rz-calendar-year-cell").Single(c => c.GetAttribute("tabindex") == "0");
+            Assert.Equal("2025", yearCell.TextContent);
+            Assert.DoesNotContain(yearCell.Attributes, attr => attr.Name.Contains("preventdefault", System.StringComparison.OrdinalIgnoreCase));
+        }
+
+        [Fact]
+        public void DatePicker_DrillDown_Disables_Months_Outside_MinMax()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DrillDown);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 5, 1));
+                parameters.Add(p => p.Min, new DateTime(2024, 3, 1));
+                parameters.Add(p => p.Max, new DateTime(2024, 10, 31));
+            });
+
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+
+            var monthCells = component.FindAll(".rz-calendar-month-cell");
+            Assert.True(monthCells[0].HasAttribute("disabled"));
+            Assert.True(monthCells[1].HasAttribute("disabled"));
+            Assert.False(monthCells[2].HasAttribute("disabled"));
+            Assert.False(monthCells[9].HasAttribute("disabled"));
+            Assert.True(monthCells[10].HasAttribute("disabled"));
+            Assert.True(monthCells[11].HasAttribute("disabled"));
+        }
+
+        [Fact]
+        public void DatePicker_ShowDaysFalse_DrillDown_Opens_In_Month_Grid()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.ShowDays, false);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 5, 1));
+            });
+
+            var monthCells = component.FindAll(".rz-calendar-month-cell");
+            Assert.Equal(12, monthCells.Count);
+            Assert.Contains("rz-state-active", monthCells[4].ClassName);
+            Assert.Empty(component.FindAll("table[role=grid]"));
+            Assert.Empty(component.FindAll(".rz-calendar-year-cell"));
+            Assert.Contains("2024", component.Find(".rz-calendar-title-button").TextContent);
+        }
+
+        [Fact]
+        public void DatePicker_ShowDaysFalse_DrillDown_Returns_From_Year_Grid_And_Picks_Month()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            DateTime? currentDate = null;
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.ShowDays, false);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 5, 1));
+                parameters.Add(p => p.CurrentDateChanged, args => currentDate = args);
+            });
+
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+            var yearCells = component.FindAll(".rz-calendar-year-cell");
+            Assert.Equal(12, yearCells.Count);
+            Assert.Empty(component.FindAll(".rz-calendar-month-cell"));
+
+            component.InvokeAsync(() => component.Find(".rz-calendar-title-button").Click());
+            Assert.Equal(12, component.FindAll(".rz-calendar-year-cell").Count);
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-year-cell").First(c => c.TextContent == "2025").Click());
+            Assert.Equal(12, component.FindAll(".rz-calendar-month-cell").Count);
+            Assert.Empty(component.FindAll(".rz-calendar-year-cell"));
+            Assert.Contains("2025", component.Find(".rz-calendar-title-button").TextContent);
+
+            component.InvokeAsync(() => component.FindAll(".rz-calendar-month-cell")[2].Click());
+            var monthCells = component.FindAll(".rz-calendar-month-cell");
+            Assert.Equal(12, monthCells.Count);
+            Assert.Contains("rz-state-active", monthCells[2].ClassName);
+            Assert.Empty(component.FindAll("table[role=grid]"));
+            Assert.Equal(new DateTime(2025, 3, 1), currentDate);
+        }
+
+        [Fact]
+        public void DatePicker_ShowDaysFalse_DropDown_Renders_Header_DropDowns_Only()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
+            {
+                parameters.Add(p => p.ShowDays, false);
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DropDown);
+                parameters.Add(p => p.InitialViewDate, new DateTime(2024, 5, 1));
+            });
+
+            Assert.Single(component.FindAll(".rz-calendar-month-dropdown"));
+            Assert.Single(component.FindAll(".rz-calendar-year-dropdown"));
+            Assert.Empty(component.FindAll(".rz-calendar-month-cell"));
+            Assert.Empty(component.FindAll("table[role=grid]"));
+        }
+
+        [Fact]
         public void DatePicker_Multiple_Selects_IEnumerableDateTime()
         {
             using var ctx = new TestContext();
@@ -1643,6 +1909,7 @@ namespace Radzen.Blazor.Tests
 
             var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
             {
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DropDown);
                 parameters.Add(p => p.Value, testDate);
                 parameters.Add(p => p.Culture, thaiCulture);
                 parameters.Add(p => p.Inline, true);
@@ -1667,6 +1934,7 @@ namespace Radzen.Blazor.Tests
 
             var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters =>
             {
+                parameters.Add(p => p.NavigationMode, DatePickerNavigationMode.DropDown);
                 parameters.Add(p => p.Value, testDate);
                 parameters.Add(p => p.Culture, thaiCulture);
                 parameters.Add(p => p.Inline, true);
@@ -1871,6 +2139,21 @@ namespace Radzen.Blazor.Tests
 
             var wrapper = component.Find("div.rz-calendar-view-container");
             Assert.Null(wrapper.GetAttribute("tabindex"));
+        }
+
+        [Fact]
+        public void DatePicker_DoesNotRegister_RangeHoverHandlers_When_NotRange()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.JSInterop.SetupModule("_content/Radzen.Blazor/Radzen.Blazor.js");
+
+            var component = ctx.RenderComponent<RadzenDatePicker<DateTime>>(parameters => parameters
+                .Add(p => p.Value, new DateTime(2024, 6, 12))
+                .Add(p => p.ShowTime, true));
+
+            Assert.DoesNotContain("blazor:onmouseover", component.Markup);
+            Assert.DoesNotContain("blazor:onmouseleave", component.Markup);
         }
     }
 }

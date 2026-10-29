@@ -37,7 +37,7 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenPieSeries<TItem> : CartesianSeries<TItem>
+    public partial class RadzenPieSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>
     {
         /// <summary>
         /// Gets or sets the horizontal center position of the pie chart in pixels.
@@ -348,6 +348,8 @@ namespace Radzen.Blazor
                         builder.AddAttribute(8, nameof(LegendItem.MouseEnter), EventCallback.Factory.Create<MouseEventArgs>(this, args => OnLegendMouseEnter(data!)));
                         builder.AddAttribute(9, nameof(LegendItem.MouseLeave), EventCallback.Factory.Create<MouseEventArgs>(this, args => OnLegendMouseLeave()));
                     }
+
+                    builder.AddAttribute(10, nameof(LegendItem.ChildContent), RenderLegendItemContent(clickable, TooltipTitle(data), data, PickColor(Items.IndexOf(data), Fills)));
 
                     builder.CloseComponent();
                 }

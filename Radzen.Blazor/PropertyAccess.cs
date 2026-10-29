@@ -87,12 +87,12 @@ public static class PropertyAccess
                     throw new InvalidOperationException($"Member '{memberName}' not found on interface '{instance.Type}'.");
                 }
 
-                return Expression.Property(instance, declaringType, memberName);
+                return RequireReadable(Expression.Property(instance, declaringType, memberName));
             }
 
             try
             {
-                return Expression.PropertyOrField(instance, memberName);
+                return RequireReadable(Expression.PropertyOrField(instance, memberName));
             }
             catch (AmbiguousMatchException)
             {
@@ -100,7 +100,7 @@ public static class PropertyAccess
                     BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
                 if (prop != null)
                 {
-                    return Expression.Property(instance, prop);
+                    return RequireReadable(Expression.Property(instance, prop));
                 }
 
                 var field = instance.Type.GetField(memberName,
@@ -112,6 +112,19 @@ public static class PropertyAccess
 
                 throw;
             }
+        }
+
+        static MemberExpression RequireReadable(MemberExpression access)
+        {
+            if (access.Member is PropertyInfo { CanRead: false } property)
+            {
+                throw new InvalidOperationException(
+                    $"Property '{property.Name}' of type '{property.DeclaringType}' has no getter. " +
+                    "A trimmed application removes getters that no code calls directly, so annotate the type with " +
+                    "[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties)] or preserve it in a linker descriptor.");
+            }
+
+            return access;
         }
 
         Expression AccessWithNullPropagation(Expression instance, string memberName)
@@ -225,6 +238,35 @@ public static class PropertyAccess
             return true;
         }
         return false;
+    }
+
+    /// <summary>
+    /// Creates a function that reads a <see cref="DateTime"/>, <see cref="DateTimeOffset"/> or <see cref="DateOnly"/> property, or its nullable,
+    /// as a <see cref="DateTime"/>. A DateOnly is read at midnight and a DateTimeOffset as its clock time, since an expression tree converts neither to DateTime;
+    /// a null nullable throws, as the DateTime getter does.
+    /// </summary>
+    /// <typeparam name="TItem">The owner type.</typeparam>
+    /// <param name="propertyName">Name of the property to return.</param>
+    /// <returns>A function which returns the specified property as a DateTime.</returns>
+    [RequiresUnreferencedCode(TrimMessages.ExpressionTreeReflection)]
+    internal static Func<TItem, DateTime> DateGetter<TItem>(string propertyName)
+    {
+        var type = GetPropertyType(typeof(TItem), propertyName);
+        var underlying = type == null ? null : Nullable.GetUnderlyingType(type) ?? type;
+
+        if (underlying == typeof(DateOnly))
+        {
+            var getter = Getter<TItem, DateOnly?>(propertyName);
+            return item => getter(item)!.Value.ToDateTime(TimeOnly.MinValue);
+        }
+
+        if (underlying == typeof(DateTimeOffset))
+        {
+            var getter = Getter<TItem, DateTimeOffset?>(propertyName);
+            return item => getter(item)!.Value.DateTime;
+        }
+
+        return Getter<TItem, DateTime>(propertyName);
     }
 
     /// <summary>
@@ -347,6 +389,7 @@ public static class PropertyAccess
         readonly ConcurrentDictionary<string, ItemGetter> getters = new();
         int count;
 
+        [RequiresUnreferencedCode(TrimMessages.ExpressionTreeReflection)]
         internal ItemGetter GetOrCreate(object item, string property)
         {
             if (getters.TryGetValue(property, out var getter))
@@ -372,6 +415,7 @@ public static class PropertyAccess
             return result;
         }
 
+        [RequiresUnreferencedCode(TrimMessages.ExpressionTreeReflection)]
         static ItemGetter Create(object item, string property)
         {
             try

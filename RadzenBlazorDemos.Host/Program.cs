@@ -57,13 +57,14 @@ builder.Services.AddScoped<CompilerService>();
 builder.Services.AddScoped<ExampleService>();
 
 builder.Services.AddDbContextFactory<NorthwindContext>();
+builder.Services.AddDbContextFactory<RadzenBlazorDemos.Data.ConversationContext>();
 
-builder.Services.AddScoped<NorthwindService>();
 builder.Services.AddScoped<NorthwindODataService>();
 builder.Services.AddSingleton<GitHubService>();
 
 builder.Services.AddAIChatService(options =>
     builder.Configuration.GetSection("AIChatService").Bind(options));
+builder.Services.AddConversationStore<RadzenBlazorDemos.Services.EfConversationStore>();
 
 builder.Services.Configure<PlaygroundOptions>(builder.Configuration.GetSection("Playground"));
 builder.Services.AddSingleton<PlaygroundService>();
@@ -204,7 +205,8 @@ if (!app.Environment.IsDevelopment())
 var contentTypeProvider = new FileExtensionContentTypeProvider(new Dictionary<string, string>
 {
     [".txt"] = "text/plain; charset=utf-8",
-    [".md"] = "text/markdown; charset=utf-8"
+    [".md"] = "text/markdown; charset=utf-8",
+    [".xml"] = "application/xml; charset=utf-8"
 });
 
 app.UseLinkHeaders(app.Environment);

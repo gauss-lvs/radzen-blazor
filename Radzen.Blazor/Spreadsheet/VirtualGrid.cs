@@ -236,6 +236,10 @@ public partial class VirtualGrid : ComponentBase, IAsyncDisposable, IVirtualGrid
 
                 Render(View.ScrollLeft, View.ScrollTop);
             }
+            else if (previousView is not null && (View.RowHeaderOffset != renderedRowHeaderOffset || View.ColumnHeaderOffset != renderedColumnHeaderOffset))
+            {
+                Render(ScrollLeft, ScrollTop);
+            }
         }
     }
 
@@ -338,8 +342,14 @@ public partial class VirtualGrid : ComponentBase, IAsyncDisposable, IVirtualGrid
         }
     }
 
+    private double renderedRowHeaderOffset;
+    private double renderedColumnHeaderOffset;
+
     private void Render(double scrollX, double scrollY)
     {
+        renderedRowHeaderOffset = View.RowHeaderOffset;
+        renderedColumnHeaderOffset = View.ColumnHeaderOffset;
+
         var columnRange = View.GetColumnRange(scrollX, scrollX + region.Width);
         var rowRange = View.GetRowRange(scrollY, scrollY + region.Height);
 
@@ -373,15 +383,6 @@ public partial class VirtualGrid : ComponentBase, IAsyncDisposable, IVirtualGrid
                 };
                 items.Add(item);
                 left += Columns[x];
-            }
-
-            if (Columns.Frozen > 0)
-            {
-                var item = new VirtualVerticalSplitter
-                {
-                    Rect = new PixelRectangle(0, left, region.Height, left + SplitterSize)
-                };
-                items.Add(item);
             }
 
             left = -columnRange.Offset;
@@ -423,15 +424,6 @@ public partial class VirtualGrid : ComponentBase, IAsyncDisposable, IVirtualGrid
                 headerTop += Rows[y];
             }
 
-            if (Rows.Frozen > 0)
-            {
-                var item = new VirtualHorizontalSplitter
-                {
-                    Rect = new PixelRectangle(headerTop, 0, headerTop + SplitterSize, region.Width)
-                };
-                items.Add(item);
-            }
-
             headerTop = -rowRange.Offset;
 
             for (var y = rowRange.Start; y <= rowRange.End; y++)
@@ -448,6 +440,42 @@ public partial class VirtualGrid : ComponentBase, IAsyncDisposable, IVirtualGrid
                 items.Add(item);
                 headerTop += Rows[y];
             }
+        }
+
+        if (Columns.Frozen > 0)
+        {
+            var splitterLeft = View.ColumnHeaderOffset;
+
+            for (var x = 0; x < Columns.Frozen; x++)
+            {
+                if (!Columns.IsHidden(x))
+                {
+                    splitterLeft += Columns[x];
+                }
+            }
+
+            items.Add(new VirtualVerticalSplitter
+            {
+                Rect = new PixelRectangle(0, splitterLeft, region.Height, splitterLeft + SplitterSize)
+            });
+        }
+
+        if (Rows.Frozen > 0)
+        {
+            var splitterTop = View.RowHeaderOffset;
+
+            for (var y = 0; y < Rows.Frozen; y++)
+            {
+                if (!Rows.IsHidden(y))
+                {
+                    splitterTop += Rows[y];
+                }
+            }
+
+            items.Add(new VirtualHorizontalSplitter
+            {
+                Rect = new PixelRectangle(splitterTop, 0, splitterTop + SplitterSize, region.Width)
+            });
         }
 
         var frozenTop = View.RowHeaderOffset;

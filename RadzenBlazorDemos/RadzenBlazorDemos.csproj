@@ -2,10 +2,20 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>disable</Nullable>
+    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Set RadzenLocalProject=true to reference the local Radzen.Blazor source even in Release.
+         Required when publishing trimmed to exercise the local member-trimmable library rather than a NuGet package. -->
+    <UseRadzenPackage Condition="'$(RadzenLocalProject)' != 'true' AND '$(Configuration)' == 'Release'">true</UseRadzenPackage>
+    <!-- Set TrimWasmClient=true to member-trim this WASM client (and Radzen.Blazor) on publish.
+         Scoped here so trimming applies to the client only - trimming the ASP.NET Core Host server
+         breaks MVC application-part discovery (Type.GetType over a trimmed factory type). -->
+    <PublishTrimmed Condition="'$(TrimWasmClient)' == 'true'">true</PublishTrimmed>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Radzen.Blazor" Version="*" GeneratePathProperty="true" Condition="'$(Configuration)' == 'Release'" />
-    <ProjectReference Include="..\Radzen.Blazor\Radzen.Blazor.csproj" Condition="'$(Configuration)' != 'Release'" />
+    <PackageReference Include="Radzen.Blazor" Version="*" GeneratePathProperty="true" Condition="'$(UseRadzenPackage)' == 'true'" />
+    <ProjectReference Include="..\Radzen.Blazor\Radzen.Blazor.csproj" Condition="'$(UseRadzenPackage)' != 'true'" />
     <ProjectReference Include="..\Radzen.Blazor.Api\Radzen.Blazor.Api.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.*-*" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.*-*" PrivateAssets="all" />
@@ -18,6 +28,7 @@
   <ItemGroup>
     <!-- Workaround for .NET 10 antiforgery token issue - https://github.com/dotnet/aspnetcore/issues/64693 -->
     <TrimmerRootDescriptor Include="linker.xml" />
+    <TrimmerRootDescriptor Include="linker.playground.xml" Condition="'$(TrimWasmClient)' != 'true'" />
     <!-- Release publish turns DebuggerSupport off, which makes the trimmer strip parameter names from every framework assembly. The runtime Roslyn compiler behind Edit Source / Playground binds interpolated strings with alignment or format specifiers ({value:F2}) as named AppendFormatted(value, format: "F2") calls, so such demos fail online with "The best overload for 'AppendFormatted' does not have a parameter named 'format'". Keep parameter names so runtime-compiled demos bind the same way they do at build time. -->
     <_TrimmerKeepMetadata Include="parametername" />
   </ItemGroup>
@@ -45,7 +56,7 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
     </Content>
   </ItemGroup>
-  <Target Name="CopyDemoPagesToWwwroot" BeforeTargets="ResolveStaticWebAssetsInputs;ProcessStaticWebAssets">
+  <Target Name="CopyDemoPagesToWwwroot" BeforeTargets="ResolveStaticWebAssetsInputs;ProcessStaticWebAssets" Condition="'$(CopyDemoPagesToWwwroot)' != 'false'">
     <ItemGroup>
       <DemoPagesRazor Include="Pages\**\*.razor" />
       <DemoPagesCs Include="Pages\**\*.cs" />
@@ -67,7 +78,7 @@
   <!-- Usage: dotnet build -p:GenerateLlmsTxt=true -->
   <Target Name="GenerateLlmsTxt"
          BeforeTargets="Build"
-         Condition="'$(Configuration)' == 'Release' OR '$(GenerateLlmsTxt)' == 'true'">
+         Condition="('$(Configuration)' == 'Release' OR '$(GenerateLlmsTxt)' == 'true') AND '$(GenerateLlmsTxt)' != 'false'">
     <PropertyGroup>
       <LlmsTxtOutputDir>$(MSBuildThisFileDirectory)..\RadzenBlazorDemos.Host\wwwroot</LlmsTxtOutputDir>
       <LlmsTxtToolPath>$(MSBuildThisFileDirectory)..\RadzenBlazorDemos.Tools\RadzenBlazorDemos.Tools.csproj</LlmsTxtToolPath>
