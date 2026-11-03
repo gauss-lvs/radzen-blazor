@@ -1,11 +1,87 @@
 using Bunit;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Rendering;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Xunit;
 
 namespace Radzen.Blazor.Tests
 {
     public class StepsTests
     {
+        [Theory]
+        [InlineData("Home", 1, 0)]
+        [InlineData("End", 1, 2)]
+        [InlineData("Home", 2, 0)]
+        [InlineData("End", 0, 2)]
+        public async Task Steps_HomeAndEnd_MoveFocusToFirstAndLastStep(string key, int focused, int expected)
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var component = ctx.RenderComponent<RadzenSteps>(parameters =>
+            {
+                parameters.Add(p => p.SelectedIndex, focused);
+                parameters.Add<RenderFragment>(p => p.Steps, builder =>
+                {
+                    builder.OpenComponent<RadzenStepsItem>(0);
+                    builder.AddAttribute(1, "Text", "Step 1");
+                    builder.CloseComponent();
+                    builder.OpenComponent<RadzenStepsItem>(2);
+                    builder.AddAttribute(3, "Text", "Step 2");
+                    builder.CloseComponent();
+                    builder.OpenComponent<RadzenStepsItem>(4);
+                    builder.AddAttribute(5, "Text", "Step 3");
+                    builder.CloseComponent();
+                });
+            });
+
+            var tabs = component.FindAll("button[role=tab]");
+            var prefix = component.Find(".rz-steps").Id;
+            await tabs[focused].KeyDownAsync(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = key, Code = key });
+
+            var focus = ctx.JSInterop.VerifyInvoke("Radzen.focusElement");
+            Assert.Equal(prefix + expected + "s", focus.Arguments[0]);
+            Assert.Equal("0", component.FindAll("button[role=tab]")[expected].GetAttribute("tabindex"));
+        }
+
+        [Fact]
+        public async Task Steps_HomeAndEnd_SkipHiddenSteps()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var component = ctx.RenderComponent<RadzenSteps>(parameters =>
+            {
+                parameters.Add(p => p.SelectedIndex, 1);
+                parameters.Add<RenderFragment>(p => p.Steps, builder =>
+                {
+                    builder.OpenComponent<RadzenStepsItem>(0);
+                    builder.AddAttribute(1, "Text", "Step 1");
+                    builder.AddAttribute(2, "Visible", false);
+                    builder.CloseComponent();
+                    builder.OpenComponent<RadzenStepsItem>(3);
+                    builder.AddAttribute(4, "Text", "Step 2");
+                    builder.CloseComponent();
+                    builder.OpenComponent<RadzenStepsItem>(5);
+                    builder.AddAttribute(6, "Text", "Step 3");
+                    builder.CloseComponent();
+                    builder.OpenComponent<RadzenStepsItem>(7);
+                    builder.AddAttribute(8, "Text", "Step 4");
+                    builder.AddAttribute(9, "Visible", false);
+                    builder.CloseComponent();
+                });
+            });
+
+            var tabs = component.FindAll("button[role=tab]");
+            var prefix = component.Find(".rz-steps").Id;
+            await tabs[0].KeyDownAsync(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "End", Code = "End" });
+            Assert.Equal(prefix + "2s", ctx.JSInterop.VerifyInvoke("Radzen.focusElement").Arguments[0]);
+
+            await component.FindAll("button[role=tab]")[1].KeyDownAsync(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Home", Code = "Home" });
+            var ids = ctx.JSInterop.Invocations.Where(i => i.Identifier == "Radzen.focusElement").Select(i => (string)i.Arguments[0]).ToList();
+            Assert.Equal(new[] { prefix + "2s", prefix + "1s" }, ids);
+        }
+
         [Fact]
         public void Steps_Renders_WithClassName()
         {
@@ -93,6 +169,31 @@ namespace Radzen.Blazor.Tests
             var nextButton = component.Find("button.rz-steps-next");
             Assert.Contains("rz-state-disabled", nextButton.GetAttribute("class"));
             Assert.NotNull(nextButton.GetAttribute("disabled"));
+        }
+
+        [Fact]
+        public void Steps_Renders_AriaDisabled_OnlyForDisabledStep()
+        {
+            using var ctx = new TestContext();
+            var component = ctx.RenderComponent<RadzenSteps>(parameters =>
+            {
+                parameters.Add(p => p.ShowStepsButtons, false);
+                parameters.Add<RenderFragment>(p => p.Steps, builder =>
+                {
+                    builder.OpenComponent<RadzenStepsItem>(0);
+                    builder.AddAttribute(1, "Text", "One");
+                    builder.CloseComponent();
+                    builder.OpenComponent<RadzenStepsItem>(2);
+                    builder.AddAttribute(3, "Text", "Two");
+                    builder.AddAttribute(4, "Disabled", true);
+                    builder.CloseComponent();
+                });
+            });
+
+            var tabs = component.FindAll("[role=tab]");
+            Assert.Equal(2, tabs.Count);
+            Assert.False(tabs[0].HasAttribute("aria-disabled"));
+            Assert.Equal("true", tabs[1].GetAttribute("aria-disabled"));
         }
 
         [Fact]
@@ -393,7 +494,119 @@ namespace Radzen.Blazor.Tests
 
             Assert.Contains("--rz-steps-transition-duration: 300ms", component.Markup);
         }
+    
+
+        [Fact]
+        public async Task Steps_AsyncCanChange_WithChangeHandler_DoesNotReenterCanChange()
+        {
+            using var ctx = new TestContext();
+            var host = ctx.RenderComponent<StepsBindHost>();
+
+            await host.InvokeAsync(() => host.FindAll("button[role=tab]")[1].Click());
+
+            Assert.Equal(1, host.Instance.CanChangeCount);
+            Assert.Equal(0, host.Instance.Index);
+
+            await host.InvokeAsync(() => host.Instance.Pending[0].SetResult());
+
+            host.WaitForAssertion(() =>
+            {
+                Assert.Equal(1, host.Instance.Index);
+                Assert.Equal(1, host.Instance.ChangeCount);
+                Assert.Equal(1, host.Instance.CanChangeCount);
+                Assert.Equal("true", host.FindAll("button[role=tab]")[1].GetAttribute("aria-selected"));
+            });
+        }
+
+        [Fact]
+        public async Task Steps_Change_IsRaisedAfterBoundSelectedIndexIsUpdated()
+        {
+            using var ctx = new TestContext();
+            var host = ctx.RenderComponent<StepsBindHost>(parameters => parameters.Add(p => p.AsyncCanChangeCalls, 0));
+
+            await host.InvokeAsync(() => host.FindAll("button[role=tab]")[2].Click());
+
+            Assert.Equal(2, host.Instance.Index);
+            Assert.Equal(1, host.Instance.ChangeCount);
+            Assert.Equal(2, host.Instance.IndexWhenChangeRaised);
+        }
+
+        [Fact]
+        public async Task Steps_ProgrammaticSelectedIndex_WithAsyncCanChange_DoesNotReenterAndSelectsStep()
+        {
+            using var ctx = new TestContext();
+            var host = ctx.RenderComponent<StepsBindHost>();
+
+            host.Instance.Index = 2;
+            await host.InvokeAsync(host.Instance.Refresh);
+
+            Assert.Equal(0, host.Instance.CanChangeCount);
+            Assert.Equal(0, host.Instance.ChangeCount);
+            Assert.Equal("true", host.FindAll("button[role=tab]")[2].GetAttribute("aria-selected"));
+            Assert.Contains("Three", host.Find("[role=tabpanel]:not([hidden])").TextContent);
+        }
+
+        [Fact]
+        public async Task Steps_ProgrammaticSelectedIndex_DoesNotRaiseCanChange()
+        {
+            using var ctx = new TestContext();
+            var host = ctx.RenderComponent<StepsBindHost>(parameters => parameters.Add(p => p.AsyncCanChangeCalls, 0));
+
+            host.Instance.Index = 1;
+            await host.InvokeAsync(host.Instance.Refresh);
+
+            Assert.Equal(0, host.Instance.CanChangeCount);
+            Assert.Equal("true", host.FindAll("button[role=tab]")[1].GetAttribute("aria-selected"));
+        }
+
+        class StepsBindHost : ComponentBase
+        {
+            [Parameter]
+            public int AsyncCanChangeCalls { get; set; } = 10;
+
+            public int Index { get; set; }
+            public int CanChangeCount { get; private set; }
+            public int ChangeCount { get; private set; }
+            public int IndexWhenChangeRaised { get; private set; } = -1;
+            public List<TaskCompletionSource> Pending { get; } = new();
+
+            public void Refresh() => StateHasChanged();
+
+            Task OnCanChange(StepsCanChangeEventArgs args)
+            {
+                CanChangeCount++;
+
+                if (CanChangeCount > AsyncCanChangeCalls)
+                {
+                    return Task.CompletedTask;
+                }
+
+                var tcs = new TaskCompletionSource();
+                Pending.Add(tcs);
+                return tcs.Task;
+            }
+
+            protected override void BuildRenderTree(RenderTreeBuilder builder)
+            {
+                builder.OpenComponent<RadzenSteps>(0);
+                builder.AddAttribute(1, nameof(RadzenSteps.SelectedIndex), Index);
+                builder.AddAttribute(2, nameof(RadzenSteps.SelectedIndexChanged), EventCallback.Factory.Create<int>(this, value => Index = value));
+                builder.AddAttribute(3, nameof(RadzenSteps.Change), EventCallback.Factory.Create<int>(this, _ => { ChangeCount++; IndexWhenChangeRaised = Index; }));
+                builder.AddAttribute(4, nameof(RadzenSteps.CanChange), EventCallback.Factory.Create<StepsCanChangeEventArgs>(this, OnCanChange));
+                builder.AddAttribute(5, nameof(RadzenSteps.ShowStepsButtons), false);
+                builder.AddAttribute(6, nameof(RadzenSteps.Steps), (RenderFragment)(steps =>
+                {
+                    var seq = 0;
+                    foreach (var text in new[] { "One", "Two", "Three" })
+                    {
+                        steps.OpenComponent<RadzenStepsItem>(seq++);
+                        steps.AddAttribute(seq++, "Text", text);
+                        steps.AddAttribute(seq++, "ChildContent", (RenderFragment)(b => b.AddContent(0, text)));
+                        steps.CloseComponent();
+                    }
+                }));
+                builder.CloseComponent();
+            }
+        }
     }
 }
-
-

@@ -218,8 +218,10 @@ class FormulaEvaluator(Worksheet sheet, Cell currentCell, Recalculation? recalcu
                 case BinaryOperator.Divide:
                     res = l / r;
                     break;
+                case BinaryOperator.Power:
+                    return PowerFunction.Calculate(l, r);
             }
-            return CellData.FromNumber(res);
+            return double.IsInfinity(res) ? CellData.FromError(CellError.Num) : CellData.FromNumber(res);
         }
 
         return CellData.FromError(CellError.Value);
@@ -267,7 +269,9 @@ class FormulaEvaluator(Worksheet sheet, Cell currentCell, Recalculation? recalcu
             return CellData.FromError(CellError.Value);
         }
 
-        return CellData.FromNumber(-operand.GetValueOrDefault<double>());
+        var number = operand.GetValueOrDefault<double>();
+
+        return CellData.FromNumber(op == UnaryOperator.Percent ? number / 100d : -number);
     }
 
     private static RangeList Broadcast(IReadOnlyList<object?> operands, Func<CellData[], CellData> apply)
@@ -472,13 +476,6 @@ class FormulaEvaluator(Worksheet sheet, Cell currentCell, Recalculation? recalcu
                 value = CellData.FromError(CellError.Ref);
                 return;
             }
-        }
-
-        // If the row/column was deleted, set whole formula to =#REF!
-        if (targetSheet.IsDeletedRow(address.Row) || targetSheet.IsDeletedColumn(address.Column))
-        {
-            value = CellData.FromError(CellError.Ref);
-            return;
         }
 
         if (address.Row < 0 || address.Column < 0)
@@ -871,30 +868,6 @@ class FormulaEvaluator(Worksheet sheet, Cell currentCell, Recalculation? recalcu
         {
             value = CellData.FromError(CellError.Ref);
             return;
-        }
-
-        if (kind != RangeKind.Columns)
-        {
-            for (var row = start.Row; row < start.Row + rows; row++)
-            {
-                if (startSheet.IsDeletedRow(row))
-                {
-                    value = CellData.FromError(CellError.Ref);
-                    return;
-                }
-            }
-        }
-
-        if (kind != RangeKind.Rows)
-        {
-            for (var column = start.Column; column < start.Column + columns; column++)
-            {
-                if (startSheet.IsDeletedColumn(column))
-                {
-                    value = CellData.FromError(CellError.Ref);
-                    return;
-                }
-            }
         }
 
         value = new RangeReference(this, startSheet, start.Row, start.Column, rows, columns, logicalRows, logicalColumns, isCell: false);

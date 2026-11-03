@@ -36,6 +36,8 @@ internal enum FormulaTokenType
     Minus,
     Star,
     Slash,
+    Caret,
+    Percent,
     Ampersand,
     EqualsGreaterThan,
     Comma,
@@ -458,6 +460,12 @@ internal class FormulaLexer(string expression, bool strict = true)
             case '/':
                 Advance(1);
                 return new FormulaToken(FormulaTokenType.Slash, "/");
+            case '^':
+                Advance(1);
+                return new FormulaToken(FormulaTokenType.Caret, "^");
+            case '%':
+                Advance(1);
+                return new FormulaToken(FormulaTokenType.Percent, "%");
             case '&':
                 Advance(1);
                 return new FormulaToken(FormulaTokenType.Ampersand, "&");
@@ -624,11 +632,23 @@ internal class FormulaLexer(string expression, bool strict = true)
         return (char)value;
     }
 
+    private const string RefLiteral = "#REF!";
+
+    private bool IsAtRefLiteral() => expression.AsSpan(position).StartsWith(RefLiteral, StringComparison.Ordinal);
+
+    private FormulaToken ScanSheetRefLiteral(string sheetName)
+    {
+        position += RefLiteral.Length;
+        return new FormulaToken(FormulaTokenType.ErrorLiteral, RefLiteral)
+        {
+            ErrorValue = CellError.Ref,
+            Address = CellRef.Invalid with { Worksheet = sheetName }
+        };
+    }
+
     private FormulaToken ScanErrorLiteral()
     {
-        // Support only #REF! for now
-        const string RefLiteral = "#REF!";
-        if (expression.AsSpan(position).StartsWith(RefLiteral, StringComparison.Ordinal))
+        if (IsAtRefLiteral())
         {
             position += RefLiteral.Length;
             return new FormulaToken(FormulaTokenType.ErrorLiteral, RefLiteral)
@@ -990,6 +1010,10 @@ internal class FormulaLexer(string expression, bool strict = true)
                     continue;
                 case '!':
                     Advance(1);
+                    if (IsAtRefLiteral())
+                    {
+                        return ScanSheetRefLiteral(expression[startOffset..(position - 1)]);
+                    }
                     continue;
                 case '$':
                     Advance(1);
@@ -1036,6 +1060,11 @@ internal class FormulaLexer(string expression, bool strict = true)
         if (position < expression.Length && Peek() == '!')
         {
             Advance(1);
+
+            if (IsAtRefLiteral())
+            {
+                return ScanSheetRefLiteral(sheetName.ToString());
+            }
 
             var cellRefStart = position;
             while (position < expression.Length)

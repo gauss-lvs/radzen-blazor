@@ -7,17 +7,22 @@ namespace Radzen.Documents.Spreadsheet;
 
 internal class FormulaRewriter : FormulaSyntaxNodeVisitorBase
 {
+    private const string RefError = "#REF!";
+
     private readonly Func<FormulaToken, CellRef> adjust;
+    private readonly Func<FormulaToken, FormulaToken, RangeKind, (CellRef Start, CellRef End)?> adjustRange;
     private readonly StringBuilder builder = new();
 
-    private FormulaRewriter(Func<FormulaToken, CellRef> adjust)
+    private FormulaRewriter(Func<FormulaToken, CellRef> adjust, Func<FormulaToken, FormulaToken, RangeKind, (CellRef Start, CellRef End)?>? adjustRange)
     {
         this.adjust = adjust;
+        this.adjustRange = adjustRange ?? ((start, end, _) => (adjust(start), adjust(end)));
     }
 
-    public static string Rewrite(string original, FormulaSyntaxTree tree, Func<FormulaToken, CellRef> adjust)
+    public static string Rewrite(string original, FormulaSyntaxTree tree, Func<FormulaToken, CellRef> adjust,
+        Func<FormulaToken, FormulaToken, RangeKind, (CellRef Start, CellRef End)?>? adjustRange = null)
     {
-        var rewriter = new FormulaRewriter(adjust);
+        var rewriter = new FormulaRewriter(adjust, adjustRange);
         rewriter.builder.Append('=');
         tree.Root.Accept(rewriter);
         return rewriter.builder.ToString();
@@ -42,7 +47,14 @@ internal class FormulaRewriter : FormulaSyntaxNodeVisitorBase
 
     public override void VisitErrorLiteral(ErrorLiteralSyntaxNode errorLiteralSyntaxNode)
     {
-        builder.Append(errorLiteralSyntaxNode.Token.Value);
+        var token = errorLiteralSyntaxNode.Token;
+
+        if (!string.IsNullOrEmpty(token.Address.Worksheet))
+        {
+            AppendWorksheetPrefix(adjust(token).Worksheet);
+        }
+
+        builder.Append(token.Value);
     }
 
     public override void VisitName(NameSyntaxNode nameSyntaxNode)
@@ -52,6 +64,13 @@ internal class FormulaRewriter : FormulaSyntaxNodeVisitorBase
 
     public override void VisitUnaryExpression(UnaryExpressionSyntaxNode unaryExpressionSyntaxNode)
     {
+        if (unaryExpressionSyntaxNode.Operator == UnaryOperator.Percent)
+        {
+            AppendOperand(unaryExpressionSyntaxNode.Operand, Precedence(unaryExpressionSyntaxNode), wrapEqual: false);
+            builder.Append('%');
+            return;
+        }
+
         builder.Append(unaryExpressionSyntaxNode.Operator == UnaryOperator.Negate ? '-' : '+');
         AppendOperand(unaryExpressionSyntaxNode.Operand, Precedence(unaryExpressionSyntaxNode), wrapEqual: false);
     }
@@ -86,12 +105,14 @@ internal class FormulaRewriter : FormulaSyntaxNodeVisitorBase
     {
         return node switch
         {
+            BinaryExpressionSyntaxNode { Operator: BinaryOperator.Power } => 5,
             BinaryExpressionSyntaxNode { Operator: BinaryOperator.Multiply or BinaryOperator.Divide } => 4,
             BinaryExpressionSyntaxNode { Operator: BinaryOperator.Plus or BinaryOperator.Minus } => 3,
             BinaryExpressionSyntaxNode { Operator: BinaryOperator.Concat } => 2,
             BinaryExpressionSyntaxNode => 1,
-            UnaryExpressionSyntaxNode => 5,
-            _ => 6
+            UnaryExpressionSyntaxNode { Operator: UnaryOperator.Percent } => 7,
+            UnaryExpressionSyntaxNode => 6,
+            _ => 8
         };
     }
 
@@ -101,6 +122,12 @@ internal class FormulaRewriter : FormulaSyntaxNodeVisitorBase
         var adjusted = adjust(token);
 
         AppendWorksheetPrefix(adjusted.Worksheet);
+
+        if (adjusted == CellRef.Invalid)
+        {
+            builder.Append(RefError);
+            return;
+        }
 
         if (token.Address.IsColumnAbsolute)
         {
@@ -134,8 +161,14 @@ internal class FormulaRewriter : FormulaSyntaxNodeVisitorBase
         var startToken = rangeSyntaxNode.Start.Token;
         var endToken = rangeSyntaxNode.End.Token;
 
-        var startAdjusted = adjust(startToken);
-        var endAdjusted = adjust(endToken);
+        if (adjustRange(startToken, endToken, rangeSyntaxNode.Kind) is not { } adjusted)
+        {
+            AppendWorksheetPrefix(startToken.Address.Worksheet);
+            builder.Append(RefError);
+            return;
+        }
+
+        var (startAdjusted, endAdjusted) = adjusted;
 
         if (rangeSyntaxNode.Kind != RangeKind.Cells)
         {
@@ -187,7 +220,7 @@ internal class FormulaRewriter : FormulaSyntaxNodeVisitorBase
 
         if (start < 0 || end < 0 || start >= max || end >= max)
         {
-            builder.Append("#REF!");
+            builder.Append(RefError);
             return;
         }
 
@@ -241,6 +274,7 @@ internal class FormulaRewriter : FormulaSyntaxNodeVisitorBase
             FormulaTokenType.Minus => "-",
             FormulaTokenType.Star => "*",
             FormulaTokenType.Slash => "/",
+            FormulaTokenType.Caret => "^",
             FormulaTokenType.Ampersand => "&",
             FormulaTokenType.Equals => "=",
             FormulaTokenType.GreaterThan => ">",

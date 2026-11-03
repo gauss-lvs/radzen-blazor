@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Radzen.Blazor;
@@ -386,6 +387,14 @@ namespace Radzen
             }
         }
 
+        /// <inheritdoc />
+        protected override void OnParametersSet()
+        {
+            base.OnParametersSet();
+
+            FormFieldContext?.SetLabelTarget(this, Visible ? LabelTargetId : null);
+        }
+
         /// <summary>
         /// Validations the state changed.
         /// </summary>
@@ -414,6 +423,8 @@ namespace Radzen
             }
 
             Form?.RemoveComponent(this);
+
+            FormFieldContext?.SetLabelTarget(this, null);
 
             GC.SuppressFinalize(this);
         }
@@ -475,6 +486,69 @@ namespace Radzen
 
         /// <summary> Gets the current placeholder. Returns empty string if this component is inside a RadzenFormField.</summary>
         protected string? CurrentPlaceholder => FormFieldContext?.AllowFloatingLabel == true ? " " : Placeholder;
+
+        /// <summary>
+        /// Gets the id of the element a <see cref="RadzenFormField"/> label points to with its <c>for</c> attribute.
+        /// Defaults to the component id; components that render their input inside a wrapper element return the input id instead.
+        /// </summary>
+        protected virtual string? LabelTargetId => GetId();
+
+        /// <summary>
+        /// Gets the id of the enclosing <see cref="RadzenFormField"/> label for use as <c>aria-labelledby</c> on elements that cannot be the target of a label,
+        /// or <c>null</c> when the component is not the one the form field label points to or the consumer supplied <c>aria-label</c> or <c>aria-labelledby</c> via <see cref="RadzenComponent.Attributes"/>.
+        /// </summary>
+        protected string? FormFieldLabelledBy => Attributes != null && (Attributes.ContainsKey("aria-label") || Attributes.ContainsKey("aria-labelledby")) ? null : FormFieldContext?.GetLabelId(this);
+
+        private string? linkedLabelName;
+        private bool linkedLabelVisible;
+
+        /// <summary>
+        /// Gets a value indicating whether a label whose <c>for</c> attribute targets <see cref="Name"/> should name the component on the client:
+        /// the component has a name, is visible, is not named by a <see cref="RadzenFormField"/> and the consumer did not supply <c>aria-label</c> or <c>aria-labelledby</c>.
+        /// Components with an aria label parameter of their own override it to require that the parameter is not set.
+        /// </summary>
+        protected virtual bool ShouldLinkLabel => !string.IsNullOrEmpty(Name) && Visible && FormFieldContext?.GetLabelId(this) == null
+            && (Attributes == null || !(Attributes.ContainsKey("aria-label") || Attributes.ContainsKey("aria-labelledby")));
+
+        /// <summary>
+        /// Asks the client to point <c>aria-labelledby</c> of <paramref name="element"/> at the label whose <c>for</c> attribute targets <see cref="Name"/>.
+        /// Call it from <c>OnAfterRenderAsync</c>; it talks to the client only when <see cref="Name"/> or <see cref="RadzenComponent.Visible"/> changed since the last call.
+        /// Use it for components whose focusable element is not labelable, so a <see cref="RadzenLabel"/> or a plain label associated through the name names it anyway.
+        /// </summary>
+        /// <param name="element">The element that carries the accessible name.</param>
+        protected async Task LinkLabelAsync(ElementReference element)
+        {
+            if (Name == linkedLabelName && Visible == linkedLabelVisible)
+            {
+                return;
+            }
+
+            if (LabelToLink() == null || !IsJSRuntimeAvailable || JSRuntime == null)
+            {
+                return;
+            }
+
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("Radzen.linkLabel", element, Name);
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Returns the name whose label the client should link to the component, or <c>null</c> when no label should be linked, and records the link as done
+        /// so that a later <see cref="LinkLabelAsync"/> talks to the client only when <see cref="Name"/> or <see cref="RadzenComponent.Visible"/> change again.
+        /// Components that already create client-side state after render pass the result to that call instead of making a separate one.
+        /// </summary>
+        protected string? LabelToLink()
+        {
+            linkedLabelName = Name;
+            linkedLabelVisible = Visible;
+
+            return ShouldLinkLabel ? Name : null;
+        }
 
         /// <summary>
         /// Handles the ContextMenu event.

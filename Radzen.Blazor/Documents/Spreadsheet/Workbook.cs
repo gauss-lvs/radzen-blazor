@@ -261,6 +261,57 @@ public class Workbook
         pendingSheetNames.Clear();
     }
 
+    private void QueueFormulasUsingDefinedNames()
+    {
+        foreach (var cell in GetFormulaCells())
+        {
+            if (cell.FormulaSyntaxTree!.Find(node => node is NameSyntaxNode).Count > 0)
+            {
+                pendingFormulaCells.Add(cell);
+            }
+        }
+    }
+
+    private IEnumerable<(IDictionary<string, string> Names, Worksheet? Owner)> DefinedNameScopes =>
+        sheets.Select(sheet => ((IDictionary<string, string>)sheet.DefinedNames, (Worksheet?)sheet)).Prepend((DefinedNames, null));
+
+    private void AdjustDefinedNames(Worksheet target, AxisShift shift)
+    {
+        var changed = false;
+
+        foreach (var (names, owner) in DefinedNameScopes)
+        {
+            foreach (var (name, refersTo) in names.ToList())
+            {
+                var adjusted = AdjustReference(refersTo, owner, target, shift)!;
+
+                if (!string.Equals(adjusted, refersTo, StringComparison.Ordinal))
+                {
+                    names[name] = adjusted;
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed)
+        {
+            QueueFormulasUsingDefinedNames();
+        }
+    }
+
+    internal List<(IDictionary<string, string> Names, string Name, string RefersTo)> CaptureDefinedNames() =>
+        [.. DefinedNameScopes.SelectMany(scope => scope.Names.Select(name => (scope.Names, name.Key, name.Value)))];
+
+    internal void RestoreDefinedNames(IEnumerable<(IDictionary<string, string> Names, string Name, string RefersTo)> definedNames)
+    {
+        foreach (var (names, name, refersTo) in definedNames)
+        {
+            names[name] = refersTo;
+        }
+
+        QueueFormulasUsingDefinedNames();
+    }
+
     private List<Cell> GetFormulaCells() => [.. sheets.SelectMany(GetFormulaCells)];
 
     private static IEnumerable<Cell> GetFormulaCells(Worksheet sheet) =>
@@ -302,7 +353,7 @@ public class Workbook
         }
     }
 
-    internal static string? AdjustReference(string? text, Worksheet owner, Worksheet target, Func<FormulaToken, bool, CellRef> adjust)
+    internal static string? AdjustReference(string? text, Worksheet? owner, Worksheet target, AxisShift shift)
     {
         if (string.IsNullOrEmpty(text))
         {
@@ -322,18 +373,12 @@ public class Workbook
             return text;
         }
 
-        var rangeEnds = new HashSet<FormulaToken>();
-
-        foreach (var node in tree.Find(node => node is RangeSyntaxNode))
+        if (tree.Errors.Count > 0)
         {
-            rangeEnds.Add(((RangeSyntaxNode)node).End.Token);
+            return text;
         }
 
-        bool IsTarget(CellRef address) => string.IsNullOrEmpty(address.Worksheet)
-            ? owner == target
-            : string.Equals(address.Worksheet, target.Name, StringComparison.OrdinalIgnoreCase);
-
-        var rewritten = FormulaRewriter.Rewrite(formula, tree, token => IsTarget(token.Address) ? adjust(token, rangeEnds.Contains(token)) : token.Address);
+        var rewritten = ShiftReferences(formula, tree, owner, target, shift);
 
         if (string.Equals(rewritten, formula, StringComparison.Ordinal))
         {
@@ -366,7 +411,7 @@ public class Workbook
     {
         bool IsOldSheet(CellRef address) => string.Equals(address.Worksheet, oldName, StringComparison.OrdinalIgnoreCase);
 
-        if (tree.Errors.Count > 0 || tree.Find(node => node is CellSyntaxNode c && IsOldSheet(c.Token.Address)).Count == 0)
+        if (tree.Errors.Count > 0 || tree.Find(node => node is CellSyntaxNode or ErrorLiteralSyntaxNode && IsOldSheet(node.Token.Address)).Count == 0)
         {
             return null;
         }
@@ -432,6 +477,7 @@ public class Workbook
             }
         }
 
+        roots.AddRange(Graph.GetRangeDependents(updatedSheets));
         roots.AddRange(changedDuringUpdate);
         roots.AddRange(Graph.VolatileCells);
 
@@ -447,17 +493,18 @@ public class Workbook
         new Recalculation(cells).Run();
     }
 
-    internal void AdjustFormulas(Worksheet target, Func<FormulaToken, CellRef> adjust)
+    internal void AdjustFormulas(Worksheet target, AxisShift shift)
     {
+        AdjustDefinedNames(target, shift);
+
         foreach (var cell in GetFormulaCells())
         {
-            if (string.IsNullOrEmpty(cell.Formula) || !References(cell, target))
+            if (string.IsNullOrEmpty(cell.Formula) || cell.FormulaSyntaxTree!.Errors.Count > 0 || !References(cell, target))
             {
                 continue;
             }
 
-            var newFormula = FormulaRewriter.Rewrite(cell.Formula, cell.FormulaSyntaxTree!,
-                token => IsReferenceTo(target, cell, token.Address) ? adjust(token) : token.Address);
+            var newFormula = ShiftReferences(cell.Formula, cell.FormulaSyntaxTree!, cell.Worksheet, target, shift);
 
             if (!string.Equals(newFormula, cell.Formula, StringComparison.Ordinal))
             {
@@ -466,94 +513,24 @@ public class Workbook
         }
     }
 
-    internal void InvalidateFormulasReferencing(Worksheet target, RangeKind axis, int index)
+    private static string ShiftReferences(string formula, FormulaSyntaxTree tree, Worksheet? owner, Worksheet target, AxisShift shift)
     {
-        bool IsInvalidated(CellRef address) => (axis == RangeKind.Rows ? address.Row : address.Column) == index;
-
-        bool RangeContainsInvalidated(RangeSyntaxNode range)
-        {
-            if (range.Kind != RangeKind.Cells && range.Kind != axis)
-            {
-                return false;
-            }
-
-            var start = range.Start.Token.Address;
-            var end = range.End.Token.Address;
-
-            return axis == RangeKind.Rows
-                ? index >= start.Row && index <= end.Row
-                : index >= start.Column && index <= end.Column;
-        }
-
-        foreach (var cell in GetFormulaCells())
-        {
-            var tree = cell.FormulaSyntaxTree!;
-
-            var hasRef = tree.Find(node => node switch
-            {
-                CellSyntaxNode c => c.Token.Type == FormulaTokenType.CellIdentifier && IsReferenceTo(target, cell, c.Token.Address) && IsInvalidated(c.Token.Address),
-                RangeSyntaxNode r => IsReferenceTo(target, cell, r.Start.Token.Address) && RangeContainsInvalidated(r),
-                _ => false,
-            }).Count > 0;
-
-            if (!hasRef)
-            {
-                continue;
-            }
-
-            var tokens = FormulaLexer.Scan(cell.Formula!, false);
-            var rebuilt = StringBuilderCache.Acquire();
-
-            for (var i = 0; i < tokens.Count; i++)
-            {
-                var t = tokens[i];
-
-                if (t.Type == FormulaTokenType.None)
-                {
-                    break;
-                }
-
-                if (t.Type == FormulaTokenType.CellIdentifier && IsReferenceTo(target, cell, t.Address) && IsInvalidated(t.Address))
-                {
-                    rebuilt.Append("#REF!");
-                }
-                else if (t.Type is FormulaTokenType.ColumnIdentifier or FormulaTokenType.RowIdentifier && i + 2 < tokens.Count && tokens[i + 2].Type == t.Type)
-                {
-                    var tokenAxis = t.Type == FormulaTokenType.ColumnIdentifier ? RangeKind.Columns : RangeKind.Rows;
-                    var end = tokens[i + 2];
-
-                    if (tokenAxis == axis && IsReferenceTo(target, cell, t.Address) && (IsInvalidated(t.Address) || IsInvalidated(end.Address)))
-                    {
-                        rebuilt.Append("#REF!");
-                    }
-                    else
-                    {
-                        rebuilt.Append(t.Value).Append(tokens[i + 1].Value).Append(end.Value);
-                    }
-
-                    i += 2;
-                }
-                else
-                {
-                    rebuilt.Append(t.Value);
-                }
-            }
-
-            cell.Formula = StringBuilderCache.GetStringAndRelease(rebuilt);
-        }
+        return FormulaRewriter.Rewrite(formula, tree,
+            token => IsReferenceTo(target, owner, token.Address) ? shift.AdjustCell(token) : token.Address,
+            (start, end, kind) => IsReferenceTo(target, owner, start.Address) ? shift.AdjustRange(start, end, kind) : (start.Address, end.Address));
     }
 
-    private static bool IsReferenceTo(Worksheet target, Cell owner, CellRef address)
+    private static bool IsReferenceTo(Worksheet target, Worksheet? owner, CellRef address)
     {
         return string.IsNullOrEmpty(address.Worksheet)
-            ? owner.Worksheet == target
+            ? owner == target
             : string.Equals(address.Worksheet, target.Name, StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool References(Cell owner, Worksheet target)
     {
         return owner.Worksheet == target
-            || owner.FormulaSyntaxTree!.Find(node => node is CellSyntaxNode c && IsReferenceTo(target, owner, c.Token.Address)).Count > 0;
+            || owner.FormulaSyntaxTree!.Find(node => node is CellSyntaxNode c && IsReferenceTo(target, owner.Worksheet, c.Token.Address)).Count > 0;
     }
 
     /// <summary>

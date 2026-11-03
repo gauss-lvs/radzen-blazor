@@ -218,8 +218,40 @@ public class CrossSheetRecalculationTests
 
         sheet2.DeleteRow(0);
 
-        Assert.Equal("=#REF!+A1", sheet1.Cells["B1"].Formula);
+        Assert.Equal("=Sheet2!#REF!+A1", sheet1.Cells["B1"].Formula);
         Assert.Equal(CellError.Ref, sheet1.Cells["B1"].Value);
+    }
+
+    [Fact]
+    public void DeletingRow_RecalculatesWholeColumnReferenceFromAnotherSheet()
+    {
+        var workbook = new Workbook();
+        var sheet1 = workbook.AddSheet("Sheet1", 10, 10);
+        var sheet2 = workbook.AddSheet("Sheet2", 10, 10);
+        sheet1.Cells["A1"].Value = 1;
+        sheet1.Cells["A2"].Value = 2;
+        sheet1.Cells["A3"].Value = 3;
+        sheet2.Cells["A1"].Formula = "=SUM(Sheet1!A:A)";
+
+        sheet1.DeleteRow(0);
+
+        Assert.Equal(5d, sheet2.Cells["A1"].Value);
+    }
+
+    [Fact]
+    public void DeletingColumn_RecalculatesWholeRowReferenceFromAnotherSheet()
+    {
+        var workbook = new Workbook();
+        var sheet1 = workbook.AddSheet("Sheet1", 10, 10);
+        var sheet2 = workbook.AddSheet("Sheet2", 10, 10);
+        sheet1.Cells["A1"].Value = 1;
+        sheet1.Cells["B1"].Value = 2;
+        sheet1.Cells["C1"].Value = 3;
+        sheet2.Cells["A1"].Formula = "=SUM(Sheet1!1:1)";
+
+        sheet1.DeleteColumn(0);
+
+        Assert.Equal(5d, sheet2.Cells["A1"].Value);
     }
 
     [Fact]
@@ -268,7 +300,7 @@ public class CrossSheetRecalculationTests
         sheet1.DeleteRow(4);
         sheet1.EndUpdate();
 
-        Assert.Equal("=#REF!", sheet2.Cells["B1"].Formula);
+        Assert.Equal("=Sheet1!#REF!", sheet2.Cells["B1"].Formula);
         Assert.Equal(CellError.Ref, sheet2.Cells["B1"].Value);
     }
 

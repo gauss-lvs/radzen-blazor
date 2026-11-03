@@ -427,6 +427,8 @@ namespace Radzen.Blazor
                 visibleChanged = false;
                 disabledChanged = false;
 
+                var labelToLink = LabelToLink();
+
                 if (Visible)
                 {
                     bool reload = false;
@@ -456,7 +458,7 @@ namespace Radzen.Blazor
                         if (version == _jsRefVersion)
                         {
                             var created = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                                "Radzen.createDropDown", Element);
+                                "Radzen.createDropDown", Element, labelToLink);
 
                             if (version == _jsRefVersion)
                             {
@@ -475,6 +477,10 @@ namespace Radzen.Blazor
                         StateHasChanged();
                     }
                 }
+            }
+            else
+            {
+                await LinkLabelAsync(Element);
             }
 
             if (shouldReposition)

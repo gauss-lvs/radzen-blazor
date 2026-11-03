@@ -7808,7 +7808,74 @@ window.Radzen = {
     }
 };
 
-Radzen.registerFabMenu = function(element, dotnet){
+Radzen.fabMenuItems = function(element) {
+  return Array.prototype.slice.call(element.querySelectorAll('.rz-fabmenu-items button:not([disabled])'));
+};
+Radzen.fabMenuToggle = function(element) {
+  return element.querySelector(':scope > button');
+};
+Radzen.createFabMenu = function(element, dotnet) {
+  if (!element || typeof element.addEventListener !== 'function') return;
+  Radzen.destroyFabMenu(element);
+  var invoke = function(method, arg) {
+    try { suppressDisposed(arg === undefined ? dotnet.invokeMethodAsync(method) : dotnet.invokeMethodAsync(method, arg)); } catch { }
+  };
+  var onKeyDown = function(e) {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    var key = e.key;
+    var open = !!element.querySelector('.rz-fabmenu-items');
+    if (!open) {
+      if ((key === 'ArrowDown' || key === 'ArrowUp') && e.target === Radzen.fabMenuToggle(element)) {
+        e.preventDefault();
+        invoke('OpenAsync', true);
+      }
+      return;
+    }
+    if (key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      invoke('CloseAsync');
+      var toggle = Radzen.fabMenuToggle(element);
+      if (toggle) toggle.focus({ preventScroll: true });
+      return;
+    }
+    if (key === 'Tab') {
+      invoke('CloseAsync');
+      return;
+    }
+    var items = Radzen.fabMenuItems(element);
+    if (!items.length) return;
+    var index = items.indexOf(document.activeElement);
+    var next = -1;
+    if (key === 'ArrowDown' || key === 'ArrowRight') next = index < 0 ? 0 : (index + 1) % items.length;
+    else if (key === 'ArrowUp' || key === 'ArrowLeft') next = index < 0 ? items.length - 1 : (index - 1 + items.length) % items.length;
+    else if (key === 'Home') next = 0;
+    else if (key === 'End') next = items.length - 1;
+    if (next < 0) return;
+    e.preventDefault();
+    items[next].focus();
+  };
+  var onFocusIn = function(e) {
+    if (e.target && e.target.closest && e.target.closest('.rz-fabmenu-items')) {
+      element.__rzFabMenuHadFocus = true;
+    }
+  };
+  element.addEventListener('keydown', onKeyDown);
+  element.addEventListener('focusin', onFocusIn);
+  element.__rzFabMenu = { keydown: onKeyDown, focusin: onFocusIn };
+};
+Radzen.destroyFabMenu = function(element) {
+  if (!element) return;
+  Radzen.unregisterFabMenu(element);
+  var handlers = element.__rzFabMenu;
+  if (handlers) {
+    element.removeEventListener('keydown', handlers.keydown);
+    element.removeEventListener('focusin', handlers.focusin);
+    delete element.__rzFabMenu;
+  }
+  delete element.__rzFabMenuHadFocus;
+};
+Radzen.registerFabMenu = function(element, dotnet, focusFirstItem){
   if(!element) return;
   if(element.__rzOutsideClickHandler){
     document.removeEventListener('click', element.__rzOutsideClickHandler);
@@ -7821,6 +7888,13 @@ Radzen.registerFabMenu = function(element, dotnet){
   };
   element.__rzOutsideClickHandler = handler;
   document.addEventListener('click', handler);
+  if (focusFirstItem) {
+    var first = Radzen.fabMenuItems(element)[0];
+    if (first) {
+      element.__rzFabMenuHadFocus = true;
+      first.focus();
+    }
+  }
 };
 Radzen.unregisterFabMenu = function(element){
   if(!element) return;
@@ -7828,6 +7902,14 @@ Radzen.unregisterFabMenu = function(element){
   if(handler){
     document.removeEventListener('click', handler);
     delete element.__rzOutsideClickHandler;
+  }
+  if (element.__rzFabMenuHadFocus) {
+    delete element.__rzFabMenuHadFocus;
+    var active = document.activeElement;
+    if (!active || active === document.body || element.contains(active)) {
+      var toggle = Radzen.fabMenuToggle(element);
+      if (toggle) toggle.focus({ preventScroll: true });
+    }
   }
 };
 Radzen.chatIsNearBottom = function(container, threshold) {
@@ -7957,8 +8039,9 @@ Radzen.createDataGrid = function(el) {
     el.removeEventListener('mousedown', onMousedown);
   }};
 };
-Radzen.createDropDown = function(el) {
+Radzen.createDropDown = function(el, labelName) {
   if (!el) return { dispose: function() {} };
+  if (labelName) Radzen.linkLabel(el, labelName);
   function onMousedown() { Radzen.activeElement = null; }
   function onFilterClick(e) {
     var input = e.target.closest('.rz-multiselect-filter-container input');
@@ -8098,16 +8181,24 @@ Radzen.createUpload = function(el, url, auto, multiple, parameterName, method, s
   function onKeydown(e) {
     if (e.keyCode === 32 || e.keyCode === 13) {
       e.preventDefault();
-      var child = choose.firstElementChild;
-      if (child) child.click();
+      if (fileInput && !fileInput.disabled) fileInput.click();
     }
   }
   function onStopKeydown(e) { e.stopPropagation(); }
+  function onDisabledDrop(e) {
+    if (fileInput && fileInput.disabled) {
+      e.preventDefault();
+    }
+  }
   function onChange(e) {
     Radzen.uploadInputChange(e, url, auto, multiple, true, parameterName, method, stream);
   }
   function onImgError() { this.style.display = 'none'; }
-  if (choose) choose.addEventListener('keydown', onKeydown);
+  if (choose) {
+    choose.addEventListener('keydown', onKeydown);
+    choose.addEventListener('dragover', onDisabledDrop);
+    choose.addEventListener('drop', onDisabledDrop);
+  }
   if (fileInput) {
     fileInput.addEventListener('keydown', onStopKeydown);
     if (url) fileInput.addEventListener('change', onChange);
@@ -8116,7 +8207,11 @@ Radzen.createUpload = function(el, url, auto, multiple, parameterName, method, s
     img.addEventListener('error', onImgError);
   });
   return { dispose: function() {
-    if (choose) choose.removeEventListener('keydown', onKeydown);
+    if (choose) {
+      choose.removeEventListener('keydown', onKeydown);
+      choose.removeEventListener('dragover', onDisabledDrop);
+      choose.removeEventListener('drop', onDisabledDrop);
+    }
     if (fileInput) {
       fileInput.removeEventListener('keydown', onStopKeydown);
       if (url) fileInput.removeEventListener('change', onChange);
@@ -8829,6 +8924,17 @@ Radzen.createVirtualItemContainer = (scrollable, content, ref) => {
 Radzen.scrollElementTo = (scrollable, left, top) => {
   scrollable.scrollTo({ top: top, left: Radzen.isRTL(scrollable) ? -left : left });
 };
+Radzen.linkLabel = function (el, name) {
+  if (!el || !name || typeof el.setAttribute !== 'function') return;
+  var escaped = window.CSS && CSS.escape ? CSS.escape(name) : name.replace(/"/g, '\\"');
+  var label = document.querySelector('label[for="' + escaped + '"]');
+  if (!label || el.contains(label)) return;
+  if (!label.id) {
+    label.id = name + '-label';
+  }
+  el.setAttribute('aria-labelledby', label.id);
+};
+
 Radzen.createFormField = function(el) {
   if (!el || typeof el.addEventListener !== 'function') return { dispose: function() {} };
   function onFocusIn() { el.classList.add('rz-state-focused'); }
@@ -9001,13 +9107,22 @@ Radzen.createSignaturePad = function(element, ref, strokeColor, strokeWidth, dis
 Radzen.itemListKeydown = function (e) {
   var el = e.target;
   if (!el || !el.classList) return;
+  if (el.classList.contains('rz-chip')) {
+    var chipKey = e.code ? e.code : e.key;
+    if (chipKey === 'Space' || chipKey === 'Enter') {
+      e.preventDefault();
+    }
+    return;
+  }
   var radio = el.classList.contains('rz-radio-button-list');
   var checkbox = el.classList.contains('rz-checkbox-list');
-  if (!radio && !checkbox) return;
+  var chips = !radio && !checkbox && el.closest ? el.closest('.rz-chip-list') : null;
+  if (!radio && !checkbox && !chips) return;
   var key = e.code ? e.code : e.key;
   if (key === 'ArrowLeft' || key === 'ArrowRight' || key === 'ArrowUp' || key === 'ArrowDown') {
     var horizontal = key === 'ArrowLeft' || key === 'ArrowRight';
-    if (radio || el.classList.contains(horizontal ? 'rz-checkbox-list-horizontal' : 'rz-checkbox-list-vertical')) {
+    var orientation = (checkbox ? 'rz-checkbox-list' : 'rz-chip-list') + (horizontal ? '-horizontal' : '-vertical');
+    if (radio || (chips || el).classList.contains(orientation)) {
       e.preventDefault();
     }
   } else if (key === 'Home' || key === 'End' || key === 'Space' || key === 'Enter') {
