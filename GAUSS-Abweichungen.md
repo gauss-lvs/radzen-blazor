@@ -8,7 +8,7 @@ bei jedem Upstream-Merge erhalten bleiben muss.
 | Branch | `gauss-next` |
 | Stand | 25.11.2026 |
 | Upstream-Basis | `30abd1636` (Radzen 13.3.0) |
-| Paketversion | `13.3.0.1` (das nächste `publish.ps1` veröffentlicht `13.3.0.2`) |
+| Paketversion | `13.3.0.0` (das nächste `publish.ps1` veröffentlicht `13.3.0.1`) |
 | Zielframeworks | `net9.0`, `net10.0`, `net11.0` |
 | Umfang | 27 Dateien, +1615 / −52 Zeilen (einschließlich dieses Dokuments) |
 
@@ -83,7 +83,7 @@ ein Upstream-Test, der gelegentlich zeitabhängig scheitert; in Wiederholungen i
 
 ```xml
 <PackageId>Radzen.Blazor.GAUSS</PackageId>
-<Version>13.3.0.1</Version>
+<Version>13.3.0.0</Version>
 <Authors>Radzen Ltd. and GAUSS-LVS mbH</Authors>
 ```
 
@@ -145,15 +145,16 @@ das minifizierte JS und `lib`-Ordner für net9.0, net10.0 und net11.0.
 ### `publish.ps1` (neu)
 
 Führt `git pull` aus, hebt mit `dotnet version -f ./Radzen.Blazor/Radzen.Blazor.csproj build` die
-vierte Stelle der Version an (z. B. `13.3.0.1` → `13.3.0.2`), committet, taggt
+vierte Stelle der Version an (z. B. `13.3.0.0` → `13.3.0.1`), committet, taggt
 `v<Version>` und pusht mit `--follow-tags` nach `git.gauss-lvs.de`. Ohne `--follow-tags` bliebe der
 annotierte Tag lokal und es würde nichts gebaut.
 
 Bei einem Konflikt in `<Version>` gewinnt beim Upstream-Merge die Upstream-Version. Das gilt nur
 für diese Property; alle anderen Konflikte an GAUSS-Stellen werden zugunsten von GAUSS aufgelöst.
 
-Nach dem Merge von Radzen 13.3.0 wurde die Version von Hand auf `13.3.0.1` gesetzt. Weil
-`publish.ps1` vor dem Taggen anhebt, wird das erste Release daraus `v13.3.0.2`.
+Nach jeder neuen Upstream-Version (Major, Minor oder Patch) startet die vierte Stelle in der
+csproj bei 0: auf `13.3.0` folgt `13.3.0.0`. Weil `publish.ps1` vor dem Taggen anhebt, ist das
+erste Release dann `v13.3.0.1`.
 
 ### `.forgejo/workflows/release.yml` (neu)
 
