@@ -149,11 +149,11 @@ vierte Stelle der Version an (z. B. `13.3.0.1` → `13.3.0.2`), committet, taggt
 `v<Version>` und pusht mit `--follow-tags` nach `git.gauss-lvs.de`. Ohne `--follow-tags` bliebe der
 annotierte Tag lokal und es würde nichts gebaut.
 
-Nach einem Upstream-Merge bleibt die GAUSS-Version im Merge-Commit zunächst stehen (im Konflikt
-die eigene Seite nehmen). Ist die Upstream-Version gestiegen, die Version vor dem
-nächsten Release von Hand auf `<Upstream-Version>.1` setzen, zuletzt `13.3.0.1` nach dem Merge
-von Radzen 13.3.0. Weil `publish.ps1` vor dem Taggen anhebt, ist das erste veröffentlichte Paket
-dann `<Upstream-Version>.2` (bisher z. B. `12.1.8.1` → `v12.1.8.2-next.0`).
+Bei einem Konflikt in `<Version>` gewinnt beim Upstream-Merge die Upstream-Version. Das gilt nur
+für diese Property; alle anderen Konflikte an GAUSS-Stellen werden zugunsten von GAUSS aufgelöst.
+
+Nach dem Merge von Radzen 13.3.0 wurde die Version von Hand auf `13.3.0.1` gesetzt. Weil
+`publish.ps1` vor dem Taggen anhebt, wird das erste Release daraus `v13.3.0.2`.
 
 ### `.forgejo/workflows/release.yml` (neu)
 
@@ -512,7 +512,7 @@ Diese Stellen nach jedem Upstream-Merge gezielt prüfen:
 | `RadzenButton.razor`, `RadzenSplitButton.razor`, `RadzenToggleButton.razor` | `GBusyIcon`-Block im Busy-Zustand |
 | `RadzenPanelMenuItem.razor` | beide `<i class="@getIconCssClass()">` |
 | `RadzenContextMenu.razor` | `GIcon`/`CssClass` am `RadzenMenuItem` |
-| `Radzen.Blazor.csproj` | Sass/Terser-Targets — Upstream-Stand ist dort nicht übernehmbar. Neue Zielframeworks von Upstream übernehmen und für jedes ein gepinntes Referenzpaar ergänzen |
+| `Radzen.Blazor.csproj` | Bei `<Version>` gewinnt Upstream, sonst bleibt die GAUSS-Seite. Sass/Terser-Targets — Upstream-Stand ist dort nicht übernehmbar. Neue Zielframeworks von Upstream übernehmen und für jedes ein gepinntes Referenzpaar ergänzen |
 | `.github/workflows/` | prüfen, ob `ci.yml` und `premium-themes.yml` wieder aktive Trigger haben |
 
 Ein schneller Selbsttest nach dem Merge:
