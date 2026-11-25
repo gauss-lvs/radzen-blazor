@@ -33,10 +33,10 @@ jobs:
     # aus dem container-Block darunter.
     runs-on: virtual-runner
     container:
-      image: docker.sopart.de/gauss/runner-image:gauss-latest
+      image: docker-repo.gauss-lvs.de/gauss/runner-image:gauss-latest
       credentials:
-        username: ${{ secrets.DOCKER_IMAGE_USER }}
-        password: ${{ secrets.DOCKER_IMAGE_PWD }}
+        username: ${{ secrets.DOCKER_INTERNAL_IMAGE_USER }}
+        password: ${{ secrets.DOCKER_INTERNAL_IMAGE_PWD }}
 
     steps:
       - name: Repository auschecken
