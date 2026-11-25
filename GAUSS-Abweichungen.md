@@ -8,7 +8,7 @@ bei jedem Upstream-Merge erhalten bleiben muss.
 | Branch | `gauss-next` |
 | Stand | 25.11.2026 |
 | Upstream-Basis | `30abd1636` (Radzen 13.3.0) |
-| Paketversion | `12.1.12.3` (wird beim nächsten `publish.ps1` angehoben) |
+| Paketversion | `13.3.0.1` (das nächste `publish.ps1` veröffentlicht `13.3.0.2`) |
 | Zielframeworks | `net9.0`, `net10.0`, `net11.0` |
 | Umfang | 27 Dateien, +1615 / −52 Zeilen (einschließlich dieses Dokuments) |
 
@@ -83,13 +83,13 @@ ein Upstream-Test, der gelegentlich zeitabhängig scheitert; in Wiederholungen i
 
 ```xml
 <PackageId>Radzen.Blazor.GAUSS</PackageId>
-<Version>12.1.12.3</Version>
+<Version>13.3.0.1</Version>
 <Authors>Radzen Ltd. and GAUSS-LVS mbH</Authors>
 ```
 
 `Product` und `Copyright` bleiben bei Radzen Ltd. `gauss-next` ist der Standard-Branch des Forks und
 veröffentlicht stabile Versionen ohne Prerelease-Kennung. Bis einschließlich `12.1.12.3-next.0`
-trugen seine Versionen das Suffix `-next.N`; NuGet ordnet `12.1.12.3` darüber ein. Der frühere
+trugen seine Versionen das Suffix `-next.N`; NuGet ordnet die stabilen Versionen darüber ein. Der frühere
 Branch `gauss` liegt als `gauss-old` vor (zuletzt `11.4.1.1`).
 
 ### Zusätzliche Abhängigkeit
@@ -145,13 +145,15 @@ das minifizierte JS und `lib`-Ordner für net9.0, net10.0 und net11.0.
 ### `publish.ps1` (neu)
 
 Führt `git pull` aus, hebt mit `dotnet version -f ./Radzen.Blazor/Radzen.Blazor.csproj build` die
-vierte Stelle der Version an (z. B. `12.1.12.3` → `12.1.12.4`), committet, taggt
+vierte Stelle der Version an (z. B. `13.3.0.1` → `13.3.0.2`), committet, taggt
 `v<Version>` und pusht mit `--follow-tags` nach `git.gauss-lvs.de`. Ohne `--follow-tags` bliebe der
 annotierte Tag lokal und es würde nichts gebaut.
 
 Nach einem Upstream-Merge bleibt die GAUSS-Version im Merge-Commit zunächst stehen (im Konflikt
-die eigene Seite nehmen). Ist die Upstream-Version gestiegen, die ersten drei Stellen vor dem
-nächsten Release von Hand nachziehen, etwa auf `13.3.0.1`, wie zuletzt von `12.1.10.2` auf `12.1.12.2`.
+die eigene Seite nehmen). Ist die Upstream-Version gestiegen, die Version vor dem
+nächsten Release von Hand auf `<Upstream-Version>.1` setzen, zuletzt `13.3.0.1` nach dem Merge
+von Radzen 13.3.0. Weil `publish.ps1` vor dem Taggen anhebt, ist das erste veröffentlichte Paket
+dann `<Upstream-Version>.2` (bisher z. B. `12.1.8.1` → `v12.1.8.2-next.0`).
 
 ### `.forgejo/workflows/release.yml` (neu)
 
