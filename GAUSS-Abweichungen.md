@@ -178,10 +178,10 @@ Build in `radzenhq/radzen-next` anstoßen.
 
 `.devcontainer/devcontainer.json` und `devcontainer-lock.json` (neu). Basis
 `docker-repo.gauss-lvs.de/gauss/devcontainers-gauss:latest`, mit `claude-code`-Feature und
-persistenten Volumes für Claude-Code- und OpenCode-Konfiguration. Der `postCreateCommand`
-installiert OpenCode, korrigiert die Besitzrechte der Volumes, führt `dotnet restore Radzen.sln`
-aus und installiert die GAUSS-VS-Code-Erweiterungen (`GAUSS/ggit-vscode`); der
-`postStartCommand` richtet Git ein. Playwright ist nicht enthalten, weil es bereits im Image liegt.
+einem persistenten Volume für die Claude-Code-Konfiguration. Der `postCreateCommand` korrigiert
+die Besitzrechte des Volumes, führt `dotnet restore Radzen.sln` aus, installiert die
+Benutzer-.NET-Tools des Images (`install-user-dotnet-tools.sh`) und die GAUSS-VS-Code-Erweiterungen
+(`GAUSS/ggit-vscode`); der `postStartCommand` richtet Git ein. Playwright ist nicht enthalten, weil es bereits im Image liegt.
 
 ### `.gitignore`
 
