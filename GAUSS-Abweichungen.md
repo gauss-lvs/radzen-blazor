@@ -103,7 +103,7 @@ nicht mehr gegen das offizielle `Radzen.Blazor` austauschbar ist.
 ### Gepinnte Framework-Versionen
 
 Upstream verwendet die Wildcards `9.*-*`, `10.*-*` und `11.*-*`. Der Fork pinnt
-`Microsoft.AspNetCore.Components` und `.Web` auf `9.0.22`, `10.0.14` und `11.0.0`, damit ein Build
+`Microsoft.AspNetCore.Components` und `.Web` auf `9.0.23`, `10.0.15` und `11.0.0`, damit ein Build
 nicht von neu erschienenen Preview-Paketen abhängt und reproduzierbar bleibt. Kommt upstream ein
 neues Zielframework hinzu, braucht es hier ein eigenes Paar gepinnter Referenzen.
 
