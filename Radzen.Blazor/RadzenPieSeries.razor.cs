@@ -37,8 +37,10 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenPieSeries<TItem> : CartesianSeries<TItem>
+    public partial class RadzenPieSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>
     {
+        private protected override bool EmptyValueIsZero => true;
+
         /// <summary>
         /// Gets or sets the horizontal center position of the pie chart in pixels.
         /// If not set, the pie is automatically centered horizontally within the chart area.
@@ -230,10 +232,10 @@ namespace Radzen.Blazor
                 return maxRadius;
             }
 
-            var getter = PropertyAccess.Getter<TItem, double>(RadiusProperty);
+            var getter = NumericGetter(RadiusProperty, true);
             var items = PositiveItems;
 
-            if (!items.Any())
+            if (items.Count == 0)
             {
                 return maxRadius;
             }
@@ -313,7 +315,7 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public override double MeasureLegend()
         {
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 return Items.Select(item => TextMeasurer.TextWidth(TooltipTitle(item))).Max() + MarkerSize;
             }
@@ -348,6 +350,8 @@ namespace Radzen.Blazor
                         builder.AddAttribute(8, nameof(LegendItem.MouseEnter), EventCallback.Factory.Create<MouseEventArgs>(this, args => OnLegendMouseEnter(data!)));
                         builder.AddAttribute(9, nameof(LegendItem.MouseLeave), EventCallback.Factory.Create<MouseEventArgs>(this, args => OnLegendMouseLeave()));
                     }
+
+                    builder.AddAttribute(10, nameof(LegendItem.ChildContent), RenderLegendItemContent(clickable, TooltipTitle(data), data, PickColor(Items.IndexOf(data), Fills)));
 
                     builder.CloseComponent();
                 }
@@ -399,7 +403,7 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public override bool Contains(double x, double y, double tolerance)
         {
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 var distance = Math.Sqrt(Math.Pow(CenterX - x, 2) + Math.Pow(CenterY - y, 2));
 

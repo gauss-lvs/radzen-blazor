@@ -16,13 +16,121 @@ namespace Radzen.Blazor
     /// <typeparam name="TItem">The type of the series data.</typeparam>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2087, Justification = TrimMessages.DataTypePreserved)]
-    public abstract class CartesianSeries<TItem> : RadzenChartComponentBase, IChartSeries, IChartValueAxisSeries, IDisposable
+    public abstract class CartesianSeries<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : RadzenChartComponentBase, IChartSeries, IChartValueAxisSeries, IChartNavigableSeries, IDisposable
     {
         /// <summary>
         /// Cache for the value returned by <see cref="Category"/> when that value is only dependent on
         /// <see cref="CategoryProperty"/>.
         /// </summary>
         Func<TItem, double>? categoryPropertyCache;
+
+        readonly Dictionary<(string Property, bool EmptyAsZero), Func<TItem, double>> numericGetters = new();
+
+        /// <summary>
+        /// Specifies whether a <c>null</c> value contributes zero instead of leaving a gap. Stacked series set it
+        /// because the items above an empty one still need a baseline.
+        /// </summary>
+        private protected virtual bool EmptyValueIsZero => false;
+
+        /// <summary>
+        /// Creates a getter that reads a numeric property as <see cref="double"/>. A <c>null</c> value of a nullable
+        /// property is returned as <see cref="double.NaN"/>, or as zero when <paramref name="emptyAsZero"/> is set.
+        /// </summary>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="emptyAsZero">Whether <c>null</c> is read as zero.</param>
+        private protected Func<TItem, double> NumericGetter(string propertyName, bool emptyAsZero = false)
+        {
+            if (numericGetters.TryGetValue((propertyName, emptyAsZero), out var cached))
+            {
+                return cached;
+            }
+
+            var propertyType = PropertyAccess.GetPropertyType(typeof(TItem), propertyName);
+            Func<TItem, double> result;
+
+            if (propertyType != null && Nullable.GetUnderlyingType(propertyType) != null)
+            {
+                var getter = PropertyAccess.Getter<TItem, double?>(propertyName);
+                var empty = emptyAsZero ? 0 : double.NaN;
+                result = item => getter(item) ?? empty;
+            }
+            else
+            {
+                result = PropertyAccess.Getter<TItem, double>(propertyName);
+            }
+
+            numericGetters[(propertyName, emptyAsZero)] = result;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Returns <c>true</c> when any of the specified values is <see cref="double.NaN"/>, which is how a
+        /// <c>null</c> value of a nullable property is represented.
+        /// </summary>
+        private protected static bool IsEmpty(double first, double second = 0, double third = 0, double fourth = 0)
+        {
+            return double.IsNaN(first) || double.IsNaN(second) || double.IsNaN(third) || double.IsNaN(fourth);
+        }
+
+        /// <summary>
+        /// Splits the points into runs that contain no empty point, so a path is drawn for each run and a
+        /// <c>null</c> value leaves a gap. Returns the original list as the only run when no point is empty.
+        /// </summary>
+        private protected static IList<IList<Point<TItem>>> Segments(IList<Point<TItem>> points, Func<int, bool>? isEmpty = null)
+        {
+            isEmpty ??= index => IsEmpty(points[index].X, points[index].Y);
+
+            var result = new List<IList<Point<TItem>>>();
+            List<Point<TItem>>? segment = null;
+            var empty = false;
+
+            for (var index = 0; index < points.Count; index++)
+            {
+                if (isEmpty(index))
+                {
+                    empty = true;
+                    segment = null;
+                    continue;
+                }
+
+                if (segment == null)
+                {
+                    segment = new List<Point<TItem>>();
+                    result.Add(segment);
+                }
+
+                segment.Add(points[index]);
+            }
+
+            if (!empty && points.Count > 0)
+            {
+                return new List<IList<Point<TItem>>> { points };
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Merges the smallest and largest of the specified values into the scale, ignoring empty ones.
+        /// </summary>
+        private protected void MergeValues(ScaleBase scale, params Func<TItem, double>[] selectors)
+        {
+            var range = new ScaleRange();
+
+            foreach (var selector in selectors)
+            {
+                var selected = ScaleRange.From(Items, selector);
+                range.Start = Math.Min(range.Start, selected.Start);
+                range.End = Math.Max(range.End, selected.End);
+            }
+
+            if (range.Start <= range.End)
+            {
+                scale.Input.MergeWidth(range);
+            }
+        }
 
         /// <summary>
         /// Returns the parent <see cref="RadzenChart"/> instance or throws an <see cref="InvalidOperationException"/> if not present.
@@ -47,13 +155,22 @@ namespace Radzen.Blazor
 
             if (IsNumeric(CategoryProperty))
             {
-                categoryPropertyCache = PropertyAccess.Getter<TItem, double>(CategoryProperty!);
+                categoryPropertyCache = NumericGetter(CategoryProperty!);
                 return categoryPropertyCache;
             }
 
             if (IsDate(CategoryProperty))
             {
-                var category = PropertyAccess.Getter<TItem, DateTime>(CategoryProperty!);
+                var categoryType = PropertyAccess.GetPropertyType(typeof(TItem), CategoryProperty!);
+
+                if (categoryType != null && Nullable.GetUnderlyingType(categoryType) != null)
+                {
+                    var nullableCategory = PropertyAccess.NullableDateGetter<TItem>(CategoryProperty!);
+                    categoryPropertyCache = (item) => nullableCategory(item)?.Ticks ?? double.NaN;
+                    return categoryPropertyCache;
+                }
+
+                var category = PropertyAccess.DateGetter<TItem>(CategoryProperty!);
                 categoryPropertyCache = (item) => category(item).Ticks;
                 return categoryPropertyCache;
             }
@@ -91,6 +208,153 @@ namespace Radzen.Blazor
             ArgumentNullException.ThrowIfNull(scale);
 
             return scale.Compose(Value);
+        }
+
+        /// <summary>
+        /// Returns the plot-relative pixel range a scale maps to: <see cref="ScaleBase.Scale(double, bool)"/> yields
+        /// coordinates from 0 to <see cref="ScaleBase.OutputSize"/> regardless of the direction of the scale.
+        /// Returns <c>false</c> when the scale has not been laid out yet and has no pixel extent.
+        /// </summary>
+        /// <param name="scale">The scale to read.</param>
+        /// <param name="start">The smaller pixel coordinate, always 0.</param>
+        /// <param name="end">The larger pixel coordinate.</param>
+        protected static bool TryGetPlotRange(ScaleBase scale, out double start, out double end)
+        {
+            ArgumentNullException.ThrowIfNull(scale);
+
+            start = 0;
+            end = scale.OutputSize;
+
+            return !double.IsNaN(end) && end > 0;
+        }
+
+        /// <summary>
+        /// Returns <c>true</c> when the band <c>[position, position + size]</c> (plus the stroke width on both sides)
+        /// overlaps the pixel range <c>[start, end]</c>, so a column or bar outside the zoomed view can be skipped.
+        /// </summary>
+        protected static bool BandIntersects(double position, double size, double strokeWidth, double start, double end)
+        {
+            var low = Math.Min(position, position + size) - strokeWidth;
+            var high = Math.Max(position, position + size) + strokeWidth;
+
+            return !double.IsNaN(low) && !double.IsNaN(high) && high >= start && low <= end;
+        }
+
+        /// <summary>
+        /// Returns the points a line needs in order to draw the part of it that falls inside the pixel range of
+        /// <paramref name="scale"/>: every point whose segment to its neighbor reaches the range, plus
+        /// <paramref name="neighbors"/> additional points on each side so the curve tangents at the edges do not change.
+        /// Returns the original list when every point is needed.
+        /// </summary>
+        /// <param name="points">The points in series order.</param>
+        /// <param name="scale">The category scale whose <see cref="ScaleBase.Output"/> is the visible pixel range.</param>
+        /// <param name="neighbors">How many extra points to keep beyond the last point whose segment is visible.</param>
+        protected static IList<Point<TItem>> ClipToPlotRange(IList<Point<TItem>> points, ScaleBase scale, int neighbors)
+        {
+            ArgumentNullException.ThrowIfNull(points);
+
+            var count = points.Count;
+
+            if (count == 0 || !TryGetPlotRange(scale, out var start, out var end))
+            {
+                return points;
+            }
+
+            var keep = new bool[count];
+            var kept = 0;
+
+            for (var i = 0; i < count; i++)
+            {
+                var x = points[i].X;
+
+                if (x >= start && x <= end)
+                {
+                    if (!keep[i])
+                    {
+                        keep[i] = true;
+                        kept++;
+                    }
+                }
+
+                if (i > 0)
+                {
+                    var previous = points[i - 1].X;
+
+                    if (Math.Max(previous, x) >= start && Math.Min(previous, x) <= end)
+                    {
+                        if (!keep[i - 1])
+                        {
+                            keep[i - 1] = true;
+                            kept++;
+                        }
+
+                        if (!keep[i])
+                        {
+                            keep[i] = true;
+                            kept++;
+                        }
+                    }
+                }
+            }
+
+            if (neighbors > 0 && kept > 0 && kept < count)
+            {
+                var expanded = new bool[count];
+                var lastKept = int.MinValue;
+
+                for (var i = 0; i < count; i++)
+                {
+                    if (keep[i])
+                    {
+                        lastKept = i;
+                    }
+
+                    expanded[i] = lastKept != int.MinValue && i - lastKept <= neighbors;
+                }
+
+                lastKept = int.MaxValue;
+
+                for (var i = count - 1; i >= 0; i--)
+                {
+                    if (keep[i])
+                    {
+                        lastKept = i;
+                    }
+
+                    if (!expanded[i] && lastKept != int.MaxValue && lastKept - i <= neighbors)
+                    {
+                        expanded[i] = true;
+                    }
+                }
+
+                keep = expanded;
+                kept = 0;
+
+                for (var i = 0; i < count; i++)
+                {
+                    if (keep[i])
+                    {
+                        kept++;
+                    }
+                }
+            }
+
+            if (kept == count)
+            {
+                return points;
+            }
+
+            var result = new List<Point<TItem>>(kept);
+
+            for (var i = 0; i < count; i++)
+            {
+                if (keep[i])
+                {
+                    result.Add(points[i]);
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -136,11 +400,12 @@ namespace Radzen.Blazor
                 throw new ArgumentException($"Property {propertyName} does not exist");
             }
 
-            if(PropertyAccess.IsDateOnly(property))
-            {
-                return false;
-            }
             return PropertyAccess.IsDate(property);
+        }
+
+        private bool IsDateOnly(string? propertyName)
+        {
+            return !String.IsNullOrEmpty(propertyName) && PropertyAccess.IsDateOnly(PropertyAccess.GetPropertyType(typeof(TItem), propertyName));
         }
 
         /// <summary>
@@ -264,7 +529,7 @@ namespace Radzen.Blazor
                     throw new ArgumentException("ValueProperty should not be empty");
                 }
 
-                return PropertyAccess.Getter<TItem, double>(ValueProperty);
+                return NumericGetter(ValueProperty, EmptyValueIsZero);
             }
         }
 
@@ -332,7 +597,7 @@ namespace Radzen.Blazor
                 return scale;
             }
 
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 scale.Input.MergeWidth(ScaleRange.From(Items, Category(scale)));
             }
@@ -347,7 +612,8 @@ namespace Radzen.Blazor
                 return new DateScale
                 {
                     Input = scale.Input,
-                    Output = scale.Output
+                    Output = scale.Output,
+                    WholeDays = IsDateOnly(CategoryProperty) && (scale is not DateScale existing || existing.WholeDays)
                 };
             }
 
@@ -387,21 +653,39 @@ namespace Radzen.Blazor
 
             if (Items != null)
             {
-                IEnumerable<TItem> items = Items;
-
-                if (IsValueNullable())
-                {
-                    var rawGetter = GetRawValueGetter();
-                    items = items.Where(item => rawGetter(item) != null);
-                }
-
-                if (items.Any())
-                {
-                    scale.Input.MergeWidth(ScaleRange.From(items, Value));
-                }
+                MergeValues(scale, Value);
             }
 
+            IncludeZeroInValueScale(scale, false);
+
             return scale;
+        }
+
+        /// <summary>
+        /// Extends the specified value scale to zero when this series or another series on the same scale requires it: when the
+        /// <see cref="RadzenValueAxis.Range" /> of the value axis is <see cref="ValueAxisRange.IncludeZero" />, or when it is <see cref="ValueAxisRange.Auto" />
+        /// and a series is zero based outside a <see cref="RadzenSparkline" />. Call it after merging the values of this series into the scale. A scale whose values are all equal is not extended
+        /// because its ticks already extend from zero. Logarithmic scales and scales without data are left unchanged.
+        /// </summary>
+        /// <param name="scale">The value scale.</param>
+        /// <param name="zeroBased">Whether this series is filled from a zero baseline, as column, bar and area series are.</param>
+        protected void IncludeZeroInValueScale(ScaleBase scale, bool zeroBased)
+        {
+            ArgumentNullException.ThrowIfNull(scale);
+
+            var range = Chart?.GetValueAxis(ValueAxisName).Range ?? ValueAxisRange.Auto;
+
+            if (range == ValueAxisRange.IncludeZero || (range == ValueAxisRange.Auto && zeroBased && Chart?.IncludesZeroForBaselineSeries != false))
+            {
+                scale.IncludeZero = true;
+            }
+
+            if (!scale.IncludeZero || scale.IsLogarithmic || !double.IsFinite(scale.Input.Start) || !double.IsFinite(scale.Input.End) || scale.Input.Start == scale.Input.End)
+            {
+                return;
+            }
+
+            scale.Input.MergeWidth(new ScaleRange { Start = 0, End = 0 });
         }
 
         /// <inheritdoc />
@@ -643,6 +927,22 @@ namespace Radzen.Blazor
             };
         }
 
+        int IChartNavigableSeries.ItemCount => Items.Count;
+
+        object? IChartNavigableSeries.ItemAt(int index) => index >= 0 && index < Items.Count ? Items[index] : null;
+
+        string IChartNavigableSeries.DescribeItem(object data)
+        {
+            if (data is not TItem item)
+            {
+                return string.Empty;
+            }
+
+            var parts = new[] { TooltipLabel(item), TooltipTitle(item), TooltipValue(item) };
+
+            return string.Join(", ", parts.Where(part => !string.IsNullOrWhiteSpace(part)).Distinct());
+        }
+
         /// <inheritdoc />
         public Point GetTooltipPosition(object data)
         {
@@ -709,8 +1009,20 @@ namespace Radzen.Blazor
                 builder.AddAttribute(7, nameof(LegendItem.Click), EventCallback.Factory.Create(this, OnLegendItemClick));
                 builder.AddAttribute(8, nameof(LegendItem.Clickable), clickable);
                 builder.AddAttribute(9, nameof(LegendItem.ShowLine), ShowLineInLegend);
+                builder.AddAttribute(10, nameof(LegendItem.ChildContent), RenderLegendItemContent(clickable, GetTitle(), Data, Color));
                 builder.CloseComponent();
             };
+        }
+
+        /// <summary>
+        /// Renders the content of a legend item via <see cref="RadzenLegend.ItemTemplate" />.
+        /// Returns <c>null</c> when there is no template or the item is not rendered in the legend (e.g. in a shared tooltip).
+        /// </summary>
+        internal RenderFragment? RenderLegendItemContent(bool inLegend, string text, object? data, string? color)
+        {
+            var template = inLegend ? Chart?.Legend?.ItemTemplate : null;
+
+            return template?.Invoke(new LegendItemContext { Text = text, Data = data, Series = this, Color = color });
         }
 
         /// <summary>
@@ -737,7 +1049,7 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public double GetMedian()
         {
-            var values = Items.Select(Value).OrderBy(e => e).ToList();
+            var values = Items.Select(Value).Where(e => !double.IsNaN(e)).OrderBy(e => e).ToList();
             if (values.Count == 0)
             {
                 return 0;
@@ -749,19 +1061,23 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public double GetMean()
         {
-            return Items.Any() ? Items.Select(Value).Average() : double.NaN;
+            var values = Items.Select(Value).Where(e => !double.IsNaN(e)).ToList();
+
+            return values.Count > 0 ? values.Average() : double.NaN;
         }
 
         /// <inheritdoc />
         public double GetMode()
         {
-            if (!Items.Any())
+            var values = Items.Select(Value).Where(e => !double.IsNaN(e)).ToList();
+
+            if (values.Count == 0)
             {
                 return double.NaN;
             }
 
-            return Items
-                .GroupBy(item => Value(item))
+            return values
+                .GroupBy(value => value)
                 .Select(g => new { Value = g.Key, Count = g.Count() })
                 .OrderByDescending(e => e.Count)
                 .First()
@@ -781,7 +1097,7 @@ namespace Radzen.Blazor
                 return (a, b);
             }
 
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 Func<TItem, double> X;
                 Func<TItem, double> Y;
@@ -800,7 +1116,13 @@ namespace Radzen.Blazor
                     Y = e => vs.Scale(Value(e));
                 }
 
-                var data = Items.ToList();
+                var data = Items.Where(e => !IsEmpty(X(e), Y(e))).ToList();
+
+                if (data.Count == 0)
+                {
+                    return (a, b);
+                }
+
                 var avgX = data.Select(e => X(e)).Average();
                 var avgY = data.Select(e => Y(e)).Average();
                 var sumXY = data.Sum(e => (X(e) - avgX) * (Y(e) - avgY));
@@ -826,7 +1148,7 @@ namespace Radzen.Blazor
         {
             var result = new List<Point>();
             var chart = Chart;
-            if (chart == null || Items == null || !Items.Any())
+            if (chart == null || Items == null || Items.Count == 0)
             {
                 return result;
             }
@@ -840,7 +1162,11 @@ namespace Radzen.Blazor
                 {
                     var px = invertedValueScale.Scale(Value(item));
                     var py = chart.ValueScale.Scale(categoryAccessor(item));
-                    result.Add(new Point { X = px, Y = py });
+
+                    if (!IsEmpty(px, py))
+                    {
+                        result.Add(new Point { X = px, Y = py });
+                    }
                 }
             }
             else
@@ -850,7 +1176,11 @@ namespace Radzen.Blazor
                 {
                     var px = chart.CategoryScale.Scale(categoryAccessor(item));
                     var py = vs.Scale(Value(item));
-                    result.Add(new Point { X = px, Y = py });
+
+                    if (!IsEmpty(px, py))
+                    {
+                        result.Add(new Point { X = px, Y = py });
+                    }
                 }
             }
 
@@ -953,16 +1283,41 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public virtual (object, Point) DataAt(double x, double y)
         {
-            if (Items.Any())
-            {
-                var retObject = Items.Select(item =>
-                {
-                    var distance = Math.Abs(TooltipX(item) - x);
-                    return new { Item = item, Distance = distance };
-                }).Aggregate((a, b) => a.Distance < b.Distance ? a : b).Item;
+            var chart = RequireChart();
+            var zoomed = chart.CategoryScale.IsZoomed;
+            var plotWidth = chart.CategoryScale.OutputSize;
 
-                return (retObject!,
-                    new Point() { X = TooltipX(retObject), Y = TooltipY(retObject)});
+            TItem closest = default!;
+            var found = false;
+            var closestDistance = double.MaxValue;
+
+            foreach (var item in Items)
+            {
+                var itemX = TooltipX(item);
+
+                if (zoomed && (itemX < 0 || itemX > plotWidth))
+                {
+                    continue;
+                }
+
+                var distance = Math.Abs(itemX - x);
+
+                if (distance <= closestDistance)
+                {
+                    closestDistance = distance;
+                    closest = item;
+                    found = true;
+                }
+            }
+
+            if (found)
+            {
+                var point = new Point() { X = TooltipX(closest), Y = TooltipY(closest) };
+
+                if (!IsEmpty(point.X, point.Y))
+                {
+                    return (closest!, point);
+                }
             }
 
             return (default!, new Point());

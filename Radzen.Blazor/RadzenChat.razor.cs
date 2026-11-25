@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Radzen.Blazor.Rendering;
 using System;
@@ -338,6 +339,14 @@ namespace Radzen.Blazor
         public int MaxVisibleUsers { get; set; } = 5;
 
         /// <summary>
+        /// Gets or sets whether HTML tags in message text are rendered.
+        /// When <c>true</c> (default), allow-listed HTML tags and attributes are rendered and everything else is removed, as in <see cref="RadzenMarkdown.AllowHtml"/>.
+        /// When <c>false</c>, HTML in message text is displayed as literal text. Set to <c>false</c> when messages come from untrusted users or from a model that reads untrusted content.
+        /// </summary>
+        [Parameter]
+        public bool AllowHtml { get; set; } = true;
+
+        /// <summary>
         /// Gets or sets whether to show the clear chat button.
         /// </summary>
         [Parameter]
@@ -660,10 +669,10 @@ namespace Radzen.Blazor
             await InvokeAsync(StateHasChanged);
         }
 
-        private async Task OnInput(ChangeEventArgs e)
+        private async Task OnInput(string value)
         {
             var previousInput = CurrentInput;
-            CurrentInput = e.Value?.ToString() ?? "";
+            CurrentInput = value ?? "";
             ReconcileMentionInputSegments(previousInput, CurrentInput);
             await NotifyCurrentUserTyping();
             await DetectMentionTrigger(CurrentInput);
@@ -1293,8 +1302,22 @@ namespace Radzen.Blazor
             };
         }
 
+        [Inject]
+        private IServiceProvider? ServiceProvider { get; set; }
+
+        private ButtonTooltips? buttonTooltips;
+
+        private ButtonTooltips Tooltips => buttonTooltips ??= new ButtonTooltips(ServiceProvider?.GetService<TooltipService>());
+
+        private async Task OnSendClick()
+        {
+            Tooltips.Close();
+            await OnSendMessage();
+        }
+
         private async Task OnClearChat()
         {
+            Tooltips.Close();
             await ClearChat();
         }
 

@@ -86,9 +86,9 @@ namespace Radzen
 
                 var themeCookie = cookies?.Split("; ").Select(x =>
                 {
-                    var parts = x.Split("=");
+                    var parts = x.Split('=', 2);
 
-                    return (Key: parts[0], Value: parts[1]);
+                    return (Key: parts[0], Value: parts.Length > 1 ? parts[1] : null);
                 })
                 .FirstOrDefault(x => x.Key == options.Name);
 

@@ -292,6 +292,11 @@ $column-draggable-shadow: 0 8px 10px 0 rgba(0, 0, 0, 0.1) !default;
       }
     }
 
+    &.rz-col-icon .rz-column-title {
+      justify-content: center;
+      padding-inline: 0;
+    }
+
     .rz-column-title-content {
       display: inline-block;
       white-space: nowrap;
@@ -318,6 +323,11 @@ $column-draggable-shadow: 0 8px 10px 0 rgba(0, 0, 0, 0.1) !default;
     &.rz-text-align-right {
       .rz-column-title {
         justify-content: right;
+      }
+      &:not(.rz-sortable-column) {
+        .rz-column-title {
+          padding-inline: var(--rz-grid-header-title-padding-inline-reverse, var(--rz-grid-header-title-padding-inline));
+        }
       }
       &.rz-sortable-column {
         .rz-column-title {
@@ -668,6 +678,12 @@ $column-draggable-shadow: 0 8px 10px 0 rgba(0, 0, 0, 0.1) !default;
     .rz-current-filter {
       margin-inline-start: 0.5rem;
     }
+
+    // The clear button of a text filter sits over the end of the input (position: absolute, 10px from the end),
+    // so the input reserves room for it and a long value does not run under the button.
+    > .rz-textbox:has(+ .rz-cell-filter-clear) {
+      padding-inline-end: calc(10px + var(--rz-grid-filter-icon-width) + 0.5rem);
+    }
   }
 }
 
@@ -888,7 +904,7 @@ $column-draggable-shadow: 0 8px 10px 0 rgba(0, 0, 0, 0.1) !default;
 
       .rz-textbox,
       .rz-inputtext {
-        text-indent: map.get($button-sizes, md, min-width);
+        padding-inline-start: calc(var(--rz-input-padding-inline) + map.get($button-sizes, md, min-width));
       }
     }
   }
@@ -1126,6 +1142,12 @@ $column-draggable-shadow: 0 8px 10px 0 rgba(0, 0, 0, 0.1) !default;
 .rz-grid-table-fixed {
   table-layout: fixed;
 
+  td.rz-grid-virtual-spacer,
+  th.rz-grid-virtual-spacer {
+    padding: 0;
+    border: none;
+  }
+
   .rz-frozen-cell {
     position: -webkit-sticky;
     position: sticky;
@@ -1345,6 +1367,7 @@ $column-draggable-shadow: 0 8px 10px 0 rgba(0, 0, 0, 0.1) !default;
     --rz-grid-header-cell-padding: 0.25rem 0;
     --rz-grid-header-padding: 0.25rem 1rem;
     --rz-grid-header-title-padding-inline: 0.5rem 0;
+    --rz-grid-header-title-padding-inline-reverse: 0 0.5rem;
     --rz-grid-filter-padding: 0.25rem 0.5rem;
     --rz-grid-group-header-padding: 0.25rem;
     --rz-grid-group-header-gap: 0.25rem;

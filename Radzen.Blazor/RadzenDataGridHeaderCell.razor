@@ -95,7 +95,7 @@
                                     else if (Column.FilterPropertyType != null && (PropertyAccess.IsNullableEnum(Column.FilterPropertyType) || PropertyAccess.IsEnum(Column.FilterPropertyType)))
                                     {
                                         <RadzenDropDown Disabled="@(!Column.CanSetFilterValue())" AllowClear="false" AllowFiltering="false" TValue="@object"
-                                        Value=@Column.GetFilterValue() Multiple="false" Placeholder="@Grid.EnumFilterSelectText" TextProperty="Text" ValueProperty="Value" Data=@EnumExtensions.EnumAsKeyValuePair(Nullable.GetUnderlyingType(Column.FilterPropertyType) ?? Column.FilterPropertyType, Grid.EnumFilterTranslationFunc)
+                                        Value=@Column.GetFilterValue() Multiple="false" Placeholder="@Grid.EnumFilterSelectText" TextProperty="Text" ValueProperty="Value" Data=@EnumExtensions.EnumAsKeyValuePair(Nullable.GetUnderlyingType(Column.FilterPropertyType) ?? Column.FilterPropertyType, Grid.EnumTranslationFunc, Grid.EnumFilterTranslationFunc)
                                         Change="@(args => Column.SetFilterValue(args))"
                                         InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", Column.Title + Grid.FilterValueAriaLabel  + Column.GetFilterValue() }})" />
                                     }
@@ -116,7 +116,7 @@
                                     }
                                     else
                                     {
-                                        <RadzenTextBox Disabled="@(!Column.CanSetFilterValue())" id="@($"{Column.GetColumnPopupID()}-sf")" aria-label=@(Column.Title + Grid.FilterValueAriaLabel + Column.GetFilterValue()) Value="@($"{Column.GetFilterValue()}")" Change="@(args => Column.SetFilterValue(args))" />
+                                        <RadzenTextBox Disabled="@(!Column.CanSetFilterValue())" id="@($"{Column.GetColumnPopupID()}-sf")" aria-label=@(Column.Title + Grid.FilterValueAriaLabel + Column.GetFilterValue()) Value="@($"{Column.GetFilterInputValue()}")" Change="@(args => Column.SetFilterValue(args))" />
                                     }
 
                                     <RadzenDropDown @onclick:preventDefault="true" TextProperty="Text" ValueProperty="Value" Style="width: 90px" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", Column.Title + Grid.LogicalOperatorAriaLabel + (Column.LogicalFilterOperator == LogicalFilterOperator.And ? Grid.AndOperatorText : Grid.OrOperatorText) }})"
@@ -130,7 +130,7 @@
                                     else if (Column.FilterPropertyType != null && (PropertyAccess.IsNullableEnum(Column.FilterPropertyType) || PropertyAccess.IsEnum(Column.FilterPropertyType)))
                                     {
                                         <RadzenDropDown Disabled="@(!Column.CanSetFilterValue(false))" AllowClear="false" AllowFiltering="false" TValue="@object" InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", Column.Title + Grid.SecondFilterValueAriaLabel }})"
-                                        Value=@Column.GetSecondFilterValue() Multiple="false" Placeholder="@Grid.EnumFilterSelectText" TextProperty="Text" ValueProperty="Value" Data=@EnumExtensions.EnumAsKeyValuePair(Nullable.GetUnderlyingType(Column.FilterPropertyType) ?? Column.FilterPropertyType, Grid.EnumFilterTranslationFunc)
+                                        Value=@Column.GetSecondFilterValue() Multiple="false" Placeholder="@Grid.EnumFilterSelectText" TextProperty="Text" ValueProperty="Value" Data=@EnumExtensions.EnumAsKeyValuePair(Nullable.GetUnderlyingType(Column.FilterPropertyType) ?? Column.FilterPropertyType, Grid.EnumTranslationFunc, Grid.EnumFilterTranslationFunc)
                                         Change="@(args => Column.SetFilterValue(args,false))" />
                                     }
                                     else if (Column.FilterPropertyType != null && PropertyAccess.IsNumeric(Column.FilterPropertyType))
@@ -150,7 +150,7 @@
                                     }
                                     else
                                     {
-                                        <RadzenTextBox Disabled="@(!Column.CanSetFilterValue(false))" id="@($"{Column.GetColumnPopupID()}-sf2")" aria-label=@(Column.Title + Grid.SecondFilterValueAriaLabel + Column.GetSecondFilterValue()) Value="@($"{Column.GetSecondFilterValue()}")" Change="@(args => Column.SetFilterValue(args, false))" />
+                                        <RadzenTextBox Disabled="@(!Column.CanSetFilterValue(false))" id="@($"{Column.GetColumnPopupID()}-sf2")" aria-label=@(Column.Title + Grid.SecondFilterValueAriaLabel + Column.GetSecondFilterValue()) Value="@($"{Column.GetSecondFilterInputValue()}")" Change="@(args => Column.SetFilterValue(args, false))" />
                                     }
                                 }
                                 else
@@ -179,7 +179,7 @@
                                                 }
                                                 else if (context is Enum enumValue)
                                                 {
-                                                    @EnumExtensions.GetDisplayDescription(enumValue, Grid.EnumFilterTranslationFunc)
+                                                    @EnumExtensions.GetDisplayDescription(enumValue, Grid.EnumTranslationFunc, Grid.EnumFilterTranslationFunc)
                                                 }
                                                 else
                                                 {

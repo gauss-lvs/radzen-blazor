@@ -22,7 +22,7 @@ internal static class FormulaFormat
             IsColumnAbsolute = true,
         };
 
-        return $"{QuoteSheetName(sheet.Name)}!{start}:{end}";
+        return $"{SheetNameFormat.Quote(sheet.Name)}!{start}:{end}";
     }
 
     public static bool TryParseFormula(string? text, out RangeRef range)
@@ -36,7 +36,7 @@ internal static class FormulaFormat
 
         var trimmed = text.Trim();
 
-        if (trimmed.StartsWith('='))
+        if (trimmed.StartsWith('=', StringComparison.Ordinal))
         {
             trimmed = trimmed[1..].Trim();
         }
@@ -54,15 +54,5 @@ internal static class FormulaFormat
         {
             return false;
         }
-    }
-
-    public static string QuoteSheetName(string name)
-    {
-        if (name.Contains(' ', StringComparison.Ordinal) || name.Contains('\'', StringComparison.Ordinal))
-        {
-            return $"'{name.Replace("'", "''", StringComparison.Ordinal)}'";
-        }
-
-        return name;
     }
 }

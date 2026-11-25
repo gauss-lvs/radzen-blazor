@@ -635,7 +635,7 @@ public class CellData : IComparable, IComparable<CellData>
         ArgumentNullException.ThrowIfNull(criteria);
         if (criteria.IsError)
         {
-            return false;
+            return IsError && GetValueOrDefault<CellError>() == criteria.GetValueOrDefault<CellError>();
         }
 
         // Empty criteria only matches empty cells.
@@ -686,17 +686,17 @@ public class CellData : IComparable, IComparable<CellData>
             return ("<>", criteria[2..]);
         }
 
-        if (criteria.StartsWith('>'))
+        if (criteria.StartsWith('>', StringComparison.Ordinal))
         {
             return (">", criteria[1..].Trim());
         }
 
-        if (criteria.StartsWith('<'))
+        if (criteria.StartsWith('<', StringComparison.Ordinal))
         {
             return ("<", criteria[1..].Trim());
         }
 
-        if (criteria.StartsWith('='))
+        if (criteria.StartsWith('=', StringComparison.Ordinal))
         {
             return ("=", criteria[1..]);
         }

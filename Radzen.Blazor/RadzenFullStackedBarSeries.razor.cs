@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 using Radzen.Blazor.Rendering;
 using System;
@@ -11,8 +12,10 @@ namespace Radzen.Blazor
     /// Each category's values are normalized so they total 100%.
     /// </summary>
     /// <typeparam name="TItem">The type of the series data item.</typeparam>
-    public partial class RadzenFullStackedBarSeries<TItem> : CartesianSeries<TItem>, IChartFullStackedBarSeries
+    public partial class RadzenFullStackedBarSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>, IChartFullStackedBarSeries
     {
+        private protected override bool EmptyValueIsZero => true;
+
         /// <summary>
         /// Specifies the fill (background color) of the bar series.
         /// </summary>
@@ -91,6 +94,22 @@ namespace Radzen.Blazor
         [Parameter]
         public double GradientEndOpacity { get; set; } = 0.4;
 
+        /// <summary>
+        /// Specifies the stack this series belongs to. Series with the same stack group stack on top of each other and every distinct group renders as its own bar placed next to the other groups and next to any plain bar series in the chart. Series without a group share one stack.
+        /// </summary>
+        /// <value>The stack group. <c>null</c> by default.</value>
+        [Parameter]
+        public string? StackGroup { get; set; }
+
+        /// <inheritdoc />
+        string? IChartStackedBarSeries.StackGroup => StackGroup;
+
+        /// <inheritdoc />
+        protected override bool ShouldRefreshChart(ParameterView parameters)
+        {
+            return DidParameterChange(parameters, nameof(StackGroup), StackGroup);
+        }
+
         /// <inheritdoc />
         public override string Color
         {
@@ -105,7 +124,7 @@ namespace Radzen.Blazor
         {
             ArgumentNullException.ThrowIfNull(scale);
 
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 scale.Input.MergeWidth(new ScaleRange { Start = 0, End = 100 });
             }
@@ -127,7 +146,7 @@ namespace Radzen.Blazor
             return base.GetCategories().Reverse().ToList();
         }
 
-        private IList<IChartSeries> BarSeries => Chart?.Series?.Where(series => series is IChartFullStackedBarSeries).Cast<IChartSeries>().ToList() ?? new List<IChartSeries>();
+        private IList<IChartSeries> BarSeries => Chart?.Series?.Where(series => CategoryBands.SharesBarSlot(series, this)).ToList() ?? new List<IChartSeries>();
 
         private IList<IChartSeries> VisibleBarSeries => BarSeries.Where(series => series.Visible).ToList();
 
@@ -178,60 +197,9 @@ namespace Radzen.Blazor
             return style;
         }
 
-        private double BandHeight
-        {
-            get
-            {
-                var barSeries = VisibleBarSeries;
-
-                if (Chart?.BarOptions?.Height.HasValue == true)
-                {
-                    return Chart.BarOptions.Height.Value * barSeries.Count;
-                }
-                else if (Chart?.BarOptions?.CategoryGap is double gap)
-                {
-                    var step = System.Math.Abs(Chart.ValueScale.Scale(1, true) - Chart.ValueScale.Scale(0, true));
-                    return step * (1 - gap);
-                }
-                else if (Chart != null)
-                {
-                    var availableHeight = Chart.ValueScale.OutputSize;
-                    var bands = barSeries.Cast<IChartStackedBarSeries>().Max(series => series.Count) + 2;
-                    return availableHeight / bands;
-                }
-
-                return 0;
-            }
-        }
-
-        double BarHeight
-        {
-            get
-            {
-                if (Chart == null)
-                {
-                    return 0;
-                }
-
-                var h = Chart.BarOptions.Height ?? (BandHeight - Chart.BarOptions.Margin);
-                var max = Chart.BarOptions.EffectiveMaxHeight;
-                return max is double m && h > m ? m : h;
-            }
-        }
+        private BandSlot Slot => Chart == null ? default : CategoryBands.Bars(Chart, this);
 
         int BarIndex => VisibleBarSeries.IndexOf(this);
-
-        private double GetBarTop(TItem item, Func<TItem, double>? category = null)
-        {
-            if (Chart == null)
-            {
-                return 0;
-            }
-
-            category = category ?? ComposeCategory(Chart.ValueScale);
-
-            return category(item) - BarHeight / 2;
-        }
 
         private (double positiveSum, double negativeSum) PercentSum(int barIndex, IEnumerable<IChartStackedBarSeries> stackedBarSeries, double category)
         {
@@ -388,13 +356,13 @@ namespace Radzen.Blazor
             }
 
             var category = ComposeCategory(Chart.ValueScale);
-            var barSeries = VisibleBarSeries;
+            var slot = Slot;
             var barIndex = BarIndex;
 
             foreach (var data in Items)
             {
-                var startY = GetBarTop(data, category);
-                var endY = startY + BandHeight;
+                var startY = slot.Start(category(data));
+                var endY = startY + slot.Size;
                 var dataX = GetBarRight(data, barIndex, category, StackedBarSeries);
                 if (Chart == null)
                 {
@@ -417,7 +385,14 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         internal override double TooltipY(TItem item)
         {
-            return GetBarTop(item) + BarHeight / 2;
+            if (Chart == null)
+            {
+                return 0;
+            }
+
+            var category = ComposeCategory(Chart.ValueScale);
+
+            return Slot.Center(category(item));
         }
 
         /// <inheritdoc />

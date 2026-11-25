@@ -72,6 +72,14 @@ namespace Radzen.Blazor
         public IReadOnlyDictionary<string, object>? InputAttributes { get; set; }
 
         /// <summary>
+        /// Gets the id of the input element: <see cref="DataBoundFormComponent{T}.Name"/> when set, otherwise an id derived from the component id.
+        /// </summary>
+        protected string InputId => Name ?? $"{GetId()}-input";
+
+        /// <inheritdoc />
+        protected override string? LabelTargetId => InputId;
+
+        /// <summary>
         /// Gets or sets a value indicating whether this <see cref="RadzenAutoComplete"/> is multiline.
         /// </summary>
         /// <value><c>true</c> if multiline; otherwise, <c>false</c>.</value>
@@ -214,6 +222,8 @@ namespace Radzen.Blazor
             
             if (value.Length < MinLength && !OpenOnFocus)
             {
+                searchText = null;
+                customSearchText = null;
                 await ClosePopup();
                 await InvokeAsync(() => { StateHasChanged(); });
                 return;
@@ -288,7 +298,10 @@ namespace Radzen.Blazor
         {
             await ClosePopup();
 
-            await SelectItem(item);
+            if (!Disabled)
+            {
+                await SelectItem(item);
+            }
         }
 
         /// <summary>
@@ -480,7 +493,7 @@ namespace Radzen.Blazor
                 }
 
                 var created = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                    "Radzen.createAutoComplete", Element, PopupID, OpenOnFocus, Reference, nameof(OnPopupOpen), nameof(OnPopupClose));
+                    "Radzen.createAutoComplete", Element, PopupID, OpenOnFocus, MinLength, Reference, nameof(OnPopupOpen), nameof(OnPopupClose));
 
                 if (version == _jsRefVersion)
                 {
@@ -506,14 +519,20 @@ namespace Radzen.Blazor
                 _jsParamsChanged = true;
             }
 
-            if (parameters.DidParameterChange(nameof(OpenOnFocus), OpenOnFocus))
+            if (parameters.DidParameterChange(nameof(OpenOnFocus), OpenOnFocus) || parameters.DidParameterChange(nameof(MinLength), MinLength))
             {
                 _jsParamsChanged = true;
             }
 
             var selectedItemChanged = parameters.DidParameterChange(nameof(SelectedItem), SelectedItem);
+            var hasValue = parameters.TryGetValue<string>(nameof(Value), out var value);
 
             await base.SetParametersAsync(parameters);
+
+            if (hasValue && Value != value)
+            {
+                Value = value;
+            }
 
             if (selectedItemChanged && SelectedItem != null)
             {

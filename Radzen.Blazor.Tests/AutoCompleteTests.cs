@@ -569,6 +569,66 @@ namespace Radzen.Blazor.Tests
         }
 
         [Fact]
+        public void AutoComplete_KeepsValue_WhenValueIsDeclaredBeforeData()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenAutoComplete>(parameters =>
+            {
+                parameters.Add(p => p.Value, "Beta");
+                parameters.Add(p => p.Data, new[] { "Alpha", "Beta" });
+            });
+
+            Assert.Equal("Beta", component.Instance.Value);
+            Assert.Equal("Beta", component.Find("input").GetAttribute("value"));
+        }
+
+        [Fact]
+        public void AutoComplete_KeepsValue_WhenDataIsReplacedAfterValue()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenAutoComplete>(parameters =>
+            {
+                parameters.Add(p => p.Value, "Beta");
+                parameters.Add(p => p.Data, new[] { "Alpha", "Beta" });
+            });
+
+            component.SetParametersAndRender(parameters =>
+            {
+                parameters.Add(p => p.Value, "Beta");
+                parameters.Add(p => p.Data, new[] { "Alpha", "Beta", "Gamma" });
+            });
+
+            Assert.Equal("Beta", component.Instance.Value);
+            Assert.Equal("Beta", component.Find("input").GetAttribute("value"));
+        }
+
+        [Fact]
+        public void AutoComplete_ClearsValue_WhenValueParameterBecomesNull()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenAutoComplete>(parameters =>
+            {
+                parameters.Add(p => p.Value, "Beta");
+                parameters.Add(p => p.Data, new[] { "Alpha", "Beta" });
+            });
+
+            component.SetParametersAndRender(parameters =>
+            {
+                parameters.Add(p => p.Value, null);
+                parameters.Add(p => p.Data, new[] { "Alpha", "Beta" });
+            });
+
+            Assert.Null(component.Instance.Value);
+            Assert.Null(component.Find("input").GetAttribute("value"));
+        }
+
+        [Fact]
         public void AutoComplete_SyncsDomValue_WhenParentTransformsInput()
         {
             using var ctx = new TestContext();
@@ -619,6 +679,100 @@ namespace Radzen.Blazor.Tests
                 Assert.Equal("Beta", autoComplete.Instance.Value);
             });
             Assert.False(ctx.Renderer.UnhandledException.IsCompleted);
+        }
+
+        [Fact]
+        public void AutoComplete_ClearsStaleSuggestions_WhenInputDropsBelowMinLength()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var inputValue = ctx.JSInterop.Setup<string>("Radzen.getInputValue", _ => true);
+            inputValue.SetResult("one");
+
+            var component = ctx.RenderComponent<RadzenAutoComplete>(parameters =>
+            {
+                parameters
+                    .Add(p => p.Data, new List<string> { "one a", "one b", "one c", "two" })
+                    .Add(p => p.FilterDelay, 1);
+            });
+
+            var input = component.Find("input[role=\"combobox\"]");
+            input.KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "e" });
+
+            component.WaitForAssertion(() => Assert.Equal(3, component.FindAll("li[role=\"option\"]").Count));
+
+            inputValue.SetResult("");
+            input.KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Backspace" });
+
+            component.WaitForAssertion(() => Assert.Empty(component.FindAll("li[role=\"option\"]")));
+            Assert.Contains(ctx.JSInterop.Invocations, invocation => invocation.Identifier == "Radzen.closePopup");
+
+            inputValue.SetResult("two");
+            input.KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "o" });
+
+            component.WaitForAssertion(() =>
+            {
+                var options = component.FindAll("li[role=\"option\"]");
+                Assert.Single(options);
+                Assert.Equal("two", options[0].TextContent.Trim());
+            });
+        }
+
+        [Fact]
+        public void AutoComplete_LoadData_ClearsStaleSuggestions_WhenInputDropsBelowMinLength()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var inputValue = ctx.JSInterop.Setup<string>("Radzen.getInputValue", _ => true);
+            inputValue.SetResult("one");
+            var filters = new List<string>();
+
+            var component = ctx.RenderComponent<RadzenAutoComplete>(parameters =>
+            {
+                parameters
+                    .Add(p => p.Data, new List<string> { "one a", "one b", "one c" })
+                    .Add(p => p.MinLength, 3)
+                    .Add(p => p.FilterDelay, 1)
+                    .Add(p => p.LoadData, args => filters.Add(args.Filter));
+            });
+
+            var input = component.Find("input[role=\"combobox\"]");
+            input.KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "e" });
+
+            Assert.True(System.Threading.SpinWait.SpinUntil(() => filters.Count == 1, 5000));
+            Assert.Equal(new[] { "one" }, filters);
+            component.Render();
+            Assert.Equal(3, component.FindAll("li[role=\"option\"]").Count);
+
+            inputValue.SetResult("on");
+            input.KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Backspace" });
+
+            component.WaitForAssertion(() => Assert.Empty(component.FindAll("li[role=\"option\"]")));
+            Assert.Equal(new[] { "one" }, filters);
+        }
+
+        [Fact]
+        public void AutoComplete_PassesMinLengthToJavaScript_AndRecreatesWhenItChanges()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenAutoComplete>(parameters =>
+            {
+                parameters
+                    .Add(p => p.Data, new List<string> { "one a" })
+                    .Add(p => p.MinLength, 3);
+            });
+
+            var created = ctx.JSInterop.Invocations.Where(invocation => invocation.Identifier == "Radzen.createAutoComplete").ToList();
+            Assert.Single(created);
+            Assert.Equal(3, created[0].Arguments[3]);
+
+            component.SetParametersAndRender(parameters => parameters.Add(p => p.MinLength, 2));
+
+            created = ctx.JSInterop.Invocations.Where(invocation => invocation.Identifier == "Radzen.createAutoComplete").ToList();
+            Assert.Equal(2, created.Count);
+            Assert.Equal(2, created[1].Arguments[3]);
         }
 
         private sealed class RadzenAutoCompleteSelectedItemHost : Microsoft.AspNetCore.Components.ComponentBase

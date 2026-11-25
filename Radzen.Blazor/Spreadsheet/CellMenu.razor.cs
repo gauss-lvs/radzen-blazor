@@ -74,6 +74,7 @@ public partial class CellMenu : ComponentBase
     public EventCallback CustomFilter { get; set; }
 
     private readonly HashSet<object?> selectedFilterValues = [];
+    private HashSet<object?> initialFilterValues = [];
     private List<(string Text, object? Value)>? cachedAvailableValues;
     private bool? cachedShowBlank;
 
@@ -103,25 +104,20 @@ public partial class CellMenu : ComponentBase
     {
         selectedFilterValues.Clear();
 
-        var visitor = new InListCriterionVisitor(Column);
+        var columnFilters = Worksheet.Filters.Where(filter => FilterTargetsOnlyColumn(filter, Column)).ToList();
 
-        foreach (var filter in Worksheet.Filters)
+        if (columnFilters.Count != 0)
         {
-            filter.Criterion.Accept(visitor);
-        }
+            var range = GetActiveFilterRange();
 
-        if (visitor.FoundValues.Count != 0)
-        {
-            foreach (var value in visitor.FoundValues)
+            if (range != RangeRef.Invalid)
             {
-                if (value is string str)
+                for (var row = range.Start.Row + 1; row <= range.End.Row; row++)
                 {
-                    CellData.TryConvertFromString(str, out var parsedValue, out _);
-                    selectedFilterValues.Add(parsedValue);
-                }
-                else
-                {
-                    selectedFilterValues.Add(value);
+                    if (columnFilters.All(filter => filter.Criterion.Matches(Worksheet, row)))
+                    {
+                        selectedFilterValues.Add(Worksheet.Cells[row, Column].Value);
+                    }
                 }
             }
         }
@@ -139,23 +135,8 @@ public partial class CellMenu : ComponentBase
                 selectedFilterValues.Add(null);
             }
         }
-    }
 
-    private class InListCriterionVisitor(int column) : FilterCriterionVisitorBase
-    {
-        private readonly int targetColumn = column;
-        public HashSet<object?> FoundValues { get; } = [];
-
-        public override void Visit(InListCriterion criterion)
-        {
-            if (criterion.Column == targetColumn)
-            {
-                foreach (var value in criterion.Values)
-                {
-                    FoundValues.Add(value);
-                }
-            }
-        }
+        initialFilterValues = [.. selectedFilterValues];
     }
 
     private sealed class FilterColumnVisitor : FilterCriterionVisitorBase
@@ -351,6 +332,12 @@ public partial class CellMenu : ComponentBase
 
     private async Task OnApplyFilterAsync()
     {
+        if (selectedFilterValues.SetEquals(initialFilterValues))
+        {
+            await Cancel.InvokeAsync();
+            return;
+        }
+
         var availableValues = LoadAvailableValues();
         var showBlank = ShouldShowBlankOption();
         var totalItems = availableValues.Count + (showBlank ? 1 : 0);

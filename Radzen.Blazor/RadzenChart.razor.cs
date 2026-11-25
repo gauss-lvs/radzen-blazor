@@ -378,7 +378,9 @@ namespace Radzen.Blazor
 
         /// <summary>
         /// Gets or sets the callback invoked when the visible range changes due to zoom or pan.
-        /// Provides the current zoom level and visible range fractions.
+        /// Provides the current zoom level and visible range fractions. A handler may re-anchor the range by assigning new values
+        /// to the variables bound to <see cref="ViewStart" /> and <see cref="ViewEnd" />; the chart adopts the values it receives
+        /// once the handler completes, e.g. <c>start = 1 - (args.ViewEnd - args.ViewStart); end = 1;</c> keeps the latest data in view while zooming.
         /// </summary>
         [Parameter]
         public EventCallback<ChartViewChangeEventArgs> ViewChange { get; set; }
@@ -460,6 +462,23 @@ namespace Radzen.Blazor
                 ViewStart = ZoomStart,
                 ViewEnd = ZoomEnd
             });
+
+            if (ViewStart != ZoomStart || ViewEnd != ZoomEnd)
+            {
+                ZoomStart = Math.Clamp(Math.Min(ViewStart, ViewEnd), 0, 1);
+                ZoomEnd = Math.Clamp(Math.Max(ViewStart, ViewEnd), 0, 1);
+                ViewStart = ZoomStart;
+                ViewEnd = ZoomEnd;
+
+                range = ZoomEnd - ZoomStart;
+                var adoptedZoom = range > 0 ? Math.Round(100.0 / range) : 100;
+
+                if (adoptedZoom != Zoom)
+                {
+                    Zoom = adoptedZoom;
+                    await ZoomChanged.InvokeAsync(adoptedZoom);
+                }
+            }
         }
 
         /// <summary>
@@ -563,6 +582,8 @@ namespace Radzen.Blazor
             return false;
         }
 
+        internal virtual bool IncludesZeroForBaselineSeries => true;
+
         internal bool ShouldInvertAxes()
         {
             return Series.Count > 0 && Series.All(series => series is IChartBarSeries);
@@ -577,6 +598,58 @@ namespace Radzen.Blazor
             var valueScale = ValueScale;
             var categoryScale = CategoryScale;
 
+            var axisSizes = LayOutScales(null);
+
+            for (var pass = 0; pass < 2; pass++)
+            {
+                var drawnSizes = MeasureDrawnValueAxes(axisSizes);
+
+                if (drawnSizes == axisSizes)
+                {
+                    break;
+                }
+
+                axisSizes = LayOutScales(drawnSizes);
+            }
+
+            return !ValueScale.IsEqualTo(valueScale) || !CategoryScale.IsEqualTo(categoryScale);
+        }
+
+        private (double Value, double AdditionalWidth, double AdditionalHeight) MeasureDrawnValueAxes((double Value, double AdditionalWidth, double AdditionalHeight) axisSizes)
+        {
+            if (!ShouldRenderAxes())
+            {
+                return (0, 0, 0);
+            }
+
+            var invertAxes = ShouldInvertAxes();
+            var (additionalWidth, additionalHeight) = MeasureAdditionalValueAxes(invertAxes);
+
+            return (invertAxes ? axisSizes.Value : ValueAxis.Measure(this), additionalWidth, additionalHeight);
+        }
+
+        private (double Width, double Height) MeasureAdditionalValueAxes(bool invertAxes)
+        {
+            double width = 0;
+            double height = 0;
+
+            foreach (var entry in AdditionalValueAxes)
+            {
+                if (invertAxes)
+                {
+                    height += entry.Value.MeasureHorizontal(GetValueScale(entry.Key));
+                }
+                else
+                {
+                    width += entry.Value.Measure(this, GetValueScale(entry.Key));
+                }
+            }
+
+            return (width, height);
+        }
+
+        private (double Value, double AdditionalWidth, double AdditionalHeight) LayOutScales((double Value, double AdditionalWidth, double AdditionalHeight)? axisSizes)
+        {
             CategoryScale = new LinearScale { Output = CategoryScale.Output };
             ValueScale = ValueAxis.Logarithmic
                 ? new LogarithmicScale { Base = ValueAxis.LogarithmicBase, Output = ValueScale.Output }
@@ -754,89 +827,49 @@ namespace Radzen.Blazor
             }
 
             var legendSize = Legend.Measure(this);
-            var valueAxisSize = ValueAxis.Measure(this);
-            var categoryAxisSize = CategoryAxis.Measure(this);
 
-            // Measure additional axes for the right margin (top margin when axes are inverted)
-            double additionalAxesWidth = 0;
-            double additionalAxesHeight = 0;
-            foreach (var entry in AdditionalValueAxes)
-            {
-                if (invertAxes)
-                {
-                    additionalAxesHeight += entry.Value.MeasureHorizontal(GetValueScale(entry.Key));
-                }
-                else
-                {
-                    additionalAxesWidth += entry.Value.Measure(this, GetValueScale(entry.Key));
-                }
-            }
+            var (additionalAxesWidth, additionalAxesHeight) = MeasureAdditionalValueAxes(invertAxes);
 
             if (!ShouldRenderAxes())
             {
-                valueAxisSize = categoryAxisSize = 0;
                 additionalAxesWidth = 0;
                 additionalAxesHeight = 0;
             }
 
-            MarginTop = 32 + additionalAxesHeight;
-
-            if (IsRTL)
+            if (axisSizes != null)
             {
-                MarginRight = valueAxisSize;
-                MarginLeft = 32 + additionalAxesWidth;
-            }
-            else
-            {
-                MarginRight = 32 + additionalAxesWidth;
-                MarginLeft = valueAxisSize;
+                additionalAxesWidth = axisSizes.Value.AdditionalWidth;
+                additionalAxesHeight = axisSizes.Value.AdditionalHeight;
             }
 
-            MarginBottom = Math.Max(32, categoryAxisSize);
+            var legendPosition = EffectiveLegendPosition;
+            var legendWidth = Legend.Visible && (legendPosition == LegendPosition.Right || legendPosition == LegendPosition.Left) ? legendSize + 16 : 0;
+            var legendHeight = Legend.Visible && (legendPosition == LegendPosition.Top || legendPosition == LegendPosition.Bottom) ? legendSize + 16 : 0;
 
-            if (Legend.Visible)
+            CategoryAxis.FitLabels(ValueScale, true, invertAxes && ShouldRenderAxes() ? ((Width ?? 0) - legendWidth - additionalAxesWidth) / 3 : 0);
+
+            var valueAxisSize = ShouldRenderAxes() ? ValueAxis.Measure(this) : 0;
+
+            if (axisSizes != null && !invertAxes)
             {
-                var legendPosition = EffectiveLegendPosition;
-
-                if (legendPosition == LegendPosition.Right || legendPosition == LegendPosition.Left)
-                {
-                    if (legendPosition == LegendPosition.Right)
-                    {
-                        MarginRight = legendSize + 16 + (IsRTL ? valueAxisSize : additionalAxesWidth);
-                    }
-                    else
-                    {
-                        MarginLeft = legendSize + 16 + (IsRTL ? additionalAxesWidth : valueAxisSize);
-                    }
-                }
-                else if (legendPosition == LegendPosition.Top || legendPosition == LegendPosition.Bottom)
-                {
-                    if (legendPosition == LegendPosition.Top)
-                    {
-                        MarginTop = legendSize + 16 + additionalAxesHeight;
-                    }
-                    else
-                    {
-                        MarginBottom = legendSize + 16 + categoryAxisSize;
-                    }
-                }
+                valueAxisSize = axisSizes.Value.Value;
             }
 
-            if ((AllowZoom || AllowPan) && ShowScrollbar)
-            {
-                MarginBottom += 20;
+            var availableHeight = (Height ?? 0) - legendHeight - additionalAxesHeight;
+            var fitCategoryLabels = !invertAxes && ShouldRenderAxes() && CategoryAxis.CanFitLabels && availableHeight > 0;
+            var categoryAxisSize = ShouldRenderAxes() && !fitCategoryLabels ? CategoryAxis.Measure(this) : 0;
 
-                scrollbarBottom = 0;
-                if (Legend.Visible && Legend.Position == LegendPosition.Bottom)
-                {
-                    scrollbarBottom = legendSize + 16;
-                }
+            var valueAxisLoss = SetTopAndSideMargins(valueAxisSize, legendSize, additionalAxesWidth, additionalAxesHeight);
+
+            if (valueAxisLoss > 0 && invertAxes && CategoryAxis.LabelLayout != null)
+            {
+                CategoryAxis.FitLabels(ValueScale, true, CategoryAxis.LabelLayout.Band - valueAxisLoss, readableMinimum: false);
+                valueAxisSize = ValueAxis.Measure(this);
+                SetTopAndSideMargins(valueAxisSize, legendSize, additionalAxesWidth, additionalAxesHeight);
             }
 
             var categoryStart = MarginLeft;
             var categoryEnd = Width != null ? Width.Value - MarginRight : 0;
-            var valueStart = Height != null ? Height.Value - MarginBottom : 0;
-            var valueEnd = MarginTop;
 
             var categoryReversed = CategoryAxis.Inverted != IsRTL;
             var valueReversed = ValueAxis.Inverted;
@@ -846,13 +879,7 @@ namespace Radzen.Blazor
                 Start = categoryReversed ? categoryEnd : categoryStart,
                 End = categoryReversed ? categoryStart : categoryEnd
             };
-            ValueScale.Output = new ScaleRange
-            {
-                Start = valueReversed ? valueEnd : valueStart,
-                End = valueReversed ? valueStart : valueEnd
-            };
 
-            ValueScale.Fit(ValueAxis.TickDistance);
             CategoryScale.Fit(CategoryAxis.TickDistance);
 
             // Apply zoom to category scale
@@ -880,6 +907,32 @@ namespace Radzen.Blazor
                 fullCategoryEnd = CategoryScale.Input.End;
             }
 
+            if (fitCategoryLabels)
+            {
+                CategoryAxis.FitLabels(CategoryScale, false, availableHeight / 3, MarginLeft, Width ?? 0);
+                categoryAxisSize = CategoryAxis.Measure(this);
+            }
+
+            var categoryAxisLoss = SetBottomMargin(categoryAxisSize, legendSize);
+
+            if (categoryAxisLoss > 0 && fitCategoryLabels && CategoryAxis.LabelLayout != null)
+            {
+                CategoryAxis.FitLabels(CategoryScale, false, CategoryAxis.LabelLayout.Band - categoryAxisLoss, MarginLeft, Width ?? 0);
+                categoryAxisSize = CategoryAxis.Measure(this);
+                SetBottomMargin(categoryAxisSize, legendSize);
+            }
+
+            var valueStart = Height != null ? Height.Value - MarginBottom : 0;
+            var valueEnd = MarginTop;
+
+            ValueScale.Output = new ScaleRange
+            {
+                Start = valueReversed ? valueEnd : valueStart,
+                End = valueReversed ? valueStart : valueEnd
+            };
+
+            ValueScale.Fit(ValueAxis.TickDistance);
+
             // Set output ranges and fit additional scales
             foreach (var entry in AdditionalValueScales)
             {
@@ -904,14 +957,109 @@ namespace Radzen.Blazor
                 entry.Value.Fit(axis.TickDistance);
             }
 
-            var stateHasChanged = !ValueScale.IsEqualTo(valueScale);
+            return (valueAxisSize, additionalAxesWidth, additionalAxesHeight);
+        }
 
-            if (!CategoryScale.IsEqualTo(categoryScale))
+        private const double MinPlotSize = 80;
+
+        internal static (double Start, double End) ClampMargins(double start, double end, double size)
+        {
+            if (!(size > 0))
             {
-                stateHasChanged = true;
+                return (start, end);
             }
 
-            return stateHasChanged;
+            var available = size - Math.Min(MinPlotSize, size / 2);
+
+            if (start + end <= available)
+            {
+                return (start, end);
+            }
+
+            if (start <= available / 2)
+            {
+                return (start, available - start);
+            }
+
+            if (end <= available / 2)
+            {
+                return (available - end, end);
+            }
+
+            return (available / 2, available / 2);
+        }
+
+        private double SetTopAndSideMargins(double valueAxisSize, double legendSize, double additionalAxesWidth, double additionalAxesHeight)
+        {
+            var legendPosition = EffectiveLegendPosition;
+
+            MarginTop = 32 + additionalAxesHeight;
+
+            var valueAxisRight = CategoryAxis.Inverted != IsRTL;
+
+            if (valueAxisRight)
+            {
+                MarginRight = valueAxisSize;
+                MarginLeft = 32 + additionalAxesWidth;
+            }
+            else
+            {
+                MarginRight = 32 + additionalAxesWidth;
+                MarginLeft = valueAxisSize;
+            }
+
+            if (Legend.Visible)
+            {
+                if (legendPosition == LegendPosition.Right)
+                {
+                    MarginRight = legendSize + 16 + (valueAxisRight ? valueAxisSize : additionalAxesWidth);
+                }
+                else if (legendPosition == LegendPosition.Left)
+                {
+                    MarginLeft = legendSize + 16 + (valueAxisRight ? additionalAxesWidth : valueAxisSize);
+                }
+                else if (legendPosition == LegendPosition.Top)
+                {
+                    MarginTop = legendSize + 16 + additionalAxesHeight;
+                }
+            }
+
+            var (left, right) = ClampMargins(MarginLeft, MarginRight, Width ?? 0);
+            var loss = valueAxisRight ? MarginRight - right : MarginLeft - left;
+
+            MarginLeft = left;
+            MarginRight = right;
+
+            return loss;
+        }
+
+        private double SetBottomMargin(double categoryAxisSize, double legendSize)
+        {
+            MarginBottom = Math.Max(32, categoryAxisSize);
+
+            if (Legend.Visible && EffectiveLegendPosition == LegendPosition.Bottom)
+            {
+                MarginBottom = legendSize + 16 + categoryAxisSize;
+            }
+
+            if ((AllowZoom || AllowPan) && ShowScrollbar)
+            {
+                MarginBottom += 20;
+
+                scrollbarBottom = 0;
+                if (Legend.Visible && Legend.Position == LegendPosition.Bottom)
+                {
+                    scrollbarBottom = legendSize + 16;
+                }
+            }
+
+            var (top, bottom) = ClampMargins(MarginTop, MarginBottom, Height ?? 0);
+            var loss = MarginBottom - bottom;
+
+            MarginTop = top;
+            MarginBottom = bottom;
+
+            return loss;
         }
 
         /// <summary>
@@ -983,6 +1131,24 @@ namespace Radzen.Blazor
 
             if (stateHasChanged)
             {
+                await Refresh();
+            }
+        }
+
+        internal (double Size, bool Vertical)? MeasuredLegendSize { get; private set; }
+
+        /// <summary>
+        /// Invoked via interop when a legend that uses <see cref="RadzenLegend.ItemTemplate" /> changes its size. Reserves the space the legend needs.
+        /// </summary>
+        /// <param name="size">The width of a legend at the left or right side of the chart or the height of a legend at the top or bottom.</param>
+        /// <param name="vertical">Whether the legend is at the left or right side of the chart.</param>
+        [JSInvokable]
+        public async Task LegendResize(double size, bool vertical)
+        {
+            if (MeasuredLegendSize != (size, vertical))
+            {
+                MeasuredLegendSize = (size, vertical);
+
                 await Refresh();
             }
         }
@@ -1106,6 +1272,224 @@ namespace Radzen.Blazor
         }
 
         /// <summary>
+        /// Gets or sets the accessible name of the chart. When not set, the name is built from the titles of the visible series.
+        /// </summary>
+        [Parameter]
+        public string? AriaLabel { get; set; }
+
+        /// <summary>
+        /// Specifies whether the chart plot area can be focused and its data points navigated with the keyboard. Set to <c>true</c> by default.
+        /// </summary>
+        [Parameter]
+        public bool AllowKeyboardNavigation { get; set; } = true;
+
+        private string? keyboardNavigationHint;
+
+        /// <summary>
+        /// Gets or sets the description that tells assistive technology users how to navigate the data points with the keyboard.
+        /// </summary>
+        [Parameter]
+        public string KeyboardNavigationHint { get => keyboardNavigationHint ?? Localize(nameof(RadzenStrings.Chart_KeyboardNavigationHint)); set => keyboardNavigationHint = value; }
+
+        IChartSeries? keyboardSeries;
+        int keyboardIndex = -1;
+
+        internal string? KeyboardAnnouncement { get; private set; }
+
+        internal string KeyboardHintId => $"{GetId()}-keyboard-hint";
+
+        internal string GetAriaLabel()
+        {
+            if (!string.IsNullOrEmpty(AriaLabel))
+            {
+                return AriaLabel;
+            }
+
+            var name = Localize(nameof(RadzenStrings.Chart_AriaLabel));
+            var titles = Series.Where(series => series.Visible && series.ShowInLegend).Select(series => series.GetTitle()).ToList();
+
+            return titles.Count > 0 ? $"{name}: {string.Join(", ", titles)}" : name;
+        }
+
+        bool IsInsidePlot(Point point)
+        {
+            if (!Width.HasValue || !Height.HasValue)
+            {
+                return true;
+            }
+
+            var plotWidth = Width.Value - MarginLeft - MarginRight;
+            var plotHeight = Height.Value - MarginTop - MarginBottom;
+
+            return point.X >= -1 && point.X <= plotWidth + 1 && point.Y >= -1 && point.Y <= plotHeight + 1;
+        }
+
+        int FindKeyboardIndex(IChartSeries series, int start, int step)
+        {
+            var navigable = (IChartNavigableSeries)series;
+
+            for (var index = start; index >= 0 && index < navigable.ItemCount; index += step)
+            {
+                var data = navigable.ItemAt(index);
+
+                if (data != null && IsInsidePlot(series.GetTooltipPosition(data)))
+                {
+                    return index;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// Invoked via interop when the user presses a key while the chart plot area is focused, or when it loses focus.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        [JSInvokable]
+        public async Task KeyDown(string key)
+        {
+            if (!AllowKeyboardNavigation)
+            {
+                return;
+            }
+
+            if (key == "Blur" || key == "Escape")
+            {
+                if (keyboardSeries != null)
+                {
+                    keyboardSeries = null;
+                    keyboardIndex = -1;
+                    KeyboardAnnouncement = null;
+                    await MouseMove(-1, -1);
+                    TooltipOverlay?.Refresh();
+                }
+
+                return;
+            }
+
+            var navigable = Series.OrderBy(series => series.RenderingOrder)
+                .Where(series => series.Visible && series is IChartNavigableSeries items && items.ItemCount > 0)
+                .ToList();
+
+            if (navigable.Count == 0)
+            {
+                return;
+            }
+
+            var seriesIndex = keyboardSeries != null ? navigable.IndexOf(keyboardSeries) : -1;
+
+            if (key == "Enter" || key == " ")
+            {
+                if (seriesIndex >= 0)
+                {
+                    var item = ((IChartNavigableSeries)navigable[seriesIndex]).ItemAt(keyboardIndex);
+
+                    if (item != null)
+                    {
+                        await navigable[seriesIndex].InvokeClick(SeriesClick, item);
+                    }
+                }
+
+                return;
+            }
+
+            if (IsRTL && key == "ArrowLeft")
+            {
+                key = "ArrowRight";
+            }
+            else if (IsRTL && key == "ArrowRight")
+            {
+                key = "ArrowLeft";
+            }
+
+            int next;
+
+            if (seriesIndex < 0)
+            {
+                seriesIndex = 0;
+                var count = ((IChartNavigableSeries)navigable[0]).ItemCount;
+                next = key == "End" ? FindKeyboardIndex(navigable[0], count - 1, -1) : FindKeyboardIndex(navigable[0], 0, 1);
+            }
+            else
+            {
+                var count = ((IChartNavigableSeries)navigable[seriesIndex]).ItemCount;
+
+                switch (key)
+                {
+                    case "ArrowRight":
+                        next = FindKeyboardIndex(navigable[seriesIndex], keyboardIndex + 1, 1);
+                        while (next < 0 && seriesIndex < navigable.Count - 1)
+                        {
+                            seriesIndex++;
+                            next = FindKeyboardIndex(navigable[seriesIndex], 0, 1);
+                        }
+                        break;
+                    case "ArrowLeft":
+                        next = FindKeyboardIndex(navigable[seriesIndex], keyboardIndex - 1, -1);
+                        while (next < 0 && seriesIndex > 0)
+                        {
+                            seriesIndex--;
+                            next = FindKeyboardIndex(navigable[seriesIndex], ((IChartNavigableSeries)navigable[seriesIndex]).ItemCount - 1, -1);
+                        }
+                        break;
+                    case "Home":
+                        next = FindKeyboardIndex(navigable[seriesIndex], 0, 1);
+                        break;
+                    case "End":
+                        next = FindKeyboardIndex(navigable[seriesIndex], count - 1, -1);
+                        break;
+                    case "ArrowDown":
+                    case "ArrowUp":
+                        seriesIndex = (seriesIndex + (key == "ArrowDown" ? 1 : navigable.Count - 1)) % navigable.Count;
+                        var other = (IChartNavigableSeries)navigable[seriesIndex];
+                        var start = Math.Min(keyboardIndex, other.ItemCount - 1);
+                        next = FindKeyboardIndex(navigable[seriesIndex], start, 1);
+                        if (next < 0)
+                        {
+                            next = FindKeyboardIndex(navigable[seriesIndex], start, -1);
+                        }
+                        break;
+                    default:
+                        return;
+                }
+            }
+
+            if (next < 0)
+            {
+                return;
+            }
+
+            var target = navigable[seriesIndex];
+            var data = ((IChartNavigableSeries)target).ItemAt(next);
+
+            if (data == null)
+            {
+                return;
+            }
+
+            keyboardSeries = target;
+            keyboardIndex = next;
+
+            var snap = target.GetTooltipPosition(data);
+            mouseX = snap.X + MarginLeft;
+            mouseY = snap.Y + MarginTop;
+            MouseInside = true;
+            SnapPlotX = snap.X;
+            SnapPlotY = snap.Y;
+            HoveredSeries = target;
+            SharedPointsAtSnap = null;
+            KeyboardAnnouncement = ((IChartNavigableSeries)target).DescribeItem(data);
+
+            if (Tooltip.Visible)
+            {
+                await ShowTooltip(target, data);
+            }
+
+            HoverOverlay?.Refresh();
+            TooltipOverlay?.Refresh();
+        }
+
+        /// <summary>
         /// The minimum pixel distance from a data point to the mouse cursor required for the SeriesClick event to fire. Set to 25 by default.
         /// </summary>
         [Parameter]
@@ -1140,11 +1524,11 @@ namespace Radzen.Blazor
         /// Invoked via interop when the user scrolls the mouse wheel over the chart. Zooms in or out.
         /// </summary>
         /// <param name="x">The mouse X position relative to the chart element.</param>
-        /// <param name="delta">Positive to zoom out, negative to zoom in.</param>
+        /// <param name="delta">Positive to zoom out, negative to zoom in. Its magnitude is the number of wheel steps to apply at once.</param>
         [JSInvokable]
         public async Task OnWheel(double x, int delta)
         {
-            if (!AllowZoom)
+            if (!AllowZoom || delta == 0)
             {
                 return;
             }
@@ -1156,7 +1540,7 @@ namespace Radzen.Blazor
             }
 
             var fraction = Math.Clamp((x - MarginLeft) / plotWidth, 0, 1);
-            var zoomFactor = delta < 0 ? 0.8 : 1.25;
+            var zoomFactor = Math.Pow(delta < 0 ? 0.8 : 1.25, Math.Abs(delta));
             var range = ZoomEnd - ZoomStart;
             var newRange = Math.Clamp(range * zoomFactor, 0.01, 1.0);
 
@@ -1520,6 +1904,8 @@ namespace Radzen.Blazor
 
         private bool widthAndHeightAreSet;
         private bool firstRender = true;
+        private bool chartCreated;
+        private bool legendObserved;
 
         /// <inheritdoc />
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -1537,6 +1923,8 @@ namespace Radzen.Blazor
                     var mouseMoveThrottle = MouseMoveThrottle ?? (JSRuntime is IJSInProcessRuntime ? 0 : 50);
                     var rect = await JSRuntime.InvokeAsync<Rect>("Radzen.createChart", Element, Reference, mouseMoveThrottle);
 
+                    chartCreated = true;
+
                     if (!widthAndHeightAreSet)
                     {
                         widthAndHeightAreSet = true;
@@ -1546,9 +1934,47 @@ namespace Radzen.Blazor
                 }
             }
 
+            await ObserveLegend();
+        }
+
+        private async Task ObserveLegend()
+        {
+            if (!Visible)
+            {
+                chartCreated = false;
+                legendObserved = false;
+                MeasuredLegendSize = null;
+
+                return;
+            }
+
+            if (!chartCreated || disposed || JSRuntime == null)
+            {
+                return;
+            }
+
+            var observe = Legend.Visible && Legend.ItemTemplate != null && Width.HasValue && Height.HasValue;
+
+            if (observe != legendObserved)
+            {
+                legendObserved = observe;
+
+                if (!observe)
+                {
+                    MeasuredLegendSize = null;
+                }
+
+                await JSRuntime.InvokeVoidAsync("Radzen.observeChartLegend", Element, observe);
+            }
         }
 
         internal string? ClipPath { get; set; }
+
+        internal string AxisClipPath => $"{ClipPath}-axes";
+
+        internal string AxisClipPathStyle => $"clip-path: url(#{AxisClipPath}); -webkit-clip-path: url(#{AxisClipPath});";
+
+        internal (double X, double Y, double Width, double Height) PlotRelativeBounds => (-MarginLeft, -MarginTop, Width ?? 0, Height ?? 0);
 
         /// <inheritdoc />
         protected override void OnInitialized()

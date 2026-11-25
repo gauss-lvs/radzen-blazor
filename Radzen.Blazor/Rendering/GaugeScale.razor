@@ -8,9 +8,9 @@
 {
     <g class="rz-tick">
         <Path class="rz-tick-line" D=@tick.Path Stroke=@Stroke StrokeWidth=@StrokeWidth Fill="none" />
-        if (!string.IsNullOrEmpty(tick.Value))
+        @if (!string.IsNullOrEmpty(tick.Value))
         {
-            <Text Value=@tick.Value class="rz-tick-text" Position=@tick.Text />
+            <Radzen.Blazor.Rendering.Text Value=@tick.Value class="rz-tick-text" Position=@tick.Text />
         }
     </g>
 }
@@ -69,6 +69,9 @@
 
     [Parameter]
     public string FormatString { get; set; } = string.Empty;
+
+    [Parameter]
+    public System.Globalization.CultureInfo? Culture { get; set; }
 
     [Parameter]
     public Func<double, string> Formatter { get; set; } = value => value.ToInvariantString();
@@ -142,7 +145,7 @@
                 {
                     if (!string.IsNullOrEmpty(FormatString))
                     {
-                        tick.Value = string.Format(FormatString, value);
+                        tick.Value = string.Format(Culture ?? System.Globalization.CultureInfo.CurrentCulture, FormatString, value);
                     }
                     else
                     {

@@ -1,6 +1,6 @@
 @using Radzen.Blazor
 
-<span class="rz-legend-item" style="@Style" @onclick="@OnClick" @attributes="@MouseEventAttributes" role="button" aria-disabled="@(!Clickable).ToString().ToLowerInvariant()" tabindex="@(Clickable ? "0" : "-1")" @onkeypress="@OnKeyPress" @onkeypress:preventDefault=@preventKeyPress @onkeypress:stopPropagation="stopKeypressPropagation">
+<span class="rz-legend-item" style="@Style" @onclick="@OnClick" @attributes="@MouseEventAttributes" role="button" aria-disabled="@((!Clickable).ToString().ToLowerInvariant())" tabindex="@(Clickable ? "0" : "-1")" @onkeypress="@OnKeyPress" @onkeypress:preventDefault=@preventKeyPress @onkeypress:stopPropagation="stopKeypressPropagation">
     <svg width="@((MarkerSize * 2).ToInvariantString())" height="@((MarkerSize * 2).ToInvariantString())">
         <g class="rz-series-@Index @Class">
             @if (ShowLine)
@@ -14,7 +14,7 @@
             }
         </g>
     </svg>
-    <span class="rz-legend-item-text">@Text</span>
+    <span class="rz-legend-item-text">@if (ChildContent != null) { @ChildContent } else { @Text }</span>
 </span>
 
 @code {
@@ -23,6 +23,9 @@
 
     [Parameter]
     public string Text { get; set; } = string.Empty;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
 
     [Parameter]
     public string Class { get; set;} = string.Empty;

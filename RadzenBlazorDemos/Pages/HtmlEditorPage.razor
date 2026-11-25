@@ -1,7 +1,7 @@
 @page "/html-editor"
 
 <RadzenText TextStyle="TextStyle.H2" TagName="TagName.H1" class="rz-pt-8">
-    Blazor HtmlEditor
+    Blazor HTML / Rich Text Editor
 </RadzenText>
 <RadzenText TextStyle="TextStyle.Subtitle1" TagName="TagName.P" class="rz-pb-4">
     The Blazor HTML Editor is a rich text (WYSIWYG) editor with a full toolbar of formatting tools, image and link support, and HTML output.
@@ -105,6 +105,18 @@ The Radzen HtmlEditor supports the following tools:
 <RadzenText TextStyle="TextStyle.Body1" class="rz-mb-8">
     Click an image to select it and drag one of its handles to resize it. The corner handles preserve the aspect ratio - hold <strong>Shift</strong> while dragging one to scale freely. The handles on the sides change only the width or only the height. The current size is displayed while dragging. Press <strong>Esc</strong> during a drag to cancel it. <strong>Ctrl+Z</strong> undoes a finished resize.
 </RadzenText>
+
+<RadzenText Anchor="html-editor#ai" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
+    AI assistant
+</RadzenText>
+<RadzenText TextStyle="TextStyle.Body1" class="rz-mb-8">
+    Add an AI tool to the toolbar with <code>RadzenHtmlEditorCustomTool</code>. Select some text and click <strong>AI</strong>: a dialog with <strong>RadzenAIPrompt</strong> opens with the selection as context,
+    you rewrite, summarize or translate it and the result replaces the selection through <code>InsertHtml</code>. Without a selection the whole document is used. <code>SaveSelectionAsync</code> and
+    <code>RestoreSelectionAsync</code> keep the selection while the dialog is open.
+</RadzenText>
+<RadzenExample ComponentName="HtmlEditor" Example="HtmlEditorAI" AdditionalSourceCodePages=@(new [] { "EditorAIDialog.razor" })>
+    <HtmlEditorAI />
+</RadzenExample>
 
 <RadzenText Anchor="html-editor#keyboard-navigation" TextStyle="TextStyle.H5" TagName="TagName.H2" class="rz-pt-12">
     Keyboard Navigation

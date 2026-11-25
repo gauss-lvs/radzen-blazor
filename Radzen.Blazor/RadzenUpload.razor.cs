@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Radzen.Blazor.Rendering;
@@ -50,17 +51,39 @@ namespace Radzen.Blazor
     {
         IJSObjectReference? _jsRef;
         int _jsRefVersion;
+        long queueVersion;
+        bool appendFilesChanged;
+
+        internal sealed class UploadQueueState
+        {
+            public UploadQueueState() { }
+            public List<PreviewFileInfo> Files { get; set; } = new();
+            public long Version { get; set; }
+        }
 
         /// <inheritdoc />
         public override void Dispose()
         {
+            if (disposed)
+            {
+                return;
+            }
+            if (IsJSRuntimeAvailable && JSRuntime != null)
+            {
+                JSRuntime.InvokeVoid("Radzen.destroyUpload", Name ?? GetId());
+            }
             base.Dispose();
+            DisposeHandler();
+            GC.SuppressFinalize(this);
+        }
+
+        void DisposeHandler()
+        {
             _jsRefVersion++;
             var jsRef = _jsRef;
             _jsRef = null;
             jsRef?.InvokeVoid("dispose");
             jsRef?.DisposeFireAndForget();
-            GC.SuppressFinalize(this);
         }
 
         private string? imageAlternateText;
@@ -106,6 +129,21 @@ namespace Radzen.Blazor
         /// <value>The choose button text.</value>
         [Parameter]
         public string ChooseText { get => chooseText ?? Localize(nameof(RadzenStrings.Upload_ChooseText)); set => chooseText = value; }
+
+        /// <summary>
+        /// Gets or sets the content of the file selection area. Replaces the default icon and text.
+        /// Use non-interactive content. The entire area selects files and supports drag and drop.
+        /// <see cref="ChooseText"/> remains the accessible name of the selection area.
+        /// </summary>
+        [Parameter]
+        public RenderFragment? ChooseTemplate { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether the selected file list is displayed. Defaults to <c>true</c>.
+        /// Hiding the list does not clear selected files or change upload behavior.
+        /// </summary>
+        [Parameter]
+        public bool ShowFileList { get; set; } = true;
 
         private string? deleteText;
 
@@ -172,11 +210,72 @@ namespace Radzen.Blazor
         public string? Accept { get; set; }
 
         /// <summary>
+        /// Gets or sets the maximum size in bytes for newly selected files. Requires <see cref="Url"/>.
+        /// Null means no size limit. Files whose size equals the limit are allowed.
+        /// This client-side check does not replace server-side validation.
+        /// </summary>
+        [Parameter]
+        public long? MaxFileSize { get; set; }
+
+        /// <summary>
+        /// Gets or sets allowed filename suffixes, such as ".pdf" or ".tar.gz". Requires <see cref="Url"/>.
+        /// Null or an empty collection allows all extensions. Comparison is case-insensitive and a missing leading dot is added.
+        /// Applies to new selections only and does not validate MIME types or file contents.
+        /// </summary>
+        [Parameter]
+        public IEnumerable<string>? AllowedExtensions { get; set; }
+
+        /// <summary>
+        /// Gets or sets the callback reporting files rejected by the client-side selection limits.
+        /// This notification does not delay or cancel upload of accepted files.
+        /// </summary>
+        [Parameter]
+        public EventCallback<UploadRejectedEventArgs> Rejected { get; set; }
+
+        string[] allowedExtensions = Array.Empty<string>();
+        long? validationMaxFileSize;
+        bool validationChanged;
+
+        /// <inheritdoc />
+        protected override void OnParametersSet()
+        {
+            base.OnParametersSet();
+            if (MaxFileSize < 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(MaxFileSize), "The maximum file size cannot be negative.");
+            }
+
+            var extensions = AllowedExtensions?.Select(extension => extension?.Trim().TrimStart('.')).ToArray();
+            if (extensions != null && extensions.Any(extension => string.IsNullOrEmpty(extension) ||
+                extension.Any(c => c is '/' or '\\' or '*' or ',' or ';' || char.IsWhiteSpace(c))))
+            {
+                throw new ArgumentException("Extensions cannot be empty or contain MIME types, wildcards or separators.", nameof(AllowedExtensions));
+            }
+
+            var normalized = extensions?.Select(extension => "." + extension!.ToLowerInvariant()).Distinct().ToArray() ?? Array.Empty<string>();
+            validationChanged |= validationMaxFileSize != MaxFileSize || !allowedExtensions.SequenceEqual(normalized);
+            validationMaxFileSize = MaxFileSize;
+            allowedExtensions = normalized;
+            if ((MaxFileSize.HasValue || allowedExtensions.Length > 0) && string.IsNullOrEmpty(Url))
+            {
+                throw new InvalidOperationException("RadzenUpload file selection limits require Url to be set.");
+            }
+        }
+
+        /// <summary>
         /// Gets or sets a value indicating whether this <see cref="RadzenUpload"/> is multiple.
         /// </summary>
         /// <value><c>true</c> if multiple; otherwise, <c>false</c>.</value>
         [Parameter]
         public bool Multiple { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether new selections are appended instead of replacing selected files.
+        /// Applies only with Url, Multiple=true, Auto=false and Stream=false. Otherwise ignored.
+        /// Repeated selections are separate entries. Uploading does not clear the selection.
+        /// </summary>
+        [Parameter]
+        public bool AppendFiles { get; set; }
 
         /// <summary>
         /// Gets or sets the icon.
@@ -220,6 +319,7 @@ namespace Radzen.Blazor
         /// </summary>
         /// <value>The choose class list.</value>
         string ChooseClassList => ClassList.Create("rz-fileupload-choose rz-button")
+                                           .Add("rz-fileupload-choose-template", ChooseTemplate != null)
                                            .AddDisabled(Disabled)
                                            .ToString();
 
@@ -278,6 +378,7 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public override async Task SetParametersAsync(ParameterView parameters)
         {
+            appendFilesChanged |= parameters.DidParameterChange(nameof(AppendFiles), AppendFiles);
             visibleChanged = parameters.DidParameterChange(nameof(Visible), Visible);
 
             if (parameters.DidParameterChange(nameof(Url), Url) ||
@@ -296,12 +397,17 @@ namespace Radzen.Blazor
             {
                 if (Visible == false)
                 {
-                    Dispose();
+                    DisposeHandler();
                 }
             }
         }
 
         /// <inheritdoc />
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(FileInfo))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(PreviewFileInfo))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(UploadRejectedEventArgs))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(UploadRejectedFile))]
+        [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(UploadQueueState))]
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
@@ -314,7 +420,7 @@ namespace Radzen.Blazor
 
                 if (Visible && JSRuntime != null)
                 {
-                    await JSRuntime.InvokeVoidAsync("Radzen.uploads", Reference, Name ?? GetId());
+                    await JSRuntime.InvokeVoidAsync("Radzen.uploads", Reference, Name ?? GetId(), true);
 
                     _jsParamsChanged = false;
 
@@ -333,10 +439,13 @@ namespace Radzen.Blazor
                         return;
                     }
 
+                    validationChanged = false;
+                    appendFilesChanged = false;
+
                     var created = await JSRuntime.InvokeAsync<IJSObjectReference>(
                         "Radzen.createUpload", Element,
                         !string.IsNullOrEmpty(Url) ? Url : null, Auto, Multiple,
-                        ParameterName, Method, Stream);
+                        ParameterName, Method, Stream, MaxFileSize, allowedExtensions, AppendFiles);
 
                     if (version == _jsRefVersion)
                     {
@@ -349,7 +458,25 @@ namespace Radzen.Blazor
                     }
                 }
             }
+
+            var handler = _jsRef;
+            if (Visible && handler != null && appendFilesChanged)
+            {
+                appendFilesChanged = false;
+                await handler.InvokeVoidAsync("updateAppendFiles", AppendFiles);
+            }
+            if (Visible && handler != null && validationChanged)
+            {
+                validationChanged = false;
+                await handler.InvokeVoidAsync("updateValidation", MaxFileSize, allowedExtensions);
+            }
         }
+
+        /// <summary>
+        /// Reports files rejected by client-side selection limits.
+        /// </summary>
+        [JSInvokable("RadzenUpload.OnRejected")]
+        public Task OnRejected(UploadRejectedEventArgs args) => Rejected.InvokeAsync(args);
 
         /// <summary>
         /// Gets the headers.
@@ -408,6 +535,23 @@ namespace Radzen.Blazor
         /// </summary>
         public async System.Threading.Tasks.Task ClearFiles()
         {
+            if (!string.IsNullOrEmpty(Url))
+            {
+                var state = IsJSRuntimeAvailable && JSRuntime != null
+                    ? await JSRuntime.InvokeAsync<UploadQueueState>("Radzen.clearUpload", Name ?? GetId())
+                    : null;
+                if (state != null)
+                {
+                    await ApplyQueueState(state, true);
+                }
+                else
+                {
+                    files.Clear();
+                    await Change.InvokeAsync(CreateUploadChangeEventArgs(files.ToArray()));
+                    await InvokeAsync(StateHasChanged);
+                }
+                return;
+            }
             while(files.Count > 0)
             {
                 await OnRemove(files[0], false);
@@ -423,11 +567,22 @@ namespace Radzen.Blazor
         /// <param name="ignoreCase">Specify true is file name casing should be ignored (default: false)</param>
         public async System.Threading.Tasks.Task RemoveFile(string fileName, bool ignoreCase = false)
         {
-            var comparisonMethod = ignoreCase ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+            var comparisonMethod = ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
             var fileInfo = files.FirstOrDefault(f => string.Equals(f.Name, fileName, comparisonMethod));
             if (fileInfo != null)
             {
                 await OnRemove(fileInfo);
+            }
+        }
+
+        /// <summary>Removes the selected file with the specified identifier. Unknown identifiers are ignored.</summary>
+        /// <param name="fileId">The identifier supplied in Change event arguments.</param>
+        public async Task RemoveFileById(string fileId)
+        {
+            var file = string.IsNullOrEmpty(fileId) ? null : files.FirstOrDefault(f => f.Id == fileId);
+            if (file != null)
+            {
+                await OnRemove(file);
             }
         }
 
@@ -439,6 +594,13 @@ namespace Radzen.Blazor
         protected async System.Threading.Tasks.Task OnRemove(PreviewFileInfo file, bool fireChangeEvent = true)
         {
             ArgumentNullException.ThrowIfNull(file);
+            if (!string.IsNullOrEmpty(Url) && JSRuntime != null && file.Id != null)
+            {
+                var state = await JSRuntime.InvokeAsync<UploadQueueState>("Radzen.removeFileFromUpload",
+                    Reference, file.Name, Name ?? GetId(), file.Id);
+                await ApplyQueueState(state, fireChangeEvent);
+                return;
+            }
             files.Remove(file);
 
             if (JSRuntime != null)
@@ -470,6 +632,26 @@ namespace Radzen.Blazor
 
             await Change.InvokeAsync(CreateUploadChangeEventArgs(files ?? Enumerable.Empty<FileInfo>()));
 
+            await InvokeAsync(StateHasChanged);
+        }
+
+        /// <summary>Receives an ordered snapshot of the browser upload selection.</summary>
+        [JSInvokable("RadzenUpload.OnQueueChange")]
+        public Task OnQueueChange(IEnumerable<PreviewFileInfo> files, long version)
+            => ApplyQueueState(new UploadQueueState { Files = files.ToList(), Version = version }, true);
+
+        async Task ApplyQueueState(UploadQueueState? state, bool fireChangeEvent)
+        {
+            if (disposed || state == null || state.Version <= queueVersion)
+            {
+                return;
+            }
+            queueVersion = state.Version;
+            files = state.Files;
+            if (fireChangeEvent)
+            {
+                await Change.InvokeAsync(CreateUploadChangeEventArgs(files.ToArray()));
+            }
             await InvokeAsync(StateHasChanged);
         }
 
@@ -557,7 +739,12 @@ namespace Radzen.Blazor
                 files = new FileInfo[] { new FileInfo(args.File) };
             }
 
-            this.files = files.Where(f => f.Source != null).Select(f => new PreviewFileInfo(f.Source!) { Name = f.Name, Size = f.Size }).ToList();
+            files = files.ToArray();
+            foreach (var file in files)
+            {
+                file.Id = Guid.NewGuid().ToString();
+            }
+            this.files = files.Where(f => f.Source != null).Select(f => new PreviewFileInfo(f.Source!) { Id = f.Id, Name = f.Name, Size = f.Size }).ToList();
 
             await Change.InvokeAsync(CreateUploadChangeEventArgs(files));
 

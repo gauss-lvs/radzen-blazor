@@ -28,7 +28,7 @@
                          aria-disabled="@(Disabled || ReadOnly ? "true" : "false")"
                          @onkeydown="OnSelectAllKeyDown">
                         <div class="rz-helper-hidden-accessible">
-                            <input id="@($"{UniqueID}sa")" readonly="readonly" type="checkbox" aria-label="@SelectAllText" aria-checked="@(IsAllSelected().ToString().ToLowerInvariant())">
+                            <input id="@($"{UniqueID}sa")" readonly="readonly" type="checkbox" tabindex="-1" inert aria-hidden="true" aria-label="@SelectAllText" aria-checked="@(IsAllSelected().ToString().ToLowerInvariant())">
                         </div>
                         <div class="@(IsAllSelected() ? "notranslate rz-chkbox-box rz-state-active" : "notranslate rz-chkbox-box")">
                             <span class="@(IsAllSelected() ? "notranslate rz-chkbox-icon rzi rzi-check" : "notranslate rz-chkbox-icon")"></span>
@@ -61,7 +61,7 @@
         else if (View != null)
         {
             <div class="rz-listbox-list-wrapper">
-                <ul @ref="list" id="@ListId" class="rz-listbox-list" role="listbox" tabindex="@(Disabled ? "-1" : $"{TabIndex}")"
+                <ul @ref="list" id="@ListId" class="rz-listbox-list" aria-invalid="@ValidationAriaInvalid" role="listbox" tabindex="@(Disabled ? "-1" : $"{TabIndex}")"
                     aria-label="@ListboxAriaLabel" aria-labelledby="@ListboxAriaLabelledBy" aria-multiselectable="@(Multiple ? "true" : "false")"
                     aria-disabled="@(Disabled ? "true" : "false")" aria-activedescendant="@ActiveDescendantId">
                     @RenderItems()

@@ -1,4 +1,4 @@
-using AngleSharp.Dom;
+﻿using AngleSharp.Dom;
 using Bunit;
 using Microsoft.AspNetCore.Components;
 using System;
@@ -12,6 +12,41 @@ namespace Radzen.Blazor.Tests
 {
     public class DropDownTests
     {
+        [Fact]
+        public void DropDown_Ignores_Option_Click_After_Disabling()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var value = "Apple";
+            var component = ctx.RenderComponent<RadzenDropDown<string>>(parameters => parameters
+                .Add(p => p.Data, new[] { "Apple", "Orange" })
+                .Add(p => p.Value, value)
+                .Add(p => p.ValueChanged, (string selected) => { value = selected; }));
+
+            component.Find("[role=combobox]").Click();
+            component.SetParametersAndRender(parameters => parameters.Add(p => p.Disabled, true));
+            component.FindAll(".rz-dropdown-item").Single(item => item.TextContent.Trim() == "Orange").Click();
+
+            Assert.Equal("Apple", value);
+        }
+
+        [Fact]
+        public void DropDown_SelectAllHiddenInput_IsInert()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenDropDown<IEnumerable<string>>>(parameters => parameters
+                .Add(p => p.Data, new List<string> { "Option 1", "Option 2" })
+                .Add(p => p.Multiple, true)
+                .Add(p => p.AllowSelectAll, true));
+
+            var input = component.Find(".rz-multiselect-header [role=checkbox] input[type=checkbox]");
+            Assert.True(input.HasAttribute("inert"));
+            Assert.Equal("true", input.GetAttribute("aria-hidden"));
+            Assert.Equal("-1", input.GetAttribute("tabindex"));
+        }
+
         class DataItem
         {
             public string Text { get; set; }
@@ -113,6 +148,29 @@ namespace Radzen.Blazor.Tests
 
             var focusNextCalls = ctx.JSInterop.Invocations.Count(i => i.Identifier == "Radzen.focusNext");
             Assert.Equal(0, focusNextCalls);
+        }
+
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public void DropDown_Filterable_TabInSearchWhenOpen_InvokesFocusNextWithPopupId(bool shiftKey)
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = DropDown<int>(ctx, p =>
+            {
+                p.Add(x => x.ValueProperty, nameof(DataItem.Id));
+                p.Add(x => x.AllowFiltering, true);
+            });
+
+            component.Find("[role='combobox']").Click();
+            component.Find(".rz-dropdown-filter").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Code = "Tab", ShiftKey = shiftKey });
+
+            var popupId = component.Find(".rz-dropdown-panel").Id;
+            var focusNext = Assert.Single(ctx.JSInterop.Invocations, i => i.Identifier == "Radzen.focusNext");
+            Assert.Equal(shiftKey, focusNext.Arguments[1]);
+            Assert.Equal(popupId, focusNext.Arguments[2]);
         }
 
         [Fact]
@@ -1790,6 +1848,194 @@ namespace Radzen.Blazor.Tests
 
             Assert.NotEmpty(buttons);
             Assert.All(buttons, b => Assert.Equal(component.Instance.RemoveChipTitle, b.GetAttribute("aria-label")));
+        }
+    
+
+        [Fact]
+        public void DropDown_WithName_LinksLabelOnClient()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.RenderComponent<RadzenDropDown<string>>(parameters => parameters
+                .Add(p => p.Name, "colour")
+                .Add(p => p.Data, new[] { "Red", "Green" }));
+
+            var invocation = ctx.JSInterop.VerifyInvoke("Radzen.createDropDown");
+
+            Assert.Equal("colour", invocation.Arguments[1]);
+            Assert.DoesNotContain(ctx.JSInterop.Invocations, i => i.Identifier == "Radzen.linkLabel");
+        }
+
+        [Fact]
+        public void DropDown_WithoutName_DoesNotLinkLabelOnClient()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.RenderComponent<RadzenDropDown<string>>(parameters => parameters
+                .Add(p => p.Data, new[] { "Red", "Green" }));
+
+            Assert.Null(ctx.JSInterop.VerifyInvoke("Radzen.createDropDown").Arguments[1]);
+            Assert.DoesNotContain(ctx.JSInterop.Invocations, i => i.Identifier == "Radzen.linkLabel");
+        }
+
+        [Fact]
+        public void DropDown_WithConsumerAriaLabel_DoesNotLinkLabelOnClient()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.RenderComponent<RadzenDropDown<string>>(parameters => parameters
+                .Add(p => p.Name, "colour")
+                .Add(p => p.Data, new[] { "Red", "Green" })
+                .AddUnmatched("aria-label", "Colour"));
+
+            Assert.Null(ctx.JSInterop.VerifyInvoke("Radzen.createDropDown").Arguments[1]);
+            Assert.DoesNotContain(ctx.JSInterop.Invocations, i => i.Identifier == "Radzen.linkLabel");
+        }
+
+        [Fact]
+        public void DropDown_InsideFormField_DoesNotLinkLabelOnClient()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var component = ctx.RenderComponent<RadzenFormField>(parameters => parameters
+                .Add(p => p.Text, "Colour")
+                .AddChildContent<RadzenDropDown<string>>(dd => dd
+                    .Add(p => p.Name, "colour")
+                    .Add(p => p.Data, new[] { "Red", "Green" })));
+
+            Assert.Null(ctx.JSInterop.VerifyInvoke("Radzen.createDropDown").Arguments[1]);
+            Assert.DoesNotContain(ctx.JSInterop.Invocations, i => i.Identifier == "Radzen.linkLabel");
+            Assert.Equal(component.Find("label").Id, component.Find("[role=combobox]").GetAttribute("aria-labelledby"));
+        }
+
+        [Fact]
+        public void DropDown_NameChange_LinksLabelAgain()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var component = ctx.RenderComponent<RadzenDropDown<string>>(parameters => parameters
+                .Add(p => p.Name, "first")
+                .Add(p => p.Data, new[] { "Red", "Green" }));
+
+            component.SetParametersAndRender(parameters => parameters.Add(p => p.Name, "second"));
+
+            Assert.Equal("first", ctx.JSInterop.VerifyInvoke("Radzen.createDropDown").Arguments[1]);
+            Assert.Equal("second", ctx.JSInterop.VerifyInvoke("Radzen.linkLabel").Arguments[1]);
+        }
+
+        [Fact]
+        public void DropDown_ShownAgain_LinksLabelThroughCreate()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var component = ctx.RenderComponent<RadzenDropDown<string>>(parameters => parameters
+                .Add(p => p.Name, "colour")
+                .Add(p => p.Data, new[] { "Red", "Green" }));
+
+            component.SetParametersAndRender(parameters => parameters.Add(p => p.Visible, false));
+            component.SetParametersAndRender(parameters => parameters.Add(p => p.Visible, true));
+
+            var names = ctx.JSInterop.Invocations.Where(i => i.Identifier == "Radzen.createDropDown").Select(i => (string)i.Arguments[1]).ToList();
+
+            Assert.Equal(new[] { "colour", "colour" }, names);
+            Assert.DoesNotContain(ctx.JSInterop.Invocations, i => i.Identifier == "Radzen.linkLabel");
+        }
+
+        private static Microsoft.AspNetCore.Components.Web.KeyboardEventArgs Backspace => new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Backspace", Code = "Backspace" };
+
+        [Fact]
+        public void DropDown_Backspace_ClearsValue_WhenAllowClear()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var value = 1;
+            var component = DropDown<int>(ctx, parameters =>
+            {
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.AllowClear, true);
+                parameters.Add(p => p.Value, value);
+                parameters.Add(p => p.ValueChanged, v => value = v);
+            });
+
+            component.Find("div[role='combobox']").KeyDown(Backspace);
+
+            Assert.Equal(0, value);
+            Assert.Empty(component.FindAll(".rz-dropdown-clear-icon"));
+        }
+
+        [Fact]
+        public void DropDown_Backspace_DoesNotClearValue_WhenAllowClearIsFalse()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var value = 1;
+            var component = DropDown<int>(ctx, parameters =>
+            {
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.Value, value);
+                parameters.Add(p => p.ValueChanged, v => value = v);
+            });
+
+            component.Find("div[role='combobox']").KeyDown(Backspace);
+
+            Assert.Equal(1, value);
+        }
+
+        class FilterKeyPressDropDown<T> : RadzenDropDown<T>
+        {
+            public Task FilterKeyPress(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args) => OnFilterKeyPress(args);
+        }
+
+        [Fact]
+        public async Task DropDown_Backspace_InFilterInput_DoesNotClearValue()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var data = new[]
+            {
+                new DataItem { Text = "Item 1", Id = 1 },
+                new DataItem { Text = "Item 2", Id = 2 },
+            };
+
+            var value = 1;
+            var component = ctx.RenderComponent<FilterKeyPressDropDown<int>>(parameters =>
+            {
+                parameters.Add(p => p.Data, data);
+                parameters.Add(p => p.TextProperty, nameof(DataItem.Text));
+                parameters.Add(p => p.ValueProperty, nameof(DataItem.Id));
+                parameters.Add(p => p.AllowClear, true);
+                parameters.Add(p => p.AllowFiltering, true);
+                parameters.Add(p => p.Value, value);
+                parameters.Add(p => p.ValueChanged, v => value = v);
+            });
+
+            await component.InvokeAsync(() => component.Instance.FilterKeyPress(Backspace));
+
+            Assert.Equal(1, value);
+        }
+
+        [Fact]
+        public void DropDown_Multiple_Backspace_ClearsAllSelectedItems()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            IEnumerable<int> value = new List<int> { 1, 2 };
+            var component = MultipleDropDown(ctx, v => value = v, parameters =>
+            {
+                parameters.Add(p => p.AllowClear, true);
+                parameters.Add(p => p.Value, value);
+            });
+
+            Assert.Equal(2, component.FindAll(".rz-state-highlight").Count);
+
+            component.Find("div[role='combobox']").KeyDown(Backspace);
+
+            Assert.True(value == null || !value.Any());
+            Assert.Empty(component.FindAll(".rz-state-highlight"));
         }
     }
 }

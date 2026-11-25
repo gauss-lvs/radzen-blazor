@@ -242,7 +242,6 @@ namespace Radzen.Blazor.Tests
             instance.OnKeyDown(new KeyboardEventArgs { Key = "Enter" }).GetAwaiter().GetResult();
 
             Assert.True(clicked);
-            Assert.True(instance.preventKeyDown);
         }
 
         [Fact]
@@ -277,7 +276,6 @@ namespace Radzen.Blazor.Tests
             instance.OnKeyDown(new KeyboardEventArgs { Key = "Delete" }).GetAwaiter().GetResult();
 
             Assert.True(closed);
-            Assert.True(instance.preventKeyDown);
         }
 
         [Fact]
@@ -313,20 +311,6 @@ namespace Radzen.Blazor.Tests
             instance.OnKeyDown(new KeyboardEventArgs { Key = "Enter" }).GetAwaiter().GetResult();
 
             Assert.False(clicked);
-            Assert.False(instance.preventKeyDown);
-        }
-
-        [Fact]
-        public void Chip_KeyDown_OtherKey_DoesNotPrevent()
-        {
-            using var ctx = new TestContext();
-
-            var component = ctx.RenderComponent<RadzenChip>();
-
-            var instance = component.Instance;
-            instance.OnKeyDown(new KeyboardEventArgs { Key = "Tab" }).GetAwaiter().GetResult();
-
-            Assert.False(instance.preventKeyDown);
         }
 
         [Fact]
@@ -357,6 +341,57 @@ namespace Radzen.Blazor.Tests
             var component = ctx.RenderComponent<RadzenChip>();
 
             Assert.Contains("rz-chip-base", component.Markup);
+        }
+    
+
+        [Fact]
+        public void Chip_Keydown_DoesNotRenderPreventDefault()
+        {
+            using var ctx = new TestContext();
+            var clicked = 0;
+            var component = ctx.RenderComponent<RadzenChip>(parameters => parameters
+                .Add(p => p.Text, "Hello")
+                .Add(p => p.Click, args => clicked++));
+
+            var chip = component.Find(".rz-chip");
+            Assert.Equal("button", chip.GetAttribute("role"));
+            Assert.Equal("0", chip.GetAttribute("tabindex"));
+            Assert.DoesNotContain(chip.Attributes, attr => attr.Name.Contains("preventdefault", System.StringComparison.OrdinalIgnoreCase));
+
+            chip.KeyDown(new KeyboardEventArgs { Code = "Enter" });
+
+            Assert.Equal(1, clicked);
+            chip = component.Find(".rz-chip");
+            Assert.DoesNotContain(chip.Attributes, attr => attr.Name.Contains("preventdefault", System.StringComparison.OrdinalIgnoreCase));
+        }
+    
+
+        [Fact]
+        public void Chip_RemoveAffordance_IsNotFocusable_AndRaisesCloseWithoutClick()
+        {
+            using var ctx = new TestContext();
+            var clicked = 0;
+            var closed = 0;
+
+            var component = ctx.RenderComponent<RadzenChip>(parameters => parameters
+                .Add(p => p.Text, "Tag")
+                .Add(p => p.RemoveChipTitle, "Remove tag")
+                .Add(p => p.Click, args => clicked++)
+                .Add(p => p.Close, args => closed++));
+
+            var chip = component.Find(".rz-chip");
+
+            Assert.Empty(chip.QuerySelectorAll("button, [tabindex]"));
+
+            var remove = component.Find(".rz-chip-remove");
+
+            Assert.Equal("true", remove.GetAttribute("aria-hidden"));
+            Assert.Equal("Remove tag", remove.GetAttribute("title"));
+
+            remove.Click();
+
+            Assert.Equal(1, closed);
+            Assert.Equal(0, clicked);
         }
     }
 }

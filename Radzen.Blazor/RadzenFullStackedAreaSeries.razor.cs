@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components;
 using Radzen.Blazor.Rendering;
 using System;
@@ -9,8 +10,10 @@ namespace Radzen.Blazor
     /// <summary>
     /// Renders 100% stacked area series in <see cref="RadzenChart" />.
     /// </summary>
-    public partial class RadzenFullStackedAreaSeries<TItem> : CartesianSeries<TItem>, IChartFullStackedAreaSeries
+    public partial class RadzenFullStackedAreaSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>, IChartFullStackedAreaSeries
     {
+        private protected override bool EmptyValueIsZero => true;
+
         /// <summary>
         /// Specifies the color of the line.
         /// </summary>
@@ -270,7 +273,7 @@ namespace Radzen.Blazor
         {
             ArgumentNullException.ThrowIfNull(scale);
 
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 // 100% stacked area always uses 0-100 range
                 scale.Input.MergeWidth(new ScaleRange { Start = 0, End = 100 });

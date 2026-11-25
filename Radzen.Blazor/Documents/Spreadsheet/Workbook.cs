@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -45,11 +47,15 @@ public class Workbook
     /// </summary>
     public IDictionary<string, string> DefinedNames { get; } = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
+    internal List<ExternalLink> ExternalLinks { get; } = [];
+
     private readonly Dictionary<string, FormulaSyntaxTree> definedNameTrees = [];
 
-    internal FormulaSyntaxTree? ResolveDefinedName(string name)
+    internal HashSet<string> HiddenDefinedNames { get; } = new(StringComparer.OrdinalIgnoreCase);
+
+    internal FormulaSyntaxTree? ResolveDefinedName(string name, Worksheet sheet)
     {
-        if (!DefinedNames.TryGetValue(name, out var refersTo))
+        if (!sheet.DefinedNames.TryGetValue(name, out var refersTo) && !DefinedNames.TryGetValue(name, out refersTo))
         {
             return null;
         }
@@ -95,8 +101,21 @@ public class Workbook
     public void AddSheet(Worksheet sheet)
     {
         ArgumentNullException.ThrowIfNull(sheet);
+
+        if (sheets.Contains(sheet))
+        {
+            return;
+        }
+
+        if (sheet.CreatedWorkbook is { } previous && previous != this)
+        {
+            previous.Detach(sheet);
+        }
+
         sheets.Add(sheet);
         sheet.Workbook = this;
+        RefreshReferencesTo(sheet.Name, GetFormulaCells(sheet));
+        RecalculateIfIdle();
     }
 
     /// <summary>
@@ -125,7 +144,393 @@ public class Workbook
     {
         ArgumentNullException.ThrowIfNull(sheet);
 
-        return sheets.Remove(sheet);
+        if (!sheets.Contains(sheet))
+        {
+            return false;
+        }
+
+        Detach(sheet);
+        sheet.Workbook = new Workbook(sheet);
+
+        return true;
+    }
+
+    private void Detach(Worksheet sheet)
+    {
+        if (!sheets.Remove(sheet))
+        {
+            return;
+        }
+
+        updatedSheets.Remove(sheet);
+
+        foreach (var cell in GetFormulaCells(sheet))
+        {
+            OnFormulaCellRemoved(cell);
+        }
+
+        RefreshReferencesTo(sheet.Name, []);
+        RecalculateIfIdle();
+    }
+
+    private void RecalculateIfIdle()
+    {
+        if (!IsUpdating)
+        {
+            Recalculate();
+        }
+    }
+
+    internal CellDependencyGraph Graph { get; } = new();
+
+    internal bool IsEvaluating { get; set; }
+
+    private readonly HashSet<Worksheet> updatedSheets = [];
+
+    private readonly HashSet<Cell> changedDuringUpdate = [];
+
+    private readonly HashSet<Cell> pendingFormulaCells = [];
+
+    private readonly HashSet<string> pendingSheetNames = new(StringComparer.OrdinalIgnoreCase);
+
+    internal bool IsUpdating
+    {
+        get
+        {
+            foreach (var sheet in sheets)
+            {
+                if (sheet.IsUpdating)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+    }
+
+    internal void OnSheetRenamed(Worksheet sheet, string oldName)
+    {
+        if (!sheets.Contains(sheet))
+        {
+            return;
+        }
+
+        var collides = sheets.Any(other => other != sheet && string.Equals(other.Name, sheet.Name, StringComparison.OrdinalIgnoreCase));
+
+        sheet.Batch(() =>
+        {
+            if (!collides)
+            {
+                RenameSheetReferences(oldName, sheet.Name);
+            }
+
+            RefreshReferencesTo(oldName, []);
+            RefreshReferencesTo(sheet.Name, []);
+        });
+    }
+
+    internal void OnFormulaCellRemoved(Cell cell)
+    {
+        Graph.Remove(cell);
+        pendingFormulaCells.Remove(cell);
+    }
+
+    private void RefreshReferencesTo(string sheetName, IEnumerable<Cell> cells)
+    {
+        pendingFormulaCells.UnionWith(cells);
+        pendingSheetNames.Add(sheetName);
+    }
+
+    private void QueueFormulasReferencingPendingSheetNames()
+    {
+        if (pendingSheetNames.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var cell in GetFormulaCells())
+        {
+            if (cell.FormulaSyntaxTree!.Find(node => node is NameSyntaxNode
+                    || node is CellSyntaxNode c && c.Token.Address.Worksheet is { } name && pendingSheetNames.Contains(name)).Count > 0)
+            {
+                pendingFormulaCells.Add(cell);
+            }
+        }
+
+        pendingSheetNames.Clear();
+    }
+
+    private void QueueFormulasUsingDefinedNames()
+    {
+        foreach (var cell in GetFormulaCells())
+        {
+            if (cell.FormulaSyntaxTree!.Find(node => node is NameSyntaxNode).Count > 0)
+            {
+                pendingFormulaCells.Add(cell);
+            }
+        }
+    }
+
+    private IEnumerable<(IDictionary<string, string> Names, Worksheet? Owner)> DefinedNameScopes =>
+        sheets.Select(sheet => ((IDictionary<string, string>)sheet.DefinedNames, (Worksheet?)sheet)).Prepend((DefinedNames, null));
+
+    private void AdjustDefinedNames(Worksheet target, AxisShift shift)
+    {
+        var changed = false;
+
+        foreach (var (names, owner) in DefinedNameScopes)
+        {
+            foreach (var (name, refersTo) in names.ToList())
+            {
+                var adjusted = AdjustReference(refersTo, owner, target, shift)!;
+
+                if (!string.Equals(adjusted, refersTo, StringComparison.Ordinal))
+                {
+                    names[name] = adjusted;
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed)
+        {
+            QueueFormulasUsingDefinedNames();
+        }
+    }
+
+    internal List<(IDictionary<string, string> Names, string Name, string RefersTo)> CaptureDefinedNames() =>
+        [.. DefinedNameScopes.SelectMany(scope => scope.Names.Select(name => (scope.Names, name.Key, name.Value)))];
+
+    internal void RestoreDefinedNames(IEnumerable<(IDictionary<string, string> Names, string Name, string RefersTo)> definedNames)
+    {
+        foreach (var (names, name, refersTo) in definedNames)
+        {
+            names[name] = refersTo;
+        }
+
+        QueueFormulasUsingDefinedNames();
+    }
+
+    private List<Cell> GetFormulaCells() => [.. sheets.SelectMany(GetFormulaCells)];
+
+    private static IEnumerable<Cell> GetFormulaCells(Worksheet sheet) =>
+        sheet.Cells.GetPopulatedCells().Where(cell => cell.FormulaSyntaxTree is not null).ToList();
+
+    private void RenameSheetReferences(string oldName, string newName)
+    {
+        foreach (var sheet in sheets)
+        {
+            foreach (var cell in GetFormulaCells(sheet))
+            {
+                var renamed = RenameSheetInFormula(cell.Formula!, cell.FormulaSyntaxTree!, oldName, newName);
+
+                if (renamed is not null)
+                {
+                    cell.Formula = renamed;
+                }
+            }
+
+            foreach (var series in sheet.Charts.SelectMany(chart => chart.Series))
+            {
+                series.Categories = RenameSheetInReference(series.Categories, oldName, newName);
+                series.Values = RenameSheetInReference(series.Values, oldName, newName);
+            }
+
+            foreach (var rule in sheet.Validation.Ranges.SelectMany(sheet.Validation.GetValidators).OfType<DataValidationRule>())
+            {
+                rule.Formula1 = RenameSheetInReference(rule.Formula1, oldName, newName);
+                rule.Formula2 = RenameSheetInReference(rule.Formula2, oldName, newName);
+            }
+        }
+
+        foreach (var names in sheets.Select(sheet => sheet.DefinedNames).Prepend(DefinedNames))
+        {
+            foreach (var (name, refersTo) in names.ToList())
+            {
+                names[name] = RenameSheetInReference(refersTo, oldName, newName)!;
+            }
+        }
+    }
+
+    internal static string? AdjustReference(string? text, Worksheet? owner, Worksheet target, AxisShift shift)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return text;
+        }
+
+        var hasEquals = text.StartsWith('=', StringComparison.Ordinal);
+        var formula = hasEquals ? text : "=" + text;
+        FormulaSyntaxTree tree;
+
+        try
+        {
+            tree = FormulaParser.Parse(formula);
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or ArgumentException or FormatException)
+        {
+            return text;
+        }
+
+        if (tree.Errors.Count > 0)
+        {
+            return text;
+        }
+
+        var rewritten = ShiftReferences(formula, tree, owner, target, shift);
+
+        if (string.Equals(rewritten, formula, StringComparison.Ordinal))
+        {
+            return text;
+        }
+
+        return hasEquals ? rewritten : rewritten[1..];
+    }
+
+    private static string? RenameSheetInReference(string? text, string oldName, string newName)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return text;
+        }
+
+        var hasEquals = text.StartsWith('=', StringComparison.Ordinal);
+        var formula = hasEquals ? text : "=" + text;
+        var renamed = RenameSheetInFormula(formula, FormulaParser.Parse(formula), oldName, newName);
+
+        if (renamed is null)
+        {
+            return text;
+        }
+
+        return hasEquals ? renamed : renamed[1..];
+    }
+
+    private static string? RenameSheetInFormula(string formula, FormulaSyntaxTree tree, string oldName, string newName)
+    {
+        bool IsOldSheet(CellRef address) => string.Equals(address.Worksheet, oldName, StringComparison.OrdinalIgnoreCase);
+
+        if (tree.Errors.Count > 0 || tree.Find(node => node is CellSyntaxNode or ErrorLiteralSyntaxNode && IsOldSheet(node.Token.Address)).Count == 0)
+        {
+            return null;
+        }
+
+        return FormulaRewriter.Rewrite(formula, tree,
+            token => IsOldSheet(token.Address) ? token.Address with { Worksheet = newName } : token.Address);
+    }
+
+    internal void OnCellValueChanged(Cell cell)
+    {
+        if (!Graph.HasDependents(cell) && Graph.VolatileCells.Count == 0)
+        {
+            return;
+        }
+
+        if (IsUpdating)
+        {
+            changedDuringUpdate.Add(cell);
+            return;
+        }
+
+        EvaluateFormulas(Graph.GetTopologicallySortedDependencies([cell, .. Graph.VolatileCells]));
+    }
+
+    internal void OnCellFormulaChanged(Cell cell)
+    {
+        if (IsUpdating)
+        {
+            pendingFormulaCells.Add(cell);
+            return;
+        }
+
+        Graph.Add(cell);
+        EvaluateFormulas(Graph.GetTopologicallySortedDependencies([cell, .. Graph.VolatileCells]));
+    }
+
+    internal void OnUpdateEnded(Worksheet sheet)
+    {
+        updatedSheets.Add(sheet);
+
+        if (!IsUpdating)
+        {
+            Recalculate();
+        }
+    }
+
+    private void Recalculate()
+    {
+        QueueFormulasReferencingPendingSheetNames();
+
+        foreach (var cell in pendingFormulaCells)
+        {
+            Graph.Add(cell);
+        }
+
+        var roots = new List<Cell>(pendingFormulaCells);
+
+        foreach (var cell in Graph.FormulaCells)
+        {
+            if (updatedSheets.Contains(cell.Worksheet))
+            {
+                roots.Add(cell);
+            }
+        }
+
+        roots.AddRange(Graph.GetRangeDependents(updatedSheets));
+        roots.AddRange(changedDuringUpdate);
+        roots.AddRange(Graph.VolatileCells);
+
+        pendingFormulaCells.Clear();
+        updatedSheets.Clear();
+        changedDuringUpdate.Clear();
+
+        EvaluateFormulas(Graph.GetTopologicallySortedDependencies(roots));
+    }
+
+    private void EvaluateFormulas(IEnumerable<Cell> cells)
+    {
+        new Recalculation(cells).Run();
+    }
+
+    internal void AdjustFormulas(Worksheet target, AxisShift shift)
+    {
+        AdjustDefinedNames(target, shift);
+
+        foreach (var cell in GetFormulaCells())
+        {
+            if (string.IsNullOrEmpty(cell.Formula) || cell.FormulaSyntaxTree!.Errors.Count > 0 || !References(cell, target))
+            {
+                continue;
+            }
+
+            var newFormula = ShiftReferences(cell.Formula, cell.FormulaSyntaxTree!, cell.Worksheet, target, shift);
+
+            if (!string.Equals(newFormula, cell.Formula, StringComparison.Ordinal))
+            {
+                cell.Formula = newFormula;
+            }
+        }
+    }
+
+    private static string ShiftReferences(string formula, FormulaSyntaxTree tree, Worksheet? owner, Worksheet target, AxisShift shift)
+    {
+        return FormulaRewriter.Rewrite(formula, tree,
+            token => IsReferenceTo(target, owner, token.Address) ? shift.AdjustCell(token) : token.Address,
+            (start, end, kind) => IsReferenceTo(target, owner, start.Address) ? shift.AdjustRange(start, end, kind) : (start.Address, end.Address));
+    }
+
+    private static bool IsReferenceTo(Worksheet target, Worksheet? owner, CellRef address)
+    {
+        return string.IsNullOrEmpty(address.Worksheet)
+            ? owner == target
+            : string.Equals(address.Worksheet, target.Name, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool References(Cell owner, Worksheet target)
+    {
+        return owner.Worksheet == target
+            || owner.FormulaSyntaxTree!.Find(node => node is CellSyntaxNode c && IsReferenceTo(target, owner.Worksheet, c.Token.Address)).Count > 0;
     }
 
     /// <summary>

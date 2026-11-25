@@ -37,7 +37,8 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenRadioButtonList<TValue> : FormComponent<TValue>, IRadzenRadioButtonList
+    public partial class RadzenRadioButtonList<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TValue> : FormComponent<TValue>, IRadzenRadioButtonList
     {
         string ItemClass(IRadzenRadioButtonListItem item) => ClassList.Create("rz-radiobutton-box")
                                                                             .Add("rz-state-active", IsSelected(item))
@@ -378,7 +379,7 @@ namespace Radzen.Blazor
         [Parameter]
         public string? AriaLabelledBy { get; set; }
 
-        string? GroupAriaLabel => (Attributes != null && Attributes.ContainsKey("aria-label")) || !string.IsNullOrEmpty(AriaLabelledBy)
+        string? GroupAriaLabel => (Attributes != null && Attributes.ContainsKey("aria-label")) || !string.IsNullOrEmpty(AriaLabelledBy ?? FormFieldLabelledBy)
             ? null
             : Name;
 

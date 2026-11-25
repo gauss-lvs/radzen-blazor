@@ -33,7 +33,8 @@ namespace Radzen.Blazor
     /// &lt;RadzenDropDown @bind-Value=@selectedIds TValue="IEnumerable&lt;int&gt;" Data=@items Multiple="true" Chips="true" /&gt;
     /// </code>
     /// </example>
-    public partial class RadzenDropDown<TValue> : DropDownBase<TValue>
+    public partial class RadzenDropDown<
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicFields)] TValue> : DropDownBase<TValue>
     {
         IJSObjectReference? _jsRef;
         int _jsRefVersion;
@@ -424,6 +425,8 @@ namespace Radzen.Blazor
                 visibleChanged = false;
                 disabledChanged = false;
 
+                var labelToLink = LabelToLink();
+
                 if (Visible)
                 {
                     bool reload = false;
@@ -453,7 +456,7 @@ namespace Radzen.Blazor
                         if (version == _jsRefVersion)
                         {
                             var created = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                                "Radzen.createDropDown", Element);
+                                "Radzen.createDropDown", Element, labelToLink);
 
                             if (version == _jsRefVersion)
                             {
@@ -472,6 +475,10 @@ namespace Radzen.Blazor
                         StateHasChanged();
                     }
                 }
+            }
+            else
+            {
+                await LinkLabelAsync(Element);
             }
 
             if (shouldReposition)
@@ -499,7 +506,7 @@ namespace Radzen.Blazor
                 var key = args.Code ?? args.Key;
                 if (key == "Tab" && isFilter && wasOpen && JSRuntime != null)
                 {
-                    await JSRuntime.InvokeVoidAsync("Radzen.focusNext", Element, args.ShiftKey);
+                    await JSRuntime.InvokeVoidAsync("Radzen.focusNext", Element, args.ShiftKey, PopupID);
                 }
             }
         }
@@ -511,7 +518,7 @@ namespace Radzen.Blazor
         /// <param name="isFromKey">if set to <c>true</c> [is from key].</param>
         protected override async Task OnSelectItem(object? item, bool isFromKey = false)
         {
-            if (!ReadOnly && JSRuntime != null)
+            if (!Disabled && !ReadOnly && JSRuntime != null)
             {
                 if (!Multiple && !isFromKey)
                 {

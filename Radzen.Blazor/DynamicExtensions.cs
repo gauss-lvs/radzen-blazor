@@ -12,17 +12,10 @@ namespace System.Linq.Dynamic.Core
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2072, Justification = TrimMessages.DataTypePreserved)]
     public static class DynamicExtensions
     {
-        static readonly Func<string, Type?> typeLocator = type => AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(a => a.GetTypes())
-            .FirstOrDefault(t =>
-            {
-                var fullName = t.FullName;
-                return fullName != null && fullName.Replace("+", ".", StringComparison.Ordinal) == type;
-            });
-
         /// <summary>
         /// Filters using the specified filter descriptors.
         /// </summary>
+        [RequiresUnreferencedCode(TrimMessages.DynamicLinqReflection)]
         public static IQueryable<T> Where<T>(
             this IQueryable<T> source,
             string predicate,
@@ -54,7 +47,7 @@ namespace System.Linq.Dynamic.Core
                     .Replace(" = ", " == ", StringComparison.Ordinal);
 
                 return !string.IsNullOrEmpty(predicate) ?
-                    source.Where(ExpressionParser.ParsePredicate<T>(predicate, typeLocator)) : source;
+                    source.Where(ExpressionParser.ParsePredicate<T>(predicate)) : source;
             }
             catch (Exception ex)
             {
@@ -65,6 +58,7 @@ namespace System.Linq.Dynamic.Core
         /// <summary>
         /// Sorts the elements of a sequence in ascending or descending order according to a key.
         /// </summary>
+        [RequiresUnreferencedCode(TrimMessages.DynamicLinqReflection)]
         public static IOrderedQueryable<T> OrderBy<T>(
             this IQueryable<T> source,
             string selector,
@@ -85,6 +79,7 @@ namespace System.Linq.Dynamic.Core
         /// <summary>
         /// Projects each element of a sequence into a collection of property values.
         /// </summary>
+        [RequiresUnreferencedCode(TrimMessages.DynamicLinqReflection)]
         public static IQueryable Select<T>(this IQueryable<T> source, string selector, object[]? parameters = null)
         {
             ArgumentNullException.ThrowIfNull(source);
@@ -111,6 +106,7 @@ namespace System.Linq.Dynamic.Core
         /// <summary>
         /// Projects each element of a sequence into a collection of property values.
         /// </summary>
+        [RequiresUnreferencedCode(TrimMessages.DynamicLinqReflection)]
         public static IQueryable Select(this IQueryable source, string selector, object[]? parameters = null)
         {
             ArgumentNullException.ThrowIfNull(source);

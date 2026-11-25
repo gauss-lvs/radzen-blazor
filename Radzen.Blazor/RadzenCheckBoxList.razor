@@ -15,12 +15,12 @@
 @if (Visible)
 {
     <div @ref="@Element" style="@Style" @attributes="Attributes" class="@GetCssClass()" id="@GetId()"
-         role="group" aria-label="@Name" aria-activedescendant="@GetActiveDescendantId()" aria-disabled="@(Disabled ? "true" : "false")" @onfocus=@OnFocus @onblur=@OnBlur
+         role="group" aria-label="@(FormFieldLabelledBy != null ? null : Name)" aria-labelledby="@FormFieldLabelledBy" aria-activedescendant="@GetActiveDescendantId()" aria-disabled="@(Disabled ? "true" : "false")" @onfocus=@OnFocus @onblur=@OnBlur
         tabindex="@(Disabled ? "-1" : $"{TabIndex}")" @onkeydown="@(args => OnKeyPress(args))" @onkeydown:stopPropagation="stopKeydownPropagation">
         @if (AllowSelectAll)
         {
             <div class="rz-multiselect-header rz-helper-clearfix" @onclick:preventDefault>
-                <RadzenCheckBox ReadOnly="@ReadOnly" Disabled="@Disabled" Name="SelectAll" TValue="bool?" Value="@IsAllSelected()" Change="@SelectAll"
+                <RadzenCheckBox ReadOnly="@ReadOnly" Disabled="@Disabled" Name="SelectAll" AriaLabel="@SelectAllText" TValue="bool?" Value="@IsAllSelected()" Change="@SelectAll"
                                 InputAttributes="@(new Dictionary<string,object>(){ { "aria-label", SelectAllText ?? "" }})" />
                 <button type="button" @onclick="@(() => SelectAll(!IsAllSelected() ?? true))" class="rz-chkbox-label" disabled="@(Disabled || ReadOnly)">@SelectAllText</button>
             </div>
@@ -35,7 +35,7 @@
                  aria-disabled="@(Disabled || item.Disabled ? "true" : "false")">
                 <div class="rz-chkbox">
                     <div class="rz-helper-hidden-accessible">
-                        <input type="checkbox" name="@Name" value="@item.Value" disabled="@(Disabled || item.Disabled)" readonly="@ReadOnly" tabindex="-1" aria-label="@(item.Text + " " + item.Value)" aria-checked="@(IsSelected(item).ToString().ToLowerInvariant())">
+                        <input type="checkbox" name="@Name" value="@item.Value" disabled="@(Disabled || item.Disabled)" readonly="@ReadOnly" tabindex="-1" inert aria-hidden="true" aria-label="@(item.Text + " " + item.Value)" aria-checked="@(IsSelected(item).ToString().ToLowerInvariant())">
                     </div>
                     <div class=@ItemClass(item)>
                         <span class=@IconClass(item)></span>

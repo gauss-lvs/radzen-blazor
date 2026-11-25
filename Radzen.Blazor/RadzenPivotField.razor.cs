@@ -14,7 +14,8 @@ namespace Radzen.Blazor
     /// <typeparam name="TItem">The type of the PivotDataGrid item.</typeparam>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2087, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenPivotField<TItem> : ComponentBase, IDisposable
+    public partial class RadzenPivotField<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : ComponentBase, IDisposable
     {
         /// <summary>
         /// Gets or sets the property name.
@@ -386,14 +387,12 @@ namespace Radzen.Blazor
 
             if ((filterPropertyType == typeof(TimeOnly) || filterPropertyType == typeof(TimeOnly?)) && value is string stringValue)
             {
-                var v = TimeOnly.Parse(stringValue, CultureInfo.InvariantCulture);
-                value = filterPropertyType == typeof(TimeOnly) ? v : (TimeOnly?)v;
+                value = TimeOnly.TryParse(stringValue, CultureInfo.InvariantCulture, out var v) ? (filterPropertyType == typeof(TimeOnly) ? v : (TimeOnly?)v) : null!;
             }
 
             if ((filterPropertyType == typeof(Guid) || filterPropertyType == typeof(Guid?)) && value is string guidString)
             {
-                var v = Guid.Parse(guidString);
-                value = filterPropertyType == typeof(Guid) ? v : (Guid?)v;
+                value = Guid.TryParse(guidString, out var v) ? (filterPropertyType == typeof(Guid) ? v : (Guid?)v) : null!;
             }
 
             if (!QueryableExtension.IsEnumerable(value?.GetType() ?? typeof(object)) && (PropertyAccess.IsEnum(filterPropertyType) || PropertyAccess.IsNullableEnum(filterPropertyType)))

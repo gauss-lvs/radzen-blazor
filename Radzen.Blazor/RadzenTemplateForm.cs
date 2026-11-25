@@ -30,7 +30,8 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [CascadingTypeParameter(nameof(TItem))]
-    public class RadzenTemplateForm<TItem> : RadzenComponent, IRadzenForm
+    public class RadzenTemplateForm<
+        [System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicProperties | System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicFields)] TItem> : RadzenComponent, IRadzenForm
     {
         /// <summary>
         /// Returns the validity of the form.
@@ -177,7 +178,11 @@ namespace Radzen.Blazor
         {
             if (EditContext != null)
             {
+#if NET11_0_OR_GREATER
+                bool valid = await EditContext.ValidateAsync();
+#else
                 bool valid = EditContext.Validate();
+#endif
 
                 if (valid)
                 {

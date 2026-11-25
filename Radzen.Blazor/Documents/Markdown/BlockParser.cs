@@ -9,23 +9,43 @@ namespace Radzen.Documents.Markdown;
 
 class BlockParser
 {
+    private static readonly string whitespace = @"[ \t\n\v\f\r]";
     private static readonly string tagName = @"[A-Za-z][A-Za-z0-9-]*";
     private static readonly string attributeName = @"[a-zA-Z_:][a-zA-Z0-9:._-]*";
-    private static readonly string unquotedValue = @"[^""'=<>`\x00-\x20]+";
-    private static readonly string singleQuotedValue = @"'[^']*'";
-    private static readonly string doubleQuotedValue = @"""[^""]*""";
+    private static readonly string unquotedValue = @"(?<attributeValue>[^""'=<>`\x00-\x20]+)";
+    private static readonly string singleQuotedValue = @"'(?<attributeValue>[^']*)'";
+    private static readonly string doubleQuotedValue = @"""(?<attributeValue>[^""]*)""";
     private static readonly string attributeValue = @$"(?:{unquotedValue}|{singleQuotedValue}|{doubleQuotedValue})";
-    private static readonly string attributeValueSpec = @$"(?:\s*=\s*{attributeValue})";
-    private static readonly string attribute = @$"(?:\s+{attributeName}{attributeValueSpec}?)";
+    private static readonly string attributeValueSpec = @$"(?:{whitespace}*={whitespace}*{attributeValue}|(?<attributeValue>))";
+    private static readonly string attribute = @$"(?:{whitespace}+(?<attributeName>{attributeName}){attributeValueSpec})";
 
-    private static readonly string OpenTag = @$"<{tagName}{attribute}*\s*/?>";
-    private static readonly string CloseTag = @$"</{tagName}\s*[>]";
+    private static readonly string OpenTag = @$"<(?<openTag>{tagName}){attribute}*{whitespace}*(?<selfClosing>/)?>";
+    private static readonly string CloseTag = @$"</(?<closeTag>{tagName}){whitespace}*[>]";
     private static readonly string htmlComment = @"<!-->|<!--->|<!--[\s\S]*?-->";
     private static readonly string processingInstruction = @"<\?[ \s\S]*?\?>";
-    private static readonly string declaration = @$"<![A-Za-z]+[^>]*>";
+    private static readonly string declaration = @$"<![A-Za-z][^>]*>";
     private static readonly string cdata = @"<!\[CDATA\[[\s\S]*?\]\]>";
 
-    public static readonly Regex HtmlRegex = new(@$"^(?:{OpenTag}|{CloseTag}|{htmlComment}|{processingInstruction}|{declaration}|{cdata})");
+    public static readonly Regex HtmlRegex = new(@$"\G(?:{OpenTag}|{CloseTag}|{htmlComment}|{processingInstruction}|{declaration}|{cdata})");
+
+    internal readonly struct HtmlTerminators(string text)
+    {
+        private readonly int tag = text.AsSpan().LastIndexOf('>');
+        private readonly int comment = text.LastIndexOf("-->", StringComparison.Ordinal);
+        private readonly int processingInstruction = text.LastIndexOf("?>", StringComparison.Ordinal);
+        private readonly int cdata = text.LastIndexOf("]]>", StringComparison.Ordinal);
+
+        public Match Match(int index)
+        {
+            var rest = text.AsSpan(index);
+            var terminated = rest.StartsWith("<!--") ? comment >= index + 2
+                : rest.StartsWith("<?") ? processingInstruction >= index + 2
+                : rest.StartsWith("<![CDATA[") ? cdata >= index + 9
+                : rest.StartsWith("<") && tag > index;
+
+            return terminated ? HtmlRegex.Match(text, index) : System.Text.RegularExpressions.Match.Empty;
+        }
+    }
 
     private BlockParser()
     {
@@ -114,9 +134,20 @@ class BlockParser
 
         var lines = NewLineRegex.Split(markdown);
 
+        lineStarts = new int[lines.Length + 1];
+
+        var lineIndex = 1;
+
+        foreach (Match match in NewLineRegex.Matches(markdown))
+        {
+            lineStarts[lineIndex++] = match.Index + match.Length;
+        }
+
+        lineStarts[lines.Length] = markdown.Length;
+
         var length = lines.Length;
 
-        if (markdown.EndsWith(InlineParser.LineFeed))
+        if (markdown.EndsWith(InlineParser.LineFeed, StringComparison.Ordinal))
         {
             length--;
         }
@@ -255,11 +286,21 @@ class BlockParser
 
     public int LastLineLength { get; set; }
 
+    private int[] lineStarts = [0];
+
+    public int OffsetAt(int line, int column) => lineStarts[Math.Clamp(line - 1, 0, lineStarts.Length - 1)] + column;
+
+    public int SourceOffset => OffsetAt(LineNumber, Offset);
+
+    public int LineEnd => OffsetAt(LineNumber, CurrentLine.Length);
+
+    public int NextLineStart => lineStarts[Math.Min(LineNumber, lineStarts.Length - 1)];
+
     public void Close(Block block, int lineNumber)
     {
         var above = block.Parent;
         block.Range.End.Line = lineNumber;
-        block.Range.End.Column = LastLineLength;
+        block.SourceEnd = Math.Max(block.SourceStart, OffsetAt(lineNumber, LastLineLength));
         block.Close(this);
         Tip = above;
     }
@@ -289,6 +330,7 @@ class BlockParser
 
         node.Range.Start.Line = LineNumber;
         node.Range.Start.Column = columnNumber;
+        node.SourceStart = OffsetAt(LineNumber, offset);
 
         Tip = node;
     }
@@ -387,6 +429,8 @@ class BlockParser
 
     private readonly Dictionary<string, LinkReference> linkReferences = [];
 
+    internal void RecordLinkReferenceDefinition(string text) => document.LinkReferenceDefinitions.Add(text.TrimEnd('\n'));
+
     // https://spec.commonmark.org/0.31.2/#html-blocks
     internal static readonly Regex[] HtmlBlockOpenRegex = [
         new (@"."), // dummy for 1 based indexing
@@ -396,7 +440,7 @@ class BlockParser
         new (@"^<![A-Za-z]"),
         new (@"^<!\[CDATA\["),
         new (@"^<[/]?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|frame|frameset|h[123456]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|nav|noframes|ol|optgroup|option|p|param|section|search|summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul)(?:\s|[/]?[>]|$)", RegexOptions.IgnoreCase | RegexOptions.Compiled),
-        new (@$"^(?:{OpenTag}|{CloseTag})\s*$", RegexOptions.IgnoreCase)
+        new (@$"^(?:{OpenTag}|{CloseTag}){whitespace}*$", RegexOptions.IgnoreCase)
     ];
 
     private static readonly Regex[] HtmlBlockCloseRegex = [
@@ -457,7 +501,7 @@ class BlockParser
         {
             var next = index < closeIndex - 1 ? markdown[index + 1] : default;
 
-            if (markdown[index] is not InlineParser.Backslash || !next.IsPunctuation())
+            if (markdown[index] is not InlineParser.Backslash || !next.IsEscapable())
             {
                 id.Append(markdown[index]);
             }

@@ -16,7 +16,8 @@ namespace Radzen.Blazor
     /// </summary>
     /// <typeparam name="TItem">The type of data item.</typeparam>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenSankeyDiagram<TItem> : RadzenComponent
+    public partial class RadzenSankeyDiagram<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : RadzenComponent
     {
         /// <summary>
         /// Gets or sets the tooltip service.
@@ -185,9 +186,13 @@ namespace Radzen.Blazor
             return $"rz-sankey-diagram rz-scheme-{colorScheme}";
         }
 
+        private bool visibleChanged;
+
         /// <inheritdoc />
         public override async Task SetParametersAsync(ParameterView parameters)
         {
+            visibleChanged = parameters.DidParameterChange(nameof(Visible), Visible);
+
             bool shouldUpdate = false;
 
             if (parameters.DidParameterChange(nameof(SourceProperty), SourceProperty))
@@ -320,11 +325,13 @@ namespace Radzen.Blazor
                 return;
             }
 
-            if ((firstRender || !Width.HasValue || !Height.HasValue) && JSRuntime != null)
+            if ((firstRender || visibleChanged || !Width.HasValue || !Height.HasValue) && JSRuntime != null)
             {
+                visibleChanged = false;
+
                 var rect = await JSRuntime.InvokeAsync<Rect>("Radzen.createResizable", Element, Reference);
 
-                if (!Width.HasValue && rect.Width > 0)
+                if (rect.Width > 0)
                 {
                     Width = rect.Width;
                 }
@@ -334,7 +341,7 @@ namespace Radzen.Blazor
                     Width = 800;
                 }
 
-                if (!Height.HasValue && rect.Height > 0)
+                if (rect.Height > 0)
                 {
                     Height = rect.Height;
                 }
@@ -660,6 +667,17 @@ namespace Radzen.Blazor
         // Track current tooltip to prevent flickering
         private ComputedSankeyNode? currentTooltipNode;
         private ComputedSankeyLink? currentTooltipLink;
+
+        /// <inheritdoc />
+        protected override void OnBecameInvisible()
+        {
+            base.OnBecameInvisible();
+
+            if (IsJSRuntimeAvailable && JSRuntime != null)
+            {
+                JSRuntime.InvokeVoid("Radzen.disposeElement", Element);
+            }
+        }
 
         /// <inheritdoc />
         public override void Dispose()

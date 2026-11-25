@@ -35,7 +35,7 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenContourSeries<TItem> : CartesianSeries<TItem>
+    public partial class RadzenContourSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>
     {
         /// <summary>
         /// The name of the numeric property of <typeparamref name="TItem"/> that provides the scalar field
@@ -103,7 +103,7 @@ namespace Radzen.Blazor
                     return _ => 0;
                 }
 
-                return PropertyAccess.Getter<TItem, double>(IntensityProperty);
+                return NumericGetter(IntensityProperty);
             }
         }
 
@@ -115,7 +115,7 @@ namespace Radzen.Blazor
         internal (double[] xs, double[] ys, double[,] grid) BuildGrid(ScaleBase categoryScale)
         {
             var categoryGetter = Category(categoryScale);
-            var pairs = Items.Select(item => (X: categoryGetter(item), Y: Value(item), V: Intensity(item))).ToList();
+            var pairs = Items.Select(item => (X: categoryGetter(item), Y: Value(item), V: Intensity(item))).Where(p => !IsEmpty(p.X, p.Y)).ToList();
 
             var xs = pairs.Select(p => p.X).Distinct().OrderBy(v => v).ToArray();
             var ys = pairs.Select(p => p.Y).Distinct().OrderBy(v => v).ToArray();
@@ -285,7 +285,7 @@ namespace Radzen.Blazor
 
         internal void RenderBands(RenderTreeBuilder builder, ref int sequence, ScaleBase categoryScale, ScaleBase valueScale)
         {
-            if (ColorRange == null || ColorRange.Count == 0 || !Items.Any())
+            if (ColorRange == null || ColorRange.Count == 0 || Items.Count == 0)
             {
                 return;
             }
@@ -350,7 +350,7 @@ namespace Radzen.Blazor
 
         internal void RenderIsoLines(RenderTreeBuilder builder, ref int sequence, ScaleBase categoryScale, ScaleBase valueScale)
         {
-            if (!ShowLines || !Items.Any())
+            if (!ShowLines || Items.Count == 0)
             {
                 return;
             }
@@ -446,6 +446,7 @@ namespace Radzen.Blazor
                     builder.AddAttribute(seq++, nameof(Rendering.LegendItem.MarkerSize), MarkerSize);
                     builder.AddAttribute(seq++, nameof(Rendering.LegendItem.Text), FormatRangeLabel(range));
                     builder.AddAttribute(seq++, nameof(Rendering.LegendItem.Clickable), false);
+                    builder.AddAttribute(seq++, nameof(Rendering.LegendItem.ChildContent), RenderLegendItemContent(clickable, FormatRangeLabel(range), range, range.Color));
                     builder.CloseComponent();
                 }
             };
@@ -462,7 +463,7 @@ namespace Radzen.Blazor
         public override bool Contains(double x, double y, double tolerance)
         {
             var chart = Chart;
-            if (chart == null || !Items.Any())
+            if (chart == null || Items.Count == 0)
             {
                 return false;
             }
@@ -482,7 +483,7 @@ namespace Radzen.Blazor
         public override (object, Point) DataAt(double x, double y)
         {
             var chart = Chart;
-            if (chart == null || !Items.Any())
+            if (chart == null || Items.Count == 0)
             {
                 return (default!, new Point());
             }
@@ -497,7 +498,12 @@ namespace Radzen.Blazor
                 var dx = px - x;
                 var dy = py - y;
                 return new { Item = item, Distance = Math.Sqrt(dx * dx + dy * dy), Point = new Point { X = px, Y = py } };
-            }).Aggregate((a, b) => a.Distance < b.Distance ? a : b);
+            }).Where(candidate => !IsEmpty(candidate.Distance, Intensity(candidate.Item))).MinBy(candidate => candidate.Distance);
+
+            if (result == null)
+            {
+                return (default!, new Point());
+            }
 
             return (result.Item!, result.Point);
         }

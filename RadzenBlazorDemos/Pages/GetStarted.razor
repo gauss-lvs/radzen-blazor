@@ -1,11 +1,11 @@
 @inject NavigationManager NavigationManager
 @page "/get-started/{version?}"
-<PageTitle>Get Started | Free UI Components by Radzen</PageTitle>
+<PageTitle>Get Started | Free Radzen Blazor</PageTitle>
 <HeadContent>
     <meta name="description" content="How to get started with the Radzen Blazor Component library.">
 </HeadContent>
 <RadzenText TextStyle="TextStyle.H2" TagName="TagName.H1" class="rz-pt-8 rz-mb-2">
-    Get started
+    Get started with Radzen Blazor Components
 </RadzenText>
 <RadzenText class="rz-mb-12">
     Radzen Blazor Components are free and open source. <RadzenLink Path="https://github.com/radzenhq/radzen-blazor" Text="Star the GitHub repo" title="Star Radzen Blazor Components on GitHub" target="_blank" /> &#11088; to support the project and help other Blazor developers discover it.
@@ -13,7 +13,7 @@
 
 <RadzenTabs SelectedIndex=@selectedIndex Change="@OnTabChange">
     <Tabs>
-        <RadzenTabsItem Text=".NET 10 &amp; 9 &amp; 8">
+        <RadzenTabsItem Text=".NET 11 &amp; 10 &amp; 9">
             <div class="rz-py-0 rz-py-sm-4 rz-px-0 rz-px-sm-2 rz-px-lg-12">
             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" AllowClose="false" class="rz-mb-12">
 All interactive features of the Radzen Blazor components require interactivity of the container <code>.razor</code> file to be enabled or the <code>@@rendermode</code>

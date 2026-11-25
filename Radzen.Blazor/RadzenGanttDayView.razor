@@ -9,9 +9,10 @@
 
     public override string Icon => "calendar_view_day";
 
-    [Parameter]
-    public override string Text { get => text ?? Localize(nameof(RadzenStrings.GanttDayView_Text)); set => text = value; }
     private string? text;
+
+    [Parameter]
+    public override string Text { get => text ?? Localize(nameof(RadzenStrings.Gantt_DayViewText)); set => text = value; }
 
     public override string Title
     {
@@ -46,7 +47,8 @@
     {
         var appointments = Scheduler?.GetAppointmentsInRange(StartDate, EndDate).ToList() ?? new List<AppointmentData>();
         var culture = Scheduler?.Culture ?? CultureInfo.CurrentCulture;
-        var columns = BuildHourColumns(StartDate, EndDate, Gantt?.DayWidthPx ?? 80, culture);
+        var dateFormat = GanttHeaderDateFormat.Resolve(Gantt?.HeaderDateFormat, culture);
+        var columns = BuildHourColumns(StartDate, EndDate, Gantt?.DayWidthPx ?? 80, culture, dateFormat);
         var timelineWidth = columns.Sum(c => c.WidthPx);
 
         Gantt?.ComputeCriticalPath(appointments, Gantt?.TimelineRowIndexByItem);
@@ -69,16 +71,18 @@
                                NonWorkingDays=@(Gantt?.TimelineNonWorkingDays)
                                Markers=@(Gantt?.TimelineMarkers)
                                TaskRender=@(Gantt?.TimelineTaskRender)
+                               LaneByItem=@(Gantt?.LaneByItem)
+                               LaneCountByRow=@(Gantt?.LaneCountByRow)
                                AppointmentMove=OnAppointmentMove />
         </CascadingValue>;
     }
 
-    private static IReadOnlyList<GanttTimelineView<TItem>.GanttTimelineColumn> BuildHourColumns(DateTime start, DateTime end, int hourWidth, CultureInfo culture)
+    internal static IReadOnlyList<GanttTimelineView<TItem>.GanttTimelineColumn> BuildHourColumns(DateTime start, DateTime end, int hourWidth, CultureInfo culture, string dateFormat)
     {
         var columns = new List<GanttTimelineView<TItem>.GanttTimelineColumn>();
         for (var d = start.Date; d < end.Date; d = d.AddDays(1))
         {
-            var dayLabel = d.ToString("ddd M/d", culture);
+            var dayLabel = $"{d.ToString("ddd", culture)} {d.ToString(dateFormat, culture)}";
             for (var h = 0; h < 24; h++)
             {
                 var hourStart = d.AddHours(h);

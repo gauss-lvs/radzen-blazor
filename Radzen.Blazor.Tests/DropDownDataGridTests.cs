@@ -1,4 +1,4 @@
-using Bunit;
+﻿using Bunit;
 using Xunit;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +13,28 @@ namespace Radzen.Blazor.Tests
             public string CompanyName { get; set; }
             public string ContactName { get; set; }
         }
+
+        [Fact]
+        public void DropDownDataGrid_Ignores_Row_Click_After_Disabling()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var value = "Apple";
+            var component = ctx.RenderComponent<RadzenDropDownDataGrid<string>>(parameters => parameters
+                .Add(p => p.Data, new[] { new DisabledPopupChoice("Apple"), new DisabledPopupChoice("Orange") })
+                .Add(p => p.TextProperty, nameof(DisabledPopupChoice.Name))
+                .Add(p => p.ValueProperty, nameof(DisabledPopupChoice.Name))
+                .Add(p => p.Value, value)
+                .Add(p => p.ValueChanged, (string selected) => { value = selected; }));
+
+            component.Find("[role=combobox]").Click();
+            component.SetParametersAndRender(parameters => parameters.Add(p => p.Disabled, true));
+            component.FindAll("tbody tr").Single(row => row.TextContent.Trim() == "Orange").Click();
+
+            Assert.Equal("Apple", value);
+        }
+
+        public record DisabledPopupChoice(string Name);
 
         [Fact]
         public void DropDownDataGrid_Renders_WithClassName()
@@ -780,6 +802,81 @@ namespace Radzen.Blazor.Tests
 
             Assert.NotEmpty(buttons);
             Assert.All(buttons, b => Assert.Equal(component.Instance.RemoveChipTitle, b.GetAttribute("aria-label")));
+        }
+    
+
+        [Fact]
+        public void DropDownDataGrid_WithName_LinksLabelOnClient()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            ctx.RenderComponent<RadzenDropDownDataGrid<string>>(parameters => parameters
+                .Add(p => p.Name, "colour")
+                .Add(p => p.Data, new[] { "Red", "Green" }));
+
+            var invocation = ctx.JSInterop.VerifyInvoke("Radzen.linkLabel");
+
+            Assert.Equal("colour", invocation.Arguments[1]);
+        }
+
+        [Fact]
+        public void DropDownDataGrid_Backspace_ClearsValue_WhenAllowClear()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var data = new List<Customer>
+            {
+                new Customer { Id = 1, CompanyName = "Acme Corp" },
+                new Customer { Id = 2, CompanyName = "Tech Inc" }
+            };
+
+            var value = 1;
+            var component = ctx.RenderComponent<RadzenDropDownDataGrid<int>>(parameters =>
+            {
+                parameters.Add(p => p.Data, data);
+                parameters.Add(p => p.TextProperty, "CompanyName");
+                parameters.Add(p => p.ValueProperty, "Id");
+                parameters.Add(p => p.AllowClear, true);
+                parameters.Add(p => p.Value, value);
+                parameters.Add(p => p.ValueChanged, v => value = v);
+            });
+
+            component.Find("div.rz-dropdown").KeyDown(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Backspace", Code = "Backspace" });
+
+            Assert.Equal(0, value);
+        }
+
+        class FilterKeyPressDropDownDataGrid<T> : RadzenDropDownDataGrid<T>
+        {
+            public System.Threading.Tasks.Task FilterKeyPress(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs args) => OnFilterKeyPress(args);
+        }
+
+        [Fact]
+        public async System.Threading.Tasks.Task DropDownDataGrid_Backspace_InFilterInput_DoesNotClearValue()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var data = new List<Customer>
+            {
+                new Customer { Id = 1, CompanyName = "Acme Corp" },
+                new Customer { Id = 2, CompanyName = "Tech Inc" }
+            };
+
+            var value = 1;
+            var component = ctx.RenderComponent<FilterKeyPressDropDownDataGrid<int>>(parameters =>
+            {
+                parameters.Add(p => p.Data, data);
+                parameters.Add(p => p.TextProperty, "CompanyName");
+                parameters.Add(p => p.ValueProperty, "Id");
+                parameters.Add(p => p.AllowClear, true);
+                parameters.Add(p => p.AllowFiltering, true);
+                parameters.Add(p => p.Value, value);
+                parameters.Add(p => p.ValueChanged, v => value = v);
+            });
+
+            await component.InvokeAsync(() => component.Instance.FilterKeyPress(new Microsoft.AspNetCore.Components.Web.KeyboardEventArgs { Key = "Backspace", Code = "Backspace" }));
+
+            Assert.Equal(1, value);
         }
     }
 }

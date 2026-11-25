@@ -42,7 +42,8 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenCheckBoxList<TValue> : FormComponent<IEnumerable<TValue>>, IRadzenCheckBoxList
+    public partial class RadzenCheckBoxList<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TValue> : FormComponent<IEnumerable<TValue>>, IRadzenCheckBoxList
     {
         string ItemClass(IRadzenCheckBoxListItem item) => ClassList.Create("rz-chkbox-box")
                                                                           .Add("rz-state-active", IsSelected(item))
@@ -185,8 +186,6 @@ namespace Radzen.Blazor
             await ValueChanged.InvokeAsync(Value);
             if (FieldIdentifier.FieldName != null) { EditContext?.NotifyFieldChanged(FieldIdentifier); }
             await Change.InvokeAsync(Value);
-
-            StateHasChanged();
         }
 
         bool? IsAllSelected()

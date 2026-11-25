@@ -247,6 +247,7 @@ namespace Radzen
 
             options.Title = title;
             currentSideDialogOptions = options;
+            options.Localizer = Localizer;
             OnSideOpen?.Invoke(typeof(T), parameters ?? new Dictionary<string, object?>(), options);
             return sideDialogResultTask.Task;
         }
@@ -260,7 +261,7 @@ namespace Radzen
         /// <param name="options">The side dialog options.</param>
         /// <returns>A task that represents the result passed as an argument to <see cref="CloseSide"/>.</returns>
         /// <exception cref="ArgumentException">Thrown if <paramref name="componentType"/> does not implement <see cref="IComponent"/>.</exception>
-        public Task<dynamic?> OpenSideAsync(string title, Type componentType, Dictionary<string, object?>? parameters = null, SideDialogOptions? options = null)
+        public Task<dynamic?> OpenSideAsync(string title, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type componentType, Dictionary<string, object?>? parameters = null, SideDialogOptions? options = null)
         {
             if (!typeof(IComponent).IsAssignableFrom(componentType))
             {
@@ -277,6 +278,7 @@ namespace Radzen
 
             options.Title = title;
             currentSideDialogOptions = options;
+            options.Localizer = Localizer;
             OnSideOpen?.Invoke(componentType, parameters ?? new Dictionary<string, object?>(), options);
 
             return sideDialogResultTask.Task;
@@ -302,6 +304,7 @@ namespace Radzen
 
             options.Title = title;
             currentSideDialogOptions = options;
+            options.Localizer = Localizer;
             OnSideOpen?.Invoke(typeof(T), parameters ?? new Dictionary<string, object?>(), options);
         }
 
@@ -313,7 +316,7 @@ namespace Radzen
         /// <param name="parameters">The dialog parameters, passed as property values of the specified component.</param>
         /// <param name="options">The side dialog options.</param>
         /// <exception cref="ArgumentException">Thrown if <paramref name="componentType"/> does not implement <see cref="IComponent"/>.</exception>
-        public void OpenSide(string title, Type componentType, Dictionary<string, object?>? parameters = null, SideDialogOptions? options = null)
+        public void OpenSide(string title, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.All)] Type componentType, Dictionary<string, object?>? parameters = null, SideDialogOptions? options = null)
         {
             if (!typeof(IComponent).IsAssignableFrom(componentType))
             {
@@ -329,6 +332,7 @@ namespace Radzen
 
             options.Title = title;
             currentSideDialogOptions = options;
+            options.Localizer = Localizer;
             OnSideOpen?.Invoke(componentType, parameters ?? new Dictionary<string, object?>(), options);
         }
 
@@ -1174,6 +1178,8 @@ namespace Radzen
             }
         }
 
+        internal Localizer? Localizer { get; set; }
+
         private string? resizeBarTitle;
         internal string? ResizeBarTitleValue => resizeBarTitle;
 
@@ -1182,7 +1188,7 @@ namespace Radzen
         /// </summary>
         public string ResizeBarTitle
         {
-            get => resizeBarTitle ?? Localizer.Default.Get(nameof(Blazor.RadzenStrings.Dialog_ResizeBarTitle), System.Globalization.CultureInfo.CurrentUICulture);
+            get => resizeBarTitle ?? (Localizer ?? Radzen.Localizer.Default).Get(nameof(Blazor.RadzenStrings.Dialog_ResizeBarTitle), System.Globalization.CultureInfo.CurrentUICulture);
             set
             {
                 if (value == resizeBarTitle)
@@ -1203,7 +1209,7 @@ namespace Radzen
         /// </summary>
         public string ResizeBarAriaLabel
         {
-            get => resizeBarAriaLabel ?? Localizer.Default.Get(nameof(Blazor.RadzenStrings.Dialog_ResizeBarAriaLabel), System.Globalization.CultureInfo.CurrentUICulture);
+            get => resizeBarAriaLabel ?? (Localizer ?? Radzen.Localizer.Default).Get(nameof(Blazor.RadzenStrings.Dialog_ResizeBarAriaLabel), System.Globalization.CultureInfo.CurrentUICulture);
             set
             {
                 if (value == resizeBarAriaLabel)

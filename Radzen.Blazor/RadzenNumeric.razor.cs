@@ -123,7 +123,8 @@ namespace Radzen.Blazor
                     var maxArg = Max.HasValue ? (object)Max.Value.ToString(CultureInfo.InvariantCulture) : null;
                     var created = await JSRuntime.InvokeAsync<IJSObjectReference>(
                         "Radzen.createNumeric", Element, IsInteger(),
-                        Culture.NumberFormat.NumberDecimalSeparator, minArg, maxArg, IsNullable);
+                        Culture.NumberFormat.NumberDecimalSeparator, minArg, maxArg, IsNullable,
+                        Culture.NumberFormat.NumberGroupSeparator);
 
                     if (version == _jsRefVersion)
                     {
@@ -452,23 +453,32 @@ namespace Radzen.Blazor
 
         /// <summary>
         /// Gets the value exposed via the <c>aria-invalid</c> attribute of the spinbutton input.
-        /// Returns <c>"true"</c> when the current value is outside the configured <see cref="Min" />/<see cref="Max" /> range,
-        /// or <c>null</c> when the value is within range or <see cref="Min" />/<see cref="Max" /> are not set.
+        /// Returns <c>"true"</c> when the current value is outside the configured <see cref="Min" />/<see cref="Max" /> range
+        /// or the field has validation messages in the <see cref="FormComponent{T}.EditContext" />,
+        /// otherwise the <c>aria-invalid</c> value supplied through <see cref="InputAttributes" />, or <c>null</c> when there is none.
         /// </summary>
         protected string? AriaInvalid
         {
             get
             {
-                if (_value == null || (Min == null && Max == null))
+                if (_value != null && (Min != null || Max != null))
                 {
-                    return null;
+                    var current = ConvertToDecimal(_value);
+
+                    if (Min != null && current < Min.Value || Max != null && current > Max.Value)
+                    {
+                        return "true";
+                    }
                 }
 
-                var current = ConvertToDecimal(_value);
-
-                if (Min != null && current < Min.Value || Max != null && current > Max.Value)
+                if (ValidationAriaInvalid != null)
                 {
                     return "true";
+                }
+
+                if (InputAttributes != null && InputAttributes.TryGetValue("aria-invalid", out var inputAriaInvalid))
+                {
+                    return inputAriaInvalid?.ToString();
                 }
 
                 return null;
@@ -624,7 +634,7 @@ namespace Radzen.Blazor
 
                 if (ch == '\'' || ch == '"')
                 {
-                    var close = format.IndexOf(ch, i + 1);
+                    var close = format.IndexOf(ch, i + 1, StringComparison.Ordinal);
                     if (close < 0)
                     {
                         close = format.Length;
@@ -928,8 +938,10 @@ namespace Radzen.Blazor
 
         /// <summary>
         /// Gets the accessible name applied to the spinbutton input. Returns <c>null</c> when the consumer has already
-        /// supplied an <c>aria-label</c> or <c>aria-labelledby</c> attribute via <see cref="RadzenComponent.Attributes" /> or
-        /// <see cref="InputAttributes" />, so a consumer-supplied accessible name is never overridden.
+        /// supplied an <c>aria-label</c> or <c>aria-labelledby</c> attribute via <see cref="RadzenComponent.Attributes" />, so a
+        /// consumer-supplied accessible name is never overridden. When <see cref="InputAttributes" /> carries an <c>aria-label</c>
+        /// that value is returned, because the markup sets <c>aria-label</c> after splatting <see cref="InputAttributes" /> and
+        /// Blazor keeps the last duplicate attribute; returning <c>null</c> there would remove the consumer's label.
         /// </summary>
         protected string? InputAriaLabel
         {
@@ -940,14 +952,30 @@ namespace Radzen.Blazor
                     return null;
                 }
 
-                if (InputAttributes != null && (InputAttributes.ContainsKey("aria-label") || InputAttributes.ContainsKey("aria-labelledby")))
+                if (InputAttributes != null)
                 {
-                    return null;
+                    if (InputAttributes.TryGetValue("aria-label", out var inputAriaLabel))
+                    {
+                        return inputAriaLabel?.ToString();
+                    }
+
+                    if (InputAttributes.ContainsKey("aria-labelledby"))
+                    {
+                        return null;
+                    }
                 }
 
-                return !string.IsNullOrEmpty(AriaLabel) ? AriaLabel : Name;
+                return !string.IsNullOrEmpty(AriaLabel) ? AriaLabel : FormFieldContext != null ? null : Name;
             }
         }
+
+        /// <summary>
+        /// Gets the id of the input element: <see cref="FormComponent{T}.Name"/> when set, otherwise an id derived from the component id.
+        /// </summary>
+        protected string InputId => Name ?? $"{GetId()}-input";
+
+        /// <inheritdoc />
+        protected override string? LabelTargetId => InputId;
 
         private string? upAriaLabel;
 

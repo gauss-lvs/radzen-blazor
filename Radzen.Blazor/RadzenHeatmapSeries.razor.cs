@@ -30,7 +30,7 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenHeatmapSeries<TItem> : CartesianSeries<TItem>
+    public partial class RadzenHeatmapSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>
     {
         /// <summary>
         /// The name of the numeric property of <typeparamref name="TItem"/> that provides the cell intensity
@@ -98,7 +98,7 @@ namespace Radzen.Blazor
                     return _ => 0;
                 }
 
-                return PropertyAccess.Getter<TItem, double>(IntensityProperty);
+                return NumericGetter(IntensityProperty);
             }
         }
 
@@ -125,7 +125,7 @@ namespace Radzen.Blazor
 
         private static double InferStep(IEnumerable<double> values)
         {
-            var distinct = values.Distinct().OrderBy(v => v).ToList();
+            var distinct = values.Where(v => !double.IsNaN(v)).Distinct().OrderBy(v => v).ToList();
             if (distinct.Count < 2)
             {
                 return 1;
@@ -178,7 +178,7 @@ namespace Radzen.Blazor
         public override bool Contains(double x, double y, double tolerance)
         {
             var chart = Chart;
-            if (chart == null || !Items.Any())
+            if (chart == null || Items.Count == 0)
             {
                 return false;
             }
@@ -203,7 +203,7 @@ namespace Radzen.Blazor
         public override (object, Point) DataAt(double x, double y)
         {
             var chart = Chart;
-            if (chart == null || !Items.Any())
+            if (chart == null || Items.Count == 0)
             {
                 return (default!, new Point());
             }
@@ -218,7 +218,12 @@ namespace Radzen.Blazor
                 var dx = cx - x;
                 var dy = cy - y;
                 return new { Item = item, Distance = Math.Sqrt(dx * dx + dy * dy), Point = new Point { X = cx, Y = cy } };
-            }).Aggregate((a, b) => a.Distance < b.Distance ? a : b);
+            }).Where(candidate => !IsEmpty(candidate.Distance, Intensity(candidate.Item))).MinBy(candidate => candidate.Distance);
+
+            if (result == null)
+            {
+                return (default!, new Point());
+            }
 
             return (result.Item!, result.Point);
         }
@@ -247,6 +252,7 @@ namespace Radzen.Blazor
                     builder.AddAttribute(seq++, nameof(Rendering.LegendItem.MarkerSize), MarkerSize);
                     builder.AddAttribute(seq++, nameof(Rendering.LegendItem.Text), FormatRangeLabel(range));
                     builder.AddAttribute(seq++, nameof(Rendering.LegendItem.Clickable), false);
+                    builder.AddAttribute(seq++, nameof(Rendering.LegendItem.ChildContent), RenderLegendItemContent(clickable, FormatRangeLabel(range), range, range.Color));
                     builder.CloseComponent();
                 }
             };

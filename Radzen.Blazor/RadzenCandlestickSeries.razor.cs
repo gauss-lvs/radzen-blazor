@@ -26,7 +26,7 @@ namespace Radzen.Blazor
     /// </code>
     /// </example>
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
-    public partial class RadzenCandlestickSeries<TItem> : CartesianSeries<TItem>
+    public partial class RadzenCandlestickSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>
     {
         /// <summary>
         /// Gets or sets the name of the property of <typeparamref name="TItem"/> that provides the Open value.
@@ -122,7 +122,7 @@ namespace Radzen.Blazor
                     throw new ArgumentException("OpenProperty should not be empty");
                 }
 
-                return PropertyAccess.Getter<TItem, double>(OpenProperty);
+                return NumericGetter(OpenProperty);
             }
         }
 
@@ -135,7 +135,7 @@ namespace Radzen.Blazor
                     throw new ArgumentException("HighProperty should not be empty");
                 }
 
-                return PropertyAccess.Getter<TItem, double>(HighProperty);
+                return NumericGetter(HighProperty);
             }
         }
 
@@ -148,7 +148,7 @@ namespace Radzen.Blazor
                     throw new ArgumentException("LowProperty should not be empty");
                 }
 
-                return PropertyAccess.Getter<TItem, double>(LowProperty);
+                return NumericGetter(LowProperty);
             }
         }
 
@@ -161,7 +161,7 @@ namespace Radzen.Blazor
                     throw new ArgumentException("CloseProperty should not be empty");
                 }
 
-                return PropertyAccess.Getter<TItem, double>(CloseProperty);
+                return NumericGetter(CloseProperty);
             }
         }
 
@@ -170,16 +170,12 @@ namespace Radzen.Blazor
         {
             ArgumentNullException.ThrowIfNull(scale);
 
-            if (Items != null && Items.Any())
+            if (Items != null && Items.Count > 0)
             {
-                var high = High;
-                var low = Low;
-
-                var minValue = Items.Min(item => low(item));
-                var maxValue = Items.Max(item => high(item));
-
-                scale.Input.MergeWidth(new ScaleRange { Start = minValue, End = maxValue });
+                MergeValues(scale, Low, High);
             }
+
+            IncludeZeroInValueScale(scale, false);
 
             return scale;
         }
@@ -288,7 +284,7 @@ namespace Radzen.Blazor
         public override (object, Point) DataAt(double x, double y)
         {
             var chart = Chart;
-            if (chart == null || !Items.Any())
+            if (chart == null || Items.Count == 0)
             {
                 return (default!, new Point());
             }

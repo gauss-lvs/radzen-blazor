@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Bunit;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Newtonsoft.Json.Linq;
 using Xunit;
@@ -786,7 +787,7 @@ namespace Radzen.Blazor.Tests
             component.Find("input").Change("10.55");
 
             Assert.NotNull(newValue);
-            Assert.Equal(10.55f, (float)newValue, 2);
+            Assert.Equal(10.55f, (float)newValue, precision: 2);
         }
 
         [Fact]
@@ -811,7 +812,7 @@ namespace Radzen.Blazor.Tests
             component.Find("input").Change("10,55");
 
             Assert.NotNull(newValue);
-            Assert.Equal(10.55f, (float)newValue, 2);
+            Assert.Equal(10.55f, (float)newValue, precision: 2);
         }
 
         [Fact]
@@ -1072,6 +1073,140 @@ namespace Radzen.Blazor.Tests
             component.Find("input").KeyDown(new KeyboardEventArgs { Key = "Home", Code = "Home" });
 
             Assert.Equal(50, component.Instance.Value);
+        }
+    
+
+        [Fact]
+        public void Numeric_Keeps_AriaLabel_From_InputAttributes()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenNumeric<int>>(parameters => parameters
+                .Add(p => p.InputAttributes, new Dictionary<string, object> { ["aria-label"] = "Hops" }));
+
+            var input = component.Find("input[role=spinbutton]");
+
+            Assert.Equal("Hops", input.GetAttribute("aria-label"));
+        }
+
+        [Fact]
+        public void Numeric_Keeps_AriaInvalid_From_InputAttributes()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenNumeric<decimal>>(parameters => parameters
+                .Add(p => p.InputAttributes, new Dictionary<string, object> { ["aria-invalid"] = "true" }));
+
+            var input = component.Find("input[role=spinbutton]");
+
+            Assert.Equal("true", input.GetAttribute("aria-invalid"));
+        }
+
+        [Fact]
+        public void Numeric_Out_Of_Range_AriaInvalid_Wins_Over_InputAttributes()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenNumeric<decimal>>(parameters => parameters
+                .Add(p => p.Value, 200m)
+                .Add(p => p.Max, 100m)
+                .Add(p => p.InputAttributes, new Dictionary<string, object> { ["aria-invalid"] = "false" }));
+
+            var input = component.Find("input[role=spinbutton]");
+
+            Assert.Equal("true", input.GetAttribute("aria-invalid"));
+        }
+
+        class AriaInvalidModel
+        {
+            public decimal Amount { get; set; }
+        }
+
+        [Fact]
+        public void Numeric_AriaInvalid_Follows_EditContext_Validation_State()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var model = new AriaInvalidModel();
+            var editContext = new EditContext(model);
+            var messages = new ValidationMessageStore(editContext);
+
+            var component = ctx.RenderComponent<RadzenNumeric<decimal>>(parameters => parameters
+                .AddCascadingValue(editContext)
+                .Add(p => p.Value, model.Amount)
+                .Add(p => p.ValueExpression, () => model.Amount));
+
+            Assert.False(component.Find("input[role=spinbutton]").HasAttribute("aria-invalid"));
+
+            component.InvokeAsync(() =>
+            {
+                messages.Add(editContext.Field(nameof(AriaInvalidModel.Amount)), "Amount is invalid");
+                editContext.NotifyValidationStateChanged();
+            });
+
+            Assert.Equal("true", component.Find("input[role=spinbutton]").GetAttribute("aria-invalid"));
+
+            component.InvokeAsync(() =>
+            {
+                messages.Clear();
+                editContext.NotifyValidationStateChanged();
+            });
+
+            Assert.False(component.Find("input[role=spinbutton]").HasAttribute("aria-invalid"));
+        }
+
+        [Fact]
+        public void Numeric_InputAttributes_AriaLabel_Wins_Over_AriaLabel_Parameter()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenNumeric<int>>(parameters => parameters
+                .Add(p => p.AriaLabel, "Ignored")
+                .Add(p => p.InputAttributes, new Dictionary<string, object> { ["aria-label"] = "Hops" }));
+
+            var input = component.Find("input[role=spinbutton]");
+
+            Assert.Equal("Hops", input.GetAttribute("aria-label"));
+        }
+
+        [Fact]
+        public void Numeric_Keeps_AriaLabelledBy_From_InputAttributes_Without_AriaLabel()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var component = ctx.RenderComponent<RadzenNumeric<int>>(parameters => parameters
+                .Add(p => p.Name, "hops")
+                .Add(p => p.InputAttributes, new Dictionary<string, object> { ["aria-labelledby"] = "hops-label" }));
+
+            var input = component.Find("input[role=spinbutton]");
+
+            Assert.Equal("hops-label", input.GetAttribute("aria-labelledby"));
+            Assert.False(input.HasAttribute("aria-label"));
+        }
+
+        [Fact]
+        public void Numeric_Passes_Culture_Separators_To_Js()
+        {
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+
+            var culture = System.Globalization.CultureInfo.GetCultureInfo("de-DE");
+
+            ctx.RenderComponent<RadzenNumeric<decimal>>(parameters => parameters
+                .Add(p => p.Min, 0)
+                .Add(p => p.Max, 100)
+                .Add(p => p.Culture, culture));
+
+            var invocation = Assert.Single(ctx.JSInterop.Invocations, i => i.Identifier == "Radzen.createNumeric");
+
+            Assert.Equal(culture.NumberFormat.NumberDecimalSeparator, invocation.Arguments[2]);
+            Assert.Equal(culture.NumberFormat.NumberGroupSeparator, invocation.Arguments[6]);
         }
     }
 }

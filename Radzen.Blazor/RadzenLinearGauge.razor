@@ -27,7 +27,7 @@
                         }
                         else if (!string.IsNullOrEmpty(pointer.FormatString))
                         {
-                            @string.Format(pointer.FormatString, pointer.Value)
+                            @string.Format(Culture, pointer.FormatString, pointer.Value)
                         }
                         else
                         {
@@ -88,7 +88,6 @@
         if (_draggingPointer != null)
         {
             _draggingPointer = null;
-            StateHasChanged();
         }
     }
 

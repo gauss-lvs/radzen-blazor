@@ -3,9 +3,9 @@
 
 @if (Visible)
 {
-<div @ref="@Element" style="@Style" @attributes="Attributes" class="@GetCssClass()" id="@GetId()">
+<div @ref="@Element" style="@Style" @attributes="Attributes" class="@GetCssClass()" id="@GetId()" data-focus-on-click="@(FocusOnClick ? "true" : null)">
     <div class="rz-form-field-content">
-        <CascadingValue Value=@context>
+        <CascadingValue Value=@context IsFixed="true">
         @if (Start != null)
         {
         <div class="rz-form-field-start">
@@ -13,7 +13,7 @@
         </div>
         }
         @ChildContent
-        <label class="rz-form-field-label rz-text-truncate" for="@(string.IsNullOrEmpty(Component) ? null : Component)">  @if (TextTemplate is null) {@Text} else {@TextTemplate} </label>
+        <label id="@LabelId" class="rz-form-field-label rz-text-truncate" for="@LabelFor">  @if (TextTemplate is null) {@Text} else {@TextTemplate} </label>
         @if (End != null)
         {
         <div class="rz-form-field-end">

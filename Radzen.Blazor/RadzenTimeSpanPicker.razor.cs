@@ -394,7 +394,21 @@ namespace Radzen.Blazor
         /// <summary>
         /// Specifies the <see cref="RadzenFormField"/> context of this component.
         /// </summary>
+        [CascadingParameter]
         public IFormFieldContext? FormFieldContext { get; set; }
+
+        /// <inheritdoc />
+        protected override void OnParametersSet()
+        {
+            base.OnParametersSet();
+
+            FormFieldContext?.SetLabelTarget(this, Visible ? InputId : null);
+        }
+
+        /// <summary>
+        /// Gets the id of the input element: <see cref="Name"/> when set, otherwise an id derived from the component id.
+        /// </summary>
+        protected string InputId => Name ?? $"{GetId()}-input";
         #endregion
 
 
@@ -568,6 +582,8 @@ namespace Radzen.Blazor
         {
             base.Dispose();
 
+            FormFieldContext?.SetLabelTarget(this, null);
+
             if (EditContext != null)
             {
                 EditContext.OnValidationStateChanged -= ValidationStateChanged;
@@ -589,6 +605,11 @@ namespace Radzen.Blazor
 
             await Change.InvokeAsync(ConfirmedValue);
         }
+
+        /// <summary>
+        /// Gets the value for the <c>aria-invalid</c> attribute. Returns <c>"true"</c> when the field has validation messages in the <see cref="EditContext" />, otherwise <c>null</c>.
+        /// </summary>
+        protected string? ValidationAriaInvalid => EditContext != null && FieldIdentifier.FieldName != null && EditContext.GetValidationMessages(FieldIdentifier).Any() ? "true" : null;
 
         private void ValidationStateChanged(object? sender, ValidationStateChangedEventArgs e)
         {

@@ -70,6 +70,7 @@
 @import 'components/blazor/gantt';
 @import 'components/blazor/link';
 @import 'components/blazor/editor';
+@import 'components/blazor/markdown-editor';
 @import 'components/blazor/colorpicker';
 @import 'components/blazor/splitter';
 @import 'components/blazor/tile-layout';
@@ -86,9 +87,11 @@
 @import 'components/blazor/toc';
 @import 'components/blazor/expander';
 @import 'components/blazor/chat';
+@import 'components/blazor/aiprompt';
 @import 'components/blazor/skeleton';
 @import 'components/blazor/fab';
 @import 'components/blazor/pivot';
 @import 'components/blazor/spreadsheet';
 @import 'components/blazor/toolbar';
+@import 'components/blazor/virtual-keyboard';
 @import 'css-variables';

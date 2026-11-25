@@ -11,6 +11,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Checkout
@@ -19,7 +22,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
 
       - name: Build
         run: dotnet build Radzen.Blazor/Radzen.Blazor.csproj -c Release
@@ -90,6 +93,13 @@ jobs:
             Radzen.Blazor/bin/Release/*.nupkg
             Radzen.Blazor/bin/Release/*.snupkg
 
+      - name: NuGet login
+        if: ${{ inputs.publish }}
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
       - name: Push to NuGet
         if: ${{ inputs.publish }}
-        run: dotnet nuget push "Radzen.Blazor/bin/Release/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push "Radzen.Blazor/bin/Release/*.nupkg" --api-key ${{ steps.login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

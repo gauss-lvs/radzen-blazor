@@ -677,7 +677,6 @@ namespace Radzen.Blazor
             if (!IsLegendHover)
             {
                 HoveredSeries = null;
-                StateHasChanged();
             }
         }
 
@@ -767,7 +766,6 @@ namespace Radzen.Blazor
         {
             HoveredSeries = null;
             IsLegendHover = false;
-            StateHasChanged();
         }
 
 
@@ -808,13 +806,30 @@ namespace Radzen.Blazor
             InvokeAsync(StateHasChanged);
         }
 
+        private bool visibleChanged;
+
+        /// <inheritdoc />
+        public override async Task SetParametersAsync(ParameterView parameters)
+        {
+            visibleChanged = parameters.DidParameterChange(nameof(Visible), Visible);
+
+            await base.SetParametersAsync(parameters);
+        }
+
         /// <inheritdoc />
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             await base.OnAfterRenderAsync(firstRender);
-            
-            if (firstRender || !Width.HasValue || !Height.HasValue)
+
+            if (!Visible)
             {
+                return;
+            }
+
+            if (firstRender || visibleChanged || !Width.HasValue || !Height.HasValue)
+            {
+                visibleChanged = false;
+
                 Rendering.Rect rect;
 
                 if (JSRuntime != null)
@@ -827,7 +842,7 @@ namespace Radzen.Blazor
                     rect = new Rendering.Rect { Width = 0, Height = 0 };
                 }
                 
-                if (!Width.HasValue && rect.Width > 0)
+                if (rect.Width > 0)
                 {
                     Width = rect.Width;
                 }
@@ -837,7 +852,7 @@ namespace Radzen.Blazor
                     Width = 800;
                 }
 
-                if (!Height.HasValue && rect.Height > 0)
+                if (rect.Height > 0)
                 {
                     Height = rect.Height;
                 }
@@ -881,6 +896,17 @@ namespace Radzen.Blazor
             }
         }
         
+        /// <inheritdoc />
+        protected override void OnBecameInvisible()
+        {
+            base.OnBecameInvisible();
+
+            if (IsJSRuntimeAvailable && JSRuntime != null)
+            {
+                JSRuntime.InvokeVoid("Radzen.disposeElement", Element);
+            }
+        }
+
         /// <inheritdoc />
         public override void Dispose()
         {
