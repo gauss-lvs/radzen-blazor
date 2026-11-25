@@ -26,6 +26,8 @@ namespace Radzen.Blazor
     [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
     public partial class RadzenWaterfallSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>, IChartColumnSeries
     {
+        private protected override bool EmptyValueIsZero => true;
+
         /// <summary>
         /// Gets or sets the fill color for positive value columns.
         /// When not set, the theme color scheme applies.
@@ -117,7 +119,7 @@ namespace Radzen.Blazor
         {
             ArgumentNullException.ThrowIfNull(scale);
 
-            if (Items == null || !Items.Any())
+            if (Items == null || Items.Count == 0)
             {
                 return scale;
             }

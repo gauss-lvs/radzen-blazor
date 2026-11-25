@@ -41,6 +41,7 @@ public class Table : Leaf
 
         var dataLines = Value.Split('\n');
         var lineStart = 0;
+        var paddedCells = 0;
 
         foreach (var line in dataLines)
         {
@@ -59,9 +60,16 @@ public class Table : Leaf
                     row.Add(cells[cellIndex].Value, alignment, cells[cellIndex].Content);
                 }
 
-                for (int missingCellIndex = 0; missingCellIndex < header.Cells.Count - cells.Count; missingCellIndex++)
+                var missingCells = Math.Max(0, header.Cells.Count - cells.Count);
+
+                if (paddedCells + missingCells <= MaxPaddedCells)
                 {
-                    row.Add("", headerCells[cells.Count + missingCellIndex].Alignment);
+                    paddedCells += missingCells;
+
+                    for (int missingCellIndex = 0; missingCellIndex < missingCells; missingCellIndex++)
+                    {
+                        row.Add("", headerCells[cells.Count + missingCellIndex].Alignment);
+                    }
                 }
 
                 rows.Add(row);
@@ -69,6 +77,8 @@ public class Table : Leaf
             lineStart += line.Length + 1;
         }
     }
+
+    private const int MaxPaddedCells = 10_000;
 
     private readonly record struct CellText(string Value, ContentMap Content);
 
@@ -204,18 +214,18 @@ public class Table : Leaf
             var delimiterRow = line.Trim();
 
             var value = paragraph.Value.TrimEnd('\n');
-            var cut = value.LastIndexOf('\n') + 1;
+            var cut = value.LastIndexOf('\n', StringComparison.Ordinal) + 1;
             var headerLine = value[cut..].Trim();
             var headerOffset = cut + value[cut..].Length - value[cut..].TrimStart().Length;
             var headerCells = ParseRow(headerLine, index => paragraph.Content.ToSource(headerOffset + index));
 
             // Parse delimiter cells to determine alignments
             var cleanDelimiterRow = delimiterRow;
-            if (cleanDelimiterRow.StartsWith('|'))
+            if (cleanDelimiterRow.StartsWith('|', StringComparison.Ordinal))
             {
                 cleanDelimiterRow = cleanDelimiterRow[1..];
             }
-            if (cleanDelimiterRow.EndsWith('|'))
+            if (cleanDelimiterRow.EndsWith('|', StringComparison.Ordinal))
             {
                 cleanDelimiterRow = cleanDelimiterRow[..^1];
             }
@@ -241,15 +251,15 @@ public class Table : Leaf
             {
                 var trimmed = delimiters[i].Trim();
 
-                if (trimmed.StartsWith(':') && trimmed.EndsWith(':'))
+                if (trimmed.StartsWith(':', StringComparison.Ordinal) && trimmed.EndsWith(':', StringComparison.Ordinal))
                 {
                     alignments[i] = TableCellAlignment.Center;
                 }
-                else if (trimmed.EndsWith(':'))
+                else if (trimmed.EndsWith(':', StringComparison.Ordinal))
                 {
                     alignments[i] = TableCellAlignment.Right;
                 }
-                else if (trimmed.StartsWith(':'))
+                else if (trimmed.StartsWith(':', StringComparison.Ordinal))
                 {
                     alignments[i] = TableCellAlignment.Left;
                 }
@@ -267,7 +277,7 @@ public class Table : Leaf
             if (paragraph.Value.Length > 0)
             {
                 value = paragraph.Value.TrimEnd('\n');
-                cut = value.LastIndexOf('\n') + 1;
+                cut = value.LastIndexOf('\n', StringComparison.Ordinal) + 1;
 
                 if (cut > 0)
                 {

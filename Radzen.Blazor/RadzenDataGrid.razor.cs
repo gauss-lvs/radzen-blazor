@@ -103,6 +103,10 @@ namespace Radzen.Blazor
         /// Use this property to check validation state before saving edited rows.
         /// </summary>
         /// <value><c>true</c> if all edit form validators are valid; otherwise, <c>false</c>. Returns <c>true</c> if no rows are being edited.</value>
+        /// <remarks>
+        /// Runs synchronous validators only. On .NET 11 and later it throws <see cref="InvalidOperationException"/> when a validator of an edited row
+        /// registers asynchronous work. Use <see cref="IsValidAsync"/> in that case.
+        /// </remarks>
         public bool IsValid
         {
             get
@@ -112,12 +116,41 @@ namespace Radzen.Blazor
                     return true;
                 }
 
+#pragma warning disable CS0618
                 return editContexts.All(c => 
                 { 
                     c.Value.Validate();
                     return !c.Value.GetValidationMessages().Any(); 
                 });
+#pragma warning restore CS0618
             }
+        }
+
+        /// <summary>
+        /// Validates all rows that are being edited and awaits their asynchronous validators.
+        /// Use this method instead of <see cref="IsValid"/> when the edited rows use asynchronous validation.
+        /// </summary>
+        /// <returns><c>true</c> if all edit form validators are valid; otherwise, <c>false</c>. Returns <c>true</c> if no rows are being edited.</returns>
+        public async Task<bool> IsValidAsync()
+        {
+            foreach (var editContext in editContexts.Values.ToList())
+            {
+#if NET11_0_OR_GREATER
+                if (!await editContext.ValidateAsync())
+                {
+                    return false;
+                }
+#else
+                editContext.Validate();
+#endif
+
+                if (editContext.GetValidationMessages().Any())
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -258,10 +291,10 @@ namespace Radzen.Blazor
             var totalItemsCount = 0;
             _groupedPagedView = Enumerable.Empty<GroupResult>();
 
-            if (Groups.Any())
+            if (Groups.Count > 0)
             {
-                query = view.AsQueryable().OrderBy(Groups.Any() ? string.Join(',', Groups.Select(g => g.Property)) : null);
-                _groupedPagedView = await Task.FromResult(query.GroupByMany(Groups.Any() ? Groups.Select(g => g.Property).ToArray() : DefaultGroupProperty).ToList());
+                query = view.AsQueryable().OrderBy(Groups.Count > 0 ? string.Join(',', Groups.Select(g => g.Property)) : null);
+                _groupedPagedView = await Task.FromResult(query.GroupByMany(Groups.Count > 0 ? Groups.Select(g => g.Property).ToArray() : DefaultGroupProperty).ToList());
 
                 totalItemsCount = await Task.FromResult(_groupedPagedView.Count());
             }
@@ -277,7 +310,7 @@ namespace Radzen.Blazor
             {
                 if (AllowVirtualization)
                 {
-                    if(AllowGrouping && Groups.Any() && !LoadData.HasDelegate)
+                    if(AllowGrouping && Groups.Count > 0 && !LoadData.HasDelegate)
                     {
                         builder.OpenComponent(0, typeof(Microsoft.AspNetCore.Components.Web.Virtualization.Virtualize<GroupResult>));
                         builder.AddAttribute(1, "ItemsProvider", new Microsoft.AspNetCore.Components.Web.Virtualization.ItemsProviderDelegate<GroupResult>(LoadGroups));
@@ -345,7 +378,7 @@ namespace Radzen.Blazor
 
         internal void DrawGroupOrDataRows(Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder, IList<RadzenDataGridColumn<TItem>> visibleColumns)
         {
-            if (Groups.Any())
+            if (Groups.Count > 0)
             {
                 foreach (var group in GroupedPagedView)
                 {
@@ -661,6 +694,23 @@ namespace Radzen.Blazor
 
         int focusedIndex = -1;
         int focusedCellIndex;
+        int focusedVirtualRowIndex = -1;
+
+        TItem? GetFocusedItem()
+        {
+            if (IsVirtualizationAllowed() && focusedVirtualRowIndex > 0)
+            {
+                return virtualDataItems.ElementAtOrDefault(focusedVirtualRowIndex - HeaderRowCount() - 1 - virtualItemsStartIndex);
+            }
+
+            var pagedViewIndex = focusedIndex - 1;
+            if (FilterRowActive)
+            {
+                pagedViewIndex = pagedViewIndex - 1;
+            }
+
+            return PagedView.ElementAtOrDefault(pagedViewIndex);
+        }
 
         internal Func<bool>? HasActiveDescendant { get; set; }
 
@@ -695,10 +745,16 @@ namespace Radzen.Blazor
             {
                 if (JSRuntime != null)
                 {
-                    var result = await JSRuntime.InvokeAsync<int[]>("Radzen.focusTableRow", UniqueID, key, focusedIndex, focusedCellIndex, IsVirtualizationAllowed());
+                    var result = await JSRuntime.InvokeAsync<int[]>("Radzen.focusTableRow", UniqueID, key, focusedIndex, focusedCellIndex, IsVirtualizationAllowed(), columnWindow?.All.Count, focusedVirtualRowIndex > 0 ? focusedVirtualRowIndex : null);
                     focusedIndex = result[0];
                     focusedCellIndex = result[1];
+                    focusedVirtualRowIndex = result.Length > 2 ? result[2] : -1;
                     hasActiveRow = true;
+
+                    if (columnWindow != null && (key == "ArrowLeft" || key == "ArrowRight"))
+                    {
+                        await FocusVirtualCell(focusedIndex, focusedCellIndex);
+                    }
                 }
             }
             catch (Exception)
@@ -720,6 +776,8 @@ namespace Radzen.Blazor
         /// <param name="args">The <see cref="FocusEventArgs"/> instance containing the event data.</param>
         protected virtual async Task OnBlur(FocusEventArgs args)
         {
+            focusedVirtualColumn = -1;
+
             if (JSRuntime != null)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.clearFocusedHeaderCell", UniqueID);
@@ -753,12 +811,7 @@ namespace Radzen.Blazor
                 }
                 else if ((Template != null || LoadChildData.HasDelegate) && (key == "ArrowLeft" || key == "ArrowRight"))
                 {
-                    var pagedViewIndex = focusedIndex - 1;
-                    if (FilterRowActive)
-                    {
-                        pagedViewIndex = pagedViewIndex - 1;
-                    }
-                    var item = PagedView.ElementAtOrDefault(pagedViewIndex);
+                    var item = GetFocusedItem();
                     if (item != null)
                     {
                         if (key == "ArrowLeft")
@@ -798,12 +851,7 @@ namespace Radzen.Blazor
                 }
                 else
                 {
-                    var pagedViewIndex = focusedIndex - 1;
-                    if (FilterRowActive)
-                    {
-                        pagedViewIndex = pagedViewIndex - 1;
-                    }
-                    var itemToSelect = PagedView.ElementAtOrDefault(pagedViewIndex);
+                    var itemToSelect = GetFocusedItem();
                     if (itemToSelect != null)
                     {
                         if (SelectionMode == DataGridSelectionMode.Multiple && !args.ShiftKey)
@@ -3218,9 +3266,9 @@ namespace Radzen.Blazor
                 }
             }
 
-            if (allowColumnPickingChanged || emptyTextChanged || allGroupsExpandedChanged && Groups.Any())
+            if (allowColumnPickingChanged || emptyTextChanged || allGroupsExpandedChanged && Groups.Count > 0)
             {
-                if (allGroupsExpandedChanged && Groups.Any() && allGroupsExpanded == true)
+                if (allGroupsExpandedChanged && Groups.Count > 0 && allGroupsExpanded == true)
                 {
                     collapsedGroupItems.Clear();
                 }
@@ -3310,9 +3358,12 @@ namespace Radzen.Blazor
 
             this.firstRender = firstRender;
 
-            if (firstRender || visibleChanged)
+            await ApplyPendingVirtualCellFocus();
+
+            if (firstRender || visibleChanged || columnVirtualizationAttached != IsColumnVirtualizationAllowed())
             {
                 visibleChanged = false;
+                columnVirtualizationAttached = IsColumnVirtualizationAllowed();
 
                 if (Visible && JSRuntime != null)
                 {
@@ -3332,7 +3383,7 @@ namespace Radzen.Blazor
                     }
 
                     var created = await JSRuntime.InvokeAsync<IJSObjectReference>(
-                        "Radzen.createDataGrid", Element);
+                        "Radzen.createDataGrid", Element, columnVirtualizationAttached ? Reference : null);
 
                     if (version == _jsRefVersion)
                     {
@@ -3722,6 +3773,12 @@ namespace Radzen.Blazor
                 focusedIndex = focusedIndexResult.Index + 1;
             }
 
+            if (IsVirtualizationAllowed() && Groups.Count == 0)
+            {
+                var virtualIndex = virtualDataItems.FindIndex(x => ItemEquals(x, item));
+                focusedVirtualRowIndex = virtualIndex >= 0 ? virtualItemsStartIndex + virtualIndex + HeaderRowCount() + 1 : -1;
+            }
+
             if (SelectionMode == DataGridSelectionMode.Single && item != null && ContainsItemKey(selectedItems, item))
             {
                 // Legacy RowSelect raise
@@ -3900,7 +3957,12 @@ namespace Radzen.Blazor
             {
                 var editContext = editContexts.FirstOrDefault(i => ItemEquals(i.Key, item)).Value;
 
-                if (editContext?.Validate() == true)
+#if NET11_0_OR_GREATER
+                var valid = editContext != null && await editContext.ValidateAsync();
+#else
+                var valid = editContext?.Validate() == true;
+#endif
+                if (valid)
                 {
                     editedItems = editedItems.Where(i => !ItemEquals(i.Key, item)).ToDictionary(i => i.Key, i => i.Value);
                     editContexts = editContexts.Where(i => !ItemEquals(i.Key, item)).ToDictionary(i => i.Key, i => i.Value);
@@ -4589,6 +4651,33 @@ namespace Radzen.Blazor
             return false;
         }
 
+        List<GroupDescriptor> GetGroupsWithExistingProperties(IEnumerable<GroupDescriptor> groups)
+        {
+            var parameter = System.Linq.Expressions.Expression.Parameter(typeof(TItem));
+
+            return groups.Where(g => IsExistingProperty(parameter, g.Property)).ToList();
+        }
+
+        [UnconditionalSuppressMessage(TrimMessages.Trimming, TrimMessages.IL2026, Justification = TrimMessages.DataTypePreserved)]
+        static bool IsExistingProperty(System.Linq.Expressions.ParameterExpression parameter, string? property)
+        {
+            if (string.IsNullOrEmpty(property))
+            {
+                return false;
+            }
+
+            try
+            {
+                QueryableExtension.GetNestedPropertyExpression(parameter, property);
+
+                return true;
+            }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or System.Reflection.AmbiguousMatchException or IndexOutOfRangeException)
+            {
+                return false;
+            }
+        }
+
         /// <summary>
         /// Load DataGrid settings saved from the GetSettings() method.
         /// This internal method handles the actual loading or updating of the DataGrid settings.
@@ -4702,9 +4791,10 @@ namespace Radzen.Blazor
                     }
                 }
 
-                if (settings.Groups != null && !settings.Groups.SequenceEqual(Groups))
+                var settingsGroups = settings.Groups != null ? GetGroupsWithExistingProperties(settings.Groups) : null;
+
+                if (settingsGroups != null && !settingsGroups.SequenceEqual(Groups))
                 {
-                    var settingsGroups = settings.Groups.ToList();
                     suppressGroupsCollectionChanged = true;
 
                     try

@@ -13,6 +13,8 @@ namespace Radzen.Blazor
     /// <typeparam name="TItem">The type of data items in the series.</typeparam>
     public partial class RadzenStackedLineSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>, IChartStackedAreaSeries
     {
+        private protected override bool EmptyValueIsZero => true;
+
         /// <inheritdoc />
         protected internal override bool ShowLineInLegend => true;
 
@@ -206,7 +208,7 @@ namespace Radzen.Blazor
         {
             ArgumentNullException.ThrowIfNull(scale);
 
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 var stackedLineSeries = StackedLineSeries;
 

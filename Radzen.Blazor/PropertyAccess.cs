@@ -90,28 +90,38 @@ public static class PropertyAccess
                 return RequireReadable(Expression.Property(instance, declaringType, memberName));
             }
 
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy;
+
+            PropertyInfo? prop;
+            FieldInfo? field = null;
+
             try
             {
-                return RequireReadable(Expression.PropertyOrField(instance, memberName));
+                prop = instance.Type.GetProperty(memberName, flags | BindingFlags.IgnoreCase);
+                field = prop == null ? instance.Type.GetField(memberName, flags | BindingFlags.IgnoreCase) : null;
             }
             catch (AmbiguousMatchException)
             {
-                var prop = instance.Type.GetProperty(memberName,
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
-                if (prop != null)
-                {
-                    return RequireReadable(Expression.Property(instance, prop));
-                }
+                prop = instance.Type.GetProperty(memberName, flags);
+                field = prop == null ? instance.Type.GetField(memberName, flags) : null;
 
-                var field = instance.Type.GetField(memberName,
-                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.FlattenHierarchy);
-                if (field != null)
+                if (prop == null && field == null)
                 {
-                    return Expression.Field(instance, field);
+                    throw;
                 }
-
-                throw;
             }
+
+            if (prop != null)
+            {
+                return RequireReadable(Expression.Property(instance, prop));
+            }
+
+            if (field != null)
+            {
+                return Expression.Field(instance, field);
+            }
+
+            throw new ArgumentException($"'{memberName}' is not a member of type '{instance.Type}'", nameof(memberName));
         }
 
         static MemberExpression RequireReadable(MemberExpression access)
@@ -267,6 +277,33 @@ public static class PropertyAccess
         }
 
         return Getter<TItem, DateTime>(propertyName);
+    }
+
+    /// <summary>
+    /// Like <see cref="DateGetter{TItem}"/>, but a null nullable is returned as null instead of throwing.
+    /// </summary>
+    /// <typeparam name="TItem">The owner type.</typeparam>
+    /// <param name="propertyName">Name of the property to return.</param>
+    /// <returns>A function which returns the specified property as a nullable DateTime.</returns>
+    [RequiresUnreferencedCode(TrimMessages.ExpressionTreeReflection)]
+    internal static Func<TItem, DateTime?> NullableDateGetter<TItem>(string propertyName)
+    {
+        var type = GetPropertyType(typeof(TItem), propertyName);
+        var underlying = type == null ? null : Nullable.GetUnderlyingType(type) ?? type;
+
+        if (underlying == typeof(DateOnly))
+        {
+            var getter = Getter<TItem, DateOnly?>(propertyName);
+            return item => getter(item)?.ToDateTime(TimeOnly.MinValue);
+        }
+
+        if (underlying == typeof(DateTimeOffset))
+        {
+            var getter = Getter<TItem, DateTimeOffset?>(propertyName);
+            return item => getter(item)?.DateTime;
+        }
+
+        return Getter<TItem, DateTime?>(propertyName);
     }
 
     /// <summary>

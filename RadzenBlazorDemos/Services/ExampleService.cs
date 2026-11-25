@@ -297,6 +297,15 @@ namespace RadzenBlazorDemos
                             Description = "RadzenDataGrid supports virtualization with custom data-binding scenarios. Handle the LoadData event as usual.",
                             Tags = new [] { "datagrid", "bind", "load", "data", "loaddata", "virtualization", "ondemand" }
                         },
+                        new Example
+                        {
+                            Name = "Column virtualization",
+                            Path = "datagrid-column-virtualization",
+                            New = true,
+                            Title = "Column Virtualization in a Blazor DataGrid | Free Radzen Blazor",
+                            Description = "RadzenDataGrid renders only the columns that are scrolled into view when AllowColumnVirtualization is enabled.",
+                            Tags = new [] { "datagrid", "columns", "virtualization", "horizontal", "scroll", "performance" }
+                        },
                     }
                 },
                 new Example
@@ -1100,6 +1109,23 @@ namespace RadzenBlazorDemos
 
                 new Example
                 {
+                    Name = "Keyboard Navigation",
+                    Path = "datagrid-keyboard-navigation",
+                    New = true,
+                    Related = new [] { "datagrid", "datagrid-multiple-selection", "master-detail-hierarchy" },
+                    Faq = new []
+                    {
+                        new FaqItem { Question = "Can the Blazor DataGrid be used with the keyboard only?", Answer = "Yes. Tab moves focus to the grid, the arrow keys move between rows and header cells, Enter sorts a focused header cell, Alt + DownArrow opens its filter, Enter or Space selects the focused row, and the pager is reachable with Tab." },
+                        new FaqItem { Question = "How do I expand a DataGrid row from the keyboard?", Answer = "Focus the row and press RightArrow to expand it or LeftArrow to collapse it." }
+                    },
+                    Title = "Keyboard Navigation in a Blazor DataGrid | Free Radzen Blazor",
+                    Description = "Navigate the Radzen Blazor DataGrid with the keyboard: move between rows and header cells, sort, filter, select, expand and page without a mouse.",
+                    Icon = "\ue312",
+                    Tags = new [] { "keyboard", "navigation", "accessibility", "a11y", "shortcuts", "datagrid", "table" }
+                },
+
+                new Example
+                {
                     Name = "Conditional formatting",
                     Path = "datagrid-conditional-template",
                     Related = new [] { "datagrid-column-template", "datagrid-conditional-columns-render", "datagrid-grid-lines" },
@@ -1169,7 +1195,7 @@ namespace RadzenBlazorDemos
                 {
                     Name = "Chart Gallery",
                     Path = "charts",
-                    Title = "Blazor Charts - 30+ Chart Types | Free Radzen Blazor",
+                    Title = "Blazor Charts & Graphs - 30+ Chart Types | Free Radzen Blazor",
                     Description = "Browse 40+ free Blazor data-visualization components, including 30+ chart types plus gauges, sparklines, treemap and Sankey. Drawn in C# as SVG, with no JavaScript charting library.",
                     Icon = "\ue3b6",
                     Faq = new []
@@ -1942,6 +1968,21 @@ namespace RadzenBlazorDemos
                     Children = new [] {
                         new Example
                         {
+                            Name = "Stock Chart",
+                            Path = "stock-chart",
+                            Description = "Build a Blazor stock chart with a price area, volume bars, a previous close line, and period buttons from one day to several years. Free and open source.",
+                            Tags = new [] { "chart", "graph", "stock", "financial", "price", "volume", "ticker", "intraday", "area", "candlestick" },
+                            New = true,
+                            Related = new [] { "candlestick-chart", "ohlc-chart", "area-chart", "range-navigator" },
+                            Faq = new []
+                            {
+                                new FaqItem { Question = "How do I show volume under the price?", Answer = "Add a column series bound to the volume and point it at a second, hidden value axis whose maximum is a few times the largest volume, so the bars stay in the bottom part of the chart." },
+                                new FaqItem { Question = "How do I skip nights and weekends on the axis?", Answer = "Bind the category to the position of each point instead of its date and format the axis labels from the date at that position. The points are then evenly spaced with no gaps for the hours the market is closed." },
+                                new FaqItem { Question = "How do I draw the previous close?", Answer = "Add a reference line to the price series and set its value to the previous close." }
+                            }
+                        },
+                        new Example
+                        {
                             Name = "Candlestick Chart",
                             Path = "candlestick-chart",
                             Description = "Show how a price opened, closed, and swung with a Blazor candlestick chart - one candle per trading period. Free and open source.",
@@ -2342,6 +2383,7 @@ namespace RadzenBlazorDemos
                 new Example
                 {
                     Name = "GoogleMap",
+                    Title = "Blazor Google Maps Component | Free Radzen Blazor",
                     Path = "googlemap",
                     Description = "Demonstration and configuration of Radzen Blazor Google Map component.",
                     Icon = "\ue55b"
@@ -2541,7 +2583,7 @@ namespace RadzenBlazorDemos
                             Toc = [ new () { Text = "Get and Set the value of DropDown", Anchor = "#get-set-value" }, new () { Text = "Get and Set the value of DropDown using Value and Change event", Anchor = "#value-and-change-event" }, new () { Text = "Define Text and Value properties", Anchor = "#text-and-value-properties" }, new () { Text = "DropDown with template", Anchor = "#template" }, new () { Text = "Disable specific item", Anchor = "#disable-item" }, new () { Text = "Clear selected item", Anchor = "#clear-selected-item" }, new () { Text = "Editable DropDown", Anchor = "#editable-dropdown" }, new () { Text = "Open and close events", Anchor = "#open-and-close-event" }, new () { Text = "Loading indicator", Anchor = "#loading" }, new () { Text = "DropDown Sizes", Anchor = "#sizes" }, new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                             Name = "Single selection",
                             Path = "dropdown",
-                            Title = "Blazor DropDown / Select Component | Free Radzen Blazor",
+                            Title = "Blazor DropDown List / Select Component | Free Radzen Blazor",
                             Description = "Free Blazor DropDown (select) component with data binding, filtering, multiple selection, grouping, templates, and virtualization for large lists. Bind to any IEnumerable or IQueryable.",
                             Tags = new [] { "select", "picker", "form" , "edit", "dropdown", "combobox", "multiselect" },
                             Related = new [] { "dropdown-multiple", "dropdown-filtering", "dropdown-grouping", "dropdown-virtualization", "dropdown-tree", "dropdown-datagrid" },
@@ -2733,7 +2775,7 @@ namespace RadzenBlazorDemos
                         {
                             Name = "Default Tools",
                             Path = "html-editor",
-                            Title = "Blazor HTML Editor Component | Free Radzen Blazor",
+                            Title = "Blazor HTML Editor (Rich Text / WYSIWYG) | Free Radzen Blazor",
                             Description = "The Blazor HTML Editor is a rich text (WYSIWYG) editor with a full toolbar of formatting tools, image and link support, and HTML output.",
                             Related = new [] { "html-editor-custom-tools", "textarea" },
                             Faq = new []
@@ -3074,6 +3116,7 @@ namespace RadzenBlazorDemos
                         new () { Text = "Upload files to server", Anchor = "#url" }, 
                         new () { Text = "Upload multiple files", Anchor = "#multiple" }, 
                         new () { Text = "Trigger from code", Anchor = "#from-code" }, 
+                        new () { Text = "Add files over selections", Anchor = "#append-files" }, 
                         new () { Text = "File filter", Anchor = "#filter" }, 
                         new () { Text = "Use parameters", Anchor = "#parameters" }, 
                         new () { Text = "Show upload progress", Anchor = "#progress" }, 
@@ -3734,7 +3777,7 @@ namespace RadzenBlazorDemos
                         {
                             Toc = [ new () { Text = "Keyboard Navigation", Anchor = "#keyboard-navigation" } ],
                             Name = "Inline definition",
-                            Title = "Blazor Tree Component | Free Radzen Blazor",
+                            Title = "Blazor TreeView Component | Free Radzen Blazor",
                             Description = "Demonstration and configuration of the Blazor RadzenTree component.",
                             Path = "tree",
                             Tags = new [] { "tree", "treeview", "nodes", "inline" },
@@ -4103,7 +4146,7 @@ namespace RadzenBlazorDemos
                 {
                     Toc = [ new () { Text = "Define can-drop and no-drop styles", Anchor = "#can-drop-no-drop-styles" }, new () { Text = "Define a Footer Template per Drop Zone", Anchor = "#footer-template" } ],
                     Name = "DropZone",
-                    Title = "Blazor DropZone - Drag & Drop | Free Radzen Blazor",
+                    Title = "Blazor Drag and Drop Component (DropZone) | Free Radzen Blazor",
                     Description = "The Blazor DropZone lets users drag and drop items between zones - for kanban boards and reordering.",
                     Path = "dropzone",
                     Related = new [] { "tile-layout", "splitter" },
@@ -4362,6 +4405,21 @@ namespace RadzenBlazorDemos
             Description = "Ready to use Blazor application and website templates",
             Icon = "\ue5c3",
             Children = new[] {
+                new Example
+                {
+                    Name = "Overview",
+                    Path = "templates",
+                    Title = "Blazor App and Website Templates | Radzen",
+                    Description = "Ready-made Blazor app templates: a free dashboard sample and premium healthcare, real estate and auto repair website templates, each with a live preview.",
+                    Tags = new [] { "template", "templates", "website", "dashboard", "admin", "app", "application", "starter", "overview" },
+                    Faq = new []
+                    {
+                        new FaqItem { Question = "Are the Blazor templates free?", Answer = "The Issues Dashboard sample is free and open source. The healthcare, real estate and repair workshop website templates are premium and come with a Radzen Blazor subscription." },
+                        new FaqItem { Question = "What does a website template include?", Answer = "Each template is a complete multi-page Blazor website. The real estate template, for example, has a home page with top listings, a properties page with filtering, property details, agent pages and an about page." },
+                        new FaqItem { Question = "Can I see a template before I buy it?", Answer = "Yes. Every template has a live preview that opens in your browser." },
+                        new FaqItem { Question = "Which components do the templates use?", Answer = "They are built with Radzen Blazor Components, so you can change and extend them with the same 155+ components you use in the rest of your app." }
+                    }
+                },
                 new Example
                 {
                     Name = "Issues Dashboard",
@@ -5108,6 +5166,12 @@ namespace RadzenBlazorDemos
         }
 
         // Every leaf page under the "DataGrid" category (across its sub-groups). Article-eligible for schema.
+        public IEnumerable<Example> GetTemplatePages()
+        {
+            var templates = Examples.FirstOrDefault(c => c.Name == "App Templates");
+            return templates?.Children != null ? CollectLeaves(templates.Children).Where(e => e.Path?.TrimStart('/') != "templates").ToList() : Enumerable.Empty<Example>();
+        }
+
         public IEnumerable<Example> GetDataGridPages()
         {
             var dataGrid = Examples.FirstOrDefault(c => c.Name == "DataGrid");

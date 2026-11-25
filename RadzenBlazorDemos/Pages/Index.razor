@@ -10,6 +10,11 @@
 </HeadContent>
 
 <div class="demos-home light rz-px-6 rz-px-md-12">
+  <RadzenStack class="rz-mx-0 rz-mx-sm-6 rz-mx-lg-12 rz-mx-xl-auto rz-mt-6 rz-background-color-base-darker rz-p-6 rz-mb-0 rz-mb-md-12" Style="max-width: 1300px; border-radius: var(--rz-card-border-radius);" Gap="0" AlignItems="Radzen.AlignItems.Center">
+    <RadzenText class="rz-color-on-base-darker rz-m-0" TextAlign="Radzen.TextAlign.Center">
+      Our Black Friday offer is live! Apply code <strong>BLACKFRIDAY2026</strong> at checkout and <strong>save $100 / €100</strong>. <RadzenLink Text="See Pricing" Path="https://www.radzen.com/pricing" class="rz-color-primary-light" target="_blank"></RadzenLink>
+    </RadzenText>
+  </RadzenStack>
   <RadzenStack Orientation="Orientation.Vertical" Gap="0px" class="rz-mx-auto">
     <RadzenRow>
       <RadzenColumn Size="12" class="rz-text-align-center">
@@ -75,7 +80,7 @@
                 <RadzenRow JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                   <RadzenColumn Size="9">
                     <RadzenStack Gap="0.125rem">
-                      <RadzenText TextStyle="TextStyle.DisplayH6" TagName="TagName.H1">Good Morning, Alex</RadzenText>
+                      <RadzenText TextStyle="TextStyle.DisplayH6" TagName="TagName.Div">Good Morning, Alex</RadzenText>
                       <RadzenText TextStyle="TextStyle.Body2" class="rz-color-text-secondary">Here's your task overview for today.</RadzenText>
                     </RadzenStack>
                   </RadzenColumn>
@@ -91,7 +96,7 @@
                       <RadzenStack JustifyContent="JustifyContent.SpaceBetween" class="rz-h-100" Gap="0.5rem;">
                         <RadzenText TextStyle="TextStyle.Overline" Style="--rz-text-overline-font-size: 0.6875rem;">Overdue</RadzenText>
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.5rem">
-                          <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.H2" Style="line-height: 0.9;">@overdueTasks</RadzenText>
+                          <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.Div" Style="line-height: 0.9;">@overdueTasks</RadzenText>
                           <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenText TextStyle="TextStyle.Body2">need attention</RadzenText>
                           </RadzenStack>
@@ -104,7 +109,7 @@
                       <RadzenStack JustifyContent="JustifyContent.SpaceBetween" class="rz-h-100" Gap="0.5rem;">
                         <RadzenText TextStyle="TextStyle.Overline" Style="--rz-text-overline-font-size: 0.6875rem;">Completed Today</RadzenText>
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.5rem">
-                          <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.H2" Style="line-height: 0.9;">@tasksCompletedToday</RadzenText>
+                          <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.Div" Style="line-height: 0.9;">@tasksCompletedToday</RadzenText>
                           <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
                             <RadzenIcon Icon="trending_up" Style="font-weight: 300; font-size: 1rem;" />
                             <RadzenText TextStyle="TextStyle.Body2">+3 from yesterday</RadzenText>
@@ -118,7 +123,7 @@
                       <RadzenStack JustifyContent="JustifyContent.SpaceBetween" class="rz-h-100" Gap="0.5rem;">
                         <RadzenText TextStyle="TextStyle.Overline" Style="--rz-text-overline-font-size: 0.6875rem;">In Progress</RadzenText>
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.5rem">
-                          <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.H2" Style="line-height: 0.9;">@tasksInProgress</RadzenText>
+                          <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.Div" Style="line-height: 0.9;">@tasksInProgress</RadzenText>
                           <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenText TextStyle="TextStyle.Body2">active tasks</RadzenText>
                           </RadzenStack>
@@ -131,7 +136,7 @@
                       <RadzenStack JustifyContent="JustifyContent.SpaceBetween" class="rz-h-100" Gap="0.5rem;">
                         <RadzenText TextStyle="TextStyle.Overline" Style="--rz-text-overline-font-size: 0.6875rem;">Upcoming Deadlines</RadzenText>
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.End" Gap="0.5rem">
-                          <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.H2" Style="line-height: 0.9;">@upcomingDeadlines</RadzenText>
+                          <RadzenText TextStyle="TextStyle.DisplayH3" TagName="TagName.Div" Style="line-height: 0.9;">@upcomingDeadlines</RadzenText>
                           <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                             <RadzenText TextStyle="TextStyle.Body2">next 7 days</RadzenText>
                           </RadzenStack>
@@ -145,7 +150,7 @@
                     <RadzenCard Variant="Variant.Outlined" class="rz-h-100">
                       <RadzenStack Gap="1rem">
                         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" JustifyContent="JustifyContent.SpaceBetween">
-                          <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H2">Monthly Performance Overview</RadzenText>
+                          <RadzenText TextStyle="TextStyle.H6" TagName="TagName.Div">Monthly Performance Overview</RadzenText>
                           <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" Wrap="FlexWrap.Wrap">
                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                               <RadzenCheckBox @bind-Value="@showDataLabels" Name="dataLabels"></RadzenCheckBox>
@@ -187,7 +192,7 @@
                   <RadzenColumn Size="12">
                     <RadzenCard Variant="Variant.Outlined" class="rz-h-100 rz-p-0 rz-overflow-hidden">
                       <RadzenStack Gap="0">
-                        <RadzenText TextStyle="TextStyle.H6" TagName="TagName.H2" Style="padding: var(--rz-card-padding);">Upcoming Deadlines</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6" TagName="TagName.Div" Style="padding: var(--rz-card-padding);">Upcoming Deadlines</RadzenText>
                         <RadzenDataGrid Data="@upcomingDeadlinesData" AllowPaging="true" PageSize="6" AllowSorting="true" AllowGrouping="true" AllowColumnResize="true" ShowColumnTitleAsTooltip="false" ShowCellDataAsTooltip="false" Style="border-inline: none; border-block-end: none; border-radius: 0;">
                           <Columns>
                             <RadzenDataGridColumn TItem="TaskItem" Property="Id" Title="ID" Width="80px" />
@@ -218,7 +223,7 @@
             </RadzenBody>
             <RadzenSidebar @ref="demoSidebar" FullHeight="true" Responsive="false" Position="SidebarPosition.Start" @bind-Expanded="@demoSidebarExpanded" Style="--rz-sidebar-width: 250px;">
               <RadzenStack Gap="0" Style="height: 100%;" JustifyContent="JustifyContent.SpaceBetween">
-                <RadzenText TextStyle="TextStyle.DisplayH6" TagName="TagName.H2" class="rz-mt-6 rz-ms-6 rz-mb-4">Radzen Tasks</RadzenText>
+                <RadzenText TextStyle="TextStyle.DisplayH6" TagName="TagName.Div" class="rz-mt-6 rz-ms-6 rz-mb-4">Radzen Tasks</RadzenText>
                 <RadzenPanelMenu @ref="demoPanelMenu" Style="flex: 1;">
                   <RadzenPanelMenuItem Text="Dashboard" Icon="dashboard" Click="@(() => OnMenuItemClick("Dashboard"))" />
                   <RadzenPanelMenuItem Text="My Tasks" Icon="assignment" Click="@(() => OnMenuItemClick("My Tasks"))" />

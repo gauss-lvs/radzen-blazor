@@ -15,6 +15,8 @@ namespace Radzen.Blazor
     /// <typeparam name="TItem">The type of the series data item.</typeparam>
     public partial class RadzenFullStackedColumnSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>, IChartFullStackedColumnSeries
     {
+        private protected override bool EmptyValueIsZero => true;
+
         /// <summary>
         /// Specifies the fill (background color) of the column series.
         /// </summary>
@@ -403,7 +405,7 @@ namespace Radzen.Blazor
         {
             ArgumentNullException.ThrowIfNull(scale);
 
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 scale.Input.MergeWidth(new ScaleRange { Start = 0, End = 100 });
             }

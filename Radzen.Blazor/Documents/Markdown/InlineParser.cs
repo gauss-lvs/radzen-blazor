@@ -42,6 +42,7 @@ class InlineParser
     private const char Exclamation = '!';
     internal const char Colon = ':';
 
+    private BlockParser.HtmlTerminators? htmlTerminators;
     private readonly List<Inline> inlines = [];
     private readonly List<Delimiter> delimiters = [];
     private readonly StringBuilder buffer = new();
@@ -146,7 +147,7 @@ class InlineParser
 
             content = BlockParser.NewLineRegex.Replace(content, $"{Space}");
 
-            if (content.StartsWith(Space) && content.EndsWith(Space) && !string.IsNullOrWhiteSpace(content))
+            if (content.StartsWith(Space, StringComparison.Ordinal) && content.EndsWith(Space, StringComparison.Ordinal) && !string.IsNullOrWhiteSpace(content))
             {
                 content = content[1..^1];
             }
@@ -418,6 +419,7 @@ class InlineParser
     private List<Inline> ParseInlines(string text, Dictionary<string, LinkReference> references)
     {
         var index = 0;
+        htmlTerminators = null;
 
         while (index < text.Length)
         {
@@ -606,7 +608,14 @@ class InlineParser
     {
         newIndex = index;
 
-        var match = BlockParser.HtmlRegex.Match(text[index..]);
+        if (text[index] is not OpenAngleBracket)
+        {
+            return false;
+        }
+
+        htmlTerminators ??= new BlockParser.HtmlTerminators(text);
+
+        var match = htmlTerminators.Value.Match(index);
 
         if (match.Success)
         {
@@ -614,7 +623,7 @@ class InlineParser
 
             var value = text[index..(index + match.Length)];
 
-            inlines.Add(new HtmlInline { Value = value, SourceStart = index, SourceEnd = index + match.Length });
+            inlines.Add(new HtmlInline { Value = value, Tag = match, SourceStart = index, SourceEnd = index + match.Length });
 
             newIndex = index + match.Length;
 
@@ -879,7 +888,11 @@ class InlineParser
         container.SourceStart = opener.Node?.SourceStart ?? opener.Position;
         container.SourceEnd = position + 1;
 
-        ReplaceOpener(openerIndex, container);
+        if (!ReplaceOpener(openerIndex, container))
+        {
+            delimiters.Remove(opener);
+            return false;
+        }
 
         newIndex = position + 1;
 
@@ -945,7 +958,7 @@ class InlineParser
         return true;
     }
 
-    private void ReplaceOpener(int openerIndex, InlineContainer parent)
+    private bool ReplaceOpener(int openerIndex, InlineContainer parent)
     {
         var startIndex = delimiters[openerIndex].Node != null ? inlines.FindIndex(node => node.Equals(delimiters[openerIndex].Node)) : -1;
 
@@ -955,6 +968,11 @@ class InlineParser
 
         var children = inlines.GetRange(startIndex + 1, endIndex - 1);
 
+        if (NestingLimit.IsReached(MaxDepth(children)))
+        {
+            return false;
+        }
+
         inlines.RemoveRange(startIndex, endIndex);
 
         foreach (var child in children)
@@ -963,8 +981,24 @@ class InlineParser
         }
 
         inlines.Insert(startIndex, parent);
+
+        return true;
     }
 
+    private static int MaxDepth(List<Inline> nodes)
+    {
+        var depth = 0;
+
+        foreach (var node in nodes)
+        {
+            if (node is InlineContainer container && container.Depth > depth)
+            {
+                depth = container.Depth;
+            }
+        }
+
+        return depth;
+    }
 
     private bool TryParseLinkFromReference(string text, int index, Dictionary<string, LinkReference> references, out int newIndex)
     {
@@ -1000,7 +1034,7 @@ class InlineParser
             }
         }
 
-        if (!references.TryGetValue(id.ToString().ToLowerInvariant(), out var reference))
+        if (!references.TryGetValue(id.ToString().ToLowerInvariant(), out var reference) || NestingLimit.IsReached(MaxDepth(children)))
         {
             return false;
         }
@@ -1066,6 +1100,12 @@ class InlineParser
                             continue;
                         }
                         charsToConsume = 2;
+                    }
+
+                    if (NestingLimit.IsReached(MaxDepth(innerInlines)))
+                    {
+                        delimiters.RemoveAt(closerIndex);
+                        continue;
                     }
 
                     InlineContainer parent = closer.Char == Tilde

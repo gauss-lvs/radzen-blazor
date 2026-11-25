@@ -20,11 +20,15 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
     /// </summary>
     public const string Outlet = "<!--rz-outlet-{0}-->";
 
-    private static readonly Regex OutletRegex = new(@"<!--rz-outlet-(\d+)-->");
-    private static readonly Regex HtmlTagRegex = new(@"<(\w+)((?:\s+[^>]*)?)\/?>");
-    private static readonly Regex HtmlClosingTagRegex = new(@"</(\w+)>");
-    private static readonly Regex AttributeRegex = new(@"(\w+)(?:\s*=\s*(?:([""'])(.*?)\2|([^\s>]+)))?");
-    private readonly HtmlSanitizer sanitizer = new(options.AllowedHtmlTags, options.AllowedHtmlAttributes);
+    private static readonly Regex OutletRegex = new(@"<!--rz-outlet-([0-9]{1,9})-->");
+    private readonly RenderTreeHtmlElementWriter html = new(options.Sanitizer, builder);
+
+    private void VisitContainer(IEnumerable<INode> children)
+    {
+        var scope = html.EnterScope();
+        VisitChildren(children);
+        html.ExitScope(scope);
+    }
 
     /// <inheritdoc />
     public override void VisitHeading(Heading heading)
@@ -142,7 +146,7 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
     {
         if (paragraph.Parent is ListItem item && item.Parent is List list && list.Tight)
         {
-            VisitChildren(paragraph.Children);
+            VisitContainer(paragraph.Children);
         }
         else
         {
@@ -157,7 +161,7 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
         return innerBuilder =>
         {
             var inner = new BlazorMarkdownRenderer(options, innerBuilder, outlet);
-            inner.VisitChildren(children);
+            inner.VisitContainer(children);
         };
     }
 
@@ -181,7 +185,7 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
     public override void VisitStrong(Strong strong)
     {
         builder.OpenElement(0, "strong");
-        VisitChildren(strong.Children);
+        VisitContainer(strong.Children);
         builder.CloseElement();
     }
 
@@ -189,7 +193,7 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
     public override void VisitStrikethrough(Strikethrough strikethrough)
     {
         builder.OpenElement(0, "del");
-        VisitChildren(strikethrough.Children);
+        VisitContainer(strikethrough.Children);
         builder.CloseElement();
     }
 
@@ -197,14 +201,14 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
     public override void VisitEmphasis(Emphasis emphasis)
     {
         builder.OpenElement(0, "em");
-        VisitChildren(emphasis.Children);
+        VisitContainer(emphasis.Children);
         builder.CloseElement();
     }
 
     /// <inheritdoc />
     public override void VisitLink(Link link)
     {
-        if (link.Destination?.StartsWith('#') == true)
+        if (link.Destination?.StartsWith('#', StringComparison.Ordinal) == true)
         {
             builder.OpenComponent<RadzenAnchor>(0);
             builder.AddAttribute(0, "href", link.Destination);
@@ -218,14 +222,16 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
         }
         else
         {
+            if (!string.IsNullOrEmpty(link.Destination)
+                && (!HtmlSanitizer.IsSafeMarkdownUrl(link.Destination, false) || !Uri.TryCreate(options.GetBaseUri(), link.Destination, out _)))
+            {
+                VisitContainer(link.Children);
+                return;
+            }
+
             builder.OpenComponent<RadzenLink>(0);
 
-            // NavLink (used by RadzenLink) calls NavigationManager.ToAbsoluteUri(href), which throws
-            // UriFormatException for destinations like "https://" (empty host). Skip those instead
-            // of letting the exception take down the component tree.
-            if (!string.IsNullOrEmpty(link.Destination)
-                && !HtmlSanitizer.IsDangerousUrl(link.Destination)
-                && Uri.TryCreate(link.Destination, UriKind.RelativeOrAbsolute, out _))
+            if (!string.IsNullOrEmpty(link.Destination))
             {
                 builder.AddAttribute(1, nameof(RadzenLink.Path), link.Destination);
             }
@@ -245,7 +251,7 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
     {
         builder.OpenComponent<RadzenImage>(0);
 
-        if (!string.IsNullOrEmpty(image.Destination) && !HtmlSanitizer.IsDangerousUrl(image.Destination))
+        if (!string.IsNullOrEmpty(image.Destination) && HtmlSanitizer.IsSafeMarkdownUrl(image.Destination, true))
         {
             builder.AddAttribute(1, nameof(RadzenImage.Path), image.Destination);
         }
@@ -289,7 +295,7 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
             }
             builder.CloseElement();
         }
-        VisitChildren(listItem.Children);
+        VisitContainer(listItem.Children);
         builder.CloseElement();
     }
 
@@ -313,17 +319,14 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
     /// <inheritdoc />
     public override void VisitHtmlBlock(HtmlBlock htmlBlock)
     {
-        var match = OutletRegex.Match(htmlBlock.Value);
-
-        if (match.Success)
+        if (TryRenderOutlet(htmlBlock.Value))
         {
-            var markerId = int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture);
-            outlet(builder, markerId);
+            return;
         }
-        else if (options.AllowHtml)
+
+        if (options.AllowHtml)
         {
-            var html = sanitizer.Sanitize(htmlBlock.Value);
-            builder.AddMarkupContent(0, html);
+            builder.AddMarkupContent(0, options.Sanitizer.Sanitize(htmlBlock.Value));
         }
         else
         {
@@ -344,32 +347,22 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
         builder.AddContent(0, text.Value);
     }
 
-    private static bool IsVoidElement(string tagName)
-    {
-        return tagName.ToLowerInvariant() switch
-        {
-            "area" => true,
-            "base" => true,
-            "br" => true,
-            "col" => true,
-            "embed" => true,
-            "hr" => true,
-            "img" => true,
-            "input" => true,
-            "link" => true,
-            "meta" => true,
-            "param" => true,
-            "source" => true,
-            "track" => true,
-            "wbr" => true,
-            _ => false
-        };
-    }
-
     /// <inheritdoc />
     public override void VisitSoftLineBreak(SoftLineBreak softBreak)
     {
         builder.AddContent(0, "\n");
+    }
+
+    private bool TryRenderOutlet(string value)
+    {
+        var match = OutletRegex.Match(value);
+
+        if (match.Success)
+        {
+            outlet(builder, int.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture));
+        }
+
+        return match.Success;
     }
 
     /// <inheritdoc />
@@ -380,12 +373,8 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
             return;
         }
 
-        var match = OutletRegex.Match(htmlInline.Value);
-
-        if (match.Success)
+        if (TryRenderOutlet(htmlInline.Value))
         {
-            var markerId = Convert.ToInt32(match.Groups[1].Value, CultureInfo.InvariantCulture);
-            outlet(builder, markerId);
             return;
         }
 
@@ -395,52 +384,33 @@ internal class BlazorMarkdownRenderer(BlazorMarkdownRendererOptions options, Ren
             return;
         }
 
-        var html = sanitizer.Sanitize(htmlInline.Value);
+        var tag = htmlInline.Tag ?? BlockParser.HtmlRegex.Match(htmlInline.Value);
 
-        var closingMatch = HtmlClosingTagRegex.Match(html);
-
-        if (closingMatch.Success)
+        if (tag.Success && tag.Length == htmlInline.Value.Length)
         {
-            builder.CloseElement();
-            return;
+            html.Write(tag);
         }
-
-        var openingMatch = HtmlTagRegex.Match(html);
-
-        if (openingMatch.Success)
+        else
         {
-            var tagName = openingMatch.Groups[1].Value;
+            builder.AddContent(0, htmlInline.Value);
+        }
+    }
 
+    private sealed class RenderTreeHtmlElementWriter(HtmlSanitizer sanitizer, RenderTreeBuilder builder) : HtmlElementWriter(sanitizer)
+    {
+        protected override void OpenElement(string tagName, IEnumerable<KeyValuePair<string, string>> attributes)
+        {
             builder.OpenElement(0, tagName);
 
-            var attributes = openingMatch.Groups[2].Value;
-
-            if (!string.IsNullOrEmpty(attributes))
+            foreach (var attribute in attributes)
             {
-                var matches = AttributeRegex.Matches(attributes);
-
-                foreach (Match attribute in matches)
-                {
-                    var name = attribute.Groups[1].Value;
-                    var value = name;
-
-                    if (attribute.Groups[2].Success) // Quoted value (either single or double)
-                    {
-                        value = attribute.Groups[3].Value;
-                    }
-                    else if (attribute.Groups[4].Success) // Unquoted value
-                    {
-                        value = attribute.Groups[4].Value;
-                    }
-
-                    builder.AddAttribute(1, name, value);
-                }
+                builder.AddAttribute(1, attribute.Key, attribute.Value);
             }
+        }
 
-            if (html.EndsWith("/>", StringComparison.Ordinal) || IsVoidElement(tagName))
-            {
-                builder.CloseElement();
-            }
+        protected override void CloseElement(string tagName, bool isVoid)
+        {
+            builder.CloseElement();
         }
     }
 }

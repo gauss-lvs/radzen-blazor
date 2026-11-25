@@ -81,7 +81,7 @@ namespace Radzen.Blazor
         public override bool Contains(double x, double y, double tolerance)
         {
             var chart = Chart;
-            if (chart == null || !Items.Any())
+            if (chart == null || Items.Count == 0)
             {
                 return false;
             }
@@ -102,7 +102,7 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public override (object, Point) DataAt(double x, double y)
         {
-            if (!Items.Any())
+            if (Items.Count == 0)
             {
                 return (default!, new Point());
             }
@@ -114,7 +114,12 @@ namespace Radzen.Blazor
                 var dx = px - x;
                 var dy = py - y;
                 return new { Item = item, Distance = Math.Sqrt(dx * dx + dy * dy), Point = new Point { X = px, Y = py } };
-            }).Aggregate((a, b) => a.Distance < b.Distance ? a : b);
+            }).Where(candidate => !double.IsNaN(candidate.Distance)).MinBy(candidate => candidate.Distance);
+
+            if (result == null)
+            {
+                return (default!, new Point());
+            }
 
             return (result.Item!, result.Point);
         }

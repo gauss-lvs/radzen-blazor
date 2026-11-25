@@ -73,7 +73,7 @@ namespace Radzen.Blazor
             }
         }
 
-        async Task OnDrop(DragEventArgs args)
+        void OnDrop(DragEventArgs args)
         {
             if (Container?.Payload == null)
             {
@@ -83,10 +83,6 @@ namespace Radzen.Blazor
             if (Container?.Payload != null)
             {
                 Container.Payload.ToItem = Item;
-            }
-            if (Zone != null)
-            {
-                await Zone.OnDropInternal();
             }
         }
 

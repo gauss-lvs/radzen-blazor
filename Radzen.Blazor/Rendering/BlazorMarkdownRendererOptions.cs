@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Radzen.Blazor.Rendering;
@@ -28,5 +29,11 @@ internal class BlazorMarkdownRendererOptions
     /// Gets or sets the list of allowed HTML attributes.
     /// </summary>
     public IEnumerable<string>? AllowedHtmlAttributes { get; set; }
+
+    public required Func<Uri> GetBaseUri { get; init; }
+
+    public HtmlSanitizer Sanitizer => sanitizer ??= new HtmlSanitizer(AllowedHtmlTags, AllowedHtmlAttributes);
+
+    private HtmlSanitizer? sanitizer;
 }
 

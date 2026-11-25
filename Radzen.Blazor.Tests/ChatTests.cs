@@ -109,6 +109,42 @@ namespace Radzen.Blazor.Tests
             Assert.Contains("Hi there!", component.Markup);
         }
 
+        [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        public void RadzenChat_AllowHtml_ControlsHtmlInMessages(bool allowHtml)
+        {
+            var messages = new List<ChatMessage>
+            {
+                new ChatMessage { Content = "<b>x</b>", UserId = "user2", Timestamp = DateTime.Now }
+            };
+
+            var users = new List<ChatUser>
+            {
+                new ChatUser { Id = "user1", Name = "John" },
+                new ChatUser { Id = "user2", Name = "Jane" }
+            };
+
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, users)
+                .Add(p => p.Messages, messages)
+                .Add(p => p.AllowHtml, allowHtml)
+            );
+
+            if (allowHtml)
+            {
+                Assert.Equal("x", component.Find(".rz-chat-message-text b").TextContent);
+            }
+            else
+            {
+                Assert.Empty(component.FindAll(".rz-chat-message-text b"));
+                Assert.Contains("&lt;b&gt;x&lt;/b&gt;", component.Markup);
+            }
+        }
+
         [Fact]
         public void RadzenChat_ShouldShowUsersInHeader()
         {
@@ -557,6 +593,34 @@ namespace Radzen.Blazor.Tests
             );
 
             Assert.False(messageSent);
+        }
+
+        [Fact]
+        public void RadzenChat_ShouldSendTypedTextOnEnter()
+        {
+            ChatMessage sent = null;
+
+            using var ctx = new TestContext();
+            ctx.JSInterop.Mode = JSRuntimeMode.Loose;
+            var component = ctx.RenderComponent<RadzenChat>(parameters => parameters
+                .Add(p => p.CurrentUserId, "user1")
+                .Add(p => p.Users, new List<ChatUser>())
+                .Add(p => p.Messages, new List<ChatMessage>())
+                .Add(p => p.MessageSent, EventCallback.Factory.Create<ChatMessage>(this, msg => sent = msg))
+            );
+
+            Assert.True(component.Find(".rz-chat-send-btn").HasAttribute("disabled"));
+
+            component.Find(".rz-chat-textarea").Input("Hello");
+
+            Assert.Equal("Hello", component.Find(".rz-chat-textarea").GetAttribute("value"));
+            Assert.False(component.Find(".rz-chat-send-btn").HasAttribute("disabled"));
+
+            component.Find(".rz-chat-textarea").KeyDown("Enter");
+
+            Assert.NotNull(sent);
+            Assert.Equal("Hello", sent.Content);
+            Assert.True(string.IsNullOrEmpty(component.Find(".rz-chat-textarea").GetAttribute("value")));
         }
 
         // Feature tests for mention functionality

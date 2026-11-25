@@ -12,6 +12,8 @@ namespace Radzen.Blazor
     /// </summary>
     public partial class RadzenStackedAreaSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>, IChartStackedAreaSeries
     {
+        private protected override bool EmptyValueIsZero => true;
+
         /// <summary>
         /// Specifies the color of the line.
         /// </summary>
@@ -262,7 +264,7 @@ namespace Radzen.Blazor
         {
             ArgumentNullException.ThrowIfNull(scale);
 
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 var stackedAreaSeries = StackedAreaSeries;
 

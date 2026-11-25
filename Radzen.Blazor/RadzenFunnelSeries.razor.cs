@@ -15,6 +15,8 @@ namespace Radzen.Blazor
     /// <typeparam name="TItem">The type of data items in the series.</typeparam>
     public partial class RadzenFunnelSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>
     {
+        private protected override bool EmptyValueIsZero => true;
+
         /// <summary>
         /// Gets or sets a collection of fill colors applied to individual funnel segments.
         /// </summary>
@@ -125,7 +127,7 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public override double MeasureLegend()
         {
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 return Items.Select(item => TextMeasurer.TextWidth(TooltipTitle(item))).Max() + MarkerSize;
             }
@@ -177,7 +179,7 @@ namespace Radzen.Blazor
         /// <inheritdoc />
         public override bool Contains(double x, double y, double tolerance)
         {
-            if (!Items.Any())
+            if (Items.Count == 0)
             {
                 return false;
             }
@@ -258,7 +260,7 @@ namespace Radzen.Blazor
         {
             var list = new List<ChartDataLabel>();
 
-            if (Data == null || !Items.Any())
+            if (Data == null || Items.Count == 0)
             {
                 return list;
             }

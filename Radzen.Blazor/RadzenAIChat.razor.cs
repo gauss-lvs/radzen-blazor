@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.AI;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Radzen.Blazor.Rendering;
 using System;
@@ -33,6 +34,7 @@ namespace Radzen.Blazor
         private bool preventDefault;
         private ElementReference inputElement;
         private ElementReference messagesContainer;
+        private bool scrollToEnd = true;
         private CancellationTokenSource cts = new();
         private string? currentSessionId;
 
@@ -433,8 +435,50 @@ namespace Radzen.Blazor
             await InvokeAsync(StateHasChanged);
         }
 
+        [Inject]
+        private IServiceProvider? ServiceProvider { get; set; }
+
+        private ButtonTooltips? buttonTooltips;
+
+        private ButtonTooltips Tooltips => buttonTooltips ??= new ButtonTooltips(ServiceProvider?.GetService<TooltipService>());
+
+        private void OnScrollToEndClick()
+        {
+            Tooltips.Close();
+            ScrollToEnd();
+        }
+
+        /// <summary>
+        /// Scrolls the messages to the latest one, wherever the reader has scrolled to.
+        /// </summary>
+        public void ScrollToEnd()
+        {
+            scrollToEnd = true;
+            InvokeAsync(StateHasChanged);
+        }
+
+        private void OnRemoveAttachmentClick(ChatAttachment attachment)
+        {
+            Tooltips.Close();
+            RemoveAttachment(attachment);
+        }
+
+        private void OnStopClick()
+        {
+            Tooltips.Close();
+            Stop();
+        }
+
+        private async Task OnSendClick()
+        {
+            Tooltips.Close();
+            await OnSendMessage();
+        }
+
         private async Task OnAttachClick()
         {
+            Tooltips.Close();
+
             if (JSRuntime != null)
             {
                 await JSRuntime.InvokeVoidAsync("Radzen.clickElement", attachInputId);
@@ -485,6 +529,14 @@ namespace Radzen.Blazor
         /// </summary>
         [Parameter]
         public EventCallback<ChatToolCall> ToolCallCompleted { get; set; }
+
+        /// <summary>
+        /// Gets or sets whether HTML tags in message text are rendered.
+        /// When <c>true</c> (default), allow-listed HTML tags and attributes are rendered and everything else is removed, as in <see cref="RadzenMarkdown.AllowHtml"/>.
+        /// When <c>false</c>, HTML in message text is displayed as literal text. Set to <c>false</c> when messages come from untrusted users or from a model that reads untrusted content.
+        /// </summary>
+        [Parameter]
+        public bool AllowHtml { get; set; } = true;
 
         /// <summary>
         /// Gets or sets whether to show the clear chat button.
@@ -612,6 +664,11 @@ namespace Radzen.Blazor
 
             Messages.Add(message);
 
+            if (message.IsUser)
+            {
+                scrollToEnd = true;
+            }
+
             while (Messages.Count > MaxMessages)
             {
                 Messages.RemoveAt(0);
@@ -652,6 +709,7 @@ namespace Radzen.Blazor
         public async Task LoadMessages(IEnumerable<ChatMessage> messages)
         {
             Messages.Clear();
+            scrollToEnd = true;
 
             if (messages != null)
             {
@@ -906,11 +964,7 @@ namespace Radzen.Blazor
         {
             IsLoading = true;
             var previousCts = cts;
-#if NET8_0_OR_GREATER
             await previousCts.CancelAsync();
-#else
-            previousCts.Cancel();
-#endif
             previousCts.Dispose();
             cts = new CancellationTokenSource();
 
@@ -1207,6 +1261,7 @@ namespace Radzen.Blazor
 
         private async Task OnClearChat()
         {
+            Tooltips.Close();
             await ClearChat();
         }
 
@@ -1215,8 +1270,12 @@ namespace Radzen.Blazor
         {
             if (!firstRender && messagesContainer.Context != null && JSRuntime != null)
             {
-                // Scroll to bottom when new messages are added
-                await JSRuntime.InvokeVoidAsync("Radzen.chatScrollAfterRender", ".rz-chat-messages", 100);
+                // The script keeps the list at its end only while the reader is there, and shows the scroll to end button when
+                // content arrives while the reader is elsewhere. The first render after the initial one, a message of the user,
+                // a loaded conversation and that button move the list to the end wherever the reader is.
+                var toEnd = scrollToEnd;
+                scrollToEnd = false;
+                await JSRuntime.InvokeVoidAsync("Radzen.chatScrollAfterRender", messagesContainer, toEnd, 100);
             }
         }
 

@@ -343,7 +343,7 @@ namespace Radzen.Blazor
         /// <returns>System.Boolean.</returns>
         public bool GetVisible()
         {
-            if (Columns != null && ColumnsCollection.Any() && VisibleColumns.Count() == 0)
+            if (Columns != null && ColumnsCollection.Count > 0 && VisibleColumns.Count() == 0)
             {
                 return false;
             }
@@ -1028,7 +1028,7 @@ namespace Radzen.Blazor
                     continue;
                 }
 
-                if (w.StartsWith("calc(", StringComparison.Ordinal) && w.EndsWith(')'))
+                if (w.StartsWith("calc(", StringComparison.Ordinal) && w.EndsWith(')', StringComparison.Ordinal))
                 {
                     var calcExpression = w.Remove(w.Length - 1).Substring("calc(".Length);
                     widths.Add(calcExpression);
@@ -1198,6 +1198,18 @@ namespace Radzen.Blazor
         FilterOperator? filterOperator;
         object? secondFilterValue;
         bool secondFilterValueCleared;
+        string? unparsedFilterText;
+        string? unparsedSecondFilterText;
+
+        internal object? GetFilterInputValue()
+        {
+            return GetFilterValue() ?? unparsedFilterText;
+        }
+
+        internal object? GetSecondFilterInputValue()
+        {
+            return GetSecondFilterValue() ?? unparsedSecondFilterText;
+        }
         FilterOperator? secondFilterOperator;
         LogicalFilterOperator? logicalFilterOperator;
         CollectionFilterMode? collectionFilterMode;
@@ -1561,16 +1573,46 @@ namespace Radzen.Blazor
                 value = v;
             }
 
-            if ((FilterPropertyType == typeof(TimeOnly) || FilterPropertyType == typeof(TimeOnly?)) && value != null && value is string)
+            string? unparsedText = null;
+
+            if ((FilterPropertyType == typeof(TimeOnly) || FilterPropertyType == typeof(TimeOnly?)) && value is string timeText)
             {
-                var v = TimeOnly.Parse($"{value}", CultureInfo.InvariantCulture);
-                value = FilterPropertyType == typeof(TimeOnly) ? v : (TimeOnly?)v;
+                if (TimeOnly.TryParse(timeText, CultureInfo.InvariantCulture, out var v))
+                {
+                    value = FilterPropertyType == typeof(TimeOnly) ? v : (TimeOnly?)v;
+                }
+                else
+                {
+                    unparsedText = timeText;
+                    value = null;
+                }
             }
 
-            if ((FilterPropertyType == typeof(Guid) || FilterPropertyType == typeof(Guid?)) && value != null && value is string)
+            if ((FilterPropertyType == typeof(Guid) || FilterPropertyType == typeof(Guid?)) && value is string guidText)
             {
-                var v = Guid.Parse($"{value}");
-                value = FilterPropertyType == typeof(Guid) ? v : (Guid?)v;
+                if (Guid.TryParse(guidText, out var v))
+                {
+                    value = FilterPropertyType == typeof(Guid) ? v : (Guid?)v;
+                }
+                else
+                {
+                    unparsedText = guidText;
+                    value = null;
+                }
+            }
+
+            if (string.IsNullOrEmpty(unparsedText))
+            {
+                unparsedText = null;
+            }
+
+            if (isFirst)
+            {
+                unparsedFilterText = unparsedText;
+            }
+            else
+            {
+                unparsedSecondFilterText = unparsedText;
             }
 
             if (!QueryableExtension.IsEnumerable(value?.GetType() ?? typeof(object)) && FilterPropertyType != null && (PropertyAccess.IsEnum(FilterPropertyType) || (PropertyAccess.IsNullableEnum(FilterPropertyType))))
@@ -1701,6 +1743,8 @@ namespace Radzen.Blazor
 
             filterValue = null;
             secondFilterValue = null;
+            unparsedFilterText = null;
+            unparsedSecondFilterText = null;
 
             filterValueCleared = FilterTemplate != null || FilterValueTemplate != null;
             secondFilterValueCleared = FilterTemplate != null || SecondFilterValueTemplate != null;
@@ -2025,12 +2069,10 @@ namespace Radzen.Blazor
         /// </summary>
         public virtual bool ShowTimeForDateTimeFilter()
         {
-#if NET6_0_OR_GREATER
             if (FilterPropertyType == typeof(DateOnly))
             {
                 return false;
             }
-#endif
             return true;
         }
 

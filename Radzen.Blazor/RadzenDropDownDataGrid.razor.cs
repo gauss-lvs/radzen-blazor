@@ -1012,8 +1012,6 @@ namespace Radzen.Blazor
             {
                 await OnLoadData(new Radzen.LoadDataArgs() { Skip = 0, Top = PageSize, OrderBy = "" });
             }
-
-            StateHasChanged();
         }
 
         string? previousSearch;
@@ -1397,6 +1395,11 @@ namespace Radzen.Blazor
 
         async Task OnRowSelect(object item)
         {
+            if (Disabled)
+            {
+                return;
+            }
+
             await CloseAndFocus();
 
             if (AllowRowSelectOnRowClick)

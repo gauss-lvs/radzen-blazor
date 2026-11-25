@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Text;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Radzen.Blazor;
 
@@ -60,7 +61,8 @@ public partial class RadzenMarkdown : RadzenComponent
 
     /// <summary>
     /// Gets or sets whether HTML tags within the markdown are rendered or escaped.
-    /// When true (default), safe HTML tags are allowed. Dangerous tags (script, iframe, style, object) are always filtered.
+    /// When true (default), HTML tags and attributes in <see cref="AllowedHtmlTags"/> and <see cref="AllowedHtmlAttributes"/> are rendered and all others are removed.
+    /// URL attributes (such as href and src) and Markdown link and image destinations are kept only for http, https, mailto and relative URLs, plus data:image/ for img src.
     /// When false, all HTML is treated as plain text and displayed literally.
     /// </summary>
     /// <value><c>true</c> to allow safe HTML; <c>false</c> to escape all HTML. Default is <c>true</c>.</value>
@@ -69,7 +71,8 @@ public partial class RadzenMarkdown : RadzenComponent
 
     /// <summary>
     /// Gets or sets a whitelist of HTML tags permitted in the markdown when <see cref="AllowHtml"/> is true.
-    /// If set, only these tags will be rendered; others are stripped. If not set, uses a default list of safe tags.
+    /// If set, only these tags will be rendered; others are stripped. If not set, uses a default list of safe tags
+    /// that excludes form controls (form, input, button, select, textarea and related tags), script, style, iframe, object, svg, html, head, body, map and area.
     /// </summary>
     /// <value>The allowed HTML tag names, or null to use the default safe tag list.</value>
     [Parameter]
@@ -77,7 +80,8 @@ public partial class RadzenMarkdown : RadzenComponent
 
     /// <summary>
     /// Gets or sets a whitelist of HTML attributes permitted on HTML tags when <see cref="AllowHtml"/> is true.
-    /// If set, only these attributes are rendered; others are stripped. If not set, uses a default list of safe attributes.
+    /// If set, only these attributes are rendered; others are stripped. If not set, uses a default list of safe attributes
+    /// that excludes event handlers, style, id, name, action and contenteditable. Names are matched exactly (case-insensitive).
     /// </summary>
     /// <value>The allowed HTML attribute names, or null to use the default safe attribute list.</value>
     [Parameter]
@@ -99,6 +103,11 @@ public partial class RadzenMarkdown : RadzenComponent
     /// <value>The maximum heading depth for auto-linking (0-6). Default is 0 (disabled).</value>
     [Parameter]
     public int AutoLinkHeadingDepth { get; set; }
+
+    [Inject]
+    private IServiceProvider ServiceProvider { get; set; } = default!;
+
+    private Uri? baseUri;
 
     /// <inheritdoc />
     protected override string GetComponentCssClass()
@@ -136,11 +145,17 @@ public partial class RadzenMarkdown : RadzenComponent
             AllowHtml = AllowHtml,
             AllowedHtmlAttributes = AllowedHtmlAttributes,
             AllowedHtmlTags = AllowedHtmlTags,
+            GetBaseUri = GetBaseUri,
         };
 
         var visitor = new BlazorMarkdownRenderer(options, builder, outlet);
 
         document.Accept(visitor);
+    }
+
+    private Uri GetBaseUri()
+    {
+        return baseUri ??= new Uri(ServiceProvider.GetRequiredService<NavigationManager>().BaseUri);
     }
 
     private static void Empty(RenderTreeBuilder builder, int marker) 
@@ -272,12 +287,10 @@ public partial class RadzenMarkdown : RadzenComponent
                     builder.AddComponentReferenceCapture(frame.Sequence, frame.ComponentReferenceCaptureAction);
                     startIndex ++;
                     break;
-#if NET8_0_OR_GREATER
                 case RenderTreeFrameType.ComponentRenderMode:
                     builder.AddComponentRenderMode(frame.ComponentRenderMode);
                     startIndex ++;
                     break;
-#endif
                 case RenderTreeFrameType.Text:
                     builder.AddContent(frame.Sequence, frame.TextContent);
                     startIndex ++;

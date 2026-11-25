@@ -13,6 +13,8 @@ namespace Radzen.Blazor
     /// <typeparam name="TItem">The type of the series data item.</typeparam>
     public partial class RadzenStackedColumnSeries<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicProperties | DynamicallyAccessedMemberTypes.PublicFields)] TItem> : CartesianSeries<TItem>, IChartStackedColumnSeries
     {
+        private protected override bool EmptyValueIsZero => true;
+
         /// <summary>
         /// Specifies the fill (background color) of the column series.
         /// </summary>
@@ -366,7 +368,7 @@ namespace Radzen.Blazor
         {
             ArgumentNullException.ThrowIfNull(scale);
 
-            if (Items.Any())
+            if (Items.Count > 0)
             {
                 var stackedColumnSeries = ColumnSeries.Cast<IChartStackedColumnSeries>();
                 var count = stackedColumnSeries.Max(series => series.Count);

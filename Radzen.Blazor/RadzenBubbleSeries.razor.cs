@@ -52,8 +52,15 @@ namespace Radzen.Blazor
                     return _ => 1;
                 }
 
-                return PropertyAccess.Getter<TItem, double>(SizeProperty);
+                return NumericGetter(SizeProperty);
             }
+        }
+
+        internal (double Min, double Max) SizeRange()
+        {
+            var sizeValues = Items.Select(item => Math.Abs(Size(item))).Where(size => !double.IsNaN(size)).ToList();
+
+            return sizeValues.Count > 0 ? (sizeValues.Min(), sizeValues.Max()) : (0, 1);
         }
 
         internal double GetBubbleRadius(TItem item, double minValue, double maxValue)
@@ -82,16 +89,14 @@ namespace Radzen.Blazor
             }
 
             var chart = Chart;
-            if (chart == null || !Items.Any())
+            if (chart == null || Items.Count == 0)
             {
                 return false;
             }
 
             var category = ComposeCategory(chart.CategoryScale);
             var value = ComposeValue(chart.ValueScale);
-            var sizeValues = Items.Select(item => Math.Abs(Size(item))).ToList();
-            var minValue = sizeValues.Min();
-            var maxValue = sizeValues.Max();
+            var (minValue, maxValue) = SizeRange();
 
             return Items.Any(item =>
             {
@@ -108,16 +113,14 @@ namespace Radzen.Blazor
         public override (object, Point) DataAt(double x, double y)
         {
             var chart = Chart;
-            if (chart == null || !Items.Any())
+            if (chart == null || Items.Count == 0)
             {
                 return (default!, new Point());
             }
 
             var category = ComposeCategory(chart.CategoryScale);
             var value = ComposeValue(chart.ValueScale);
-            var sizeValues = Items.Select(item => Math.Abs(Size(item))).ToList();
-            var minValue = sizeValues.Min();
-            var maxValue = sizeValues.Max();
+            var (minValue, maxValue) = SizeRange();
 
             // Find the bubble whose center is closest to the mouse
             var result = Items.Select(item =>
@@ -129,7 +132,12 @@ namespace Radzen.Blazor
                 var dy = py - y;
                 var distance = Math.Sqrt(dx * dx + dy * dy);
                 return new { Item = item, Distance = distance, Radius = radius, Point = new Point { X = px, Y = py } };
-            }).Aggregate((a, b) => a.Distance < b.Distance ? a : b);
+            }).Where(candidate => !IsEmpty(candidate.Distance, candidate.Radius)).MinBy(candidate => candidate.Distance);
+
+            if (result == null)
+            {
+                return (default!, new Point());
+            }
 
             if (result.Distance <= result.Radius)
             {
@@ -169,16 +177,14 @@ namespace Radzen.Blazor
             var chart = RequireChart();
             var list = new List<ChartDataLabel>();
 
-            if (!Items.Any())
+            if (Items.Count == 0)
             {
                 return list;
             }
 
             const double gap = 12;
             const double inset = 12;
-            var sizeValues = Items.Select(item => Math.Abs(Size(item))).ToList();
-            var minValue = sizeValues.Min();
-            var maxValue = sizeValues.Max();
+            var (minValue, maxValue) = SizeRange();
             var va = chart.GetValueAxis(ValueAxisName);
             var vs = chart.GetValueScale(ValueAxisName);
 

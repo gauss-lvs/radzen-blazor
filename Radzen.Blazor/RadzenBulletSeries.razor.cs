@@ -115,7 +115,7 @@ namespace Radzen.Blazor
                     throw new ArgumentException("TargetProperty should not be empty");
                 }
 
-                return PropertyAccess.Getter<TItem, double>(TargetProperty);
+                return NumericGetter(TargetProperty);
             }
         }
 
@@ -128,7 +128,7 @@ namespace Radzen.Blazor
                     throw new ArgumentException("MaxProperty should not be empty");
                 }
 
-                return PropertyAccess.Getter<TItem, double>(MaxProperty);
+                return NumericGetter(MaxProperty);
             }
         }
 
@@ -139,13 +139,17 @@ namespace Radzen.Blazor
             ArgumentNullException.ThrowIfNull(scale);
 
             // Merge value range into the "category" scale (which becomes the X-axis)
-            if (Items != null && Items.Any())
+            if (Items != null && Items.Count > 0)
             {
                 var max = Max;
                 var value = Value;
 
-                var maxVal = Items.Max(item => Math.Max(max(item), value(item)));
-                scale.Input.MergeWidth(new ScaleRange { Start = 0, End = maxVal });
+                var values = Items.SelectMany(item => new[] { max(item), value(item) }).Where(v => !double.IsNaN(v)).ToList();
+
+                if (values.Count > 0)
+                {
+                    scale.Input.MergeWidth(new ScaleRange { Start = 0, End = values.Max() });
+                }
             }
 
             return scale;
@@ -280,7 +284,7 @@ namespace Radzen.Blazor
         public override (object, Point) DataAt(double x, double y)
         {
             var chart = Chart;
-            if (chart == null || !Items.Any())
+            if (chart == null || Items.Count == 0)
             {
                 return (default!, new Point());
             }
