@@ -6,10 +6,11 @@ bei jedem Upstream-Merge erhalten bleiben muss.
 | | |
 | --- | --- |
 | Branch | `gauss-next` |
-| Stand | 22.09.2026 |
-| Upstream-Basis | `5dc34d34b` ("Version updated", Radzen 11.4.2) |
-| Paketversion | `11.4.2.1-next.0` |
-| Umfang | 26 Dateien, +1582 / −52 Zeilen |
+| Stand | 25.11.2026 |
+| Upstream-Basis | `30abd1636` (Radzen 13.3.0) |
+| Paketversion | `12.1.12.3-next.0` (wird beim nächsten `publish.ps1` angehoben) |
+| Zielframeworks | `net9.0`, `net10.0`, `net11.0` |
+| Umfang | 27 Dateien, +1615 / −52 Zeilen (einschließlich dieses Dokuments) |
 
 ## Wie dieser Delta ermittelt wurde
 
@@ -17,22 +18,24 @@ Ein naheliegendes `git diff master..gauss-next` ist **irreführend**: `master` i
 Spiegel des Radzen-Upstream und hinkt hinterher. Der weitaus größte Teil dieser Differenz ist
 reiner Radzen-Fortschritt und keine GAUSS-Abweichung.
 
-Die Historie ist aber günstig gebaut: die GAUSS-Commits sitzen als **geschlossener Block** auf
-einer reinen Upstream-Linie. Den Schnittpunkt — den jüngsten Commit, der nicht von GAUSS stammt —
-findet man so:
+Maßgeblich ist stattdessen der Upstream-Stand, der zuletzt in `gauss-next` gemergt wurde. Den
+liefert `git merge-base` (Remote `upstream` = `github.com/radzenhq/radzen-blazor`, vorher
+`git fetch upstream`):
 
 ```bash
-BASE=$(git log gauss-next --format="%H %an" | grep -vm1 " pb$" | cut -d' ' -f1)
+BASE=$(git merge-base gauss-next upstream/master)
 
-# Gegenprobe, muss "pb" und nur "pb" ausgeben:
-git log $BASE..gauss-next --format="%an" | sort -u
+# Gegenprobe, darf nur GAUSS-Autoren ausgeben:
+git log $BASE..gauss-next --no-merges --format="%an <%ae>" | sort -u
 
 # Der GAUSS-Delta:
-git diff $BASE..gauss-next
+git diff $BASE gauss-next
 ```
 
-Zum Stand dieses Dokuments ist `$BASE` = `5dc34d34b`. Nach jedem Upstream-Merge verschiebt sich
-der Wert; das Kommando oben ermittelt ihn neu.
+Zum Stand dieses Dokuments ist `$BASE` = `30abd1636`. Nach jedem Upstream-Merge verschiebt sich
+der Wert; das Kommando oben ermittelt ihn neu. Die frühere Ermittlung über den Autorennamen
+(`grep -v " pb$"`) ist nicht mehr verlässlich: zwei Devcontainer-Commits tragen einen anderen
+Autorennamen bei gleicher Adresse.
 
 Im Code sind die Abweichungen zusätzlich durch `#region GAUSS-spezifische Änderungen` markiert
 (`grep -rn "GAUSS-spezifisch" Radzen.Blazor/`), das deckt aber nur einen Teil ab — siehe
@@ -44,7 +47,7 @@ Im Code sind die Abweichungen zusätzlich durch `#region GAUSS-spezifische Ände
 | --- | --- | --- |
 | [A. Paket & Build](#a-paket--build) | 1 | Eigene PackageId, gepinnte Abhängigkeiten, reparierte CSS/JS-Generierung |
 | [B. Veröffentlichung](#b-veröffentlichung) | 4 | Release über Forgejo statt GitHub Actions |
-| [C. Entwicklungsumgebung](#c-entwicklungsumgebung) | 2 | GAUSS-Devcontainer |
+| [C. Entwicklungsumgebung](#c-entwicklungsumgebung) | 3 | GAUSS-Devcontainer, `.gitignore` |
 | [D. GIcon / GBusyIcon](#d-gicon--gbusyicon) | 12 | Icon-Integration aus `GAUSS.RadzenBase` |
 | [E. RadzenTree](#e-radzentree) | 2 | `BeforeChange`-Event, `Reload(value)` |
 | [F. DropDown: LoadDataOnOpen](#f-dropdown-loaddataonopen) | 1 | Verzögertes Laden erst beim Öffnen |
@@ -54,14 +57,21 @@ Im Code sind die Abweichungen zusätzlich durch `#region GAUSS-spezifische Ände
 
 ## Testlage
 
-`dotnet test` auf `gauss-next` (net10.0): **5369 Tests, 4909 grün, 460 rot.**
+`dotnet test` auf `gauss-next` (net11.0, Linux, frischer Checkout): **12076 Tests, 11617 grün,
+459 rot.**
 
-Alle 460 Fehler liegen in `Radzen.Documents.Markdown.Tests.*` und sind **nicht GAUSS-verursacht**:
-die CommonMark-Tests erwarten CRLF und scheitern unter Linux. Am reinen Upstream-Stand schlagen
-dieselben Tests fehl — verifiziert.
+Alle 459 Fehler liegen in `Radzen.Documents.Markdown.Tests.*` und sind **nicht GAUSS-verursacht**:
+die CommonMark-Tests vergleichen Zeichenketten mit festen Zeilenenden und scheitern unter Linux.
+Am reinen Upstream-Stand (`30abd1636`) schlagen ebenso 459 Markdown-Tests fehl — verifiziert.
 
-Außerhalb der Markdown-Tests ist der Baum grün, einschließlich der 17 GAUSS-eigenen Tests
-(Abschnitt I).
+Die Zahl hängt von den Zeilenenden der ausgecheckten Testdateien ab (`core.autocrlf`). In einer
+länger benutzten Arbeitskopie mit gemischten Zeilenenden waren es zuletzt nur 124 rote
+Markdown-Tests. Vergleichbar sind deshalb nur Läufe in frischen Checkouts, etwa über
+`git worktree add`.
+
+Außerhalb der Markdown-Tests ist der Baum grün, einschließlich der GAUSS-eigenen Tests
+(Abschnitt I). `AIChatLayoutTests.AIChatService_ForwardsQueuedMessagesToTheChatClientQueue` ist
+ein Upstream-Test, der gelegentlich zeitabhängig scheitert; in Wiederholungen ist er grün.
 
 ---
 
@@ -73,7 +83,7 @@ Außerhalb der Markdown-Tests ist der Baum grün, einschließlich der 17 GAUSS-e
 
 ```xml
 <PackageId>Radzen.Blazor.GAUSS</PackageId>
-<Version>11.4.2.1-next.0</Version>
+<Version>12.1.12.3-next.0</Version>
 <Authors>Radzen Ltd. and GAUSS-LVS mbH</Authors>
 ```
 
@@ -92,18 +102,26 @@ nicht mehr gegen das offizielle `Radzen.Blazor` austauschbar ist.
 
 ### Gepinnte Framework-Versionen
 
-Upstream verwendet `8.0.0` sowie die Wildcards `9.*-*` und `10.*-*`. Der Fork pinnt auf `8.0.26`,
-`9.0.15` und `10.0.7`, damit ein Build nicht von neu erschienenen Preview-Paketen abhängt und
-reproduzierbar bleibt.
+Upstream verwendet die Wildcards `9.*-*`, `10.*-*` und `11.*-*`. Der Fork pinnt
+`Microsoft.AspNetCore.Components` und `.Web` auf `9.0.22`, `10.0.14` und `11.0.0`, damit ein Build
+nicht von neu erschienenen Preview-Paketen abhängt und reproduzierbar bleibt. Kommt upstream ein
+neues Zielframework hinzu, braucht es hier ein eigenes Paar gepinnter Referenzen.
+
+### Zielframeworks
+
+Der Fork folgt den Zielframeworks von Upstream. Seit Radzen 13 sind das `net9.0`, `net10.0` und
+`net11.0`; `net8.0` ist mit dem Merge vom 25.11.2026 entfallen. Das Forgejo-Release baut mit dem
+.NET-SDK aus dem Runner-Image, das .NET 11 enthält.
 
 ### Reparierte Generierung von CSS und minifiziertem JS
 
 Die umfangreichste Build-Änderung. Upstream erzeugt CSS (`SassCompile`) und
-`Radzen.Blazor.min.js` (`TerserMinify`) nur unter `'$(TargetFramework)' == 'net10.0'`.
+`Radzen.Blazor.min.js` (`TerserMinify`) nur im Inner-Build des höchsten Zielframeworks (derzeit
+`'$(TargetFramework)' == 'net11.0'`).
 
 **Problem:** Beim Packen eines cross-targeting Projekts packt das SDK die Static Web Assets nur
 *eines* Inner-Builds — `ResolveStaticWebAssetsEffectiveTargetFramework` wählt das niedrigste TFM,
-also `net8.0`. Das erzeugte Paket kam dadurch **ohne jedes CSS** heraus.
+derzeit `net9.0`. Das erzeugte Paket kam dadurch **ohne jedes CSS** heraus.
 
 **Lösung:** Die Generierung läuft einmal im Outer-Build, vor den Inner-Builds:
 
@@ -117,16 +135,21 @@ also `net8.0`. Das erzeugte Paket kam dadurch **ohne jedes CSS** heraus.
   in die Inner-Builds importiert. Dafür ist die Version in
   `<RadzenMSBuildVersion>0.0.6</RadzenMSBuildVersion>` ausgelagert.
 
-Laut Commit-Nachricht von `cfdf5f9a` per `dotnet pack -c Release` verifiziert: das Paket enthält
-30 CSS-Dateien, das minifizierte JS und `lib`-Ordner für net8.0, net9.0 und net10.0.
+Zuletzt am 25.11.2026 per `dotnet pack -c Release` verifiziert: das Paket enthält 30 CSS-Dateien,
+das minifizierte JS und `lib`-Ordner für net9.0, net10.0 und net11.0.
 
 ## B. Veröffentlichung
 
 ### `publish.ps1` (neu)
 
-Hebt die Version an, committet, taggt `v<Version>` und pusht mit `--follow-tags` nach
-`git.gauss-lvs.de`. Ohne `--follow-tags` bliebe der annotierte Tag lokal und es würde nichts
-gebaut. Auf `gauss-next` wird `dotnet version ... prerelease` verwendet.
+Führt `git pull` aus, hebt mit `dotnet version -f ./Radzen.Blazor/Radzen.Blazor.csproj build` die
+vierte Stelle der Version an (z. B. `12.1.12.2-next.0` → `12.1.12.3-next.0`), committet, taggt
+`v<Version>` und pusht mit `--follow-tags` nach `git.gauss-lvs.de`. Ohne `--follow-tags` bliebe der
+annotierte Tag lokal und es würde nichts gebaut.
+
+Nach einem Upstream-Merge bleibt die GAUSS-Version im Merge-Commit zunächst stehen (im Konflikt
+die eigene Seite nehmen). Ist die Upstream-Version gestiegen, die ersten drei Stellen vor dem
+nächsten Release von Hand nachziehen, etwa auf `13.3.0.x-next.0`, wie zuletzt von `12.1.10.2` auf `12.1.12.2`.
 
 ### `.forgejo/workflows/release.yml` (neu)
 
@@ -149,10 +172,17 @@ Build in `radzenhq/radzen-next` anstoßen.
 ## C. Entwicklungsumgebung
 
 `.devcontainer/devcontainer.json` und `devcontainer-lock.json` (neu). Basis
-`docker.sopart.de/gauss/devcontainers-gauss:latest`, mit `claude-code`-Feature, persistenten
-Volumes für Claude-Code- und OpenCode-Konfiguration, `dotnet restore Radzen.sln` als
-`postCreateCommand` und einem Git-Setup-Skript als `postStartCommand`. Playwright ist nicht
-enthalten, weil es bereits im Image liegt.
+`docker-repo.gauss-lvs.de/gauss/devcontainers-gauss:latest`, mit `claude-code`-Feature und
+persistenten Volumes für Claude-Code- und OpenCode-Konfiguration. Der `postCreateCommand`
+installiert OpenCode, korrigiert die Besitzrechte der Volumes, führt `dotnet restore Radzen.sln`
+aus und installiert die GAUSS-VS-Code-Erweiterungen (`GAUSS/ggit-vscode`); der
+`postStartCommand` richtet Git ein. Playwright ist nicht enthalten, weil es bereits im Image liegt.
+
+### `.gitignore`
+
+Upstream ignoriert `*.md`. Der Fork lässt Markdown-Dateien im Hauptverzeichnis mit `!/*.md`
+wieder zu, damit dieses Dokument versioniert wird, und ignoriert
+`/SANKEY_PATTERN_COMPARISON.md` weiterhin ausdrücklich.
 
 ## D. GIcon / GBusyIcon
 
@@ -425,7 +455,7 @@ In `.forgejo/workflows/release.yml` ist der Testschritt auskommentiert:
 ```
 
 Ein Tag-Push veröffentlicht also ungetestet. Das lässt sich derzeit auch nicht ohne Weiteres
-aktivieren: von den 5334 Tests scheitern 461 (siehe [Testlage](#testlage)), davon 460 aus
+aktivieren: von den 12076 Tests scheitern 459 (siehe [Testlage](#testlage)), alle aus
 plattformbedingten Gründen. Ein sinnvolles Aktivieren setzt voraus, die Markdown-Tests entweder
 zu reparieren oder per `--filter` auszuschließen.
 
@@ -478,7 +508,7 @@ Diese Stellen nach jedem Upstream-Merge gezielt prüfen:
 | `RadzenButton.razor`, `RadzenSplitButton.razor`, `RadzenToggleButton.razor` | `GBusyIcon`-Block im Busy-Zustand |
 | `RadzenPanelMenuItem.razor` | beide `<i class="@getIconCssClass()">` |
 | `RadzenContextMenu.razor` | `GIcon`/`CssClass` am `RadzenMenuItem` |
-| `Radzen.Blazor.csproj` | Sass/Terser-Targets — Upstream-Stand ist dort nicht übernehmbar |
+| `Radzen.Blazor.csproj` | Sass/Terser-Targets — Upstream-Stand ist dort nicht übernehmbar. Neue Zielframeworks von Upstream übernehmen und für jedes ein gepinntes Referenzpaar ergänzen |
 | `.github/workflows/` | prüfen, ob `ci.yml` und `premium-themes.yml` wieder aktive Trigger haben |
 
 Ein schneller Selbsttest nach dem Merge:
