@@ -9,7 +9,6 @@
   ],
   "containerEnv": {
     "CLAUDE_CONFIG_DIR": "/home/vscode/.claude",
-    "OPENCODE_CONFIG_DIR": "/home/vscode/.config/opencode",
     "DEV_GIT_TOKEN": "${localEnv:GAUSS_GIT_API_KEY_AI}",
     "ASPNETCORE_Kestrel__Certificates__Default__Path": "/etc/ssl/localcerts/devlocal.pfx"
   },
